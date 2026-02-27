@@ -18,6 +18,13 @@ config("userauth_service_load_mode_config") {
   include_dirs = [ "inc" ]
 }
 
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.account_os_account)) {
+  has_os_account_part = true
+} else {
+  has_os_account_part = false
+}
+
 ohos_source_set("userauth_service_load_mode") {
   sanitize = {
     integer_overflow = true
@@ -72,6 +79,11 @@ ohos_source_set("userauth_service_load_mode") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  if (has_os_account_part) {
+    cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
+    external_deps += [ "os_account:os_account_innerkits" ]
+  }
 
   configs = [
     "../../common:iam_log_config",
