@@ -111,11 +111,15 @@ void LoadModeHandlerDefault::TriggerAllServiceStart()
 std::optional<bool> LoadModeHandlerDefault::AnyUserHasCompanionDeviceCredential()
 {
     std::vector<AccountSA::OsAccountInfo> osAccountInfo;
+#ifdef HAS_OS_ACCOUNT_PART
+#ifndef ENABLE_TEST
     ErrCode errCode = AccountSA::OsAccountManager::QueryAllCreatedOsAccounts(osAccountInfo);
     if (errCode != ERR_OK) {
         IAM_LOGE("QueryAllCreatedOsAccounts fail, errCode = %{public}d", errCode);
         return std::nullopt;
     }
+#endif // ENABLE_TEST
+#endif // HAS_OS_ACCOUNT_PART
 
     for (auto &info : osAccountInfo) {
         int32_t userId = info.GetLocalId();

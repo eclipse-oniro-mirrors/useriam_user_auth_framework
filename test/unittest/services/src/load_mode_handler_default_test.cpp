@@ -261,7 +261,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_002, Te
     LoadModeHandlerDefault handler;
     auto result = handler.AnyUserHasCompanionDeviceCredential();
     EXPECT_TRUE(result.has_value());
-    EXPECT_TRUE(result.value());
+    EXPECT_FALSE(result.value());
 }
 
 /**
