@@ -45,6 +45,20 @@ idl_gen_interface("auth_user_ipc_interface") {
     "IWidgetCallback.idl",
   ]
 
+  inputs = [
+    "idl/IExecutorCallback.idl",
+    "idl/IExecutorMessenger.idl",
+    "idl/IEventListenerCallback.idl",
+    "idl/IGetExecutorPropertyCallback.idl",
+    "idl/IIamCallback.idl",
+    "idl/IIdmGetCredInfoCallback.idl",
+    "idl/IIdmGetSecureUserInfoCallback.idl",
+    "idl/IModalCallback.idl",
+    "idl/ISetExecutorPropertyCallback.idl",
+    "idl/IVerifyTokenCallback.idl",
+    "idl/IWidgetCallback.idl",
+    "idl/UserAuthTypes.idl",
+  ]
   log_domainid = "0xD002401"
   log_tag = "USER_AUTH_SA"
   subsystem_name = "useriam"

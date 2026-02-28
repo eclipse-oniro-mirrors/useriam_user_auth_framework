@@ -734,7 +734,7 @@ int32_t UserIdmService::EnforceDelUserInner(int32_t userId, std::shared_ptr<Cont
         return ret;
     }
     SetAuthTypeTrace(credInfos, callbackForTrace);
-    PostProcessForDelete(userId, credInfos, changeReasonTrace, DEL_USER, changeInfo);
+    PostProcessForDelete(userId, credInfos, changeReasonTrace, ENFORCE_DEL_USER, changeInfo);
     return SUCCESS;
 }
 

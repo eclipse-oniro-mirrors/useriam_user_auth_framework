@@ -62,6 +62,7 @@ int32_t EventListenerCallbackManager<T>::RegisterListener(const std::vector<Auth
         IF_FALSE_LOGE_AND_RETURN_VAL(proxy->IsProxyObject(), GENERAL_ERROR);
 
         auto listenerImpl = EventListenerCallbackService::GetInstance();
+        IF_FALSE_LOGE_AND_RETURN_VAL(listenerImpl != nullptr, GENERAL_ERROR);
         int32_t ret = RegisterListenerDispatcher(proxy, listenerImpl);
         if (ret != SUCCESS) {
             IAM_LOGE("RegisterListenerDispatcher fail, ret:%{public}d", ret);
@@ -106,6 +107,7 @@ int32_t EventListenerCallbackManager<T>::UnRegisterListener(const std::shared_pt
         IF_FALSE_LOGE_AND_RETURN_VAL(proxy->IsProxyObject(), GENERAL_ERROR);
 
         auto listenerImpl = EventListenerCallbackService::GetInstance();
+        IF_FALSE_LOGE_AND_RETURN_VAL(listenerImpl != nullptr, GENERAL_ERROR);
         return UnRegisterListenerDispatcher(proxy, listenerImpl);
     }
     return SUCCESS;
@@ -202,6 +204,7 @@ void IamServiceListener<T>::OnAddSystemAbility(int32_t systemAbilityId, const st
     IF_FALSE_LOGE_AND_RETURN(proxy->IsProxyObject());
 
     auto listenerImpl = EventListenerCallbackService::GetInstance();
+    IF_FALSE_LOGE_AND_RETURN(listenerImpl != nullptr);
     EventListenerCallbackManager<T>::GetInstance().RegisterListenerDispatcher(proxy, listenerImpl);
 }
 
