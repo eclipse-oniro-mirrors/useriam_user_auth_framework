@@ -42,7 +42,7 @@ BaseContext::BaseContext(const std::string &type, uint64_t contextId, std::share
     LoadConfigJsonBuffer(jsonBuf);
     std::string sceneboardName = "";
     if (GetSceneboardBundleName(jsonBuf, sceneboardName) && sceneboardName == callback->GetCallerName()) {
-        IAM_LOGI("the caller is %{public}s, skip", sceneboardName.c_str());
+        IAM_LOGI("no need subscribe state for %{public}s", sceneboardName.c_str());
         needSubscribeAppState = false;
     }
 #endif
