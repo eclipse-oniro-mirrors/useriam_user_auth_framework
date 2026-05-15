@@ -1522,6 +1522,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_SingleCompanionDevic
         Common::MakeShared<MockContextCallback>(), nullptr);
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = true;
 
     EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
 
@@ -1544,6 +1545,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_SingleCompanionDevic
         Common::MakeShared<MockContextCallback>(), nullptr);
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = true;
 
     EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
 
@@ -1566,6 +1568,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_SingleCompanionDevic
         Common::MakeShared<MockContextCallback>(), nullptr);
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = true;
 
     EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
 
@@ -1576,82 +1579,318 @@ HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_SingleCompanionDevic
     handler->EnsureTask([]() {});
 }
 
-HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthTipInfo_SingleCompanionDevice_001, TestSize.Level0)
+HWTEST_F(WidgetContextTest, WidgetContextTestFailAuth_UseLatestError_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FACE};
+    auto widgetContext = CreateWidgetContext(contextId, para);
+    EXPECT_NE(widgetContext, nullptr);
+    widgetContext->SetLatestError(ResultCode::LOCKED);
+    widgetContext->FailAuth(AuthType::FACE);
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestFailAuth_UseLatestError_002, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FINGERPRINT};
+    auto widgetContext = CreateWidgetContext(contextId, para);
+    EXPECT_NE(widgetContext, nullptr);
+    widgetContext->SetLatestError(ResultCode::FAIL);
+    widgetContext->FailAuth(AuthType::FINGERPRINT);
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_DirectAuthSuccess_001, TestSize.Level0)
 {
     uint64_t contextId = 1;
     ContextFactory::AuthWidgetContextPara para;
     para.authTypeList = {AuthType::COMPANION_DEVICE};
+    ContextFactory::AuthProfile authProfile;
+    authProfile.pinSubType = 0;
+    authProfile.sensorInfo = "";
+    authProfile.remainTimes = -1;
+    authProfile.freezingTime = 0;
+    para.authProfileMap[AuthType::COMPANION_DEVICE] = authProfile;
+
+    auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para,
+        Common::MakeShared<MockContextCallback>(), nullptr);
+    auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = true;
+
+    EXPECT_CALL(*mockSchedule, SuccessAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, ClearSchedule()).WillOnce(Return(true));
+
+    Attributes finalResult;
+    testableContext->ProcAuthResult(ResultCode::SUCCESS, AuthType::COMPANION_DEVICE, 0, finalResult);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_DirectAuthFail_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::COMPANION_DEVICE};
+    ContextFactory::AuthProfile authProfile;
+    authProfile.pinSubType = 0;
+    authProfile.sensorInfo = "";
+    authProfile.remainTimes = -1;
+    authProfile.freezingTime = 0;
+    para.authProfileMap[AuthType::COMPANION_DEVICE] = authProfile;
+
+    auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para,
+        Common::MakeShared<MockContextCallback>(), nullptr);
+    auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = true;
+
+    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, ClearSchedule()).WillOnce(Return(true));
+
+    Attributes finalResult;
+    testableContext->ProcAuthResult(ResultCode::FAIL, AuthType::COMPANION_DEVICE, 0, finalResult);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_DirectAuthFail_002, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::COMPANION_DEVICE};
+    ContextFactory::AuthProfile authProfile;
+    authProfile.pinSubType = 0;
+    authProfile.sensorInfo = "";
+    authProfile.remainTimes = -1;
+    authProfile.freezingTime = 0;
+    para.authProfileMap[AuthType::COMPANION_DEVICE] = authProfile;
+
+    auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para,
+        Common::MakeShared<MockContextCallback>(), nullptr);
+    auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = true;
+
+    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, ClearSchedule()).WillOnce(Return(true));
+
+    Attributes finalResult;
+    testableContext->ProcAuthResult(ResultCode::LOCKED, AuthType::COMPANION_DEVICE, 60, finalResult);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_SingleFaceAuth_SetLockedError_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FACE};
+    para.skipLockedBiometricAuth = true;
+
+    auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para,
+        Common::MakeShared<MockContextCallback>(), nullptr);
+    auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = false;
+
+    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FACE)).WillOnce(Return(true));
+
+    Attributes finalResult;
+    testableContext->ProcAuthResult(ResultCode::FAIL, AuthType::FACE, 30, finalResult);
+
+    EXPECT_EQ(testableContext->GetLatestError(), ResultCode::LOCKED);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_SingleFingerprintAuth_SetLockedError_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FINGERPRINT};
+    para.skipLockedBiometricAuth = true;
+
+    auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para,
+        Common::MakeShared<MockContextCallback>(), nullptr);
+    auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = false;
+
+    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FINGERPRINT)).WillOnce(Return(true));
+
+    Attributes finalResult;
+    testableContext->ProcAuthResult(ResultCode::FAIL, AuthType::FINGERPRINT, 30, finalResult);
+
+    EXPECT_EQ(testableContext->GetLatestError(), ResultCode::LOCKED);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthTipInfo_SingleFaceAuth_SetLockedError_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FACE};
+    para.skipLockedBiometricAuth = true;
 
     auto mockCallback = Common::MakeShared<MockContextCallback>();
     auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para, mockCallback, nullptr);
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = false;
 
     std::vector<uint8_t> extraInfo;
     EXPECT_CALL(*mockCallback, ParseAuthTipInfo(_, _, _, _))
         .WillOnce(Invoke([](int32_t, const std::vector<uint8_t> &, int32_t &authResult, int32_t &freezingTime) {
             authResult = ResultCode::FAIL;
-            freezingTime = 0;
+            freezingTime = 30;
             return ResultCode::SUCCESS;
         }));
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FACE)).WillOnce(Return(true));
 
-    testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::COMPANION_DEVICE, extraInfo);
+    testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::FACE, extraInfo);
+
+    EXPECT_EQ(testableContext->GetLatestError(), ResultCode::LOCKED);
 
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
 
-HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthTipInfo_SingleCompanionDevice_002, TestSize.Level0)
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthTipInfo_SingleFingerprintAuth_SetLockedError_001, TestSize.Level0)
 {
     uint64_t contextId = 1;
     ContextFactory::AuthWidgetContextPara para;
-    para.authTypeList = {AuthType::COMPANION_DEVICE};
+    para.authTypeList = {AuthType::FINGERPRINT};
+    para.skipLockedBiometricAuth = true;
 
     auto mockCallback = Common::MakeShared<MockContextCallback>();
     auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para, mockCallback, nullptr);
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = false;
 
     std::vector<uint8_t> extraInfo;
     EXPECT_CALL(*mockCallback, ParseAuthTipInfo(_, _, _, _))
         .WillOnce(Invoke([](int32_t, const std::vector<uint8_t> &, int32_t &authResult, int32_t &freezingTime) {
-            authResult = ResultCode::LOCKED;
-            freezingTime = 60;
+            authResult = ResultCode::FAIL;
+            freezingTime = 30;
             return ResultCode::SUCCESS;
         }));
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FINGERPRINT)).WillOnce(Return(true));
 
-    testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::COMPANION_DEVICE, extraInfo);
+    testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::FINGERPRINT, extraInfo);
+
+    EXPECT_EQ(testableContext->GetLatestError(), ResultCode::LOCKED);
 
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
 
-HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthTipInfo_SingleCompanionDevice_003, TestSize.Level0)
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_NonDirectAuthSuccess_001, TestSize.Level0)
 {
     uint64_t contextId = 1;
     ContextFactory::AuthWidgetContextPara para;
-    para.authTypeList = {AuthType::COMPANION_DEVICE};
+    para.authTypeList = {AuthType::FACE, AuthType::PIN};
+
+    auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para,
+        Common::MakeShared<MockContextCallback>(), nullptr);
+    auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = false;
+
+    EXPECT_CALL(*mockSchedule, SuccessAuth(AuthType::FACE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, ClearSchedule()).Times(0);
+
+    Attributes finalResult;
+    testableContext->ProcAuthResult(ResultCode::SUCCESS, AuthType::FACE, 0, finalResult);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_NonDirectAuthFail_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FACE, AuthType::PIN};
+
+    auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para,
+        Common::MakeShared<MockContextCallback>(), nullptr);
+    auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = false;
+
+    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FACE)).Times(0);
+    EXPECT_CALL(*mockSchedule, ClearSchedule()).Times(0);
+
+    Attributes finalResult;
+    testableContext->ProcAuthResult(ResultCode::FAIL, AuthType::FACE, 0, finalResult);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthResult_NavigationAuth_NaviPinAuth_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FACE, AuthType::PIN};
+    para.skipLockedBiometricAuth = true;
+    para.widgetParam.navigationButtonText = "Navigate";
+
+    auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para,
+        Common::MakeShared<MockContextCallback>(), nullptr);
+    auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = false;
+
+    EXPECT_CALL(*mockSchedule, NaviPinAuth()).WillOnce(Return(true));
+
+    Attributes finalResult;
+    testableContext->ProcAuthResult(ResultCode::FAIL, AuthType::FACE, 30, finalResult);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthTipInfo_NavigationAuth_NaviPinAuth_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FACE, AuthType::PIN};
+    para.skipLockedBiometricAuth = true;
+    para.widgetParam.navigationButtonText = "Navigate";
 
     auto mockCallback = Common::MakeShared<MockContextCallback>();
     auto testableContext = Common::MakeShared<TestableWidgetContext>(contextId, para, mockCallback, nullptr);
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     testableContext->SetSchedule(mockSchedule);
+    testableContext->isDirectAuth_ = false;
 
     std::vector<uint8_t> extraInfo;
     EXPECT_CALL(*mockCallback, ParseAuthTipInfo(_, _, _, _))
         .WillOnce(Invoke([](int32_t, const std::vector<uint8_t> &, int32_t &authResult, int32_t &freezingTime) {
-            authResult = ResultCode::TIMEOUT;
-            freezingTime = 0;
+            authResult = ResultCode::FAIL;
+            freezingTime = 30;
             return ResultCode::SUCCESS;
         }));
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NaviPinAuth()).WillOnce(Return(true));
 
-    testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::COMPANION_DEVICE, extraInfo);
+    testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::FACE, extraInfo);
 
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
