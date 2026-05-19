@@ -477,7 +477,7 @@ void WidgetContext::FailAuth(AuthType authType)
 {
     IAM_LOGI("fail auth. authType:%{public}d", static_cast<int32_t>(authType));
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    End(ResultCode::LOCKED);
+    End(static_cast<ResultCode>(GetLatestError()));
 }
 
 int32_t WidgetContext::ConnectExtensionAbility(const AAFwk::Want &want, const std::string commandStr)
@@ -924,17 +924,22 @@ void WidgetContext::ProcAuthResult(int32_t resultCode, AuthType authType, int32_
             SetLatestError(resultCode);
         }
         schedule_->SuccessAuth(authType);
+        if (isDirectAuth_) {
+            schedule_->ClearSchedule();
+        }
     } else {
         SetLatestError(resultCode);
+        if (isDirectAuth_) {
+            schedule_->FailAuth(authType);
+            schedule_->ClearSchedule();
+            return;
+        }
         if (resultCode != ResultCode::CANCELED) {
             SendAuthTipInfo(authType, GetAuthTipCode(resultCode, freezingTime));
         }
-        if (IsSingleCompanionDeviceAuth()) {
-            schedule_->FailAuth(authType);
-            return;
-        }
         if (para_.skipLockedBiometricAuth && freezingTime > 0) {
             if (IsSingleFaceOrFingerPrintAuth()) {
+                SetLatestError(ResultCode::LOCKED);
                 schedule_->FailAuth(authType);
             } else if (IsNavigationAuth()) {
                 schedule_->NaviPinAuth();
@@ -963,12 +968,9 @@ void WidgetContext::ProcAuthTipInfo(int32_t tip, AuthType authType, const std::v
     if (resultCode != ResultCode::CANCELED) {
         SendAuthTipInfo(authType, GetAuthTipCode(resultCode, freezingTime));
     }
-    if (IsSingleCompanionDeviceAuth()) {
-        schedule_->FailAuth(authType);
-        return;
-    }
     if (para_.skipLockedBiometricAuth && freezingTime > 0) {
         if (IsSingleFaceOrFingerPrintAuth()) {
+            SetLatestError(ResultCode::LOCKED);
             schedule_->FailAuth(authType);
         } else if (IsNavigationAuth()) {
             schedule_->NaviPinAuth();
