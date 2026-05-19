@@ -65,7 +65,7 @@ void LoadModeHandlerDefault::OnExecutorUnregistered(AuthType authType, ExecutorR
 
 void LoadModeHandlerDefault::OnCredentialUpdated(AuthType authType)
 {
-    if (authType != AuthType::COMPANION_DEVICE) {
+    if (authType != AuthType::COMPANION_DEVICE && authType != AuthType::CUSTOM_AUTH) {
         return;
     }
     IAM_LOGI("on credential updated authType %{public}d", authType);
@@ -110,32 +110,37 @@ void LoadModeHandlerDefault::TriggerAllServiceStart()
 
 std::optional<bool> LoadModeHandlerDefault::AnyUserHasCompanionDeviceCredential()
 {
+    std::vector<int32_t> userIds;
+#ifdef IAM_TEST_ENABLE
+    constexpr int32_t TEST_USER_ID = 100;
+    userIds.push_back(TEST_USER_ID);
+#elif defined(HAS_OS_ACCOUNT_PART)
     std::vector<AccountSA::OsAccountInfo> osAccountInfo;
-#ifdef HAS_OS_ACCOUNT_PART
-#ifndef ENABLE_TEST
     ErrCode errCode = AccountSA::OsAccountManager::QueryAllCreatedOsAccounts(osAccountInfo);
     if (errCode != ERR_OK) {
         IAM_LOGE("QueryAllCreatedOsAccounts fail, errCode = %{public}d", errCode);
         return std::nullopt;
     }
-#endif // ENABLE_TEST
-#endif // HAS_OS_ACCOUNT_PART
+    for (const auto &info : osAccountInfo) {
+        userIds.push_back(info.GetLocalId());
+    }
+#endif
 
-    for (auto &info : osAccountInfo) {
-        int32_t userId = info.GetLocalId();
+    for (auto userId : userIds) {
         std::vector<std::shared_ptr<CredentialInfoInterface>> credInfos;
         int32_t getCredRet =
             UserIdmDatabase::Instance().GetCredentialInfo(userId, AuthType::COMPANION_DEVICE, credInfos);
-        if (getCredRet != SUCCESS) {
-            IAM_LOGI("failed to get credential info ret %{public}d", getCredRet);
-            continue;
-        }
-
-        if (!credInfos.empty()) {
+        if (getCredRet == SUCCESS && !credInfos.empty()) {
             IAM_LOGI("user %{public}d companion device credential number %{public}zu", userId, credInfos.size());
             return true;
         }
-        IAM_LOGI("user %{public}d has no companion device credential", userId);
+
+        getCredRet = UserIdmDatabase::Instance().GetCredentialInfo(userId, AuthType::CUSTOM_AUTH, credInfos);
+        if (getCredRet == SUCCESS && !credInfos.empty()) {
+            IAM_LOGI("user %{public}d custom auth credential number %{public}zu", userId, credInfos.size());
+            return true;
+        }
+        IAM_LOGI("user %{public}d has no companion device or custom auth credential", userId);
     }
     return false;
 }
