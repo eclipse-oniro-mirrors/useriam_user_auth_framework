@@ -43,7 +43,7 @@ const int32_t MAX_USER_CREDENTIAL_SIZE = 100;
 /**
  * @brief Defines authentication type.
  */
-constexpr uint32_t MAX_AUTH_TYPE_SIZE = 7;
+constexpr uint32_t MAX_AUTH_TYPE_SIZE = 8;
 enum AuthType : int32_t {
     /** Default authType. */
     INVALID_AUTH_TYPE = -1,
@@ -63,6 +63,8 @@ enum AuthType : int32_t {
     TUI_PIN = 32,
     /** Companion device authentication. */
     COMPANION_DEVICE = 64,
+    /** Custom authentication. */
+    CUSTOM_AUTH = 128,
 };
 
 /**

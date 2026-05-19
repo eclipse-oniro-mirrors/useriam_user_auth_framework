@@ -420,10 +420,11 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_DuplicateAuthTypeInS
     EXPECT_CALL(*callback, ExecuteAuthList(_, _, _)).Times(1);
     schedule->StartAuthList(authTypeList, false, AuthIntent::DEFAULT);
 
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+
     EXPECT_CALL(*callback, ExecuteAuthList(_, _, _)).Times(1);
     schedule->StartAuthList(authTypeList, false, AuthIntent::DEFAULT);
-
-    auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
 

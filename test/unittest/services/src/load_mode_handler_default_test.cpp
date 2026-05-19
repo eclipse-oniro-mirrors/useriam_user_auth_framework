@@ -49,7 +49,7 @@ void LoadModeHandlerDefaultTest::TearDown()
 
 /**
  * @tc.name: OnCredentialUpdated_001
- * @tc.desc: Test OnCredentialUpdated with non-COMPANION_DEVICE authType
+ * @tc.desc: Test OnCredentialUpdated with authType that does not trigger CheckStartCompanionDeviceSa
  * @tc.type: FUNC
  */
 HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_001, TestSize.Level0)
@@ -57,7 +57,6 @@ HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_001, TestSize.Level0)
     auto handler = std::make_unique<LoadModeHandlerDefault>();
     EXPECT_NE(handler, nullptr);
 
-    // Test with PIN authType (not COMPANION_DEVICE)
     EXPECT_NO_THROW(handler->OnCredentialUpdated(AuthType::PIN));
     EXPECT_NO_THROW(handler->OnCredentialUpdated(AuthType::FACE));
     EXPECT_NO_THROW(handler->OnCredentialUpdated(AuthType::FINGERPRINT));
@@ -120,6 +119,69 @@ HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_003, TestSize.Level0)
 
     // Test with COMPANION_DEVICE authType
     EXPECT_NO_THROW(handler->OnCredentialUpdated(AuthType::COMPANION_DEVICE));
+}
+
+/**
+ * @tc.name: OnCredentialUpdated_004
+ * @tc.desc: Test OnCredentialUpdated with CUSTOM_AUTH authType, no credentials
+ * @tc.type: FUNC
+ */
+HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_004, TestSize.Level0)
+{
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+
+    auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {
+        std::vector<HdiCredentialInfo> infos = {};
+        list.swap(infos);
+    };
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::COMPANION_DEVICE), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::CUSTOM_AUTH), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
+
+    auto handler = std::make_unique<LoadModeHandlerDefault>();
+    EXPECT_NE(handler, nullptr);
+
+    EXPECT_NO_THROW(handler->OnCredentialUpdated(AuthType::CUSTOM_AUTH));
+}
+
+/**
+ * @tc.name: OnCredentialUpdated_005
+ * @tc.desc: Test OnCredentialUpdated with CUSTOM_AUTH authType, has credentials
+ * @tc.type: FUNC
+ */
+HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_005, TestSize.Level0)
+{
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+
+    auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {
+        std::vector<HdiCredentialInfo> infos = {};
+        list.swap(infos);
+    };
+    auto fillCustomAuthCreds = [](std::vector<HdiCredentialInfo> &list) {
+        std::vector<HdiCredentialInfo> infos = {};
+        HdiCredentialInfo info = {
+            .credentialId = 1,
+            .executorIndex = 2,
+            .templateId = 3,
+            .authType = static_cast<HdiAuthType>(AuthType::CUSTOM_AUTH),
+            .executorMatcher = 1,
+            .executorSensorHint = 1,
+        };
+        infos.push_back(info);
+        list.swap(infos);
+    };
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::COMPANION_DEVICE), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::CUSTOM_AUTH), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillCustomAuthCreds), Return(SUCCESS)));
+
+    auto handler = std::make_unique<LoadModeHandlerDefault>();
+    EXPECT_NE(handler, nullptr);
+
+    EXPECT_NO_THROW(handler->OnCredentialUpdated(AuthType::CUSTOM_AUTH));
 }
 
 /**
@@ -223,6 +285,8 @@ HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_001, Te
     };
     EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::COMPANION_DEVICE), _))
         .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::CUSTOM_AUTH), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
 
     LoadModeHandlerDefault handler;
     // Access private method using -Dprivate=public flag
@@ -261,7 +325,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_002, Te
     LoadModeHandlerDefault handler;
     auto result = handler.AnyUserHasCompanionDeviceCredential();
     EXPECT_TRUE(result.has_value());
-    EXPECT_FALSE(result.value());
+    EXPECT_TRUE(result.value());
 }
 
 /**
@@ -285,6 +349,44 @@ HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_003, Te
 }
 
 /**
+ * @tc.name: AnyUserHasCompanionDeviceCredential_004
+ * @tc.desc: Test no COMPANION_DEVICE credential but has CUSTOM_AUTH credential
+ * @tc.type: FUNC
+ */
+HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_004, TestSize.Level0)
+{
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+
+    auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {
+        std::vector<HdiCredentialInfo> infos = {};
+        list.swap(infos);
+    };
+    auto fillCustomAuthCreds = [](std::vector<HdiCredentialInfo> &list) {
+        std::vector<HdiCredentialInfo> infos = {};
+        HdiCredentialInfo info = {
+            .credentialId = 1,
+            .executorIndex = 2,
+            .templateId = 3,
+            .authType = static_cast<HdiAuthType>(AuthType::CUSTOM_AUTH),
+            .executorMatcher = 1,
+            .executorSensorHint = 1,
+        };
+        infos.push_back(info);
+        list.swap(infos);
+    };
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::COMPANION_DEVICE), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::CUSTOM_AUTH), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillCustomAuthCreds), Return(SUCCESS)));
+
+    LoadModeHandlerDefault handler;
+    auto result = handler.AnyUserHasCompanionDeviceCredential();
+    EXPECT_TRUE(result.has_value());
+    EXPECT_TRUE(result.value());
+}
+
+/**
  * @tc.name: CheckStartCompanionDeviceSa_001
  * @tc.desc: Test CheckStartCompanionDeviceSa with no credentials
  * @tc.type: FUNC
@@ -300,6 +402,8 @@ HWTEST_F(LoadModeHandlerDefaultTest, CheckStartCompanionDeviceSa_001, TestSize.L
         list.swap(infos);
     };
     EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::COMPANION_DEVICE), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::CUSTOM_AUTH), _))
         .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
 
     LoadModeHandlerDefault handler;
@@ -338,7 +442,42 @@ HWTEST_F(LoadModeHandlerDefaultTest, CheckStartCompanionDeviceSa_002, TestSize.L
 }
 
 /**
- * @tc.name: OnExecutorRegistered_001
+ * @tc.name: CheckStartCompanionDeviceSa_003
+ * @tc.desc: Test CheckStartCompanionDeviceSa with CUSTOM_AUTH credentials only
+ * @tc.type: FUNC
+ */
+HWTEST_F(LoadModeHandlerDefaultTest, CheckStartCompanionDeviceSa_003, TestSize.Level0)
+{
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+
+    auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {
+        std::vector<HdiCredentialInfo> infos = {};
+        list.swap(infos);
+    };
+    auto fillCustomAuthCreds = [](std::vector<HdiCredentialInfo> &list) {
+        std::vector<HdiCredentialInfo> infos = {};
+        HdiCredentialInfo info = {
+            .credentialId = 1,
+            .executorIndex = 2,
+            .templateId = 3,
+            .authType = static_cast<HdiAuthType>(AuthType::CUSTOM_AUTH),
+            .executorMatcher = 1,
+            .executorSensorHint = 1,
+        };
+        infos.push_back(info);
+        list.swap(infos);
+    };
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::COMPANION_DEVICE), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillEmptyCreds), Return(SUCCESS)));
+    EXPECT_CALL(*mockHdi, GetCredential(_, static_cast<int32_t>(AuthType::CUSTOM_AUTH), _))
+        .WillRepeatedly(DoAll(WithArg<2>(fillCustomAuthCreds), Return(SUCCESS)));
+
+    LoadModeHandlerDefault handler;
+    EXPECT_NO_THROW(handler.CheckStartCompanionDeviceSa());
+}
+
+/**
  * @tc.desc: Test OnExecutorRegistered basic functionality
  * @tc.type: FUNC
  */
