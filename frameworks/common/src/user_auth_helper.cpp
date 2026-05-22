@@ -78,7 +78,7 @@ bool UserAuthHelper::CheckUserAuthType(int32_t authType)
 {
     if (authType != AuthType::PIN && authType != AuthType::FACE &&
         authType != AuthType::FINGERPRINT && authType != AuthType::PRIVATE_PIN &&
-        authType != AuthType::COMPANION_DEVICE) {
+        authType != AuthType::COMPANION_DEVICE && authType != AuthType::CUSTOM_AUTH) {
         IAM_LOGE("authType check fail:%{public}d", authType);
         return false;
     }
