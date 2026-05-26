@@ -66,6 +66,8 @@ ohos_shared_library("userauth_client") {
     defines += [ "ENABLE_DYNAMIC_LOAD" ]
   }
 
+  cflags = [ "-Oz" ]
+
   configs = [
     "../../../common:iam_log_config",
     "../../../common:iam_utils_config",

@@ -12,6 +12,11 @@
 # limitations under the License.
 
 import("//build/ohos.gni")
+import("BUILD.gni")
+
+config("userauth_services_config") {
+  include_dirs = userauth_services_include_dirs
+}
 
 declare_args() {
   user_auth_framework_enabled = true
@@ -30,9 +35,29 @@ ohos_shared_library("userauthservice") {
   branch_protector_ret = "pac_ret"
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
-  deps = [ "../services/ipc:userauth_services_ipc" ]
+  cflags = [ "-Oz" ]
 
-  external_deps = [ "hilog:libhilog" ]
+  sources = userauth_services_sources
+  include_dirs = userauth_services_include_dirs
+
+  deps = userauth_services_deps
+  external_deps = userauth_services_external_deps
+
+  defines = userauth_services_defines
+
+  if (userauth_services_has_os_account_part) {
+    cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
+  }
+
+  public_configs = [
+    ":userauth_services_config",
+    "../frameworks/native/ipc:userauth_client_ipc_config",
+  ]
+
+  configs = [
+    "../common:iam_log_config",
+    "../common:iam_utils_config",
+  ]
 
   if (use_musl) {
     version_script = "user_auth_service_map"

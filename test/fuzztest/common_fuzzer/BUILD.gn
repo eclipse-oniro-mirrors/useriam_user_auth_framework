@@ -104,7 +104,7 @@ ohos_source_set("userauth_service_base_fuzzer") {
     "../common_fuzzer:iam_utils_fuzzer",
   ]
 
-  public_configs = [ "../../../services/base:userauth_service_base_config" ]
+  public_configs = [ "../../../services:userauth_services_config" ]
 
   configs = [
     "../../../common:iam_log_config",
@@ -215,14 +215,13 @@ ohos_source_set("userauth_service_core_fuzzer") {
     ]
   }
 
-  public_configs = [ "../../../services/core:userauth_service_core_config" ]
+  public_configs = [ "../../../services:userauth_services_config" ]
 
   configs = [
     "../../../common:iam_log_config",
     "../../../common:iam_utils_config",
     "../../../frameworks/native/ipc:userauth_client_ipc_config",
-    "../../../services/remote_connect:userauth_service_remote_connect_config",
-    "../../../services/load_mode:userauth_service_load_mode_config",
+    "../../../services:userauth_services_config",
   ]
 
   subsystem_name = "useriam"
@@ -310,15 +309,13 @@ ohos_source_set("userauth_service_context_fuzzer") {
   }
 
   public_configs =
-      [ "../../../services/context:userauth_service_context_config" ]
+      [ "../../../services:userauth_services_config" ]
 
   configs = [
-    "../../../services/base:userauth_service_base_config",
+    "../../../services:userauth_services_config",
     "../../../common:iam_log_config",
     "../../../common:iam_utils_config",
     "../../../frameworks/native/ipc:userauth_client_ipc_config",
-    "../../../services/remote_connect:userauth_service_remote_connect_config",
-    "../../../services/load_mode:userauth_service_load_mode_config",
   ]
 
   subsystem_name = "useriam"
@@ -383,11 +380,11 @@ ohos_source_set("userauth_service_remote_connect_fuzzer") {
   }
 
   public_configs = [
-    "../../../services/remote_connect:userauth_service_remote_connect_config",
+    "../../../services:userauth_services_config",
   ]
 
   configs = [
-    "../../../services/base:userauth_service_base_config",
+    "../../../services:userauth_services_config",
     "../../../common:iam_utils_config",
     "../../../common:iam_log_config",
   ]
@@ -453,11 +450,8 @@ ohos_source_set("userauth_services_ipc_fuzzer") {
   }
 
   configs = [
-    "../../../services/base:userauth_service_base_config",
+    "../../../services:userauth_services_config",
     "../../../common:iam_log_config",
-    "../../../services/core:userauth_service_core_config",
-    "../../../services/remote_connect:userauth_service_remote_connect_config",
-    "../../../services/load_mode:userauth_service_load_mode_config",
   ]
 
   subsystem_name = "useriam"
