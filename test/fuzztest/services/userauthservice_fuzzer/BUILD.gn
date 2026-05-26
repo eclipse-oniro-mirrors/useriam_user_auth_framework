@@ -205,16 +205,12 @@ ohos_fuzztest("UserAuthServiceFuzzTest") {
 
   public_configs = [
     "../../../../frameworks/native/ipc:userauth_client_ipc_config",
-    "../../../../services/context:userauth_service_context_config",
-    "../../../../services/core:userauth_service_core_config",
+    "../../../../services:userauth_services_config",
   ]
 
   configs = [
-    "../../../../services/base:userauth_service_base_config",
+    "../../../../services:userauth_services_config",
     "../../../../common:iam_log_config",
-    "../../../../services/core:userauth_service_core_config",
-    "../../../../services/remote_connect:userauth_service_remote_connect_config",
-    "../../../../services/load_mode:userauth_service_load_mode_config",
     "../../../../common:iam_utils_config",
   ]
 

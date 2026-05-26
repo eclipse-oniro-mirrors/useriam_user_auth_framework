@@ -57,6 +57,8 @@ ohos_shared_library("userauth_executors") {
     "include/listener",
   ]
 
+  cflags = [ "-Oz" ]
+
   configs = [ "../../../common:iam_log_config" ]
 
   public_configs = [ ":userauth_executors_public_config" ]
