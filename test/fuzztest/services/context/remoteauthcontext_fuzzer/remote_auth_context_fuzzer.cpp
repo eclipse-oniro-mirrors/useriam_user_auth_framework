@@ -244,10 +244,11 @@ void FuzzAuthWidgetHelper(Parcel &parcel)
 
 void FuzzGetUserAuthProfile(Parcel &parcel)
 {
-    int32_t userId = MAIN_USER_ID;
-    AuthType authType = PIN;
+    int32_t userId = parcel.ReadInt32();
+    AuthType authType = static_cast<AuthType>(parcel.ReadInt32());
     ContextFactory::AuthProfile profile = {};
-    std::vector<uint64_t> credIds = {};
+    std::vector<uint64_t> credIds;
+    FillFuzzUint64Vector(parcel, credIds);
     AuthWidgetHelper::GetUserAuthProfile(userId, authType, profile, credIds);
 }
 
