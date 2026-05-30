@@ -64,9 +64,11 @@ bool ResourceNodePoolImpl::Insert(const std::shared_ptr<ResourceNode> &resource)
     ResourceNodeParam nodeParam = {1, resource};
     auto iter = resourceNodeMap_.find(executorIndex);
     if (iter != resourceNodeMap_.end()) {
-        if (nodeParam.count < UINT32_MAX) {
-            nodeParam.count = iter->second.count + 1;
+        if (iter->second.count >= UINT32_MAX) {
+            IAM_LOGE("resource node count would overflow, insert failed.");
+            return false;
         }
+        nodeParam.count = iter->second.count + 1;
         if (iter->second.node != nullptr) {
             iter->second.node->DetachFromDriver();
         }
@@ -94,26 +96,31 @@ bool ResourceNodePoolImpl::Insert(const std::shared_ptr<ResourceNode> &resource)
 
 bool ResourceNodePoolImpl::Delete(uint64_t executorIndex)
 {
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    auto iter = resourceNodeMap_.find(executorIndex);
-    if (iter == resourceNodeMap_.end()) {
-        IAM_LOGE("executor not found");
-        return false;
+    std::shared_ptr<ResourceNode> tempResource;
+    std::set<std::shared_ptr<ResourceNodePoolListener>> tempListenerSet;
+    {
+        std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+        auto iter = resourceNodeMap_.find(executorIndex);
+        if (iter == resourceNodeMap_.end()) {
+            IAM_LOGE("executor not found");
+            return false;
+        }
+
+        if (iter->second.count > 1) {
+            iter->second.count--;
+            IAM_LOGI("resource node count %{public}u, no delete", iter->second.count);
+            return true;
+        }
+        IAM_LOGI("delete resource node");
+
+        tempResource = iter->second.node;
+        resourceNodeMap_.erase(iter);
+        IF_FALSE_LOGE_AND_RETURN_VAL(tempResource != nullptr, false);
+        tempResource->DeleteFromDriver();
+
+        tempListenerSet = listenerSet_;
     }
 
-    if (iter->second.count > 1) {
-        iter->second.count--;
-        IAM_LOGI("resource node count %{public}u, no delete", iter->second.count);
-        return true;
-    }
-    IAM_LOGI("delete resource node");
-
-    auto tempResource = iter->second.node;
-    resourceNodeMap_.erase(iter);
-    IF_FALSE_LOGE_AND_RETURN_VAL(tempResource != nullptr, false);
-    tempResource->DeleteFromDriver();
-
-    auto tempListenerSet = listenerSet_;
     for (const auto &listener : tempListenerSet) {
         if (listener != nullptr) {
             listener->OnResourceNodePoolDelete(tempResource);
@@ -124,17 +131,22 @@ bool ResourceNodePoolImpl::Delete(uint64_t executorIndex)
 
 void ResourceNodePoolImpl::DeleteAll()
 {
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    IAM_LOGI("delete all resource node begin, node num %{public}zu", resourceNodeMap_.size());
-    for (const auto &pair : resourceNodeMap_) {
-        auto node = pair.second.node;
-        if (node != nullptr) {
-            node->DeleteFromDriver();
+    std::unordered_map<uint64_t, ResourceNodeParam> tempMap;
+    std::set<std::shared_ptr<ResourceNodePoolListener>> tempListenerSet;
+    {
+        std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+        IAM_LOGI("delete all resource node begin, node num %{public}zu", resourceNodeMap_.size());
+        for (const auto &pair : resourceNodeMap_) {
+            auto node = pair.second.node;
+            if (node != nullptr) {
+                node->DeleteFromDriver();
+            }
         }
+        tempMap = resourceNodeMap_;
+        tempListenerSet = listenerSet_;
+        resourceNodeMap_.clear();
     }
-    auto tempMap = resourceNodeMap_;
-    auto tempListenerSet = listenerSet_;
-    resourceNodeMap_.clear();
+
     for (auto &node : tempMap) {
         for (const auto &listener : tempListenerSet) {
             if (listener != nullptr) {
