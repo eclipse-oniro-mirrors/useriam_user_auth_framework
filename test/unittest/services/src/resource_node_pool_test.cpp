@@ -278,6 +278,50 @@ HWTEST_F(ResourceNodePoolTest, GetResourceNodeByTypeAndRole, TestSize.Level0)
     EXPECT_NO_THROW(pool.GetResourceNodeByTypeAndRole(AuthType::FINGERPRINT, VERIFIER, fingerPrintNodes));
     ResourceNodePool::Instance().DeleteAll();
 }
+
+HWTEST_F(ResourceNodePoolTest, ResourceNodePoolDeleteWithListener, TestSize.Level0)
+{
+    auto &pool = ResourceNodePool::Instance();
+    const uint64_t EXECUTOR_INDEX = 700;
+    auto resource = MockResourceNode::CreateWithExecuteIndex(EXECUTOR_INDEX);
+    ASSERT_NE(resource, nullptr);
+
+    auto listener = Common::MakeShared<MockResourceNodePoolListener>();
+    ASSERT_NE(listener, nullptr);
+    EXPECT_CALL(*listener, OnResourceNodePoolInsert(_)).Times(1);
+    EXPECT_CALL(*listener, OnResourceNodePoolDelete(_)).Times(1);
+    EXPECT_TRUE(pool.RegisterResourceNodePoolListener(listener));
+
+    EXPECT_TRUE(pool.Insert(resource));
+    EXPECT_TRUE(pool.Delete(EXECUTOR_INDEX));
+
+    EXPECT_TRUE(pool.DeregisterResourceNodePoolListener(listener));
+    ResourceNodePool::Instance().DeleteAll();
+}
+
+HWTEST_F(ResourceNodePoolTest, ResourceNodePoolDeleteAllWithListener, TestSize.Level0)
+{
+    auto &pool = ResourceNodePool::Instance();
+    const uint64_t EXECUTOR_INDEX1 = 800;
+    const uint64_t EXECUTOR_INDEX2 = 900;
+    auto resource1 = MockResourceNode::CreateWithExecuteIndex(EXECUTOR_INDEX1);
+    auto resource2 = MockResourceNode::CreateWithExecuteIndex(EXECUTOR_INDEX2);
+    ASSERT_NE(resource1, nullptr);
+    ASSERT_NE(resource2, nullptr);
+
+    auto listener = Common::MakeShared<MockResourceNodePoolListener>();
+    ASSERT_NE(listener, nullptr);
+    EXPECT_CALL(*listener, OnResourceNodePoolInsert(_)).Times(2);
+    EXPECT_CALL(*listener, OnResourceNodePoolDelete(_)).Times(2);
+    EXPECT_TRUE(pool.RegisterResourceNodePoolListener(listener));
+
+    EXPECT_TRUE(pool.Insert(resource1));
+    EXPECT_TRUE(pool.Insert(resource2));
+    pool.DeleteAll();
+
+    EXPECT_TRUE(pool.DeregisterResourceNodePoolListener(listener));
+    ResourceNodePool::Instance().DeleteAll();
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
