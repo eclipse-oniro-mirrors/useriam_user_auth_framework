@@ -49,7 +49,9 @@ UserAuthInstanceV10::UserAuthInstanceV10(napi_env env) : callback_(Common::MakeS
     }
     authParam_.authTrustLevel = AuthTrustLevel::ATL1;
     authParam_.userId = INVALID_USER_ID;
+    authParam_.isUserIdSpecified = false;
     authParam_.skipLockedBiometricAuth = false;
+    authParam_.reuseUnlockResult.isReuse = false;
     widgetParam_.navigationButtonText = "";
     widgetParam_.title = "";
     widgetParam_.windowMode = WindowModeType::UNKNOWN_WINDOW_MODE;
