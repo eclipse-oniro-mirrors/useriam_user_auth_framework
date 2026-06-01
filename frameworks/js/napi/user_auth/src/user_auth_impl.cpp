@@ -409,6 +409,10 @@ napi_value UserAuthImpl::QueryReusableAuthResult(napi_env env, napi_callback_inf
         return nullptr;
     }
     napi_value eventInfo = UserAuthNapiHelper::Uint8VectorToNapiUint8Array(env, token);
+    if (eventInfo == nullptr) {
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV21(env, UserAuthResultCode::GENERAL_ERROR));
+        return nullptr;
+    }
     return eventInfo;
 }
 
