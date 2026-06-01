@@ -658,6 +658,34 @@ void FuzzInsert2ContextPool(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzCheckAuthWidgetParam(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    AuthParamInner authParam = {};
+    std::vector<int32_t> authTypes;
+    parcel.ReadInt32Vector(&authTypes);
+    for (const auto &iter : authTypes) {
+        authParam.authTypes.push_back(static_cast<AuthType>(iter));
+    }
+    WidgetParamInner widgetParam;
+    widgetParam.title = parcel.ReadString();
+    widgetParam.navigationButtonText = parcel.ReadString();
+    widgetParam.windowMode = static_cast<WindowModeType>(parcel.ReadInt32());
+    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+
+    authParam.authTypes = {FACE, FINGERPRINT};
+    widgetParam.navigationButtonText = "";
+    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    authParam.authTypes = {FACE, FINGERPRINT, COMPANION_DEVICE};
+    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    widgetParam.navigationButtonText = "button";
+    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    widgetParam.title = "";
+    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
 void FuzzCheckAuthWidgetType(Parcel &parcel)
 {
     IAM_LOGI("begin");
@@ -835,6 +863,32 @@ void FuzzGetPropertyById(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzGetPropertyInner(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    constexpr uint32_t maxDataLen = 50;
+    AuthType authType = PIN;
+    std::vector<Attributes::AttributeKey> keys;
+    uint32_t keysLen = parcel.ReadUint32() % maxDataLen;
+    keys.reserve(keysLen);
+    for (uint32_t i = 0; i < keysLen; i++) {
+        keys.emplace_back(static_cast<Attributes::AttributeKey>(parcel.ReadInt32()));
+    }
+
+    sptr<IGetExecutorPropertyCallback> callback(nullptr);
+    callback = sptr<IGetExecutorPropertyCallback>(new (std::nothrow) DummyGetExecutorPropertyCallback());
+    std::vector<uint64_t> templateIds;
+    uint32_t templateIdsLen = parcel.ReadUint32() % maxDataLen;
+    templateIds.reserve(templateIdsLen);
+    for (uint32_t i = 0; i < templateIdsLen; i++) {
+        templateIds.emplace_back(parcel.ReadUint64());
+    }
+
+    g_userAuthService.GetPropertyInner(authType, keys, callback, templateIds);
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
 void FuzzVerifyAuthToken(Parcel &parcel)
 {
     IAM_LOGI("begin");
@@ -958,6 +1012,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzCompleteRemoteAuthParam,
     FuzzGetAuthContextCallback,
     FuzzInsert2ContextPool,
+    FuzzCheckAuthWidgetParam,
     FuzzCheckAuthWidgetType,
     FuzzCheckAuthTypeOnly,
     FuzzAuthRemoteUser,
@@ -967,6 +1022,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzStartRemoteAuthInvokerContext,
     FuzzStartAuth,
     FuzzGetPropertyById,
+    FuzzGetPropertyInner,
     FuzzVerifyAuthToken,
     FuzzGetAuthTokenAttr,
     FuzzQueryReusableAuthResult,

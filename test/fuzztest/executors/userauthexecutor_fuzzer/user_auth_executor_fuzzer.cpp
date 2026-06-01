@@ -26,6 +26,10 @@
 #include "iam_executor_iauth_executor_hdi.h"
 #include "framework_executor_callback.h"
 #include "collect_command.h"
+#include "auth_command.h"
+#include "enroll_command.h"
+#include "identify_command.h"
+#include "abandon_command.h"
 
 #undef private
 
@@ -658,6 +662,178 @@ void FuzzFrameworkExecutorProcessGetPropertyCommand(std::shared_ptr<Parcel> parc
     IAM_LOGI("end");
 }
 
+void FuzzAuthCommandOnResultInner(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    uint64_t scheduleId = parcel->ReadUint64();
+    Attributes attributes;
+    FillIAttributes(parcel, attributes);
+    ResultCode result = static_cast<ResultCode>(parcel->ReadInt32());
+    std::vector<uint8_t> extraInfo;
+    FillFuzzUint8Vector(*parcel, extraInfo);
+    shared_ptr<ExecutorMessenger> messenger = nullptr;
+    FillIExecutorMessenger(parcel, messenger);
+    auto command = Common::MakeShared<AuthCommand>(g_executor, scheduleId, attributes, messenger);
+    if (command == nullptr) {
+        IAM_LOGE("command is null");
+        return;
+    }
+    command->OnResult(result, extraInfo);
+    IAM_LOGI("end");
+}
+
+void FuzzEnrollCommandOnResultInner(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    uint64_t scheduleId = parcel->ReadUint64();
+    Attributes attributes;
+    FillIAttributes(parcel, attributes);
+    ResultCode result = static_cast<ResultCode>(parcel->ReadInt32());
+    std::vector<uint8_t> extraInfo;
+    FillFuzzUint8Vector(*parcel, extraInfo);
+    shared_ptr<ExecutorMessenger> messenger = nullptr;
+    FillIExecutorMessenger(parcel, messenger);
+    auto command = Common::MakeShared<EnrollCommand>(g_executor, scheduleId, attributes, messenger);
+    if (command == nullptr) {
+        IAM_LOGE("command is null");
+        return;
+    }
+    command->OnResult(result, extraInfo);
+    IAM_LOGI("end");
+}
+
+void FuzzIdentifyCommandOnResultInner(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    uint64_t scheduleId = parcel->ReadUint64();
+    Attributes attributes;
+    FillIAttributes(parcel, attributes);
+    ResultCode result = static_cast<ResultCode>(parcel->ReadInt32());
+    std::vector<uint8_t> extraInfo;
+    FillFuzzUint8Vector(*parcel, extraInfo);
+    shared_ptr<ExecutorMessenger> messenger = nullptr;
+    FillIExecutorMessenger(parcel, messenger);
+    auto command = Common::MakeShared<IdentifyCommand>(g_executor, scheduleId, attributes, messenger);
+    if (command == nullptr) {
+        IAM_LOGE("command is null");
+        return;
+    }
+    command->OnResult(result, extraInfo);
+    IAM_LOGI("end");
+}
+
+void FuzzCollectCommandOnResultInner(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    uint64_t scheduleId = parcel->ReadUint64();
+    Attributes attributes;
+    FillIAttributes(parcel, attributes);
+    ResultCode result = static_cast<ResultCode>(parcel->ReadInt32());
+    std::vector<uint8_t> extraInfo;
+    FillFuzzUint8Vector(*parcel, extraInfo);
+    shared_ptr<ExecutorMessenger> messenger = nullptr;
+    FillIExecutorMessenger(parcel, messenger);
+    auto command = Common::MakeShared<CollectCommand>(g_executor, scheduleId, attributes, messenger);
+    if (command == nullptr) {
+        IAM_LOGE("command is null");
+        return;
+    }
+    command->OnResult(result, extraInfo);
+    IAM_LOGI("end");
+}
+
+void FuzzAbandonCommandOnResultInner(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    uint64_t scheduleId = parcel->ReadUint64();
+    Attributes attributes;
+    FillIAttributes(parcel, attributes);
+    ResultCode result = static_cast<ResultCode>(parcel->ReadInt32());
+    std::vector<uint8_t> extraInfo;
+    FillFuzzUint8Vector(*parcel, extraInfo);
+    shared_ptr<ExecutorMessenger> messenger = nullptr;
+    FillIExecutorMessenger(parcel, messenger);
+    auto command = Common::MakeShared<AbandonCommand>(g_executor, scheduleId, attributes, messenger);
+    if (command == nullptr) {
+        IAM_LOGE("command is null");
+        return;
+    }
+    command->OnResult(result, extraInfo);
+    IAM_LOGI("end");
+}
+
+void FillAuthCommandAttributes(std::shared_ptr<Parcel> parcel, Attributes &attributes)
+{
+    bool fillNull = parcel->ReadBool();
+    if (fillNull) {
+        return;
+    }
+
+    bool setTemplateIdList = parcel->ReadBool();
+    if (setTemplateIdList) {
+        std::vector<uint64_t> templateIdList;
+        FillFuzzUint64Vector(*parcel, templateIdList);
+        attributes.SetUint64ArrayValue(Attributes::ATTR_TEMPLATE_ID_LIST, templateIdList);
+    }
+
+    bool setTokenId = parcel->ReadBool();
+    if (setTokenId) {
+        attributes.SetUint32Value(Attributes::ATTR_ACCESS_TOKEN_ID, parcel->ReadUint32());
+    }
+
+    bool setEndAfterFirstFail = parcel->ReadBool();
+    if (setEndAfterFirstFail) {
+        attributes.SetBoolValue(Attributes::ATTR_END_AFTER_FIRST_FAIL, parcel->ReadBool());
+    }
+
+    bool setExtraInfo = parcel->ReadBool();
+    if (setExtraInfo) {
+        std::vector<uint8_t> extraInfo;
+        FillFuzzUint8Vector(*parcel, extraInfo);
+        attributes.SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo);
+    }
+
+    bool setAuthIntent = parcel->ReadBool();
+    if (setAuthIntent) {
+        attributes.SetInt32Value(Attributes::ATTR_AUTH_INTENTION, parcel->ReadInt32());
+    }
+
+    bool setUserId = parcel->ReadBool();
+    if (setUserId) {
+        attributes.SetInt32Value(Attributes::ATTR_USER_ID, parcel->ReadInt32());
+    }
+
+    bool setAuthScene = parcel->ReadBool();
+    if (setAuthScene) {
+        attributes.SetInt32Value(Attributes::ATTR_AUTH_SCENE, parcel->ReadInt32());
+    }
+
+    bool setTitle = parcel->ReadBool();
+    if (setTitle) {
+        std::string title;
+        FillFuzzString(*parcel, title);
+        attributes.SetStringValue(Attributes::ATTR_WIDGET_TITLE, title);
+    }
+}
+
+void FuzzAuthCommandSendRequest(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    uint64_t scheduleId = parcel->ReadUint64();
+    Attributes attributes;
+    FillAuthCommandAttributes(parcel, attributes);
+    shared_ptr<ExecutorMessenger> messenger = nullptr;
+    FillIExecutorMessenger(parcel, messenger);
+    auto command = Common::MakeShared<AuthCommand>(g_executor, scheduleId, attributes, messenger);
+    if (command == nullptr) {
+        IAM_LOGE("command is null");
+        return;
+    }
+    g_executor->AddCommand(command);
+    command->StartProcess();
+    IAM_LOGI("end");
+}
+
 void FuzzFillPropertyToAttribute(std::shared_ptr<Parcel> parcel)
 {
     IAM_LOGI("begin");
@@ -714,6 +890,12 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzFrameworkExecutorProcessCustomCommand,
     FuzzFrameworkExecutorProcessGetPropertyCommand,
     FuzzFillPropertyToAttribute,
+    FuzzAuthCommandOnResultInner,
+    FuzzEnrollCommandOnResultInner,
+    FuzzIdentifyCommandOnResultInner,
+    FuzzCollectCommandOnResultInner,
+    FuzzAbandonCommandOnResultInner,
+    FuzzAuthCommandSendRequest,
 };
 
 void UserAuthExecutorFuzzTest(const uint8_t *data, size_t size)
