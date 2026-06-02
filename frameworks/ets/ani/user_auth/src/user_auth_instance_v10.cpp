@@ -67,7 +67,9 @@ UserAuthInstanceV10::UserAuthInstanceV10() : callback_(Common::MakeShared<UserAu
     }
     authParam_.authTrustLevel = AuthTrustLevel::ATL1;
     authParam_.userId = INVALID_USER_ID;
+    authParam_.isUserIdSpecified = false;
     authParam_.skipLockedBiometricAuth = false;
+    authParam_.reuseUnlockResult.isReuse = false;
     widgetParam_.navigationButtonText = "";
     widgetParam_.title = "";
     widgetParam_.windowMode = WindowModeType::UNKNOWN_WINDOW_MODE;
@@ -191,6 +193,7 @@ UserAuthResultCode UserAuthInstanceV10::InitUserId(userAuth::AuthParam const &au
     IAM_LOGI("InitUserId start.");
     if (authParam.userId.has_value()) {
         authParam_.userId = authParam.userId.value();
+        authParam_.isUserIdSpecified = true;
         if (authParam_.userId < 0) {
             IAM_LOGE("userId error.");
             return UserAuthResultCode::OHOS_INVALID_PARAM;
@@ -198,6 +201,7 @@ UserAuthResultCode UserAuthInstanceV10::InitUserId(userAuth::AuthParam const &au
         IAM_LOGI("InitUserId userId: %{public}d", authParam_.userId);
     } else {
         IAM_LOGI("propertyName: %{public}s not exists.", AUTH_PARAM_USER_ID.c_str());
+        authParam_.isUserIdSpecified = false;
     }
     return UserAuthResultCode::SUCCESS;
 }
