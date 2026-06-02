@@ -13,6 +13,14 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
+import("../../../../../user_auth_framework.gni")
+
+if (!defined(global_parts_info) ||
+    defined(global_parts_info.account_os_account)) {
+  has_os_account_part = true
+} else {
+  has_os_account_part = false
+}
 
 ohos_fuzztest("WidgetContextFuzzTest") {
   branch_protector_ret = "pac_ret"
@@ -24,6 +32,7 @@ ohos_fuzztest("WidgetContextFuzzTest") {
     "-O0",
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
+    "-DIAM_TEST_ENABLE",
     "-Dprivate=public",
     "-Dprotected=public",
   ]
@@ -44,19 +53,65 @@ ohos_fuzztest("WidgetContextFuzzTest") {
     "../../../../../interfaces/inner_api",
     "../../../../../common/utils",
     "../../../../../common/logs",
+    "../../../../../frameworks/native/common/dfx/inc",
+    "../../../../../common/test",
+    "../../../../../services/load_mode/inc",
   ]
 
-  sources = [ "widget_context_fuzzer.cpp" ]
+  sources = [
+    "../../../../../frameworks/common/src/user_auth_helper.cpp",
+    "../../../../../services/context/src/auth_widget_helper.cpp",
+    "../../../../../services/context/src/base_context.cpp",
+    "../../../../../services/context/src/context_appstate_observer.cpp",
+    "../../../../../services/context/src/context_callback_impl.cpp",
+    "../../../../../services/context/src/context_death_recipient.cpp",
+    "../../../../../services/context/src/context_factory.cpp",
+    "../../../../../services/context/src/context_helper.cpp",
+    "../../../../../services/context/src/context_pool_impl.cpp",
+    "../../../../../services/context/src/delete_context.cpp",
+    "../../../../../services/context/src/enroll_context.cpp",
+    "../../../../../services/context/src/identify_context.cpp",
+    "../../../../../services/context/src/local_remote_auth_context.cpp",
+    "../../../../../services/context/src/remote_auth_context.cpp",
+    "../../../../../services/context/src/remote_auth_invoker_context.cpp",
+    "../../../../../services/context/src/remote_auth_service.cpp",
+    "../../../../../services/context/src/remote_executor_stub.cpp",
+    "../../../../../services/context/src/remote_iam_callback.cpp",
+    "../../../../../services/context/src/schedule_holder_context.cpp",
+    "../../../../../services/context/src/simple_auth_context.cpp",
+    "../../../../../services/context/src/trace.cpp",
+    "../../../../../services/context/src/ui_extension_ability_connection.cpp",
+    "../../../../../services/context/src/widget_client.cpp",
+    "../../../../../services/context/src/widget_context.cpp",
+    "../../../../../services/context/src/widget_context_callback_impl.cpp",
+    "../../../../../services/context/src/widget_json.cpp",
+    "../../../../../services/ipc/src/co_auth_service.cpp",
+    "../../../../../services/ipc/src/executor_messenger_service.cpp",
+    "../../../../../services/ipc/src/hdi_message_callback_service.cpp",
+    "../../../../../services/ipc/src/service_init_manager.cpp",
+    "../../../../../services/ipc/src/template_cache_manager.cpp",
+    "../../../../../services/ipc/src/user_auth_service.cpp",
+    "../../../../../services/ipc/src/user_idm_service.cpp",
+    "../../../../../services/load_mode/src/load_mode_handler.cpp",
+    "../../../../../services/load_mode/src/load_mode_handler_default.cpp",
+    "../../../dummy/mock_application_state_observer_stub.cpp",
+    "../../../dummy/mock_ipc_common.cpp",
+    "widget_context_fuzzer.cpp",
+  ]
 
   deps = [
     "../../../common_fuzzer:attributes_fuzzer",
     "../../../common_fuzzer:dfx_fuzzer",
     "../../../common_fuzzer:iam_test_fuzzer",
     "../../../common_fuzzer:iam_utils_fuzzer",
-    "../../../common_fuzzer:userauth_service_base_fuzzer",
-    "../../../common_fuzzer:userauth_service_context_fuzzer",
     "../../../common_fuzzer:userauth_service_core_fuzzer",
-    "../../../common_fuzzer:userauth_services_ipc_fuzzer",
+    "../../../common_fuzzer:userauth_service_remote_connect_fuzzer",
+    "../../../../../frameworks/native/client:userauth_client",
+    "../../../../../frameworks/native/ipc:userauth_service_ipc_fuzzer",
+  ]
+
+  configs = [
+    "../../../../../frameworks/native/ipc:userauth_client_ipc_config",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
@@ -68,20 +123,44 @@ ohos_fuzztest("WidgetContextFuzzTest") {
     "ability_runtime:ability_connect_callback_stub",
     "ability_runtime:ability_context_native",
     "ability_runtime:abilitykit_native",
-    "ability_runtime:app_manager",
     "ability_runtime:extension_manager",
     "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
+    "access_token:libtoken_setproc",
     "c_utils:utils",
+    "config_policy:configpolicy_util",
     "drivers_interface_user_auth:libuser_auth_proxy_4.0",
     "drivers_interface_user_auth:libuser_auth_proxy_4.1",
+    "eventhandler:libeventhandler",
     "hdf_core:libhdf_utils",
+    "hdf_core:libhdi",
+    "hicollie:libhicollie",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
+    "init:libbeget_proxy",
     "init:libbegetutil",
+    "ipc:ipc_core",
     "ipc:ipc_single",
     "napi:ace_napi",
+    "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  defines = []
+  if (screenlock_client_enable) {
+    external_deps += [
+      "ffrt:libffrt",
+      "preferences:native_preferences",
+      "screenlock_mgr:screenlock_client",
+      "window_manager:libdm_lite",
+    ]
+    defines += [ "SCREENLOCK_CLIENT_ENABLE" ]
+  }
+
+  if (has_os_account_part) {
+    cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
+    external_deps += [ "os_account:os_account_innerkits" ]
+  }
 
   subsystem_name = "useriam"
   part_name = "user_auth_framework"

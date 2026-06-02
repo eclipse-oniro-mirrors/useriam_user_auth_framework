@@ -127,6 +127,7 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
     "../../../dummy/mock_iuser_auth_interface.cpp",
     "../../../dummy/mock_ipc_common.cpp",
     "../../../dummy/mock_thread_handler_manager.cpp",
+    "../../../dummy/mock_application_state_observer_stub.cpp",
     "remote_auth_context_fuzzer.cpp",
   ]
 
@@ -149,9 +150,7 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
     "ability_runtime:ability_connect_callback_stub",
     "ability_runtime:ability_context_native",
     "ability_runtime:abilitykit_native",
-    "ability_runtime:app_manager",
     "ability_runtime:extension_manager",
-    "ability_runtime:ability_connect_callback_stub",
     "access_token:libaccesstoken_sdk",
     "access_token:libtokenid_sdk",
     "access_token:libtoken_setproc",
