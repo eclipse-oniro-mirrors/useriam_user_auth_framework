@@ -34,15 +34,19 @@ sptr<IRemoteObject> HdiWrapper::GetHdiRemoteObjInstance()
 
 std::shared_ptr<MockIUserAuthInterface> MockIUserAuthInterface::Holder::Get()
 {
-    if (!mock_) {
-        mock_ = std::make_shared<MockIUserAuthInterface>();
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto mock = mock_.lock();
+    if (!mock) {
+        mock = std::make_shared<MockIUserAuthInterface>();
+        mock_ = mock;
     }
-    return mock_;
+    return mock;
 }
 
 void MockIUserAuthInterface::Holder::Reset()
 {
-    mock_ = nullptr;
+    std::lock_guard<std::mutex> lock(mutex_);
+    mock_.reset();
 }
 } // namespace UserAuth
 } // namespace UserIam
