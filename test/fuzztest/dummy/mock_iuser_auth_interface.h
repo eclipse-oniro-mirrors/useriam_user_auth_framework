@@ -247,7 +247,7 @@ public:
 
 private:
     std::mutex mutex_;
-    std::shared_ptr<MockIUserAuthInterface> mock_;
+    std::weak_ptr<MockIUserAuthInterface> mock_;
 };
 } // namespace UserAuth
 } // namespace UserIam
