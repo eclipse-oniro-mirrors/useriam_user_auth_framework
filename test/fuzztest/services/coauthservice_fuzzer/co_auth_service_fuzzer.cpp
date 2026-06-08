@@ -264,46 +264,6 @@ void FuzzProcExecutorRegisterSuccess(Parcel &parcel)
     IAM_LOGI("FuzzProcExecutorRegisterSuccess end");
 }
 
-void FuzzExecutorUnregister(Parcel &parcel)
-{
-    IAM_LOGI("FuzzExecutorUnregister begin");
-    g_coAuthService->SetIsReady(parcel.ReadBool());
-    g_coAuthService->SetAccessTokenReady(parcel.ReadBool());
-    bool addPerm = parcel.ReadBool();
-    if (addPerm) {
-        IpcCommon::AddPermission(ACCESS_AUTH_RESPOOL);
-    } else {
-        IpcCommon::DeleteAllPermission();
-    }
-
-    bool registerFirst = parcel.ReadBool();
-    uint64_t executorIndex = 0;
-    if (registerFirst) {
-        IpcExecutorRegisterInfo executorInfo;
-        FillFuzzExecutorRegisterInfo(parcel, executorInfo);
-        sptr<IExecutorCallback> callback = sptr<IExecutorCallback>(new (std::nothrow)
-            CoAuthServiceFuzzer(parcel.ReadInt32(), parcel.ReadInt32(), parcel.ReadInt32(), parcel.ReadInt32(),
-                parcel.ReadInt32()));
-        g_coAuthService->SetIsReady(true);
-        g_coAuthService->SetAccessTokenReady(true);
-        IpcCommon::AddPermission(ACCESS_AUTH_RESPOOL);
-        g_coAuthService->ExecutorRegister(executorInfo, callback, executorIndex);
-        g_coAuthService->SetIsReady(parcel.ReadBool());
-        g_coAuthService->SetAccessTokenReady(parcel.ReadBool());
-        bool addPermAgain = parcel.ReadBool();
-        if (addPermAgain) {
-            IpcCommon::AddPermission(ACCESS_AUTH_RESPOOL);
-        } else {
-            IpcCommon::DeleteAllPermission();
-        }
-    } else {
-        executorIndex = parcel.ReadUint64();
-    }
-
-    g_coAuthService->ExecutorUnregister(executorIndex);
-    IAM_LOGI("FuzzExecutorUnregister end");
-}
-
 void FuzzCallbackEnter(Parcel &parcel)
 {
     IAM_LOGI("FuzzCallbackEnter begin");
@@ -331,7 +291,6 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzCallbackEnter,
     FuzzCallbackExit,
     FuzzProcExecutorRegisterSuccess,
-    FuzzExecutorUnregister,
 };
 
 void CoAuthFuzzTest(const uint8_t *data, size_t size)
