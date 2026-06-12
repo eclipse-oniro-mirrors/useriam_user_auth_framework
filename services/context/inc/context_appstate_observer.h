@@ -46,6 +46,7 @@ class ContextAppStateObserverManager {
 
     private:
         sptr<IAppMgr> GetAppManagerInstance();
+        std::recursive_mutex mutex_;
 };
 
 class ContextAppStateObserver : public ApplicationStateObserverStub {

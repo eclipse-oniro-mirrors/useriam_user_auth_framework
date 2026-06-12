@@ -16,6 +16,7 @@
 #include "context_appstate_observer_test.h"
 
 #include <gtest/gtest.h>
+#include <thread>
 
 #include "accesstoken_kit.h"
 #include "app_state_data.h"
@@ -76,6 +77,11 @@ HWTEST_F(ContextAppStateObserverTest, SubscribeAppStateTest_003, TestSize.Level0
     std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     uint64_t contextId = 1;
+    EXPECT_CALL(*contextCallback, GetCallerName())
+        .WillRepeatedly([]() {
+                return "";
+            }
+        );
     auto appStateObserverManager = Common::MakeShared<ContextAppStateObserverManager>();
     ASSERT_NE(appStateObserverManager, nullptr);
     appStateObserverManager->SubscribeAppState(contextCallback, contextId);
@@ -190,6 +196,149 @@ HWTEST_F(ContextAppStateObserverTest, ProcAppStateChangedTest_001, TestSize.Leve
     appStateObserver->ProcAppStateChanged(userId);
     appStateObserver->ProcAppStateChanged(userId);
     EXPECT_TRUE(ContextPool::Instance().Delete(contextId));
+}
+
+HWTEST_F(ContextAppStateObserverTest, SubscribeAppStateTest_004, TestSize.Level0)
+{
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    ASSERT_NE(contextCallback, nullptr);
+    uint64_t contextId1 = 1;
+    uint64_t contextId2 = 2;
+    EXPECT_CALL(*contextCallback, GetCallerName())
+        .WillRepeatedly([]() {
+                return "com.homs.settings";
+            }
+        );
+    
+    auto manager = Common::MakeShared<ContextAppStateObserverManager>();
+    ASSERT_NE(manager, nullptr);
+    
+    sptr<ApplicationStateObserverStub> oldObserver =
+        new (std::nothrow) ContextAppStateObserver(contextId1, "com.homs.settings");
+    ASSERT_NE(oldObserver, nullptr);
+    manager->appStateObserver_ = oldObserver;
+    
+    manager->SubscribeAppState(contextCallback, contextId2);
+    
+    manager->UnSubscribeAppState();
+}
+
+HWTEST_F(ContextAppStateObserverTest, ConcurrentSubscribeTest_001, TestSize.Level0)
+{
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    ASSERT_NE(contextCallback, nullptr);
+    uint64_t contextId1 = 1;
+    uint64_t contextId2 = 2;
+    EXPECT_CALL(*contextCallback, GetCallerName())
+        .WillRepeatedly([]() {
+                return "com.homs.settings";
+            }
+        );
+    
+    auto manager = Common::MakeShared<ContextAppStateObserverManager>();
+    ASSERT_NE(manager, nullptr);
+    
+    std::thread thread1([manager, contextCallback, contextId1]() {
+        manager->SubscribeAppState(contextCallback, contextId1);
+    });
+    
+    std::thread thread2([manager, contextCallback, contextId2]() {
+        manager->SubscribeAppState(contextCallback, contextId2);
+    });
+    
+    thread1.join();
+    thread2.join();
+    
+    if (manager->appStateObserver_ != nullptr) {
+        manager->UnSubscribeAppState();
+    }
+}
+
+HWTEST_F(ContextAppStateObserverTest, ConcurrentSubscribeUnSubscribeTest_001, TestSize.Level0)
+{
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    ASSERT_NE(contextCallback, nullptr);
+    uint64_t contextId = 1;
+    EXPECT_CALL(*contextCallback, GetCallerName())
+        .WillRepeatedly([]() {
+                return "com.homs.settings";
+            }
+        );
+    
+    auto manager = Common::MakeShared<ContextAppStateObserverManager>();
+    ASSERT_NE(manager, nullptr);
+    
+    std::thread thread1([manager, contextCallback, contextId]() {
+        manager->SubscribeAppState(contextCallback, contextId);
+    });
+    
+    std::thread thread2([manager]() {
+        manager->UnSubscribeAppState();
+    });
+    
+    thread1.join();
+    thread2.join();
+    
+    manager->appStateObserver_ = nullptr;
+}
+
+HWTEST_F(ContextAppStateObserverTest, ConcurrentUnSubscribeTest_001, TestSize.Level0)
+{
+    auto manager = Common::MakeShared<ContextAppStateObserverManager>();
+    ASSERT_NE(manager, nullptr);
+    
+    uint64_t contextId = 1;
+    std::string bundelName = "com.homs.settings";
+    manager->appStateObserver_ = new (std::nothrow) ContextAppStateObserver(contextId, bundelName);
+    
+    std::thread thread1([manager]() {
+        manager->UnSubscribeAppState();
+    });
+    
+    std::thread thread2([manager]() {
+        manager->UnSubscribeAppState();
+    });
+    
+    thread1.join();
+    thread2.join();
+    
+    manager->appStateObserver_ = nullptr;
+}
+
+HWTEST_F(ContextAppStateObserverTest, MutexProtectionTest_001, TestSize.Level0)
+{
+    auto manager = Common::MakeShared<ContextAppStateObserverManager>();
+    ASSERT_NE(manager, nullptr);
+    
+    uint64_t contextId = 1;
+    std::string bundelName = "com.homs.settings";
+    manager->appStateObserver_ = new (std::nothrow) ContextAppStateObserver(contextId, bundelName);
+    
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, GetCallerName())
+        .WillRepeatedly([]() {
+                return "com.homs.settings";
+            }
+        );
+    
+    std::thread thread1([manager, contextCallback, contextId]() {
+        manager->SubscribeAppState(contextCallback, contextId);
+    });
+    
+    std::thread thread2([manager]() {
+        manager->UnSubscribeAppState();
+    });
+    
+    std::thread thread3([manager, contextCallback, contextId]() {
+        manager->SubscribeAppState(contextCallback, contextId);
+    });
+    
+    thread1.join();
+    thread2.join();
+    thread3.join();
+    
+    manager->appStateObserver_ = nullptr;
 }
 } // namespace UserAuth
 } // namespace UserIam
