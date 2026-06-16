@@ -57,6 +57,7 @@ void ContextAppStateObserverManager::SubscribeAppState(const std::shared_ptr<Con
     const uint64_t contextId)
 {
     IAM_LOGD("start");
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
 
     const std::string bundleName = callback->GetCallerName();
@@ -69,6 +70,12 @@ void ContextAppStateObserverManager::SubscribeAppState(const std::shared_ptr<Con
     if (appManager == nullptr) {
         IAM_LOGE("GetAppManagerInstance failed");
         return;
+    }
+
+    if (appStateObserver_ != nullptr) {
+        IAM_LOGI("appStateObserver_ already exists, unsubscribe first");
+        appManager->UnregisterApplicationStateObserver(appStateObserver_);
+        appStateObserver_ = nullptr;
     }
 
     appStateObserver_ = new (std::nothrow) ContextAppStateObserver(contextId, bundleName);
@@ -94,6 +101,7 @@ void ContextAppStateObserverManager::SubscribeAppState(const std::shared_ptr<Con
 void ContextAppStateObserverManager::UnSubscribeAppState()
 {
     IAM_LOGD("start");
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (appStateObserver_ == nullptr) {
         IAM_LOGE("appStateObserver_ is nullptr");
         return;
