@@ -1915,7 +1915,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolutionTest, TestSize.Le
     authParam.authTypes.clear();
     IpcCommon::SetSkipAccountVerifiedFlag(true);
     authParam.skipLockedBiometricAuth = false;
-    EXPECT_EQ(service->CheckValidSolution(para, authParam, widgetParam, validType), LOCKED);
+    EXPECT_EQ(service->CheckValidSolution(para, authParam, widgetParam, validType), TYPE_NOT_SUPPORT);
     IpcCommon::SetSkipAccountVerifiedFlag(false);
 }
 

@@ -1051,7 +1051,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth002, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), LOCKED);
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), TYPE_NOT_SUPPORT);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth003, TestSize.Level0)
@@ -1293,6 +1293,19 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth010, Te
     EXPECT_EQ(validType[0], PRIVATE_PIN);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
     MockIUserAuthInterface::Holder::GetInstance().Reset();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth011, TestSize.Level0)
+{
+    auto service = Common::MakeShared<UserAuthService>();
+    AuthParamInner authParam = {};
+    WidgetParamInner widgetParam = {};
+    std::vector<AuthType> validType;
+    authParam.skipLockedBiometricAuth = true;
+    int32_t userId = 110;
+    ContextFactory::AuthWidgetContextPara para;
+    para.userId = userId;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), TYPE_NOT_SUPPORT);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceFilterFaceNotAvailable001, TestSize.Level0)
