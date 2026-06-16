@@ -1289,6 +1289,10 @@ uint64_t UserAuthService::StartWidgetContext(const std::shared_ptr<ContextCallba
 int32_t UserAuthService::CheckSkipLockedBiometricAuth(ContextFactory::AuthWidgetContextPara &para,
     const AuthParamInner &authParam, const WidgetParamInner &widgetParam, std::vector<AuthType> &validType)
 {
+    if (validType.empty()) {
+        IAM_LOGE("validType size is 0");
+        return TYPE_NOT_SUPPORT;
+    }
     for (auto iter = validType.begin(); iter != validType.end();) {
         AuthType type = *iter;
         ContextFactory::AuthProfile profile = {};
