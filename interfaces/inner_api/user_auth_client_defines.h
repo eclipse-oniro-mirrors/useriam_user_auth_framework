@@ -62,6 +62,8 @@ struct AuthParam {
     AuthIntent authIntent;
     /** Remote auth parameter. */
     std::optional<RemoteAuthParam> remoteAuthParam;
+    /** Additional info. */
+    std::string additionalInfo;
 };
 
 /**
