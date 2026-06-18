@@ -39,6 +39,7 @@
 #include "remote_auth_service.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_CONTEXT
 
 #undef private
 

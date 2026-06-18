@@ -24,6 +24,7 @@
 #include "trace.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_TRACE
 
 namespace OHOS {
 namespace UserIam {

@@ -22,6 +22,7 @@
 #include "mock_iuser_auth_interface.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_RISK_EVENT_MANAGER
 
 namespace OHOS {
 namespace UserIam {

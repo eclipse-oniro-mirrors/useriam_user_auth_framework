@@ -24,6 +24,7 @@
 #include "mock_iauth_executor_hdi.h"
 
 #define LOG_TAG "USER_AUTH_EXECUTOR"
+#define LOG_FILE_ID LOG_FILE_DRIVER_MANAGER
 
 using namespace testing;
 using namespace testing::ext;

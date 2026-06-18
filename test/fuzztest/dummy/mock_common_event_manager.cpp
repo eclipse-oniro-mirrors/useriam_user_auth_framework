@@ -17,6 +17,7 @@
 #include "iam_logger.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_PUBLISH_EVENT_ADAPTER
 
 namespace OHOS {
 namespace EventFwk {

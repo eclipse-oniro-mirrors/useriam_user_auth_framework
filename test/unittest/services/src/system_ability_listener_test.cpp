@@ -21,6 +21,7 @@
 #include "iservice_registry.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SYSTEM_ABILITY_LISTENER
 
 namespace OHOS {
 namespace UserIam {

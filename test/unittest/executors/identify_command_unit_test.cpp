@@ -25,6 +25,7 @@
 #include "mock_iexecutor_messenger.h"
 
 #define LOG_TAG "USER_AUTH_EXECUTOR"
+#define LOG_FILE_ID LOG_FILE_IDENTIFY_COMMAND
 
 using namespace std;
 using namespace testing;

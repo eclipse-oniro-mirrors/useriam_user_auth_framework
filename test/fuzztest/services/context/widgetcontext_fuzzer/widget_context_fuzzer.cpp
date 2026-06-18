@@ -27,6 +27,7 @@
 #include "dummy_iam_callback_interface.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_WIDGET_CONTEXT
 
 #undef private
 

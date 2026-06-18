@@ -25,6 +25,7 @@
 #include "iam_time.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_HISYSEVENT_ADAPTER
 
 namespace OHOS {
 namespace UserIam {
