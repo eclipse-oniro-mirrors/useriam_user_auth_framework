@@ -71,7 +71,6 @@ ohos_source_set("iam_utils") {
   ]
 
   sources = [
-    "logs/iam_log_tracer.cpp",
     "utils/iam_time.cpp",
     "utils/relative_timer.cpp",
     "utils/system_param_manager.cpp",
