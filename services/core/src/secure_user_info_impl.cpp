@@ -15,6 +15,8 @@
 
 #include "secure_user_info_impl.h"
 
+#define LOG_FILE_ID LOG_FILE_SECURE_USER_INFO_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

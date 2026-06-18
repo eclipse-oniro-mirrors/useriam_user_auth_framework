@@ -33,6 +33,7 @@
 #include "iam_ptr.h"
 #include "identify_command.h"
 
+#define LOG_FILE_ID LOG_FILE_FRAMEWORK_EXECUTOR_CALLBACK
 #define LOG_TAG "USER_AUTH_EXECUTOR"
 
 namespace OHOS {

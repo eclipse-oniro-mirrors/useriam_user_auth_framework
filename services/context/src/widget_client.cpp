@@ -26,6 +26,7 @@
 #include "iwidget_callback.h"
 #include "hisysevent_adapter.h"
 
+#define LOG_FILE_ID LOG_FILE_WIDGET_CLIENT
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

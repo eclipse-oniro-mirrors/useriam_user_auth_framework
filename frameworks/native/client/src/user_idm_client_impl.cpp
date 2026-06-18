@@ -26,6 +26,7 @@
 #include "ipc_client_utils.h"
 #include "user_idm_callback_service.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_IDM_CLIENT_IMPL
 #define LOG_TAG "USER_IDM_SDK"
 
 namespace OHOS {

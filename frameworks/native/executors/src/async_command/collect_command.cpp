@@ -22,6 +22,7 @@
 #include "iam_para2str.h"
 #include "iam_ptr.h"
 
+#define LOG_FILE_ID LOG_FILE_COLLECT_COMMAND
 #define LOG_TAG "USER_COLLECT_EXECUTOR"
 
 namespace OHOS {

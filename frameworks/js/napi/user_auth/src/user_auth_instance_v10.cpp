@@ -31,6 +31,7 @@
 #include "user_auth_napi_helper.h"
 #include "user_auth_param_utils.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_INSTANCE_V10_NAPI
 #define LOG_TAG "USER_AUTH_NAPI"
 
 namespace OHOS {

@@ -21,6 +21,7 @@
 #include "iam_logger.h"
 #include "iservice_registry.h"
 
+#define LOG_FILE_ID LOG_FILE_IPC_CLIENT_UTILS
 #define LOG_TAG "USER_AUTH_SDK"
 
 namespace OHOS {

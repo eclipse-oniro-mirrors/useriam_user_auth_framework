@@ -22,6 +22,7 @@
 #include "napi/native_node_api.h"
 #include "user_auth_helper.h"
 
+#define LOG_FILE_ID LOG_FILE_GET_AUTH_LOCK_STATE_HELPER
 #define LOG_TAG "USER_AUTH_NAPI"
 
 namespace OHOS {

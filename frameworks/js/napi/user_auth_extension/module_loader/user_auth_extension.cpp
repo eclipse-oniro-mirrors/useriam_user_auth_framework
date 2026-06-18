@@ -20,6 +20,7 @@
 
 #include "iam_logger.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_EXTENSION
 #define LOG_TAG "USER_AUTH_NAPI"
 
 namespace OHOS {

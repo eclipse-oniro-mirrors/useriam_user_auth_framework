@@ -25,6 +25,7 @@
 #include "iam_ptr.h"
 #include "thread_handler.h"
 
+#define LOG_FILE_ID LOG_FILE_REMOTE_EXECUTOR_PROXY
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

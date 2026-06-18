@@ -24,6 +24,7 @@
 #include "user_auth_widget_mgr_v10.h"
 #include "user_auth_client_impl.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_ENTRY
 #define LOG_TAG "USER_AUTH_NAPI"
 
 namespace OHOS {

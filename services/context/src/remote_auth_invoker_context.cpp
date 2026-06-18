@@ -29,6 +29,7 @@
 #include "thread_handler_manager.h"
 #include "user_auth_hdi.h"
 
+#define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_INVOKER_CONTEXT
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

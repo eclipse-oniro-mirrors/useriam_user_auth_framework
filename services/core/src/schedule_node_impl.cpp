@@ -29,6 +29,7 @@
 #include "relative_timer.h"
 #include "schedule_resource_node_listener.h"
 
+#define LOG_FILE_ID LOG_FILE_SCHEDULE_NODE_IMPL
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

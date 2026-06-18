@@ -19,6 +19,7 @@
 #include "iam_logger.h"
 #include "iam_ptr.h"
 
+#define LOG_FILE_ID LOG_FILE_EXECUTOR_MESSENGER_CLIENT
 #define LOG_TAG "AUTH_EXECUTOR_MGR_SDK"
 
 namespace OHOS {

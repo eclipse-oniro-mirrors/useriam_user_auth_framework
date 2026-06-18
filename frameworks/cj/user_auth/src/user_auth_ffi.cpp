@@ -19,6 +19,7 @@
 #include "user_auth_ffi.h"
 #include "iam_logger.h"
 #include "iam_ptr.h"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_FFI
 #define LOG_TAG "USER_AUTH_NAPI"
 
 using namespace OHOS::UserIam::UserAuth;

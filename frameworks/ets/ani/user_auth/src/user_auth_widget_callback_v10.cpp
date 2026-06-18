@@ -17,6 +17,7 @@
 #include "iam_ptr.h"
 #include "iam_logger.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_WIDGET_CALLBACK_V10_ANI
 #define LOG_TAG "USER_AUTH_ANI"
 
 namespace OHOS {

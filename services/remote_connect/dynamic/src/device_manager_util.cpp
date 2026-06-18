@@ -18,6 +18,7 @@
 #include "iam_logger.h"
 #include "parameter.h"
 
+#define LOG_FILE_ID LOG_FILE_DEVICE_MANAGER_UTIL_DYNAMIC
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

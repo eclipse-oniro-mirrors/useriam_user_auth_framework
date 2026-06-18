@@ -20,6 +20,7 @@
 #include "iam_logger.h"
 #include "resource_node_pool.h"
 
+#define LOG_FILE_ID LOG_FILE_SCHEDULE_NODE_HELPER
 #define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {

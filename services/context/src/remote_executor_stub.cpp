@@ -32,6 +32,7 @@
 #include "schedule_resource_node_listener.h"
 #include "thread_handler.h"
 
+#define LOG_FILE_ID LOG_FILE_REMOTE_EXECUTOR_STUB
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

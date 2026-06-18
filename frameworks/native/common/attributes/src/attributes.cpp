@@ -22,6 +22,7 @@
 #include "iam_logger.h"
 #include "securec.h"
 
+#define LOG_FILE_ID LOG_FILE_ATTRIBUTES
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

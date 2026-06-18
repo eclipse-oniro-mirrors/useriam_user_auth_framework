@@ -17,6 +17,7 @@
 
 #include "iam_logger.h"
 
+#define LOG_FILE_ID LOG_FILE_IAUTH_EXECUTOR_HDI
 #define LOG_TAG "USER_AUTH_EXECUTOR"
 
 namespace OHOS {

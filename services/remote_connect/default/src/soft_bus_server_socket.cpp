@@ -17,6 +17,7 @@
 
 #include "remote_connect_listener_manager.h"
 
+#define LOG_FILE_ID LOG_FILE_SOFT_BUS_SERVER_SOCKET
 #define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {

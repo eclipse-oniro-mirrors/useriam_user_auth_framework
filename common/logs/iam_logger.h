@@ -16,13 +16,14 @@
 #define IAM_LOGGER_H
 
 #include "hilog/log.h"
+#include "iam_log_tracer.h"
+
 namespace OHOS {
 namespace UserIam {
 namespace Common {
-#ifdef __FILE_NAME__
-#define USER_AUTH_FILE __FILE_NAME__
-#else
-#define USER_AUTH_FILE (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#ifndef LOG_FILE_ID
+#define LOG_FILE_ID LOG_FILE_UNKNOWN
 #endif
 
 #ifdef LOG_DOMAIN
@@ -35,16 +36,26 @@ namespace Common {
 #undef LOG_TAG
 #endif
 
+#ifdef ENABLE_LOG_TRACE
+#define IAM_LOG_HOOK() OHOS::UserIam::Common::LogTracer::GetInstance().Record(LOG_FILE_ID, __LINE__)
+#else
+#define IAM_LOG_HOOK() ((void)0)
+#endif
+
 #define IAM_LOGD(fmt, ...) ((void)HILOG_IMPL(LOG_CORE, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, USER_AUTH_FILE, __LINE__, ##__VA_ARGS__))
-#define IAM_LOGE(fmt, ...) ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, LOG_DOMAIN, LOG_TAG, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, USER_AUTH_FILE, __LINE__, ##__VA_ARGS__))
+    "[%{public}s@%{public}04x:%{public}d] " fmt, __FUNCTION__, LOG_FILE_ID, __LINE__, ##__VA_ARGS__))
+#define IAM_LOGE(fmt, ...)                \
+    do {                                  \
+        IAM_LOG_HOOK();                   \
+        ((void)HILOG_IMPL(LOG_CORE, LOG_ERROR, LOG_DOMAIN, LOG_TAG, \
+            "[%{public}s@%{public}04x:%{public}d] " fmt, __FUNCTION__, LOG_FILE_ID, __LINE__, ##__VA_ARGS__)); \
+    } while (0)
 #define IAM_LOGW(fmt, ...) ((void)HILOG_IMPL(LOG_CORE, LOG_WARN, LOG_DOMAIN, LOG_TAG, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, USER_AUTH_FILE, __LINE__, ##__VA_ARGS__))
+    "[%{public}s@%{public}04x:%{public}d] " fmt, __FUNCTION__, LOG_FILE_ID, __LINE__, ##__VA_ARGS__))
 #define IAM_LOGI(fmt, ...) ((void)HILOG_IMPL(LOG_CORE, LOG_INFO, LOG_DOMAIN, LOG_TAG, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, USER_AUTH_FILE, __LINE__, ##__VA_ARGS__))
+    "[%{public}s@%{public}04x:%{public}d] " fmt, __FUNCTION__, LOG_FILE_ID, __LINE__, ##__VA_ARGS__))
 #define IAM_LOGF(fmt, ...) ((void)HILOG_IMPL(LOG_CORE, LOG_FATAL, LOG_DOMAIN, LOG_TAG, \
-    "[%{public}s@%{public}s:%{public}d] " fmt, __FUNCTION__, USER_AUTH_FILE, __LINE__, ##__VA_ARGS__))
+    "[%{public}s@%{public}04x:%{public}d] " fmt, __FUNCTION__, LOG_FILE_ID, __LINE__, ##__VA_ARGS__))
 
 } // namespace Common
 } // namespace UserIam

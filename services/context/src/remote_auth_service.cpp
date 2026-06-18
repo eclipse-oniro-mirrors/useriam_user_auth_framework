@@ -30,6 +30,7 @@
 #include "remote_iam_callback.h"
 #include "remote_msg_util.h"
 
+#define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_SERVICE
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

@@ -22,6 +22,7 @@
 #include "schedule_node.h"
 #include "schedule_node_callback.h"
 
+#define LOG_FILE_ID LOG_FILE_ENROLL_CONTEXT
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

@@ -23,6 +23,7 @@
 #include "iam_logger.h"
 #include "iam_ptr.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_CALLBACK_V9
 #define LOG_TAG "USER_AUTH_NAPI"
 
 namespace OHOS {

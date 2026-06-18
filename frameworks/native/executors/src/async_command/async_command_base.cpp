@@ -28,6 +28,7 @@
 #include "iam_para2str.h"
 #include "iam_executor_framework_types.h"
 
+#define LOG_FILE_ID LOG_FILE_ASYNC_COMMAND_BASE
 #define LOG_TAG "USER_AUTH_EXECUTOR"
 
 namespace OHOS {

@@ -23,6 +23,7 @@
 #include "ipc_client_utils.h"
 #include "user_access_ctrl_callback_service.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_CLIENT_IMPL
 #define LOG_TAG "USER_ACCESS_CTRL_SDK"
 
 namespace OHOS {

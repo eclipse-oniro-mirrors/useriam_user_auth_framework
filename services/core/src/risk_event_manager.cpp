@@ -25,6 +25,7 @@
 #include "resource_node_pool.h"
 #include "user_idm_database.h"
 
+#define LOG_FILE_ID LOG_FILE_RISK_EVENT_MANAGER
 #define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {

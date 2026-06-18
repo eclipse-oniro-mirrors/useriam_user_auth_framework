@@ -22,6 +22,7 @@
 #include "iam_logger.h"
 #include "ipc_client_utils.h"
 
+#define LOG_FILE_ID LOG_FILE_CO_AUTH_CLIENT_IMPL
 #define LOG_TAG "EXECUTOR_MGR_SDK"
 
 namespace OHOS {

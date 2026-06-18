@@ -28,6 +28,7 @@
 #include "os_account_info.h"
 #include "user_auth_hdi.h"
 #endif // HAS_OS_ACCOUNT_PART
+#define LOG_FILE_ID LOG_FILE_IPC_COMMON
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

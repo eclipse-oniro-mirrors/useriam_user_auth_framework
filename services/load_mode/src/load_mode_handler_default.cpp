@@ -24,6 +24,7 @@
 #include "system_param_manager.h"
 #include "user_idm_database.h"
 
+#define LOG_FILE_ID LOG_FILE_LOAD_MODE_HANDLER_DEFAULT
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

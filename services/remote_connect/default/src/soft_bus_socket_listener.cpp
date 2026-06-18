@@ -17,6 +17,7 @@
 
 #include "soft_bus_manager.h"
 
+#define LOG_FILE_ID LOG_FILE_SOFT_BUS_SOCKET_LISTENER
 #define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {

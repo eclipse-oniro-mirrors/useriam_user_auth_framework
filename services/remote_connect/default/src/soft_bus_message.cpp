@@ -15,6 +15,7 @@
 
 #include "soft_bus_message.h"
 
+#define LOG_FILE_ID LOG_FILE_SOFT_BUS_MESSAGE
 #define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {

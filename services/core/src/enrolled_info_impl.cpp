@@ -15,6 +15,8 @@
 
 #include "enrolled_info_impl.h"
 
+#define LOG_FILE_ID LOG_FILE_ENROLLED_INFO_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

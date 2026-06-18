@@ -20,6 +20,7 @@
 #include "user_auth_helper.h"
 #include "user_auth_ani_helper.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_CALLBACK_V10_ANI
 #define LOG_TAG "USER_AUTH_ANI"
 
 namespace OHOS {

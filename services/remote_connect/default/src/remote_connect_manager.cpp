@@ -21,6 +21,7 @@
 #include "soft_bus_manager.h"
 #include "device_manager.h"
 
+#define LOG_FILE_ID LOG_FILE_REMOTE_CONNECT_MANAGER
 #define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {

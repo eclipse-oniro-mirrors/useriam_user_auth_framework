@@ -20,6 +20,7 @@
 
 #include "iam_logger.h"
 
+#define LOG_FILE_ID LOG_FILE_XCOLLIE_HELPER
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

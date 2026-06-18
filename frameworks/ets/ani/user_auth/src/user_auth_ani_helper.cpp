@@ -24,6 +24,7 @@
 #include "iam_logger.h"
 #include "auth_common.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_ANI_HELPER
 #define LOG_TAG "USER_AUTH_ANI"
 
 namespace OHOS {

@@ -15,6 +15,8 @@
 
 #include "update_pin_param_impl.h"
 
+#define LOG_FILE_ID LOG_FILE_UPDATE_PIN_PARAM_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

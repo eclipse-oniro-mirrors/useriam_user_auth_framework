@@ -35,6 +35,7 @@
 #include "thread_handler.h"
 #include "user_idm_database.h"
 
+#define LOG_FILE_ID LOG_FILE_OS_ACCOUNTS_MANAGER_IMPL
 #define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {

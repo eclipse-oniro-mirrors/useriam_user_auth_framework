@@ -24,6 +24,7 @@
 #include "relative_timer.h"
 #include "system_param_manager.h"
 
+#define LOG_FILE_ID LOG_FILE_DRIVER
 #define LOG_TAG "USER_AUTH_EXECUTOR"
 
 namespace OHOS {

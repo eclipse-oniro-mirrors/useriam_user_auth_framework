@@ -21,6 +21,7 @@
 #include "iam_common_defines.h"
 #include "iam_ptr.h"
 
+#define LOG_FILE_ID LOG_FILE_EXECUTOR_MESSENGER_SERVICE
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

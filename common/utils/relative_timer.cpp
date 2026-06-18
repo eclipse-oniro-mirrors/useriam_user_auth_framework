@@ -17,6 +17,8 @@
 
 #include "iam_logger.h"
 
+#define LOG_FILE_ID LOG_FILE_RELATIVE_TIMER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

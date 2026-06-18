@@ -22,6 +22,7 @@
 #include "config_policy_utils.h"
 #include "widget_json.h"
 
+#define LOG_FILE_ID LOG_FILE_WIDGET_JSON
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

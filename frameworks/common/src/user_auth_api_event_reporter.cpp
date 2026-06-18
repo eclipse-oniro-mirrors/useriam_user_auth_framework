@@ -25,6 +25,7 @@
 #include "config_parser.h"
 #include "iam_logger.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_API_EVENT_REPORTER
 #define LOG_TAG "USER_AUTH_COMMON"
 
 namespace OHOS {

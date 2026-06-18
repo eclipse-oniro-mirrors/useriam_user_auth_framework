@@ -18,6 +18,7 @@
 #include "iam_check.h"
 #include "iam_logger.h"
 
+#define LOG_FILE_ID LOG_FILE_SYSTEM_PARAM_MANAGER
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

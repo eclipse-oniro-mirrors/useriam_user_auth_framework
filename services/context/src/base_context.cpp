@@ -23,6 +23,7 @@
 #include "system_ability_definition.h"
 #include "widget_json.h"
 
+#define LOG_FILE_ID LOG_FILE_BASE_CONTEXT
 #define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {

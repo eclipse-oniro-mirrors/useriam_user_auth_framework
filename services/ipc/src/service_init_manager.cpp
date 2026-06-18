@@ -28,6 +28,7 @@
 #include "strong_auth_status_manager.h"
 #include "system_param_manager.h"
 
+#define LOG_FILE_ID LOG_FILE_SERVICE_INIT_MANAGER
 #define IAM_LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

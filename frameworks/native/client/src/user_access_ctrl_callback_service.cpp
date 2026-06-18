@@ -20,6 +20,7 @@
 #include "iam_ptr.h"
 #include "iam_common_defines.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_CALLBACK_SERVICE
 #define LOG_TAG "USER_ACCESS_CTRL_SDK"
 
 namespace OHOS {

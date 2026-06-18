@@ -29,6 +29,7 @@
 #include "iam_ptr.h"
 #include "user_auth_helper.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_NAPI_HELPER
 #define LOG_TAG "USER_AUTH_NAPI"
 
 namespace OHOS {

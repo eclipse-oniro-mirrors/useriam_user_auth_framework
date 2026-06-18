@@ -25,6 +25,7 @@
 #include "iam_para2str.h"
 #include "iam_ptr.h"
 
+#define LOG_FILE_ID LOG_FILE_EXECUTOR
 #define LOG_TAG "USER_AUTH_EXECUTOR"
 
 namespace OHOS {

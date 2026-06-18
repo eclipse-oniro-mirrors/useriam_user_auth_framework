@@ -23,6 +23,7 @@
 #include "thread_handler_impl.h"
 #include "thread_handler_singleton_impl.h"
 
+#define LOG_FILE_ID LOG_FILE_THREAD_HANDLER_MANAGER
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

@@ -26,6 +26,7 @@
 #include "iam_hitrace_helper.h"
 #include "iam_common_defines.h"
 
+#define LOG_FILE_ID LOG_FILE_USER_IDM_DATABASE_IMPL
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

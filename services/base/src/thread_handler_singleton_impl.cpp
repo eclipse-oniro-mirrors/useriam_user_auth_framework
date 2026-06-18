@@ -27,6 +27,7 @@
 #include "thread_handler_manager.h"
 #include "xcollie_helper.h"
 
+#define LOG_FILE_ID LOG_FILE_THREAD_HANDLER_SINGLETON_IMPL
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

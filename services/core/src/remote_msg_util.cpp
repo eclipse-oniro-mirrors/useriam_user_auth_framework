@@ -27,6 +27,7 @@
 #include "parameter.h"
 #include "resource_node_pool.h"
 
+#define LOG_FILE_ID LOG_FILE_REMOTE_MSG_UTIL
 #define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {

@@ -20,6 +20,7 @@
 #include "iam_logger.h"
 #include "iam_time.h"
 
+#define LOG_FILE_ID LOG_FILE_TRACE
 #define LOG_TAG "USER_AUTH_SA"
 
 using namespace OHOS::UserIam::UserAuth;

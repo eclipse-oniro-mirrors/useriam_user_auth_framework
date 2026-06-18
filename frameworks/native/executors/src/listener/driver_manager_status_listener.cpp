@@ -19,6 +19,7 @@
 #include "iam_logger.h"
 #include "system_ability_definition.h"
 
+#define LOG_FILE_ID LOG_FILE_DRIVER_MANAGER_STATUS_LISTENER
 #define LOG_TAG "USER_AUTH_EXECUTOR"
 
 namespace OHOS {
