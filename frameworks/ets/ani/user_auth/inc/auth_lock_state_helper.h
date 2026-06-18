@@ -46,7 +46,6 @@ public:
     void OnResult(int32_t result, const UserAuth::Attributes &extraInfo) override
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        IAM_LOGI("result: %{public}d, resultSet_:%{public}d", result, resultSet_);
         if (!resultSet_) {
             GetAuthLockStateResult getAuthLockStateResult{result, extraInfo.Serialize()};
             promise_.set_value(getAuthLockStateResult);

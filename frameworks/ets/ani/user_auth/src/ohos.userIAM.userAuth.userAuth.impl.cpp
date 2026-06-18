@@ -33,6 +33,7 @@
 #include "user_auth_client_callback.h"
 
 #define LOG_TAG "USER_AUTH_ANI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_ANI_IMPL
 
 namespace UserAuth = OHOS::UserIam::UserAuth;
 using namespace taihe;
