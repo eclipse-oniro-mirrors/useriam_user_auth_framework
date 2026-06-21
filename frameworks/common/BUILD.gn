@@ -49,6 +49,7 @@ ohos_source_set("user_auth_common") {
     "ace_engine:ace_uicontent",
     "hiappevent:hiappevent_innerapi",
     "hilog:libhilog",
+    "window_manager:window_native_kit"
   ]
 
   deps = [

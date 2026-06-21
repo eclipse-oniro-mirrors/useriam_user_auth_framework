@@ -55,6 +55,8 @@ public:
         napi_value obj, const char *name, const std::vector<uint8_t> &value);
     static napi_status SetEnrolledStateProperty(napi_env env, napi_value obj, const char *name, EnrolledState &value);
     static napi_status CallVoidNapiFunc(napi_env env, napi_ref funcRef, size_t argc, const napi_value *argv);
+    static napi_status CallNapiFuncWithResult(napi_env env, napi_ref funcRef, size_t argc,
+        const napi_value *argv, napi_value *result);
     static napi_value GetNamedProperty(napi_env env, napi_value value, const std::string &propertyName);
     static std::string GetStringFromValueUtf8(napi_env env, napi_value value);
     static bool HasNamedProperty(napi_env env, napi_value object, const std::string &propertyName);

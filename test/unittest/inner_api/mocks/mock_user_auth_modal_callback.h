@@ -25,7 +25,7 @@ namespace UserIam {
 namespace UserAuth {
 class MockUserAuthModalCallback final : public UserAuthModalClientCallback {
 public:
-    MockUserAuthModalCallback();
+    MockUserAuthModalCallback() = default;
     virtual ~MockUserAuthModalCallback() = default;
     MOCK_METHOD2(SendCommand, void(uint64_t contextId, const std::string &cmdData));
     MOCK_METHOD0(IsModalInit, bool());

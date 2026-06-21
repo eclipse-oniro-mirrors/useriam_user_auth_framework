@@ -26,10 +26,14 @@
 
 #include "attributes.h"
 #include "user_auth_client_defines.h"
+#include "set_widget_param_callback.h"
 
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+
+using Attributes = OHOS::UserIam::UserAuth::Attributes;
+
 class AuthenticationCallback {
 public:
     /**
@@ -113,6 +117,28 @@ public:
      * @param result The result success or error code{@link ResultCode}.
      */
     virtual void OnResult(int32_t result) = 0;
+};
+
+class RemoteAuthClientCallback {
+public:
+    /**
+     * @brief The callback return remote auth widget param.
+     *
+     * @param challenge Auth challenge which can prevent replay attacks.
+     * @param callback Callback to set widget param.
+     */
+    virtual void OnGetRemoteAuthWidgetParam(const std::vector<uint8_t> &challenge,
+        const std::shared_ptr<SetWidgetParamClientCallback> &callback)  = 0;
+
+    /**
+     * @brief The callback return remote auth result.
+     *
+     * @param challenge Auth challenge which can prevent replay attacks.
+     * @param result The result success or error code{@link ResultCode}.
+     * @param extraInfo Other related information about remote auth.
+     */
+    virtual void OnRemoteAuthResult(const std::vector<uint8_t> &challenge, int32_t result,
+        const Attributes &extraInfo)  = 0;
 };
 } // namespace UserAuth
 } // namespace UserIam

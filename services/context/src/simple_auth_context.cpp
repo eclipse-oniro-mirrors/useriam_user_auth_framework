@@ -336,6 +336,14 @@ void SimpleAuthContext::InvokeResultCallback(const Authentication::AuthResultInf
     callback_->OnResult(resultInfo.result, finalResult);
     IAM_LOGI("%{public}s invoke result callback success, result %{public}d", GetDescription(), resultInfo.result);
 }
+
+void SimpleAuthContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam,
+    const sptr<IModalCallback> &modalCallback)
+{
+    static_cast<void>(widgetParam);
+    static_cast<void>(modalCallback);
+    IAM_LOGE("not implemented");
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

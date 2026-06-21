@@ -24,6 +24,7 @@ group("iam_services_fuzztest") {
     "context/widgetcontext_fuzzer:WidgetContextFuzzTest",
     "core/remoteexecutorstub_fuzzer:RemoteExecutorStubFuzzTest",
     "servicecore_fuzzer:ServiceCoreFuzzTest",
+    "setwidgetparamcallbackservice_fuzzer:SetWidgetParamCallbackServiceFuzzTest",
     "softbus_fuzzer:SoftBusFuzzTest",
     "templatecachemanager_fuzzer:TemplateCacheManagerFuzzTest",
     "userauthservice_fuzzer:UserAuthServiceFuzzTest",

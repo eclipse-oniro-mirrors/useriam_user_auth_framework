@@ -135,6 +135,7 @@ ohos_source_set("userauth_service_core_fuzzer") {
     "../../../services/core/src/event_listener_manager.cpp",
     "../../../services/core/src/identification_impl.cpp",
     "../../../services/core/src/publish_event_adapter_mock.cpp",
+    "../../../services/core/src/remote_auth_callback_manager.cpp",
     "../../../services/core/src/remote_executor_proxy.cpp",
     "../../../services/core/src/remote_msg_util.cpp",
     "../../../services/core/src/resource_node_impl.cpp",
@@ -233,6 +234,7 @@ ohos_source_set("userauth_service_context_fuzzer") {
     "inc",
     "../dummy",
     "../../../frameworks/common/inc",
+    "../../../frameworks/native/client/inc",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
@@ -257,6 +259,7 @@ ohos_source_set("userauth_service_context_fuzzer") {
     "../../../services/context/src/remote_executor_stub.cpp",
     "../../../services/context/src/remote_iam_callback.cpp",
     "../../../services/context/src/schedule_holder_context.cpp",
+    "../../../services/context/src/set_widget_param_callback_service.cpp",
     "../../../services/context/src/simple_auth_context.cpp",
     "../../../services/context/src/trace.cpp",
     "../../../services/context/src/ui_extension_ability_connection.cpp",
@@ -400,6 +403,7 @@ ohos_source_set("userauth_services_ipc_fuzzer") {
     "../../../services/ipc/inc",
     "../dummy",
     "../../../frameworks/common/inc",
+    "../../../frameworks/native/client/inc",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
@@ -413,6 +417,7 @@ ohos_source_set("userauth_services_ipc_fuzzer") {
     "../../../services/ipc/src/user_auth_service.cpp",
     "../../../services/ipc/src/user_idm_service.cpp",
     "../../../frameworks/common/src/user_auth_helper.cpp",
+    "../../../frameworks/native/client/src/remote_auth_callback_service.cpp",
     "../dummy/mock_ipc_common.cpp",
   ]
 

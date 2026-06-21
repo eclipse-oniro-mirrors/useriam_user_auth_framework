@@ -44,6 +44,7 @@ public:
     int32_t GetUserId() const override;
     int32_t GetAuthType() const override;
     std::string GetCallerName() const override;
+    void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) override;
 
 protected:
     void SetLatestError(int32_t error) override;

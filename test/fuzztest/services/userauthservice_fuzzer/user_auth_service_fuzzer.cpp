@@ -652,7 +652,7 @@ void FuzzInsert2ContextPool(Parcel &parcel)
 {
     IAM_LOGI("begin");
     ContextFactory::AuthWidgetContextPara para = {};
-    auto context = ContextFactory::CreateWidgetContext(para, nullptr, nullptr);
+    auto context = ContextFactory::CreateWidgetContext(para, nullptr, nullptr, nullptr);
     g_userAuthService.Insert2ContextPool(context);
     EnsureTask();
     IAM_LOGI("end");

@@ -1,0 +1,96 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/test.gni")
+
+ohos_fuzztest("RemoteAuthCallbackServiceFuzzTest") {
+  branch_protector_ret = "pac_ret"
+  module_out_path = "user_auth_framework/user_auth/concurrent"
+  fuzz_config_file = "../remoteauthcallbackservice_fuzzer"
+
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+    "-Dprivate=public",
+    "-Dprotected=public",
+  ]
+
+  include_dirs = [
+    "../../../../interfaces/inner_api",
+    "../../../../frameworks/common/inc",
+    "../../../../frameworks/native/ipc/inc",
+    "../../../../frameworks/native/client/inc",
+    "../../../../frameworks/native/ipc/common_defines",
+    "../../../../common/utils",
+    "../../../../common/logs",
+  ]
+
+  sources = [
+    "../../../../frameworks/native/client/src/auth_message_impl.cpp",
+    "../../../../frameworks/native/client/src/callback_manager_impl.cpp",
+    "../../../../frameworks/native/client/src/co_auth_client_impl.cpp",
+    "../../../../frameworks/native/client/src/event_listener_callback_manager.cpp",
+    "../../../../frameworks/native/client/src/event_listener_callback_service.cpp",
+    "../../../../frameworks/native/client/src/executor_callback_service.cpp",
+    "../../../../frameworks/native/client/src/executor_messenger_client.cpp",
+    "../../../../frameworks/native/client/src/ipc_client_utils.cpp",
+    "../../../../frameworks/native/client/src/load_mode_client_util.cpp",
+    "../../../../frameworks/native/client/src/modal_callback_service.cpp",
+    "../../../../frameworks/native/client/src/remote_auth_callback_service.cpp",
+    "../../../../frameworks/native/client/src/set_widget_param_callback.cpp",
+    "../../../../frameworks/native/client/src/user_access_ctrl_callback_service.cpp",
+    "../../../../frameworks/native/client/src/user_access_ctrl_client_impl.cpp",
+    "../../../../frameworks/native/client/src/user_auth_callback_service.cpp",
+    "../../../../frameworks/native/client/src/user_auth_client_impl.cpp",
+    "../../../../frameworks/native/client/src/user_auth_modal_inner_callback.cpp",
+    "../../../../frameworks/native/client/src/user_auth_napi_client_impl.cpp",
+    "../../../../frameworks/native/client/src/user_idm_callback_service.cpp",
+    "../../../../frameworks/native/client/src/user_idm_client_impl.cpp",
+    "../../../../frameworks/native/client/src/widget_callback_service.cpp",
+    "remote_auth_callback_service_fuzzer.cpp",
+  ]
+
+  deps = [
+    "../../../../frameworks/native/ipc:userauth_client_ipc_fuzzer",
+    "../../common_fuzzer:attributes_fuzzer",
+    "../../common_fuzzer:dfx_fuzzer",
+    "../../common_fuzzer:iam_test_fuzzer",
+  ]
+
+  remove_configs = [ "//build/config/compiler:no_exceptions" ]
+
+  external_deps = [
+    "ability_runtime:ability_context_native",
+    "ability_runtime:ability_manager",
+    "ability_runtime:abilitykit_native",
+    "ability_runtime:app_context",
+    "ability_runtime:napi_base_context",
+    "ability_runtime:ui_extension",
+    "access_token:libaccesstoken_sdk",
+    "ace_engine:ace_uicontent",
+    "c_utils:utils",
+    "hilog:libhilog",
+    "init:libbeget_proxy",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "napi:ace_napi",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  subsystem_name = "useriam"
+  part_name = "user_auth_framework"
+}

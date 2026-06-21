@@ -159,6 +159,13 @@ const char *BaseContext::GetDescription() const
 {
     return description_.c_str();
 }
+
+void BaseContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback)
+{
+    static_cast<void>(widgetParam);
+    static_cast<void>(modalCallback);
+    IAM_LOGE("not implemented");
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

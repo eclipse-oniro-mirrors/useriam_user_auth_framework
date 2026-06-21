@@ -29,8 +29,9 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-UserAuthModalCallback::UserAuthModalCallback(const std::shared_ptr<AbilityRuntime::Context> context)
-    : context_(context)
+UserAuthModalCallback::UserAuthModalCallback(const std::shared_ptr<AbilityRuntime::Context> context) : context_(context)
+{}
+UserAuthModalCallback::UserAuthModalCallback(const sptr<OHOS::Rosen::Window> window) : window_(window)
 {}
 
 UserAuthModalCallback::~UserAuthModalCallback()
@@ -40,33 +41,29 @@ void UserAuthModalCallback::SendCommand(uint64_t contextId, const std::string &c
 {
     IAM_LOGI("SendCommand start");
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (context_ != nullptr) {
-        if (contextId == contextId_ && cmdData.empty()) {
-            IAM_LOGI("stop modal");
-            ReleaseModal();
-            return;
-        }
-        IAM_LOGI("widgetParam context not null, process as modal application");
-        if (contextId == 0 || cmdData.empty()) {
-            IAM_LOGI("stop modal for invalid request");
-            isInitError_ = true;
-            CancelAuthentication(contextId, CancelReason::MODAL_CREATE_ERROR);
-            return;
-        }
-        contextId_ = contextId;
-        bool createModalRet = CreateUIExtension(context_, contextId, cmdData);
-        // Cancel for failed
-        if (!createModalRet) {
-            IAM_LOGE("create modal error, createModalRet: %{public}d", createModalRet);
-            isInitError_ = true;
-            CancelAuthentication(contextId, CancelReason::MODAL_CREATE_ERROR);
-            return;
-        }
-        IAM_LOGI("create modal success");
-        isInit_ = true;
+    if (contextId == contextId_ && cmdData.empty()) {
+        IAM_LOGI("stop modal");
+        ReleaseModal();
         return;
     }
-    IAM_LOGI("widgetParam.context is nullptr");
+    IAM_LOGI("widgetParam context not null, process as modal application");
+    if (contextId == 0 || cmdData.empty()) {
+        IAM_LOGI("stop modal for invalid request");
+        isInitError_ = true;
+        CancelAuthentication(contextId, CancelReason::MODAL_CREATE_ERROR);
+        return;
+    }
+    contextId_ = contextId;
+    bool createModalRet = CreateUIExtension(contextId, cmdData);
+    // Cancel for failed
+    if (!createModalRet) {
+        IAM_LOGE("create modal error, createModalRet: %{public}d", createModalRet);
+        isInitError_ = true;
+        CancelAuthentication(contextId, CancelReason::MODAL_CREATE_ERROR);
+        return;
+    }
+    IAM_LOGI("create modal success");
+    isInit_ = true;
 }
 
 bool UserAuthModalCallback::IsModalInit()
@@ -87,47 +84,48 @@ bool UserAuthModalCallback::IsModalDestroy()
     return false;
 }
 
-Ace::UIContent* UserAuthModalCallback::InitAndGetUIContent(
-    const std::shared_ptr<OHOS::AbilityRuntime::Context> context)
+Ace::UIContent *UserAuthModalCallback::InitAndGetUIContent()
 {
-    if (context == nullptr) {
-        IAM_LOGE("context is nullptr");
-        return nullptr;
+    Ace::UIContent *uiContent = nullptr;
+    std::shared_ptr<AbilityRuntime::AbilityContext> abilityContext = nullptr;
+    std::shared_ptr<AbilityRuntime::UIHolderExtensionContext> holderContext = nullptr;
+    if (context_ != nullptr) {
+        IAM_LOGI("use context");
+        abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context_);
+        if (abilityContext == nullptr) {
+            IAM_LOGI("abilityContext is nullptr");
+            holderContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIHolderExtensionContext>(context_);
+            if (holderContext == nullptr) {
+                IAM_LOGE("uiExtensionContext is nullptr");
+                return nullptr;
+            }
+            uiContent = holderContext->GetUIContent();
+        } else {
+            uiContent = abilityContext->GetUIContent();
+        }
+    } else if (window_ != nullptr) {
+        IAM_LOGI("use window");
+        uiContent = window_->GetUIContent();
     }
-    Ace::UIContent* uiContent = nullptr;
-    auto abilityContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::AbilityContext>(context);
-    std::shared_ptr<AbilityRuntime::UIHolderExtensionContext> holderContext;
-    if (abilityContext == nullptr) {
-        IAM_LOGE("abilityContext is nullptr");
-        holderContext = AbilityRuntime::Context::ConvertTo<AbilityRuntime::UIHolderExtensionContext>(context);
-        if (holderContext == nullptr) {
-            IAM_LOGE("uiExtensionContext is nullptr");
-            return nullptr;
-        }
-        uiContent = holderContext->GetUIContent();
-        if (uiContent == nullptr) {
-            IAM_LOGE("uiContent is nullptr");
-            return nullptr;
-        }
-    } else {
-        uiContent = abilityContext->GetUIContent();
-        if (uiContent == nullptr) {
-            IAM_LOGE("uiContent is nullptr");
-            return nullptr;
-        }
+    if (uiContent == nullptr) {
+        IAM_LOGE("uiContent is nullptr");
+        return nullptr;
     }
 
     uiExtCallback_ = std::make_shared<ModalExtensionCallback>();
+    if (uiExtCallback_ == nullptr) {
+        IAM_LOGI("uiExtCallback_ is nullptr");
+        return nullptr;
+    }
     uiExtCallback_->SetAbilityContext(abilityContext);
     uiExtCallback_->SetHolderContext(holderContext);
-
+    uiExtCallback_->SetWindow(window_);
     return uiContent;
 }
 
-bool UserAuthModalCallback::CreateUIExtension(const std::shared_ptr<OHOS::AbilityRuntime::Context> context,
-    uint64_t contextId, const std::string &cmdData)
+bool UserAuthModalCallback::CreateUIExtension(uint64_t contextId, const std::string &cmdData)
 {
-    Ace::UIContent* uiContent = InitAndGetUIContent(context);
+    Ace::UIContent *uiContent = InitAndGetUIContent();
     if (uiContent == nullptr) {
         IAM_LOGE("uiContent invalid");
         return false;

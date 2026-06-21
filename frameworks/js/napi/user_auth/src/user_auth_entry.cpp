@@ -662,6 +662,18 @@ napi_value GetAuthLockState(napi_env env, napi_callback_info info)
     return UserAuthImpl::GetAuthLockState(env, info);
 }
 
+napi_value RegisterRemoteAuthCallback(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    return UserAuthImpl::RegisterRemoteAuthCallback(env, info);
+}
+
+napi_value UnregisterRemoteAuthCallback(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    return UserAuthImpl::UnregisterRemoteAuthCallback(env, info);
+}
+
 napi_value AuthTrustLevelConstructor(napi_env env)
 {
     napi_value authTrustLevel = nullptr;
@@ -1070,6 +1082,8 @@ napi_value UserAuthInit(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("sendNotice", UserAuth::SendNotice),
         DECLARE_NAPI_FUNCTION("queryReusableAuthResult", UserAuth::QueryReusableAuthResult),
         DECLARE_NAPI_FUNCTION("getAuthLockState", UserAuth::GetAuthLockState),
+        DECLARE_NAPI_FUNCTION("registerRemoteAuthCallback", UserAuth::RegisterRemoteAuthCallback),
+        DECLARE_NAPI_FUNCTION("unregisterRemoteAuthCallback", UserAuth::UnregisterRemoteAuthCallback),
     };
     status = napi_define_properties(env, exports,
         sizeof(exportFuncs) / sizeof(napi_property_descriptor), exportFuncs);

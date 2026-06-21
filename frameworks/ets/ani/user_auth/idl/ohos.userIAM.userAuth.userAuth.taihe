@@ -162,3 +162,12 @@ function QueryReusableAuthResult(authParam: AuthParam): @typedarray Array<u8>;
 
 @gen_promise("getAuthLockState")
 function getAuthLockStateSync(authType: UserAuthType): AuthLockState;
+
+struct IRemoteAuthCallback {
+    onGetRemoteAuthWidgetParam: (challenge: @typedarray Array<u8>) => WidgetParam;
+    onRemoteAuthResult: (challenge: @typedarray Array<u8>, result: UserAuthResult) => void;
+}
+
+function RegisterRemoteAuthCallback(callback: IRemoteAuthCallback): void;
+
+function UnRegisterRemoteAuthCallback(): void;

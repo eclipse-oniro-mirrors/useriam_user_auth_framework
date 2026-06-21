@@ -93,6 +93,14 @@ void ScheduleHolderContext::SetLatestError(int32_t error)
     static_cast<void>(error);
     IAM_LOGE("not implemented");
 }
+
+void ScheduleHolderContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam,
+    const sptr<IModalCallback> &modalCallback)
+{
+    static_cast<void>(widgetParam);
+    static_cast<void>(modalCallback);
+    IAM_LOGE("not implemented");
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

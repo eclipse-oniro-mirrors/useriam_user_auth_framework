@@ -38,6 +38,7 @@ ohos_fuzztest("ContextPoolImplFuzzTest") {
     "../../../../../services/ipc/inc",
     "../../../../../interfaces/inner_api",
     "../../../../../frameworks/common/dfx/inc",
+    "../../../../../frameworks/native/client/inc",
     "../../../../../frameworks/native/ipc/inc",
     "../../../../../frameworks/native/ipc/common_defines",
     "../../../../../common/utils",

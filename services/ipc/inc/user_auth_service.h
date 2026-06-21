@@ -28,6 +28,7 @@
 #include "resource_node_pool.h"
 #include "user_idm_database.h"
 #include "attributes.h"
+#include "user_auth_types.h"
 
 namespace OHOS {
 namespace UserIam {
@@ -75,6 +76,10 @@ public:
         std::vector<uint8_t> &token) override;
     int32_t GetAuthLockState(int32_t authType,
         const sptr<IGetExecutorPropertyCallback> &getExecutorPropertyCallback) override;
+
+    int32_t RegisterRemoteAuthCallback(const sptr<IRemoteAuthCallback> &remoteAuthCallback) override;
+    int32_t UnregisterRemoteAuthCallback() override;
+
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
 

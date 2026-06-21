@@ -154,7 +154,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateWidgetContext_001, TestSize.Lev
     ASSERT_NE(callback, nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_ADD_CREDENTIAL);
     ContextFactory::AuthWidgetContextPara para = {};
-    auto context = factory->CreateWidgetContext(para, contextCallback, nullptr);
+    auto context = factory->CreateWidgetContext(para, contextCallback, nullptr, nullptr);
     ASSERT_NE(context, nullptr);
 }
 
@@ -166,7 +166,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateWidgetContext_002, TestSize.Lev
     sptr<IIamCallback> callback(nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_ADD_CREDENTIAL);
     ContextFactory::AuthWidgetContextPara para = {};
-    auto context = factory->CreateWidgetContext(para, contextCallback, nullptr);
+    auto context = factory->CreateWidgetContext(para, contextCallback, nullptr, nullptr);
     ASSERT_EQ(context, nullptr);
 }
 

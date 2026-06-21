@@ -77,11 +77,12 @@ std::shared_ptr<Context> ContextFactory::CreateWidgetAuthContext(std::shared_ptr
 }
 
 std::shared_ptr<Context> ContextFactory::CreateWidgetContext(const AuthWidgetContextPara &para,
-    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback)
+    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
+    const sptr<IRemoteAuthCallback> &remoteAuthCallback)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, nullptr);
     uint64_t newContextId = ContextPool::GetNewContextId();
-    return Common::MakeShared<WidgetContext>(newContextId, para, callback, modalCallback);
+    return Common::MakeShared<WidgetContext>(newContextId, para, callback, modalCallback, remoteAuthCallback);
 }
 
 std::shared_ptr<Context> ContextFactory::CreateRemoteAuthContext(const Authentication::AuthenticationPara &para,

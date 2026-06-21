@@ -20,6 +20,7 @@ group("iam_clients_fuzztest") {
     "coauthclient_fuzzer:CoAuthClientFuzzTest",
     "eventlistenercallbackservice_fuzzer:EventListenerCallbackServiceFuzzTest",
     "executorcallbackservice_fuzzer:ExecutorCallbackServiceFuzzTest",
+    "remoteauthcallbackservice_fuzzer:RemoteAuthCallbackServiceFuzzTest",
     "useraccessctrlclient_fuzzer:UserAccessCtrlClientFuzzTest",
     "userauthclient_fuzzer:UserAuthClientFuzzTest",
     "useridmclient_fuzzer:UserIdmClientFuzzTest",

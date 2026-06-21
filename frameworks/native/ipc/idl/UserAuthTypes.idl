@@ -129,6 +129,10 @@ struct IpcAuthParamInner {
     boolean skipLockedBiometricAuth;
     /** Used to specify the credential Ids for authentication */
     unsigned long[] credentialIdList;
+    /** Is with remote token id  */
+    boolean isHasRemoteTokenId;
+    /** Remote token id */
+    unsigned int remoteTokenId;
 };
 
 /**

@@ -337,7 +337,7 @@ void FuzzNapiBeginWidgetAuth(Parcel &parcel)
     IAM_LOGI("start");
     int32_t apiVersion = parcel.ReadInt32();
     AuthParamInner authParam;
-    UserAuthNapiClientImpl::WidgetParamNapi widgetParam;
+    WidgetParamNapi widgetParam;
     Common::FillFuzzUint8Vector(parcel, authParam.challenge);
     std::vector<int32_t> atList;
     parcel.ReadInt32Vector(&atList);

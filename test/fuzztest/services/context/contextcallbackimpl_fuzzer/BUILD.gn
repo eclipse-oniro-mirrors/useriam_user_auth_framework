@@ -36,6 +36,7 @@ ohos_fuzztest("ContextCallbackImplFuzzTest") {
     "../../../../../services/context/inc",
     "../../../../../services/context/src",
     "../../../../../services/ipc/inc",
+    "../../../../../frameworks/native/client/inc",
     "../../../../../frameworks/native/ipc/inc",
     "../../../../../frameworks/native/ipc/common_defines",
     "../../../../../interfaces/inner_api",

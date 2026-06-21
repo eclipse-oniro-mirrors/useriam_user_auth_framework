@@ -68,6 +68,10 @@ public:
     int32_t PrepareRemoteAuth(const std::string &networkId,
         const std::shared_ptr<PrepareRemoteAuthCallback> &callback) override;
     int32_t QueryReusableAuthResult(const WidgetAuthParam &authParam, std::vector<uint8_t> &token) override;
+
+    int32_t RegisterRemoteAuthCallback(const std::shared_ptr<RemoteAuthClientCallback> &remoteAuthCallback) override;
+    int32_t UnregisterRemoteAuthCallback() override;
+
     void CleanUpResource();
 
 private:

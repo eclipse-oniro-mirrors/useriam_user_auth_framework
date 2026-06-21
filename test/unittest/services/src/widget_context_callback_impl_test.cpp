@@ -60,7 +60,7 @@ HWTEST_F(WidgetContextCallbackImplTest, WidgetContextCallbackImplOnResult_001, T
     uint64_t contextId = 1;
     ContextFactory::AuthWidgetContextPara para;
     std::shared_ptr<ContextCallback> callback = Common::MakeShared<MockContextCallback>();
-    WidgetContext *widgetContext = new WidgetContext(contextId, para, callback, nullptr);
+    WidgetContext *widgetContext = new WidgetContext(contextId, para, callback, nullptr, nullptr);
     int32_t authType = 0;
     auto contextCallback =
         Common::MakeShared<WidgetContextCallbackImpl>(std::shared_ptr<WidgetContext>(widgetContext), authType);
@@ -88,7 +88,7 @@ HWTEST_F(WidgetContextCallbackImplTest, WidgetContextCallbackImplOnAcquireInfo_0
     uint64_t contextId = 1;
     ContextFactory::AuthWidgetContextPara para;
     std::shared_ptr<ContextCallback> callback = Common::MakeShared<MockContextCallback>();
-    WidgetContext *widgetContext = new WidgetContext(contextId, para, callback, nullptr);
+    WidgetContext *widgetContext = new WidgetContext(contextId, para, callback, nullptr, nullptr);
     int32_t authType = 0;
     auto contextCallback =
         Common::MakeShared<WidgetContextCallbackImpl>(std::shared_ptr<WidgetContext>(widgetContext), authType);

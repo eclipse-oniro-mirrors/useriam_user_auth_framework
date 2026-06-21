@@ -31,6 +31,7 @@
 #include "mock_user_auth_service.h"
 #include "mock_resource_node.h"
 #include "mock_widget_callback_interface.h"
+#include "mock_remote_auth_callback.h"
 #include "resource_node_pool.h"
 #include "user_auth_service.h"
 #include "user_auth_helper.h"
@@ -144,6 +145,72 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam006, TestSize.L
             }
         );
     EXPECT_EQ(service.SetGlobalConfigParam(param), HDF_FAILURE);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback001, TestSize.Level0)
+{
+    UserAuthService service;
+    sptr<IRemoteAuthCallback> testCallback = nullptr;
+    EXPECT_EQ(service.RegisterRemoteAuthCallback(testCallback), ResultCode::INVALID_PARAMETERS);
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback002, TestSize.Level0)
+{
+    UserAuthService service;
+    sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
+    EXPECT_NE(mockCallback, nullptr);
+
+    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::CHECK_PERMISSION_FAILED);
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback003, TestSize.Level0)
+{
+    UserAuthService service;
+    sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
+    EXPECT_NE(mockCallback, nullptr);
+
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::CHECK_SYSTEM_APP_FAILED);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback004, TestSize.Level0)
+{
+    UserAuthService service;
+    sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
+    EXPECT_NE(mockCallback, nullptr);
+
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::SUCCESS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback001, TestSize.Level0)
+{
+    UserAuthService service;
+    EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::CHECK_PERMISSION_FAILED);
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback002, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::CHECK_SYSTEM_APP_FAILED);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback003, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+
+    sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
+    EXPECT_NE(mockCallback, nullptr);
+    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::SUCCESS);
+    EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::SUCCESS);
     IpcCommon::DeleteAllPermission();
 }
 } // namespace UserAuth

@@ -21,6 +21,7 @@ import IWidgetCallback;
 import IVerifyTokenCallback;
 import IModalCallback;
 import IEventListenerCallback;
+import IRemoteAuthCallback;
 
 option_stub_hooks on;
 
@@ -75,4 +76,7 @@ interface OHOS.UserIam.UserAuth.IUserAuth {
 
     void QueryReusableAuthResult([in] IpcAuthParamInner ipcAuthParamInner, [out] unsigned char[] token);
     void GetAuthLockState([in] int authType, [in] IGetExecutorPropertyCallback getExecutorPropertyCallback);
+
+    void RegisterRemoteAuthCallback([in] IRemoteAuthCallback remoteAuthCallback);
+    void UnregisterRemoteAuthCallback();
 }

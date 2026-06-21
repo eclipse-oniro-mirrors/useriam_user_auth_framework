@@ -82,7 +82,7 @@ UserAuthResultCode UserAuthInstanceV10::Init(napi_env env, napi_callback_info in
         return errCode;
     }
 
-    errCode = UserAuthParamUtils::InitWidgetParam(env, argv[PARAM1], widgetParam_, context_);
+    errCode = UserAuthParamUtils::InitWidgetParam(env, argv[PARAM1], widgetParam_, context_, window_);
     if (errCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("WidgetParam type error, errorCode: %{public}d", errCode);
         return errCode;
@@ -276,7 +276,13 @@ UserAuthResultCode UserAuthInstanceV10::Start(napi_env env, napi_callback_info i
         IAM_LOGE("auth already started");
         return UserAuthResultCode::GENERAL_ERROR;
     }
-    modalCallback_ = Common::MakeShared<UserAuthModalCallback>(context_);
+    if (window_) {
+        IAM_LOGI("widget type is window");
+        modalCallback_ = Common::MakeShared<UserAuthModalCallback>(window_);
+    } else {
+        IAM_LOGI("widget type is context");
+        modalCallback_ = Common::MakeShared<UserAuthModalCallback>(context_);
+    }
     contextId_ = UserAuthNapiClientImpl::Instance().BeginWidgetAuth(API_VERSION_10,
         authParam_, widgetParam_, callback_, modalCallback_);
     isAuthStarted_ = true;

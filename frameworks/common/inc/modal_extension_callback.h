@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include "window.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
 
@@ -38,6 +39,7 @@ public:
     void SetContextId(uint64_t contextId);
     void SetAbilityContext(std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext);
     void SetHolderContext(std::shared_ptr<OHOS::AbilityRuntime::UIHolderExtensionContext> uiHolderContext);
+    void SetWindow(sptr<OHOS::Rosen::Window> window);
     void ReleaseOrErrorHandle(int32_t code);
     bool IsModalDestroy();
 
@@ -48,6 +50,7 @@ private:
     uint64_t contextId_ = 0;
     std::shared_ptr<OHOS::AbilityRuntime::AbilityContext> abilityContext_;
     std::shared_ptr<OHOS::AbilityRuntime::UIHolderExtensionContext> uiHolderContext_;
+    sptr<OHOS::Rosen::Window> window_;
     bool isDestroy_ {false};
     std::recursive_mutex mutex_;
 };

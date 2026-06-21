@@ -40,6 +40,7 @@ public:
         S_WIDGET_AUTH_FINISHED = 3,
         S_WIDGET_RELOAD_WAITING = 4,
         S_WIDGET_RELEASED = 5,
+        S_WIDGET_PARAM_WAITING = 6,
     };
 
     enum Event : uint32_t {
@@ -54,6 +55,7 @@ public:
         E_STOP_AUTH = 8,
         E_WIDGET_RELEASE = 9,
         E_START_DIRECT_AUTH = 10,
+        E_GET_REMOTE_AUTH_PARAM = 11,
     };
 
     virtual ~WidgetScheduleNode() = default;
@@ -72,6 +74,7 @@ public:
     virtual void SetCallback(std::shared_ptr<WidgetScheduleNodeCallback> callback) = 0;
     virtual void SendAuthTipInfo(const std::vector<AuthType> &authTypeList, int32_t tipCode) = 0;
     virtual bool ClearSchedule() = 0;
+    virtual bool GetRemoteAuthParam() = 0;
 };
 } // namespace UserAuth
 } // namespace UserIam

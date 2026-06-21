@@ -32,20 +32,6 @@ namespace UserIam {
 namespace UserAuth {
 class UserAuthNapiClientImpl final : public NoCopyable {
 public:
-    /**
-     * @brief Auth widget parameter.
-     */
-    struct WidgetParamNapi {
-        /** Title of widget. */
-        std::string title;
-        /** The description text of navigation button. */
-        std::string navigationButtonText;
-        /** Full screen or not. */
-        WindowModeType windowMode;
-        /** Default has't context. */
-        bool hasContext {false};
-    };
-
     static UserAuthNapiClientImpl& Instance();
     uint64_t BeginWidgetAuth(int32_t apiVersion, const AuthParamInner &authParam, const WidgetParamNapi &widgetParam,
         const std::shared_ptr<AuthenticationCallback> &callback,

@@ -119,6 +119,14 @@ void ModalExtensionCallback::ReleaseOrErrorHandle(int32_t code)
         }
         uiContent->CloseModalUIExtension(sessionId_);
     }
+    if (window_ != nullptr) {
+        Ace::UIContent* uiContent = window_->GetUIContent();
+        if (uiContent == nullptr) {
+            IAM_LOGE("uiContent is null");
+            return;
+        }
+        uiContent->CloseModalUIExtension(sessionId_);
+    }
     IAM_LOGI("ReleaseOrErrorHandle end");
     isDestroy_ = true;
     return;
@@ -135,6 +143,11 @@ void ModalExtensionCallback::CancelAuthentication()
     // cancel for failed
     int32_t code = UserAuthNapiClientImpl::Instance().CancelAuthentication(contextId_, CancelReason::MODAL_RUN_ERROR);
     IAM_LOGI("CancelAuthentication, code: %{public}d", code);
+}
+void ModalExtensionCallback::SetWindow(sptr<OHOS::Rosen::Window> window)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    window_ = window;
 }
 } // namespace UserAuth
 } // namespace UserIam
