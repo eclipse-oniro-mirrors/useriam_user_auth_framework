@@ -148,4 +148,3 @@ void PublishEventAdapter::PublishCredentialUpdatedEvent(int32_t userId, int32_t 
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
-#endif

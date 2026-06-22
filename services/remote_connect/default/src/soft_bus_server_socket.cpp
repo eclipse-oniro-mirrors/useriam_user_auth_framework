@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "iam_logger.h"
 #include "soft_bus_server_socket.h"
 
 #include "remote_connect_listener_manager.h"

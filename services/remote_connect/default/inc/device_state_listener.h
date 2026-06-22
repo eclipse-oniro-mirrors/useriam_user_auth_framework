@@ -18,7 +18,6 @@
 
 #include <string>
 
-#include "iam_logger.h"
 #include "device_manager_callback.h"
 
 namespace OHOS {

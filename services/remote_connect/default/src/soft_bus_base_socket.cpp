@@ -17,6 +17,7 @@
 
 #include <cinttypes>
 
+#include "iam_logger.h"
 #include "remote_connect_listener_manager.h"
 
 #define LOG_TAG "USER_AUTH_SA"

@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "iam_logger.h"
 #include "soft_bus_manager_test.h"
 #include "soft_bus_manager.h"
 #include "soft_bus_socket_listener.h"
@@ -21,6 +22,9 @@
 #include "remote_connect_listener_manager.h"
 
 #include "gtest/gtest.h"
+
+#define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SOFT_BUS_MANAGER
 
 namespace OHOS {
 namespace UserIam {

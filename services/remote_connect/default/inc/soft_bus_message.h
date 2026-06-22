@@ -24,7 +24,6 @@
 #include "nocopyable.h"
 #include "attributes.h"
 #include "iam_check.h"
-#include "iam_logger.h"
 #include "iam_ptr.h"
 
 namespace OHOS {

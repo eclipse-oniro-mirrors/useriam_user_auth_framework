@@ -23,7 +23,6 @@
 #include <cstdint>
 #include "socket.h"
 
-#include "iam_logger.h"
 #include "iam_common_defines.h"
 
 namespace OHOS {

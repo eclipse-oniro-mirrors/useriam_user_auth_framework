@@ -18,6 +18,7 @@
 #include "device_manager.h"
 #include "parameter.h"
 
+#include "iam_logger.h"
 #include "iam_check.h"
 
 #define LOG_TAG "USER_AUTH_SA"

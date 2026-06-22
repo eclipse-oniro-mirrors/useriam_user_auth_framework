@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "iam_logger.h"
 #include "remote_connect_listener.h"
 
 #define LOG_TAG "USER_AUTH_SA"

@@ -22,7 +22,6 @@
 #include <mutex>
 
 #include "iam_check.h"
-#include "iam_logger.h"
 #include "iam_common_defines.h"
 #include "soft_bus_client_socket.h"
 #include "soft_bus_server_socket.h"

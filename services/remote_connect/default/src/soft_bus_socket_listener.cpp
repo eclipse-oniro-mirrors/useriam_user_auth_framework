@@ -15,6 +15,7 @@
 
 #include "soft_bus_socket_listener.h"
 
+#include "iam_logger.h"
 #include "soft_bus_manager.h"
 
 #define LOG_TAG "USER_AUTH_SA"

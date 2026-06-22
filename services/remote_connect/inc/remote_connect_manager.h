@@ -21,7 +21,6 @@
 
 #include "attributes.h"
 #include "iam_common_defines.h"
-#include "iam_logger.h"
 
 #include "remote_connect_listener.h"
 

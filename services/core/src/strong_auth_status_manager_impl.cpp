@@ -26,6 +26,7 @@
 
 #include "context_appstate_observer.h"
 #include "hisysevent_adapter.h"
+#include "iam_logger.h"
 #include "ipc_common.h"
 #include "resource_node_pool.h"
 #include "risk_event_manager.h"

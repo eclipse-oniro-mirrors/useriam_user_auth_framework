@@ -18,7 +18,6 @@
 
 #include "system_ability_status_change_stub.h"
 
-#include "iam_logger.h"
 #include "iam_check.h"
 
 namespace OHOS {

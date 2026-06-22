@@ -30,7 +30,6 @@
 #include "hisysevent_adapter.h"
 #include "iam_check.h"
 #include "iam_common_defines.h"
-#include "iam_logger.h"
 #include "iam_ptr.h"
 #include "relative_timer.h"
 #include "remote_connect_listener.h"

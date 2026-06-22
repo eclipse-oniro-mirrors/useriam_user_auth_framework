@@ -15,6 +15,7 @@
 
 #include "soft_bus_client_socket.h"
 
+#include "iam_logger.h"
 #include "relative_timer.h"
 #include "remote_connect_listener_manager.h"
 #include "remote_connect_manager.h"

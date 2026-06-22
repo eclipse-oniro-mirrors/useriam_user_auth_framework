@@ -22,6 +22,7 @@
 
 #include "context_appstate_observer.h"
 #include "credential_info_interface.h"
+#include "iam_logger.h"
 #include "risk_event_manager.h"
 #include "user_idm_database.h"
 

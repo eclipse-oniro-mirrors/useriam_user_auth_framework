@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "iam_logger.h"
 #include "soft_bus_message.h"
 
 #define LOG_TAG "USER_AUTH_SA"
