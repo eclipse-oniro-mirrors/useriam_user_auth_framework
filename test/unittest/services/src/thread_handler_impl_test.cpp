@@ -25,11 +25,6 @@
 #include "nocopyable.h"
 #include "thread_handler_manager.h"
 
-#include "iam_logger.h"
-
-#define LOG_TAG "USER_AUTH_SA"
-#define LOG_FILE_ID LOG_FILE_THREAD_HANDLER_IMPL
-
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

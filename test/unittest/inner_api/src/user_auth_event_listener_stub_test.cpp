@@ -17,7 +17,6 @@
 
 #include <cinttypes>
 
-#include "iam_logger.h"
 #include "mock_user_auth_callback_service.h"
 #include "iuser_auth.h"
 #include "user_auth_interface_ipc_interface_code.h"

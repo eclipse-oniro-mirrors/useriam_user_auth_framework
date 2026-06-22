@@ -17,11 +17,7 @@
 
 #include "driver_state_manager.h"
 
-#include "iam_logger.h"
 #include "securec.h"
-
-#define LOG_TAG "USER_AUTH_SA"
-#define LOG_FILE_ID LOG_FILE_DRIVER_STATE_MANAGER
 
 namespace OHOS {
 namespace UserIam {

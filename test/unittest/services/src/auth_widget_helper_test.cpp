@@ -19,7 +19,6 @@
 
 #include <gtest/gtest.h>
 #include "iam_common_defines.h"
-#include "iam_logger.h"
 #include "mock_iuser_auth_interface.h"
 #include "mock_schedule_node.h"
 #include "mock_resource_node.h"

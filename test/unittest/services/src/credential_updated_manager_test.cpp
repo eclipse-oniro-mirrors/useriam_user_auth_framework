@@ -21,13 +21,9 @@
 #include "delete_impl.h"
 #include "enrollment.h"
 #include "event_listener_manager.h"
-#include "iam_logger.h"
 #include "publish_event_adapter.h"
 #include "system_param_manager.h"
 #include "user_idm_database_impl.h"
-
-#define LOG_TAG "USER_AUTH_SA"
-#define LOG_FILE_ID LOG_FILE_CREDENTIAL_UPDATED_MANAGER
 
 namespace OHOS {
 namespace UserIam {

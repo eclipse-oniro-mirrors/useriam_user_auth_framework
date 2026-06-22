@@ -17,7 +17,6 @@
 
 #include "enroll_command.h"
 #include "iam_check.h"
-#include "iam_logger.h"
 #include "iam_mem.h"
 #include "iam_ptr.h"
 #include "collect_command.h"
@@ -25,9 +24,6 @@
 
 #include "executor.h"
 #include "mock_iexecutor_messenger.h"
-
-#define LOG_TAG "USER_AUTH_EXECUTOR"
-#define LOG_FILE_ID LOG_FILE_ENROLL_COMMAND
 
 using namespace std;
 using namespace testing;

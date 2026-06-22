@@ -18,11 +18,7 @@
 #include "strong_auth_status_manager.h"
 #include "screenlock_manager.h"
 
-#include "iam_logger.h"
 #include "securec.h"
-
-#define LOG_TAG "USER_AUTH_SA"
-#define LOG_FILE_ID LOG_FILE_STRONG_AUTH_STATUS_MANAGER_IMPL
 
 namespace OHOS {
 namespace UserIam {

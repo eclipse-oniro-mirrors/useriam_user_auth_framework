@@ -18,9 +18,6 @@
 #include "service_unload_manager.h"
 #include "system_param_manager.h"
 
-#define LOG_TAG "USER_AUTH_SA"
-#define LOG_FILE_ID LOG_FILE_SERVICE_UNLOAD_MANAGER
-
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
