@@ -21,8 +21,8 @@
 
 #include "iam_logger.h"
 
-#define LOG_FILE_ID LOG_FILE_CONFIG_PARSER
 #define LOG_TAG "USER_AUTH_COMMON"
+#define LOG_FILE_ID LOG_FILE_CONFIG_PARSER
 
 namespace OHOS {
 namespace UserIam {

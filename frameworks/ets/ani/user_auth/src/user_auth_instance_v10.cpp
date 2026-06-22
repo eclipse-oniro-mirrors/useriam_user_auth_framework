@@ -33,8 +33,8 @@
 #include "user_auth_client_impl.h"
 #include "user_auth_api_event_reporter.h"
 
-#define LOG_FILE_ID LOG_FILE_USER_AUTH_INSTANCE_V10_ANI
 #define LOG_TAG "USER_AUTH_ANI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_INSTANCE_V10_ANI
 
 namespace userAuth = ohos::userIAM::userAuth::userAuth;
 

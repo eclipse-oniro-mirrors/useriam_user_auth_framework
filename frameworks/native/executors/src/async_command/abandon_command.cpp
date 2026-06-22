@@ -24,8 +24,8 @@
 #include "iam_defines.h"
 #include "hisysevent_adapter.h"
 
-#define LOG_FILE_ID LOG_FILE_ABANDON_COMMAND
 #define LOG_TAG "USER_AUTH_EXECUTOR"
+#define LOG_FILE_ID LOG_FILE_ABANDON_COMMAND
 
 namespace OHOS {
 namespace UserIam {

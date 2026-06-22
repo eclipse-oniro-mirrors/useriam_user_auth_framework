@@ -19,6 +19,8 @@
 #include "hilog/log.h"
 
 enum LogTraceFileId : uint16_t {
+    LOG_FILE_UNKNOWN = 0,
+
     // frameworks/native/client (0x010x)
     LOG_FILE_AUTH_MESSAGE_IMPL = 0x0100,
     LOG_FILE_CALLBACK_MANAGER_IMPL = 0x0101,

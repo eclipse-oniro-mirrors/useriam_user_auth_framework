@@ -27,8 +27,8 @@
 #include "iam_ptr.h"
 #include "remote_msg_util.h"
 
-#define LOG_FILE_ID LOG_FILE_RESOURCE_NODE_IMPL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_RESOURCE_NODE_IMPL
 
 namespace OHOS {
 namespace UserIam {

@@ -19,8 +19,8 @@
 
 #include "user_auth_napi_client_impl.h"
 
-#define LOG_FILE_ID LOG_FILE_USER_AUTH_MODAL_INNER_CALLBACK
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_MODAL_INNER_CALLBACK
 
 namespace OHOS {
 namespace UserIam {

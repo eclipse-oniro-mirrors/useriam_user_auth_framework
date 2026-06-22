@@ -20,8 +20,9 @@
 #include "hisysevent_adapter.h"
 #include "iam_time.h"
 
-#define LOG_FILE_ID LOG_FILE_UI_EXTENSION_ABILITY_CONNECTION
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_UI_EXTENSION_ABILITY_CONNECTION
+
 constexpr int32_t SIGNAL_NUM = 3;
 
 namespace OHOS {

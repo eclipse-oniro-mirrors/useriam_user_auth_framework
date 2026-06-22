@@ -29,8 +29,8 @@
 #include "update_pin_param_impl.h"
 #include "user_idm_database.h"
 
-#define LOG_FILE_ID LOG_FILE_ENROLLMENT_IMPL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_ENROLLMENT_IMPL
 
 namespace OHOS {
 namespace UserIam {

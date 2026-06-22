@@ -23,8 +23,8 @@
 #include "load_mode_handler_default.h"
 #endif
 
-#define LOG_FILE_ID LOG_FILE_LOAD_MODE_HANDLER
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_LOAD_MODE_HANDLER
 
 namespace OHOS {
 namespace UserIam {

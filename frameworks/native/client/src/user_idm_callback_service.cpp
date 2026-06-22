@@ -19,8 +19,8 @@
 #include "iam_logger.h"
 #include "iam_ptr.h"
 
-#define LOG_FILE_ID LOG_FILE_USER_IDM_CALLBACK_SERVICE
 #define LOG_TAG "USER_IDM_SDK"
+#define LOG_FILE_ID LOG_FILE_USER_IDM_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {

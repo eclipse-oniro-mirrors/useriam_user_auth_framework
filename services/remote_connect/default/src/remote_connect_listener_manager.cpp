@@ -18,8 +18,9 @@
 #include "iam_check.h"
 #include "iam_logger.h"
 
-#define LOG_FILE_ID LOG_FILE_REMOTE_CONNECT_LISTENER_MANAGER
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_REMOTE_CONNECT_LISTENER_MANAGER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

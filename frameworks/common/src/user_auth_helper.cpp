@@ -19,9 +19,9 @@
  
 #include "iam_logger.h"
  
-#define LOG_FILE_ID LOG_FILE_USER_AUTH_HELPER
 #define LOG_TAG "USER_AUTH_COMMON"
- 
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_HELPER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

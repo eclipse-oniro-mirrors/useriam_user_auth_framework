@@ -18,8 +18,8 @@
 #include "context_pool.h"
 #include "iam_logger.h"
 
-#define LOG_FILE_ID LOG_FILE_CONTEXT_HELPER
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_CONTEXT_HELPER
 
 namespace OHOS {
 namespace UserIam {

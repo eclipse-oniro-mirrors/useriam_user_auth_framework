@@ -22,8 +22,9 @@
 #include "iam_ptr.h"
 #include "widget_context.h"
 
-#define LOG_FILE_ID LOG_FILE_WIDGET_CONTEXT_CALLBACK_IMPL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_WIDGET_CONTEXT_CALLBACK_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

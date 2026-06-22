@@ -25,8 +25,9 @@
 #endif
 #include "system_ability_definition.h"
 
-#define LOG_FILE_ID LOG_FILE_CONTEXT_APPSTATE_OBSERVER
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_CONTEXT_APPSTATE_OBSERVER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

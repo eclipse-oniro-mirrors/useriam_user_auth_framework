@@ -19,8 +19,9 @@
 #include "iam_logger.h"
 #include "schedule_node_helper.h"
 
-#define LOG_FILE_ID LOG_FILE_IDENTIFICATION_IMPL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_IDENTIFICATION_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

@@ -20,8 +20,8 @@
 #include "iam_logger.h"
 #include "iam_ptr.h"
 
-#define LOG_FILE_ID LOG_FILE_USER_AUTH_CALLBACK_SERVICE
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {

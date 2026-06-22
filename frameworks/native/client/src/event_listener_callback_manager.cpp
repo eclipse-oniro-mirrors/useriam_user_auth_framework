@@ -23,8 +23,8 @@
 #include "system_ability_status_change_stub.h"
 #include "system_ability_definition.h"
 
-#define LOG_FILE_ID LOG_FILE_EVENT_LISTENER_CALLBACK_MANAGER
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_EVENT_LISTENER_CALLBACK_MANAGER
 
 namespace OHOS {
 namespace UserIam {

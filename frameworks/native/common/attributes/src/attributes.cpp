@@ -22,11 +22,12 @@
 #include "iam_logger.h"
 #include "securec.h"
 
+#define LOG_TAG "USER_AUTH_SA"
 #define LOG_FILE_ID LOG_FILE_ATTRIBUTES
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-#define LOG_TAG "USER_AUTH_SA"
 class Attributes::Impl {
 public:
     Impl() = default;

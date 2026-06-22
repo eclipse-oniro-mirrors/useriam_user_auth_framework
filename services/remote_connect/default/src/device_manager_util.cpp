@@ -20,8 +20,9 @@
 
 #include "iam_check.h"
 
-#define LOG_FILE_ID LOG_FILE_DEVICE_MANAGER_UTIL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_DEVICE_MANAGER_UTIL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

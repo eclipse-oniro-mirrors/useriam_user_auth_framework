@@ -28,7 +28,6 @@
 #include "soft_bus_server_socket.h"
 #include "system_ability_listener.h"
 
-#define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

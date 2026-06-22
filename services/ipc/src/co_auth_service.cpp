@@ -45,8 +45,8 @@
 #include "remote_msg_util.h"
 #include "xcollie_helper.h"
 
-#define LOG_FILE_ID LOG_FILE_CO_AUTH_SERVICE
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_CO_AUTH_SERVICE
 
 namespace OHOS {
 namespace UserIam {

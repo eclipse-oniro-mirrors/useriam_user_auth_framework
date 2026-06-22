@@ -27,8 +27,8 @@
 #include "widget_context.h"
 #include "remote_msg_util.h"
 
-#define LOG_FILE_ID LOG_FILE_CONTEXT_FACTORY
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_CONTEXT_FACTORY
 
 namespace OHOS {
 namespace UserIam {

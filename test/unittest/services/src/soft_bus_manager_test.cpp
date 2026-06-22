@@ -22,8 +22,6 @@
 
 #include "gtest/gtest.h"
 
-#define LOG_FILE_ID LOG_FILE_SOFT_BUS_MANAGER
-
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

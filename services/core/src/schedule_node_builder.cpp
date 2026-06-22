@@ -22,8 +22,8 @@
 #include "iam_logger.h"
 #include "iam_ptr.h"
 
-#define LOG_FILE_ID LOG_FILE_SCHEDULE_NODE_BUILDER
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SCHEDULE_NODE_BUILDER
 
 namespace OHOS {
 namespace UserIam {

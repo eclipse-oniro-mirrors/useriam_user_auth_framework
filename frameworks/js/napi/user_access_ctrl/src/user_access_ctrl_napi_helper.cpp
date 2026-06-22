@@ -22,8 +22,8 @@
 
 #include "iam_logger.h"
 
-#define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_NAPI_HELPER
 #define LOG_TAG "USER_ACCESS_CTRL_NAPI"
+#define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_NAPI_HELPER
 
 namespace OHOS {
 namespace UserIam {

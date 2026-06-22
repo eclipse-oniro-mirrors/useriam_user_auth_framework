@@ -19,10 +19,7 @@
 #include <future>
 #include <mutex>
 
-#include "iam_logger.h"
 #include "user_auth_client_callback.h"
-
-#define LOG_TAG "USER_AUTH_ANI"
 
 namespace userAuth = ohos::userIAM::userAuth::userAuth;
 

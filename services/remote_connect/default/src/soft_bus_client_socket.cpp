@@ -21,8 +21,9 @@
 #include "remote_message.h"
 #include "thread_handler_manager.h"
 
-#define LOG_FILE_ID LOG_FILE_SOFT_BUS_CLIENT_SOCKET
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SOFT_BUS_CLIENT_SOCKET
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

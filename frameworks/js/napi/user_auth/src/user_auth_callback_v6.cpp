@@ -24,8 +24,8 @@
 
 #include "user_auth_napi_helper.h"
 
-#define LOG_FILE_ID LOG_FILE_USER_AUTH_CALLBACK_VERSION_6
 #define LOG_TAG "USER_AUTH_NAPI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_CALLBACK_VERSION_6
 
 namespace OHOS {
 namespace UserIam {

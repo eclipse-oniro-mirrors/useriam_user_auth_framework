@@ -50,8 +50,8 @@
 #include "display_manager.h"
 #endif
 
-#define LOG_FILE_ID LOG_FILE_WIDGET_CONTEXT
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_WIDGET_CONTEXT
 
 namespace OHOS {
 namespace UserIam {

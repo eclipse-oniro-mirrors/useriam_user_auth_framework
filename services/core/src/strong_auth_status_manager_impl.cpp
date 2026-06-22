@@ -33,8 +33,9 @@
 #include "system_ability_listener.h"
 #include "user_auth_service.h"
 
-#define LOG_FILE_ID LOG_FILE_STRONG_AUTH_STATUS_MANAGER_IMPL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_STRONG_AUTH_STATUS_MANAGER_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

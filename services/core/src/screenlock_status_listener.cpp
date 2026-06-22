@@ -25,8 +25,8 @@
 #include "risk_event_manager.h"
 #include "user_idm_database.h"
 
-#define LOG_FILE_ID LOG_FILE_SCREENLOCK_STATUS_LISTENER
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SCREENLOCK_STATUS_LISTENER
 
 namespace OHOS {
 namespace UserIam {

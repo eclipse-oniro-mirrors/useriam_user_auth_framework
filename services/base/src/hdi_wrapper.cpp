@@ -20,8 +20,6 @@
 #include "iam_ptr.h"
 #include "iproxy_broker.h"
 
-#define LOG_FILE_ID LOG_FILE_HDI_WRAPPER
-
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

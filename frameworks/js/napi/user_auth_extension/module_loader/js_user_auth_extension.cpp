@@ -20,8 +20,8 @@
 
 #include "iam_logger.h"
 
-#define LOG_FILE_ID LOG_FILE_JS_USER_AUTH_EXTENSION
 #define LOG_TAG "USER_AUTH_NAPI"
+#define LOG_FILE_ID LOG_FILE_JS_USER_AUTH_EXTENSION
 
 namespace OHOS {
 namespace AbilityRuntime {

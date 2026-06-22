@@ -29,8 +29,9 @@
 #include "thread_handler_manager.h"
 #include "user_idm_database.h"
 
-#define LOG_FILE_ID LOG_FILE_SIMPLE_AUTH_CONTEXT
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SIMPLE_AUTH_CONTEXT
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

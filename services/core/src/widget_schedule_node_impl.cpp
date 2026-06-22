@@ -27,8 +27,9 @@
 #include "relative_timer.h"
 #include "user_auth_common_defines.h"
 
-#define LOG_FILE_ID LOG_FILE_WIDGET_SCHEDULE_NODE_IMPL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_WIDGET_SCHEDULE_NODE_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

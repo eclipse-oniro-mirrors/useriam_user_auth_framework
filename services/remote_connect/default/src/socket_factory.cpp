@@ -21,8 +21,8 @@
 #include "soft_bus_client_socket.h"
 #include "soft_bus_server_socket.h"
 
-#define LOG_FILE_ID LOG_FILE_SOCKET_FACTORY
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SOCKET_FACTORY
 
 namespace OHOS {
 namespace UserIam {

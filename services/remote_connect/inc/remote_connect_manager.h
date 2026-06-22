@@ -25,7 +25,6 @@
 
 #include "remote_connect_listener.h"
 
-#define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

@@ -18,11 +18,8 @@
 
 #include "attributes.h"
 #include "co_auth_client_defines.h"
-#include "iam_logger.h"
 #include "user_auth_common_defines.h"
 #include "remote_message.h"
-
-#define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {
 namespace UserIam {

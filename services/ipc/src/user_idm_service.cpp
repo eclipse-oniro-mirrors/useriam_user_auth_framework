@@ -43,8 +43,8 @@
 #include "user_idm_database.h"
 #include "xcollie_helper.h"
 
-#define LOG_FILE_ID LOG_FILE_USER_IDM_SERVICE
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_USER_IDM_SERVICE
 
 namespace OHOS {
 namespace UserIam {

@@ -24,8 +24,9 @@
 #include "iam_ptr.h"
 #include "nlohmann/json.hpp"
 
-#define LOG_FILE_ID LOG_FILE_CONTEXT_CALLBACK_IMPL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_CONTEXT_CALLBACK_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
