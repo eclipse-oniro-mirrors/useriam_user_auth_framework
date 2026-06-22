@@ -29,6 +29,7 @@
 #include "iam_executor_framework_types.h"
 
 #define LOG_TAG "USER_AUTH_EXECUTOR"
+#define LOG_FILE_ID LOG_FILE_ASYNC_COMMAND_BASE
 
 namespace OHOS {
 namespace UserIam {

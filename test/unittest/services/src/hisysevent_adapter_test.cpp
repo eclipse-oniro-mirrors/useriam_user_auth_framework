@@ -20,11 +20,8 @@
 #include <cinttypes>
 
 #include "hisysevent.h"
-#include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_time.h"
-
-#define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {
 namespace UserIam {

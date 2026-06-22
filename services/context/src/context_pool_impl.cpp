@@ -29,6 +29,7 @@
 #include "system_ability_listener.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_CONTEXT_POOL_IMPL
 
 namespace OHOS {
 namespace UserIam {

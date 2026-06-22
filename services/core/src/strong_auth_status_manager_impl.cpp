@@ -26,6 +26,7 @@
 
 #include "context_appstate_observer.h"
 #include "hisysevent_adapter.h"
+#include "iam_logger.h"
 #include "ipc_common.h"
 #include "resource_node_pool.h"
 #include "risk_event_manager.h"
@@ -34,6 +35,8 @@
 #include "user_auth_service.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_STRONG_AUTH_STATUS_MANAGER_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

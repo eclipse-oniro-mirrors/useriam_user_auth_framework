@@ -26,6 +26,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_AUTH_EXECUTOR"
+#define LOG_FILE_ID LOG_FILE_EXECUTOR
 
 namespace OHOS {
 namespace UserIam {

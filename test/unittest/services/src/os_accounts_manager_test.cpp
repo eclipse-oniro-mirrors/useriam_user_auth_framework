@@ -17,10 +17,7 @@
 
 #include "os_accounts_manager.h"
 
-#include "iam_logger.h"
 #include "securec.h"
-
-#define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {
 namespace UserIam {

@@ -197,9 +197,7 @@ HWTEST_F(SoftBusServerSocketTest, SoftBusServerSocketTestOnBind01, TestSize.Leve
     socketId = 1;
     const int len = 6;
     std::string networkIdName = "Hello";
-    if (memcpy_s(info.networkId, len, networkIdName.c_str(), networkIdName.size()) != EOK) {
-        IAM_LOGE("memcpy_s networkId failed");;
-    }
+    (void)memcpy_s(info.networkId, len, networkIdName.c_str(), networkIdName.size());
     EXPECT_NO_THROW(serverSocket->OnBind(socketId, info));
     delete serverSocket;
 }

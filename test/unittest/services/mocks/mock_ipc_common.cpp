@@ -20,6 +20,7 @@
 #include "os_account_manager.h"
 #endif // HAS_OS_ACCOUNT_PART
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_IPC_COMMON
 
 namespace {
     const uint32_t TEST_USER_ID = 548781;

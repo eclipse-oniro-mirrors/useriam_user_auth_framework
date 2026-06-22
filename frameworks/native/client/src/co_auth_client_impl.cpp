@@ -23,6 +23,7 @@
 #include "ipc_client_utils.h"
 
 #define LOG_TAG "EXECUTOR_MGR_SDK"
+#define LOG_FILE_ID LOG_FILE_CO_AUTH_CLIENT_IMPL
 
 namespace OHOS {
 namespace UserIam {

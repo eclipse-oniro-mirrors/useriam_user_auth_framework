@@ -24,6 +24,8 @@
 #include "widget_json.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_BASE_CONTEXT
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

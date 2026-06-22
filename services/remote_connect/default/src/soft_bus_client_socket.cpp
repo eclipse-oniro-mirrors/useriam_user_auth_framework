@@ -15,6 +15,7 @@
 
 #include "soft_bus_client_socket.h"
 
+#include "iam_logger.h"
 #include "relative_timer.h"
 #include "remote_connect_listener_manager.h"
 #include "remote_connect_manager.h"
@@ -22,6 +23,8 @@
 #include "thread_handler_manager.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SOFT_BUS_CLIENT_SOCKET
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

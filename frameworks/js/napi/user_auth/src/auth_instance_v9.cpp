@@ -25,6 +25,7 @@
 #include "user_auth_client_impl.h"
 
 #define LOG_TAG "USER_AUTH_NAPI"
+#define LOG_FILE_ID LOG_FILE_AUTH_INSTANCE_V9
 
 namespace OHOS {
 namespace UserIam {

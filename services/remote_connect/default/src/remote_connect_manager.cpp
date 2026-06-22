@@ -22,6 +22,8 @@
 #include "device_manager.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_REMOTE_CONNECT_MANAGER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

@@ -19,8 +19,9 @@
 #include "event_listener_manager.h"
 #include "iam_logger.h"
 
-#ifndef LOG_LABEL
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_PUBLISH_EVENT_ADAPTER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
@@ -146,4 +147,3 @@ void PublishEventAdapter::PublishCredentialUpdatedEvent(int32_t userId, int32_t 
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
-#endif

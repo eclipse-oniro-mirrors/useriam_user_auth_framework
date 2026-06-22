@@ -19,7 +19,6 @@
 
 #include "callback_manager.h"
 #include "iam_check.h"
-#include "iam_logger.h"
 #include "iam_ptr.h"
 #include "user_auth_client_impl.h"
 

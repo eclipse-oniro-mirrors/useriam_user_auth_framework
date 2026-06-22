@@ -28,6 +28,7 @@ using namespace OHOS::UserIam::Common;
 using namespace OHOS::UserIam::UserAuth;
 
 #define LOG_TAG "USER_AUTH_EXECUTOR_TEST"
+#define LOG_FILE_ID LOG_FILE_IAUTH_EXECUTOR_HDI
 
 namespace OHOS {
 namespace UserIam {

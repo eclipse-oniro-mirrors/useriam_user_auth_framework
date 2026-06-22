@@ -20,6 +20,9 @@
 #include "remote_connect_manager.h"
 #include "remote_msg_util.h"
 
+#define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_REMOTE_IAM_CALLBACK
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

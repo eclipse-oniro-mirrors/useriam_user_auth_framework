@@ -22,6 +22,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_EXECUTOR_MESSENGER_SERVICE
 
 namespace OHOS {
 namespace UserIam {

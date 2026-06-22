@@ -30,10 +30,8 @@
 
 #undef private
 
-#ifdef LOG_LABEL
-#undef LOG_LABEL
-#endif
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_SERVICE
 
 using namespace std;
 using namespace OHOS::UserIam::Common;

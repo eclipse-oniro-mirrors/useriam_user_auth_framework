@@ -35,6 +35,8 @@
 #include "token_setproc.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SOFT_BUS_MANAGER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

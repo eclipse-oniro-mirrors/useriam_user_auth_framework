@@ -23,6 +23,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_AUTH_NAPI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_WIDGET_CALLBACK_V10_NAPI
 
 namespace OHOS {
 namespace UserIam {

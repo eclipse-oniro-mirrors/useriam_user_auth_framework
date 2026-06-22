@@ -32,6 +32,8 @@
 #include "widget_callback_service.h"
 
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_CLIENT_IMPL
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

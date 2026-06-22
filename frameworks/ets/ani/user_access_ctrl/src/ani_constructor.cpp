@@ -18,6 +18,7 @@
 #include "iam_logger.h"
 
 #define LOG_TAG "USER_ACCESS_CTRL_ANI"
+#define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_CONSTRUCTOR
 
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {

@@ -20,6 +20,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "AUTH_EXECUTOR_MGR_SDK"
+#define LOG_FILE_ID LOG_FILE_EXECUTOR_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {

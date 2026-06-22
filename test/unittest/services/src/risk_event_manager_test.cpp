@@ -17,11 +17,8 @@
 
 #include "risk_event_manager.h"
 
-#include "iam_logger.h"
 #include "securec.h"
 #include "mock_iuser_auth_interface.h"
-
-#define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {
 namespace UserIam {

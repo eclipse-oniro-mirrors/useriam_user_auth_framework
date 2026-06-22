@@ -26,6 +26,8 @@
 #include "user_idm_database.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_RISK_EVENT_MANAGER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

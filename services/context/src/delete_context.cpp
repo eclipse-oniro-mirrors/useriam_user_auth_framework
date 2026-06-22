@@ -23,6 +23,7 @@
 #include "schedule_node_callback.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_DELETE_CONTEXT
 
 namespace OHOS {
 namespace UserIam {

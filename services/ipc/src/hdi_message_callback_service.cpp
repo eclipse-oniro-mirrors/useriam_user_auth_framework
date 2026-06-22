@@ -24,6 +24,7 @@
 #include "hdi_wrapper.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_HDI_MESSAGE_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {

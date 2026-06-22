@@ -25,7 +25,6 @@
 #include "device_manager_util.h"
 #include "hdi_wrapper.h"
 #include "iam_check.h"
-#include "iam_logger.h"
 #include "parameter.h"
 #include "resource_node_pool.h"
 
