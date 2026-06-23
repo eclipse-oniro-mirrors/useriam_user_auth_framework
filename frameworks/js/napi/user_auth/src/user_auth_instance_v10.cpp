@@ -32,6 +32,7 @@
 #include "user_auth_param_utils.h"
 
 #define LOG_TAG "USER_AUTH_NAPI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_INSTANCE_V10_NAPI
 
 namespace OHOS {
 namespace UserIam {

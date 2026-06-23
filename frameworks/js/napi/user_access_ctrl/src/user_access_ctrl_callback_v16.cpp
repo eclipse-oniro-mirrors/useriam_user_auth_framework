@@ -24,6 +24,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_ACCESS_CTRL_NAPI"
+#define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_CALLBACK_V16
 
 namespace OHOS {
 namespace UserIam {

@@ -30,6 +30,7 @@
 #include "user_auth_hdi.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_INVOKER_CONTEXT
 
 namespace OHOS {
 namespace UserIam {

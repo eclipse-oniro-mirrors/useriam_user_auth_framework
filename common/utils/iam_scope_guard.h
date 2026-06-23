@@ -19,7 +19,6 @@
 #include <functional>
 #include <string>
 
-#include "iam_logger.h"
 #include "iam_defines.h"
 #include "nocopyable.h"
 

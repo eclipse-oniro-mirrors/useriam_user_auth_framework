@@ -30,6 +30,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_LOAD_MODE_HANDLER_DYNAMIC
 
 namespace OHOS {
 namespace UserIam {

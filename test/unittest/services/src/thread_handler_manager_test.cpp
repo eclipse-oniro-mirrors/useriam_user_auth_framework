@@ -20,12 +20,9 @@
 #include <map>
 
 #include "iam_check.h"
-#include "iam_logger.h"
 #include "iam_ptr.h"
 #include "thread_handler_impl.h"
 #include "thread_handler_singleton_impl.h"
-
-#define LOG_TAG "USER_AUTH_SA"
 
 namespace OHOS {
 namespace UserIam {

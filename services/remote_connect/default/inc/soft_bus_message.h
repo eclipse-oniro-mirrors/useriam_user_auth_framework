@@ -24,10 +24,8 @@
 #include "nocopyable.h"
 #include "attributes.h"
 #include "iam_check.h"
-#include "iam_logger.h"
 #include "iam_ptr.h"
 
-#define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

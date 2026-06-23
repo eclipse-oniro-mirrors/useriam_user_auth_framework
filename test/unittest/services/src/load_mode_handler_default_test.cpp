@@ -21,8 +21,6 @@
 #include "system_param_manager.h"
 #include "user_idm_database_impl.h"
 
-#define LOG_TAG "USER_AUTH_SA"
-
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

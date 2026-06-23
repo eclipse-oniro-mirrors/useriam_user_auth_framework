@@ -13,11 +13,14 @@
  * limitations under the License.
  */
 
+#include "iam_logger.h"
 #include "soft_bus_server_socket.h"
 
 #include "remote_connect_listener_manager.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SOFT_BUS_SERVER_SOCKET
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

@@ -22,6 +22,7 @@
 #include "iservice_registry.h"
 
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_IPC_CLIENT_UTILS
 
 namespace OHOS {
 namespace UserIam {

@@ -15,15 +15,12 @@
 
 #include "gtest/gtest.h"
 
-#include "iam_logger.h"
 #include "iam_ptr.h"
 
 #include "driver_manager.h"
 #include "iam_executor_idriver_manager.h"
 #include "mock_iauth_driver_hdi.h"
 #include "mock_iauth_executor_hdi.h"
-
-#define LOG_TAG "USER_AUTH_EXECUTOR"
 
 using namespace testing;
 using namespace testing::ext;

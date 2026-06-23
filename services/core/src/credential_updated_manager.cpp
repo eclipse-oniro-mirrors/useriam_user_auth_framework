@@ -24,6 +24,7 @@
 #include "user_idm_database_impl.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_CREDENTIAL_UPDATED_MANAGER
 
 namespace OHOS {
 namespace UserIam {

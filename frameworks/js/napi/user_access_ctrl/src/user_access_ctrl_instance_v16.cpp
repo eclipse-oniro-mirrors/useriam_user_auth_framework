@@ -24,6 +24,7 @@
 #include "user_access_ctrl_client_impl.h"
 
 #define LOG_TAG "USER_ACCESS_CTRL_NAPI"
+#define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_INSTANCE_V16
 
 namespace OHOS {
 namespace UserIam {

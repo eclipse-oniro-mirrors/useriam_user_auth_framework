@@ -25,6 +25,7 @@
 #include "system_param_manager.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_DRIVER_LOAD_MANAGER
 
 namespace OHOS {
 namespace UserIam {

@@ -21,6 +21,7 @@
 #include "iam_common_defines.h"
 
 #define LOG_TAG "USER_ACCESS_CTRL_SDK"
+#define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {

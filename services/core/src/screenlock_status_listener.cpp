@@ -22,10 +22,12 @@
 
 #include "context_appstate_observer.h"
 #include "credential_info_interface.h"
+#include "iam_logger.h"
 #include "risk_event_manager.h"
 #include "user_idm_database.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SCREENLOCK_STATUS_LISTENER
 
 namespace OHOS {
 namespace UserIam {

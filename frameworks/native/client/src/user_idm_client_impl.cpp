@@ -27,6 +27,7 @@
 #include "user_idm_callback_service.h"
 
 #define LOG_TAG "USER_IDM_SDK"
+#define LOG_FILE_ID LOG_FILE_USER_IDM_CLIENT_IMPL
 
 namespace OHOS {
 namespace UserIam {

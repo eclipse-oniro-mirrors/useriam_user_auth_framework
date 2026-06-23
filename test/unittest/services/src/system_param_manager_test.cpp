@@ -21,6 +21,7 @@
 #include "securec.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SYSTEM_PARAM_MANAGER
 
 namespace OHOS {
 namespace UserIam {

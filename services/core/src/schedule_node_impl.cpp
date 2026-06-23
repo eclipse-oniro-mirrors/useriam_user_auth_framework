@@ -30,6 +30,7 @@
 #include "schedule_resource_node_listener.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SCHEDULE_NODE_IMPL
 
 namespace OHOS {
 namespace UserIam {

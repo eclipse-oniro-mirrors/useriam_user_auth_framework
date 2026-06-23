@@ -22,6 +22,7 @@
 #include "nocopyable.h"
 
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_CALLBACK_MANAGER_IMPL
 
 namespace OHOS {
 namespace UserIam {

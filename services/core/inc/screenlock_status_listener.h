@@ -23,7 +23,6 @@
 
 #include "iam_check.h"
 #include "iam_common_defines.h"
-#include "iam_logger.h"
 #include "iam_ptr.h"
 #include "system_ability_listener.h"
 

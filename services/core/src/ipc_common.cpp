@@ -29,6 +29,7 @@
 #include "user_auth_hdi.h"
 #endif // HAS_OS_ACCOUNT_PART
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_IPC_COMMON
 
 namespace OHOS {
 namespace UserIam {

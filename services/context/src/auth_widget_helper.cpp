@@ -25,6 +25,7 @@
 #include "widget_client.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_AUTH_WIDGET_HELPER
 
 namespace OHOS {
 namespace UserIam {

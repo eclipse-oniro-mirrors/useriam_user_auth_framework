@@ -18,10 +18,8 @@
 
 #include <string>
 
-#include "iam_logger.h"
 #include "device_manager_callback.h"
 
-#define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

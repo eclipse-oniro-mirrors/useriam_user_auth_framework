@@ -31,6 +31,7 @@
 #include "iam_time.h"
 
 #define LOG_TAG "USER_AUTH_EXECUTOR"
+#define LOG_FILE_ID LOG_FILE_DRIVER_MANAGER
 
 namespace OHOS {
 namespace UserIam {

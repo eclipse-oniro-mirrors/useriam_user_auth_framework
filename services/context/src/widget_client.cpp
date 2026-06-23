@@ -27,6 +27,7 @@
 #include "hisysevent_adapter.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_WIDGET_CLIENT
 
 namespace OHOS {
 namespace UserIam {

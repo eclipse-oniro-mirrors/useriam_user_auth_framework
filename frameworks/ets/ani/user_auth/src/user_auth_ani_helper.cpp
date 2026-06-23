@@ -25,6 +25,7 @@
 #include "auth_common.h"
 
 #define LOG_TAG "USER_AUTH_ANI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_ANI_HELPER
 
 namespace OHOS {
 namespace UserIam {

@@ -17,10 +17,12 @@
 
 #include "iam_logger.h"
 
+#define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_RELATIVE_TIMER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-#define LOG_TAG "USER_AUTH_SA"
 
 RelativeTimer::RelativeTimer() : timer_("iam_relative_timer")
 {

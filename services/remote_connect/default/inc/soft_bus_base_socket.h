@@ -30,13 +30,11 @@
 #include "hisysevent_adapter.h"
 #include "iam_check.h"
 #include "iam_common_defines.h"
-#include "iam_logger.h"
 #include "iam_ptr.h"
 #include "relative_timer.h"
 #include "remote_connect_listener.h"
 #include "soft_bus_message.h"
 
-#define LOG_TAG "USER_AUTH_SA"
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

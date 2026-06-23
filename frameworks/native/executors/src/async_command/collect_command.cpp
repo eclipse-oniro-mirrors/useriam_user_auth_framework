@@ -23,6 +23,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_COLLECT_EXECUTOR"
+#define LOG_FILE_ID LOG_FILE_COLLECT_COMMAND
 
 namespace OHOS {
 namespace UserIam {
