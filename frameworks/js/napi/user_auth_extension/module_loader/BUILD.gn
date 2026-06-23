@@ -49,6 +49,8 @@ ohos_shared_library("user_auth_extension") {
     "ipc:ipc_napi",
     "ipc:ipc_single",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
   ]
 
   configs = [ "../../../../../common:iam_log_config" ]
@@ -86,6 +88,8 @@ ohos_shared_library("user_auth_extension_module") {
     "ipc:ipc_napi",
     "ipc:ipc_single",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
   ]
 
   relative_install_dir = "extensionability/"

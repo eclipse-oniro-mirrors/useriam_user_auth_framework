@@ -47,6 +47,8 @@
         "access_token",
         "os_account",
         "napi",
+        "node",
+        "libuv",
         "hdf_core",
         "hitrace",
         "c_utils",

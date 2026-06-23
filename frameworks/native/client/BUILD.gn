@@ -101,6 +101,8 @@ ohos_shared_library("userauth_client") {
     "ipc:ipc_single",
     "ipc:ipc_single",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
     "samgr:samgr_proxy",
   ]
 

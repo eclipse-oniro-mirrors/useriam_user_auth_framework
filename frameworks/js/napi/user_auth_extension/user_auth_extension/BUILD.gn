@@ -52,7 +52,11 @@ ohos_shared_library("userauthextensionability_napi") {
     ":user_auth_extension_ability_js",
   ]
 
-  external_deps = [ "napi:ace_napi" ]
+  external_deps = [
+    "napi:ace_napi",  
+    "node:node_header_notice",
+    "libuv:uv",
+  ]
 
   relative_install_dir = "module/app/ability"
   subsystem_name = "useriam"
