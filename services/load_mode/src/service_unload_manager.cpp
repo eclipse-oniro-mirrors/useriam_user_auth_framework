@@ -125,13 +125,8 @@ void ServiceUnloadManager::OnStartSaChange(bool startSa)
         return;
     }
 
-    if (startSa && !isPinEnrolled_ && isCredentialChecked_) {
-        IAM_LOGI("start sa and isPinEnrolled is false, start timer");
-        RestartTimer();
-    } else {
-        IAM_LOGI("start sa %{public}d, isPinEnrolled %{public}d, isCredentialChecked %{public}d, not start timer",
-            startSa, isPinEnrolled_, isCredentialChecked_);
-    }
+    IAM_LOGI("start sa manually, start timer");
+    RestartTimer();
 }
 
 void ServiceUnloadManager::RestartTimer()
@@ -163,32 +158,24 @@ void ServiceUnloadManager::OnCredentialCheckedChange(bool isCredentialChecked)
     }
     IAM_LOGI("isCredentialChecked change from %{public}d to %{public}d", isCredentialChecked_, isCredentialChecked);
     isCredentialChecked_ = isCredentialChecked;
-
-    if (isCredentialChecked && !isPinEnrolled_ && startSa_) {
-        IAM_LOGI("isCredentialChecked change to true, start timer");
-        RestartTimer();
-    }
 }
 
 void ServiceUnloadManager::OnFwkReady(bool &isStopSa)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     isStopSa = false;
-    bool isPinEnrolled = SystemParamManager::GetInstance().GetParam(IS_PIN_ENROLLED_KEY, FALSE_STR) == TRUE_STR;
-    if (isPinEnrolled) {
+    isPinEnrolled_ = SystemParamManager::GetInstance().GetParam(IS_PIN_ENROLLED_KEY, FALSE_STR) == TRUE_STR;
+    if (isPinEnrolled_) {
         IAM_LOGI("fwk ready, isPinEnrolled is true, sa should be running");
         return;
     }
-
-    bool checked = SystemParamManager::GetInstance().GetParam(IS_CREDENTIAL_CHECKED_KEY, FALSE_STR) == TRUE_STR;
-    OnCredentialCheckedChange(checked);
 
     if (timerId_ != std::nullopt) {
         IAM_LOGI("fwk ready, timer is running, wait timer timeout");
         return;
     }
 
-    IAM_LOGI("fwk ready, timer is not running and isPinEnrolled is false, stop sa");
+    IAM_LOGI("fwk ready, no pin and not manual start, stop sa");
     SystemParamManager::GetInstance().SetParamTwice(STOP_SA_KEY, FALSE_STR, TRUE_STR);
     isStopSa = true;
 }
