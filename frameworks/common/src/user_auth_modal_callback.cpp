@@ -32,6 +32,7 @@ namespace UserIam {
 namespace UserAuth {
 UserAuthModalCallback::UserAuthModalCallback(const std::shared_ptr<AbilityRuntime::Context> context) : context_(context)
 {}
+
 UserAuthModalCallback::UserAuthModalCallback(const sptr<OHOS::Rosen::Window> window) : window_(window)
 {}
 

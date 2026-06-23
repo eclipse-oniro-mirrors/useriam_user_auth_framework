@@ -867,8 +867,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_024, TestSize.Level0)
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
     ON_CALL(*mockHdi, GetValidSolution)
         .WillByDefault(
-            [](int32_t userId, const std::vector<int32_t>& authTypes, uint32_t authTrustLevel,
-            std::vector<int32_t>& validTypes) {
+            [](int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
+            std::vector<int32_t> &validTypes) {
                 validTypes.clear();
                 return HDF_ERR_INVALID_PARAM;
             }
@@ -900,8 +900,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_025, TestSize.Level0)
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
     ON_CALL(*mockHdi, GetValidSolution)
         .WillByDefault(
-            [](int32_t userId, const std::vector<int32_t>& authTypes, uint32_t authTrustLevel,
-            std::vector<int32_t>& validTypes) {
+            [](int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
+            std::vector<int32_t> &validTypes) {
                 return PIN_EXPIRED;
             }
         );
@@ -933,8 +933,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_026, TestSize.Level0)
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
     ON_CALL(*mockHdi, GetValidSolution)
         .WillByDefault(
-            [](int32_t userId, const std::vector<int32_t>& authTypes, uint32_t authTrustLevel,
-            std::vector<int32_t>& validTypes) {
+            [](int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
+            std::vector<int32_t> &validTypes) {
                 validTypes.clear();
                 validTypes.push_back(AuthType::FACE);
                 return HDF_SUCCESS;
@@ -968,8 +968,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_027, TestSize.Level0)
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
     ON_CALL(*mockHdi, GetValidSolution)
         .WillByDefault(
-            [](int32_t userId, const std::vector<int32_t>& authTypes, uint32_t authTrustLevel,
-            std::vector<int32_t>& validTypes) {
+            [](int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
+            std::vector<int32_t> &validTypes) {
                 validTypes.clear();
                 validTypes.push_back(AuthType::FINGERPRINT);
                 return HDF_SUCCESS;
@@ -1003,8 +1003,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_028, TestSize.Level0)
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
     ON_CALL(*mockHdi, GetValidSolution)
         .WillByDefault(
-            [](int32_t userId, const std::vector<int32_t>& authTypes, uint32_t authTrustLevel,
-            std::vector<int32_t>& validTypes) {
+            [](int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
+            std::vector<int32_t> &validTypes) {
                 validTypes.clear();
                 validTypes.push_back(AuthType::PIN);
                 return HDF_SUCCESS;
@@ -1039,8 +1039,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_029, TestSize.Level0)
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
     ON_CALL(*mockHdi, GetValidSolution)
         .WillByDefault(
-            [](int32_t userId, const std::vector<int32_t>& authTypes, uint32_t authTrustLevel,
-            std::vector<int32_t>& validTypes) {
+            [](int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
+            std::vector<int32_t> &validTypes) {
                 validTypes.clear();
                 validTypes.push_back(AuthType::PIN);
                 return HDF_SUCCESS;
@@ -1075,8 +1075,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_030, TestSize.Level0)
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
     ON_CALL(*mockHdi, GetValidSolution)
         .WillByDefault(
-            [](int32_t userId, const std::vector<int32_t>& authTypes, uint32_t authTrustLevel,
-            std::vector<int32_t>& validTypes) {
+            [](int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
+            std::vector<int32_t> &validTypes) {
                 validTypes.clear();
                 validTypes.push_back(AuthType::PIN);
                 return HDF_SUCCESS;
@@ -1265,8 +1265,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_CompanionDeviceHdiFail_0
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _)).Times(1);
     ON_CALL(*mockHdi, GetValidSolution)
         .WillByDefault(
-            [](int32_t userId, const std::vector<int32_t>& authTypes, uint32_t authTrustLevel,
-            std::vector<int32_t>& validTypes) {
+            [](int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
+            std::vector<int32_t> &validTypes) {
                 validTypes.clear();
                 validTypes.push_back(AuthType::COMPANION_DEVICE);
                 return HDF_FAILURE;

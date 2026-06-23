@@ -35,12 +35,12 @@ ModalExtensionCallback::ModalExtensionCallback()
 ModalExtensionCallback::~ModalExtensionCallback()
 {}
 
-void ModalExtensionCallback::OnResult(int32_t code, const AAFwk::Want& result)
+void ModalExtensionCallback::OnResult(int32_t code, const AAFwk::Want &result)
 {
     IAM_LOGI("OnResult, code: %{public}d", code);
 }
 
-void ModalExtensionCallback::OnReceive(const AAFwk::WantParams& receive)
+void ModalExtensionCallback::OnReceive(const AAFwk::WantParams &receive)
 {
     IAM_LOGI("OnReceive");
 }
@@ -55,7 +55,7 @@ void ModalExtensionCallback::OnRelease(int32_t code)
     ReleaseOrErrorHandle(code);
 }
 
-void ModalExtensionCallback::OnError(int32_t code, const std::string& name, const std::string& message)
+void ModalExtensionCallback::OnError(int32_t code, const std::string &name, const std::string &message)
 {
     IAM_LOGE("OnError, name:  %{public}s, message:  %{public}s", name.c_str(), message.c_str());
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -63,7 +63,7 @@ void ModalExtensionCallback::OnError(int32_t code, const std::string& name, cons
     ReleaseOrErrorHandle(code);
 }
 
-void ModalExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy>& uiProxy)
+void ModalExtensionCallback::OnRemoteReady(const std::shared_ptr<Ace::ModalUIExtensionProxy> &uiProxy)
 {
     IAM_LOGI("OnRemoteReady");
 }
@@ -105,7 +105,7 @@ void ModalExtensionCallback::ReleaseOrErrorHandle(int32_t code)
     IAM_LOGI("ReleaseOrErrorHandle start, code: %{public}d", code);
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (abilityContext_ != nullptr) {
-        Ace::UIContent* uiContent = abilityContext_->GetUIContent();
+        Ace::UIContent *uiContent = abilityContext_->GetUIContent();
         if (uiContent == nullptr) {
             IAM_LOGE("uiContent is null");
             return;
@@ -113,7 +113,7 @@ void ModalExtensionCallback::ReleaseOrErrorHandle(int32_t code)
         uiContent->CloseModalUIExtension(sessionId_);
     }
     if (uiHolderContext_ != nullptr) {
-        Ace::UIContent* uiContent = uiHolderContext_->GetUIContent();
+        Ace::UIContent *uiContent = uiHolderContext_->GetUIContent();
         if (uiContent == nullptr) {
             IAM_LOGE("uiContent is null");
             return;
@@ -121,7 +121,7 @@ void ModalExtensionCallback::ReleaseOrErrorHandle(int32_t code)
         uiContent->CloseModalUIExtension(sessionId_);
     }
     if (window_ != nullptr) {
-        Ace::UIContent* uiContent = window_->GetUIContent();
+        Ace::UIContent *uiContent = window_->GetUIContent();
         if (uiContent == nullptr) {
             IAM_LOGE("uiContent is null");
             return;
@@ -145,6 +145,7 @@ void ModalExtensionCallback::CancelAuthentication()
     int32_t code = UserAuthNapiClientImpl::Instance().CancelAuthentication(contextId_, CancelReason::MODAL_RUN_ERROR);
     IAM_LOGI("CancelAuthentication, code: %{public}d", code);
 }
+
 void ModalExtensionCallback::SetWindow(sptr<OHOS::Rosen::Window> window)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);

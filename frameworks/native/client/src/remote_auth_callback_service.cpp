@@ -23,6 +23,7 @@
 #include "user_auth_client_callback.h"
 
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {
@@ -45,10 +46,11 @@ RemoteAuthCallbackService::~RemoteAuthCallbackService()
 }
 
 int32_t RemoteAuthCallbackService::OnGetRemoteAuthWidgetParam(const std::vector<uint8_t> &challenge,
-    const sptr<ISetWidgetParamCallback>& setWidgetParamCallback)
+    const sptr<ISetWidgetParamCallback> &setWidgetParamCallback)
 {
     IAM_LOGI("start");
     if (callback_ == nullptr) {
+        IAM_LOGE("callback is nullptr");
         return GENERAL_ERROR;
     }
 
@@ -62,6 +64,7 @@ int32_t RemoteAuthCallbackService::OnRemoteAuthResult(const std::vector<uint8_t>
 {
     IAM_LOGI("start");
     if (callback_ == nullptr) {
+        IAM_LOGE("callback is nullptr");
         return GENERAL_ERROR;
     }
     Attributes attribute(extraInfo);

@@ -67,7 +67,7 @@ UserAuthResultCode UserAuthInstanceV10::Init(
         return errCode;
     }
 
-    errCode = UserAuthParamUtils::InitWidgetParam(widgetParam, widgetParam_, context_);
+    errCode = UserAuthParamUtils::InitWidgetParam(widgetParam, widgetParam_, context_, window_);
     if (errCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("WidgetParam type error, errorCode: %{public}d", errCode);
         return errCode;

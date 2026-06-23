@@ -67,6 +67,8 @@ taihe_shared_library("userauth_ani") {
     "hilog:libhilog",
     "ipc:ipc_single",
     "runtime_core:ani",
+    "window_manager:window_native_kit",
+    "window_manager:windowstageani_kit",
   ]
 
   sanitize = {

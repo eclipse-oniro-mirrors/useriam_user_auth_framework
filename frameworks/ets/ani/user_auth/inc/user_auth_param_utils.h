@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2026-2026 Huawei Device Co., Ltd.
+* Copyright (c) 2026 Huawei Device Co., Ltd.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -37,7 +37,8 @@ class UserAuthParamUtils : public NoCopyable {
 public:
     static UserAuthResultCode InitAuthParam(userAuth::AuthParam const &authParam, AuthParamInner &authParamInner);
     static UserAuthResultCode InitWidgetParam(userAuth::WidgetParam const &widgetParam,
-        WidgetParamNapi &widgetParamNapi, std::shared_ptr<AbilityRuntime::Context> &abilityContext);
+        WidgetParamNapi &widgetParamNapi, std::shared_ptr<AbilityRuntime::Context> &abilityContext,
+        sptr<OHOS::Rosen::Window> &window);
 
 private:
     static UserAuthResultCode InitAuthType(userAuth::AuthParam const &authParam, AuthParamInner &authParamInner);
@@ -56,6 +57,8 @@ private:
         WidgetParamNapi &widgetParamNapi);
     static UserAuthResultCode InitContext(userAuth::WidgetParam const &widgetParam,
         WidgetParamNapi &widgetParamNapi, std::shared_ptr<AbilityRuntime::Context> &abilityContext);
+    static UserAuthResultCode InitWindow(userAuth::WidgetParam const &widgetParam,
+        WidgetParamNapi &widgetParamNapi, sptr<OHOS::Rosen::Window> &window);
     static bool CheckUIContext(const std::shared_ptr<OHOS::AbilityRuntime::Context> context);
 };
 } // namespace UserAuth

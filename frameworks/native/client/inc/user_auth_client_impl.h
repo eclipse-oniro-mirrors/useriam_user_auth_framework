@@ -33,7 +33,7 @@ namespace UserIam {
 namespace UserAuth {
 class UserAuthClientImpl final : public UserAuthClient, NoCopyable {
 public:
-    static UserAuthClientImpl& Instance();
+    static UserAuthClientImpl &Instance();
     int32_t GetAvailableStatus(AuthType authType, AuthTrustLevel authTrustLevel);
     int32_t GetNorthAvailableStatus(int32_t apiVersion, AuthType authType, AuthTrustLevel authTrustLevel);
     int32_t GetAvailableStatus(int32_t userId, AuthType authType, AuthTrustLevel authTrustLevel) override;

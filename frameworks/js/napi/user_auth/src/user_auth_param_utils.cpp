@@ -51,7 +51,7 @@ namespace {
     const std::string WIDGET_PARAM_NAVIBTNTEXT = "navigationButtonText";
     const std::string WIDGET_PARAM_WINDOWMODE = "windowMode";
     const std::string WIDGET_PARAM_CONTEXT = "uiContext";
-    const std::string WIDGET_PARAM_WINDOW = "window";
+    const std::string WIDGET_PARAM_WINDOW = "appWindow";
     const std::string NOTICETYPE = "noticeType";
     const std::string REUSEMODE = "reuseMode";
     const std::string REUSEDURATION = "reuseDuration";
@@ -211,7 +211,7 @@ UserAuthResultCode UserAuthParamUtils::InitUserId(napi_env env, napi_value value
     IAM_LOGI("InitUserId userId: %{public}d", authParam.userId);
     return UserAuthResultCode::SUCCESS;
 }
- 
+
 UserAuthResultCode UserAuthParamUtils::ProcessAuthTrustLevelAndUserId(napi_env env, napi_value value,
     AuthParamInner &authParam)
 {
@@ -226,7 +226,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessAuthTrustLevelAndUserId(napi_env e
         IAM_LOGE("InitAuthTrustLevel fail:%{public}d", errorCode);
         return errorCode;
     }
- 
+
     if (UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_USER_ID)) {
         napi_value napi_userId = UserAuthNapiHelper::GetNamedProperty(env, value, AUTH_PARAM_USER_ID);
         errorCode = InitUserId(env, napi_userId, authParam);
@@ -404,7 +404,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessWindow(napi_env env, napi_value va
         return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
     }
 
-    OHOS::Rosen::JsWindow* nativeWindow = nullptr;
+    OHOS::Rosen::JsWindow *nativeWindow = nullptr;
     ret = napi_unwrap(env, napi_window, reinterpret_cast<void**>(&nativeWindow));
     if (ret != napi_ok || nativeWindow == nullptr) {
         IAM_LOGE("unwrap window fail: %{public}d", ret);

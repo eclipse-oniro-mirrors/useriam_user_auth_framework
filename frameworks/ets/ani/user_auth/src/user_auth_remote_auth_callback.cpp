@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026-2026 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,7 @@
 #include "user_auth_ani_helper.h"
 
 #define LOG_TAG "USER_AUTH_ANI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_REMOTE_AUTH_CALLBACK_ANI
 
 namespace OHOS {
 namespace UserIam {
@@ -111,7 +112,7 @@ void RemoteAuthCallback::OnGetRemoteAuthWidgetParam(const std::vector<uint8_t> &
         IAM_LOGE("callback is null");
         return;
     }
-    
+
     userAuth::WidgetParam widgetParam = {};
     bool ret = DoGetRemoteAuthWidgetParam(challenge, widgetParam);
     if (!ret) {
@@ -120,12 +121,14 @@ void RemoteAuthCallback::OnGetRemoteAuthWidgetParam(const std::vector<uint8_t> &
     }
 
     std::shared_ptr<AbilityRuntime::Context> context = nullptr;
+    sptr<OHOS::Rosen::Window> window = nullptr;
+    std::shared_ptr<UserAuthModalCallback> modalCallback = nullptr;
     WidgetParamNapi widgetParamNapi = {};
-    UserAuthParamUtils::InitWidgetParam(widgetParam, widgetParamNapi, context);
-    auto modalCallback = Common::MakeShared<UserAuthModalCallback>(context);
-    if (modalCallback == nullptr) {
-        IAM_LOGE("modalCallback is nullptr");
-        return;
+    UserAuthParamUtils::InitWidgetParam(widgetParam, widgetParamNapi, context, window);
+    if (window != nullptr) {
+        modalCallback = Common::MakeShared<UserAuthModalCallback>(window);
+    } else {
+        modalCallback = Common::MakeShared<UserAuthModalCallback>(context);
     }
     callback->OnSetRemoteAuthWidgetParam(widgetParamNapi, modalCallback);
 }

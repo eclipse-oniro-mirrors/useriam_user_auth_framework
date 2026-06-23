@@ -72,10 +72,11 @@ HWTEST_F(SetWidgetParamCallbackTest, SetWidgetParamCallbackTest002, TestSize.Lev
     testWidgetParam.navigationButtonText = "test navigation";
     testWidgetParam.windowMode = WindowModeType::DIALOG_BOX;
     testWidgetParam.hasContext = false;
-    std::shared_ptr<UserAuthModalClientCallback> testModalCallback = nullptr;
+    auto mockModalCallback = Common::MakeShared<MockUserAuthModalCallback>();
+    EXPECT_NE(mockModalCallback, nullptr);
 
     EXPECT_CALL(*mockCallback, OnSetRemoteAuthWidgetParam(_, _)).Times(1);
-    int32_t result = service->OnSetRemoteAuthWidgetParam(testWidgetParam, testModalCallback);
+    int32_t result = service->OnSetRemoteAuthWidgetParam(testWidgetParam, mockModalCallback);
     EXPECT_EQ(result, SUCCESS);
 }
 

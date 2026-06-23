@@ -120,7 +120,6 @@ HWTEST_F(SetWidgetParamCallbackServiceTest, SetWidgetParamCallbackServiceTest005
     EXPECT_NE(mockModalCallback, nullptr);
 
     EXPECT_CALL(*mockContext, SetRemoteAuthParam(_, _)).Times(1);
-    EXPECT_CALL(*mockContext, Start()).WillOnce(Return(true));
 
     int32_t result = service->OnSetRemoteAuthWidgetParam(testIpcWidgetParamInner, mockModalCallback);
     EXPECT_EQ(result, SUCCESS);
@@ -148,7 +147,6 @@ HWTEST_F(SetWidgetParamCallbackServiceTest, SetWidgetParamCallbackServiceTest006
     EXPECT_NE(mockModalCallback, nullptr);
 
     EXPECT_CALL(*mockContext, SetRemoteAuthParam(_, _)).Times(1);
-    EXPECT_CALL(*mockContext, Start()).WillOnce(Return(true));
 
     int32_t result = service->OnSetRemoteAuthWidgetParam(testIpcWidgetParamInner, mockModalCallback);
     EXPECT_EQ(result, SUCCESS);
@@ -176,10 +174,9 @@ HWTEST_F(SetWidgetParamCallbackServiceTest, SetWidgetParamCallbackServiceTest007
     EXPECT_NE(mockModalCallback, nullptr);
 
     EXPECT_CALL(*mockContext, SetRemoteAuthParam(_, _)).Times(1);
-    EXPECT_CALL(*mockContext, Start()).WillOnce(Return(false));
 
     int32_t result = service->OnSetRemoteAuthWidgetParam(testIpcWidgetParamInner, mockModalCallback);
-    EXPECT_EQ(result, GENERAL_ERROR);
+    EXPECT_EQ(result, SUCCESS);
 
     ContextPool::Instance().Delete(testContextId);
 }

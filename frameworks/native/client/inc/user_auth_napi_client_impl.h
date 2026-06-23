@@ -32,7 +32,7 @@ namespace UserIam {
 namespace UserAuth {
 class UserAuthNapiClientImpl final : public NoCopyable {
 public:
-    static UserAuthNapiClientImpl& Instance();
+    static UserAuthNapiClientImpl &Instance();
     uint64_t BeginWidgetAuth(int32_t apiVersion, const AuthParamInner &authParam, const WidgetParamNapi &widgetParam,
         const std::shared_ptr<AuthenticationCallback> &callback,
         const std::shared_ptr<UserAuthModalClientCallback> &modalCallback);

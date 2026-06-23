@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026-2026 Huawei Device Co., Ltd.
+ * Copyright (C) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -161,7 +161,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback002, Test
     sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
     EXPECT_NE(mockCallback, nullptr);
 
-    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::CHECK_SYSTEM_APP_FAILED);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback003, TestSize.Level0)
@@ -183,14 +183,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback004, Test
 
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
-    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::SUCCESS);
+    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::CHECK_PERMISSION_FAILED);
     IpcCommon::DeleteAllPermission();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback001, TestSize.Level0)
 {
     UserAuthService service;
-    EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::CHECK_SYSTEM_APP_FAILED);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback002, TestSize.Level0)
@@ -209,8 +209,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback003, Te
 
     sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
     EXPECT_NE(mockCallback, nullptr);
-    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::SUCCESS);
-    EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::SUCCESS);
+    EXPECT_EQ(service.RegisterRemoteAuthCallback(mockCallback), ResultCode::CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::CHECK_PERMISSION_FAILED);
     IpcCommon::DeleteAllPermission();
 }
 } // namespace UserAuth

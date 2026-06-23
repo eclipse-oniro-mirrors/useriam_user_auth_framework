@@ -114,8 +114,8 @@ public:
         return 0;
     }
 
-    int32_t GetValidSolution(int32_t userId, const std::vector<int32_t>& authTypes,
-        uint32_t authTrustLevel, std::vector<int32_t>& validTypes)
+    int32_t GetValidSolution(int32_t userId, const std::vector<int32_t> &authTypes,
+        uint32_t authTrustLevel, std::vector<int32_t> &validTypes)
     {
         return 0;
     }
@@ -216,8 +216,8 @@ public:
         return 0;
     }
 
-    int32_t VerifyAuthToken(const std::vector<uint8_t>& tokenIn, uint64_t allowableDuration,
-        HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t>& rootSecret)
+    int32_t VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+        HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret)
     {
         return 0;
     }

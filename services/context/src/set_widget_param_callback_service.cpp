@@ -26,6 +26,7 @@
 #include "context_pool.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SET_WIDGET_PARAM_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {
@@ -37,8 +38,8 @@ SetWidgetParamCallbackService::SetWidgetParamCallbackService(uint64_t contextId)
 SetWidgetParamCallbackService::~SetWidgetParamCallbackService()
 {}
 
-int32_t SetWidgetParamCallbackService::OnSetRemoteAuthWidgetParam(const IpcWidgetParamInner& ipcWidgetParam,
-    const sptr<IModalCallback>& modalCallback)
+int32_t SetWidgetParamCallbackService::OnSetRemoteAuthWidgetParam(const IpcWidgetParamInner &ipcWidgetParam,
+    const sptr<IModalCallback> &modalCallback)
 {
     IAM_LOGI("start");
     auto context = ContextPool::Instance().Select(contextId_).lock();

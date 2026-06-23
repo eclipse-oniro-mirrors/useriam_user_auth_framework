@@ -56,8 +56,8 @@ public:
     MOCK_METHOD1(CancelIdentification, int32_t(uint64_t contextId));
     MOCK_METHOD4(GetAvailableStatus, int32_t(int32_t userId, int32_t authType, uint32_t authTrustLevel,
         int32_t &checkRet));
-    MOCK_METHOD4(GetValidSolution, int32_t(int32_t userId, const std::vector<int32_t>& authTypes,
-        uint32_t authTrustLevel, std::vector<int32_t>& validTypes));
+    MOCK_METHOD4(GetValidSolution, int32_t(int32_t userId, const std::vector<int32_t> &authTypes,
+        uint32_t authTrustLevel, std::vector<int32_t> &validTypes));
     MOCK_METHOD5(BeginIdentification,
         int32_t(uint64_t contextId, int32_t authType, const std::vector<uint8_t> &challenge, uint32_t executorId,
             HdiScheduleInfo &scheduleInfo));
@@ -85,8 +85,8 @@ public:
     MOCK_METHOD1(SetGlobalConfigParam, int32_t(const HdiGlobalConfigParam &param));
     MOCK_METHOD3(GetAuthResultFromMessage, int32_t(
         const std::string &remoteUdid, const std::vector<uint8_t> &message, HdiAuthResultInfo &authResultInfo));
-    MOCK_METHOD4(VerifyAuthToken, int32_t(const std::vector<uint8_t>& tokenIn, uint64_t allowableDuration,
-        HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t>& rootSecret));
+    MOCK_METHOD4(VerifyAuthToken, int32_t(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+        HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret));
     MOCK_METHOD2(GetCredentialById, int32_t(uint64_t credentialId, HdiCredentialInfo &info));
     MOCK_METHOD3(UpdateAbandonResult, int32_t(int32_t userId, const std::vector<uint8_t> &scheduleResult,
         std::vector<HdiCredentialInfo> &infos));

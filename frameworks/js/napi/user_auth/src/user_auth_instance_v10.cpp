@@ -93,7 +93,7 @@ UserAuthResultCode UserAuthInstanceV10::Init(napi_env env, napi_callback_info in
     return UserAuthResultCode::SUCCESS;
 }
 
-std::shared_ptr<JsRefHolder> UserAuthInstanceV10::GetCallback(napi_env env, napi_value value, const char* propertyName)
+std::shared_ptr<JsRefHolder> UserAuthInstanceV10::GetCallback(napi_env env, napi_value value, const char *propertyName)
 {
     napi_status ret = UserAuthNapiHelper::CheckNapiType(env, value, napi_object);
     if (ret != napi_ok) {

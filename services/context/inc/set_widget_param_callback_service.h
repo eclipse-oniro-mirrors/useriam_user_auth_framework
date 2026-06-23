@@ -33,7 +33,7 @@ public:
     ~SetWidgetParamCallbackService() override;
 
     int32_t OnSetRemoteAuthWidgetParam(
-        const IpcWidgetParamInner& ipcWidgetParamInner, const sptr<IModalCallback>& modalCallback) override;
+        const IpcWidgetParamInner &ipcWidgetParamInner, const sptr<IModalCallback> &modalCallback) override;
 
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;

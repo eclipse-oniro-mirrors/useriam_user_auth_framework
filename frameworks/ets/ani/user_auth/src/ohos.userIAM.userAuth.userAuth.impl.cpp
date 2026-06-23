@@ -412,7 +412,7 @@ userAuth::AuthLockState getAuthLockStateSync(UserAuthType authType)
     return authLockState;
 }
 
-void RegisterRemoteAuthCallback(::ohos::userIAM::userAuth::userAuth::IRemoteAuthCallback const& callback)
+void RegisterRemoteAuthCallback(::ohos::userIAM::userAuth::userAuth::IRemoteAuthCallback const &callback)
 {
     IAM_LOGD("begin");
     UserAuth::UserAuthApiEventReporter reporter("RegisterRemoteAuthCallback");

@@ -22,6 +22,8 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_CALLBACK_MANAGER
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
@@ -74,7 +76,7 @@ int32_t RemoteAuthCallbackManager::DelRemoteAuthCallback(uint32_t tokenId)
 
 sptr<IRemoteAuthCallback> RemoteAuthCallbackManager::GetRemoteAuthCallback(uint32_t tokenId)
 {
-    IAM_LOGI("start"); 
+    IAM_LOGI("start");
     std::lock_guard<std::recursive_mutex> guard(mutex_);
     auto iter = callbacks_.find(tokenId);
     if (iter != callbacks_.end()) {

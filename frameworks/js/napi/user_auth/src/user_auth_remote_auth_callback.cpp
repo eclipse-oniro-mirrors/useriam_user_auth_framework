@@ -25,6 +25,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_AUTH_NAPI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_REMOTE_AUTH_CALLBACK_NAPI
 
 namespace OHOS {
 namespace UserIam {

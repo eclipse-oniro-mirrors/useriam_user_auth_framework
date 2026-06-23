@@ -59,6 +59,7 @@ private:
     std::shared_ptr<UserAuthCallbackV10> callback_ = nullptr;
     std::shared_ptr<UserAuthModalCallback> modalCallback_ = nullptr;
     std::shared_ptr<AbilityRuntime::Context> context_ = nullptr;
+    sptr<OHOS::Rosen::Window> window_ = nullptr;
 };
 }  // namespace UserAuth
 }  // namespace UserIam

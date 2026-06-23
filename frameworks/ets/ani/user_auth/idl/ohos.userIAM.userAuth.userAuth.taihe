@@ -15,6 +15,10 @@
  
 @!namespace("@ohos.userIAM.userAuth", "userAuth")
  
+@!sts_inject_into_module("""
+import window from '@ohos.window';
+""")
+
 @!sts_inject("""
 static { loadLibraryWithPermissionCheck("userauth_ani", "@ohos.userIAM.userAuth"); }
 export const MAX_ALLOWABLE_REUSE_DURATION : int = 300000;
@@ -117,6 +121,7 @@ struct WidgetParam {
     navigationButtonText: Optional<String>;
     windowMode: Optional<WindowModeType>;
     uiContext: Optional<@sts_type("Context") Opaque>;
+    appWindow: Optional<@sts_type("window.Window") Opaque>;
 }
  
 struct UserAuthResult {

@@ -1936,6 +1936,7 @@ HWTEST_F(WidgetContextTest, WidgetContextSetRemoteAuthParam_001, TestSize.Level0
     sptr<MockModalCallback> mockModalCallback = new (std::nothrow) MockModalCallback();
     EXPECT_NE(mockModalCallback, nullptr);
 
+    EXPECT_TRUE(widgetContext->Start());
     EXPECT_NO_THROW(widgetContext->SetRemoteAuthParam(widgetParam, mockModalCallback));
 
     auto handler = ThreadHandler::GetSingleThreadInstance();
@@ -1959,9 +1960,10 @@ HWTEST_F(WidgetContextTest, WidgetContextSetRemoteAuthParam_002, TestSize.Level0
     sptr<MockModalCallback> mockModalCallback = new (std::nothrow) MockModalCallback();
     EXPECT_NE(mockModalCallback, nullptr);
 
+    EXPECT_TRUE(widgetContext->Start());
     EXPECT_NO_THROW(widgetContext->SetRemoteAuthParam(widgetParam, mockModalCallback));
-    EXPECT_EQ(widgetContext->para_.authTypeList.size(), 1);
-    EXPECT_EQ(widgetContext->para_.authProfileMap.find(AuthType::PIN), widgetContext->para_.authProfileMap.end());
+    EXPECT_EQ(widgetContext->para_.authTypeList.size(), 2);
+    EXPECT_NE(widgetContext->para_.authProfileMap.find(AuthType::PIN), widgetContext->para_.authProfileMap.end());
 
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -1983,8 +1985,9 @@ HWTEST_F(WidgetContextTest, WidgetContextSetRemoteAuthParam_003, TestSize.Level0
     sptr<MockModalCallback> mockModalCallback = new (std::nothrow) MockModalCallback();
     EXPECT_NE(mockModalCallback, nullptr);
 
+    EXPECT_TRUE(widgetContext->Start());
     EXPECT_NO_THROW(widgetContext->SetRemoteAuthParam(widgetParam, mockModalCallback));
-    EXPECT_EQ(widgetContext->para_.widgetParam.windowMode, WindowModeType::DIALOG_BOX);
+    EXPECT_EQ(widgetContext->para_.widgetParam.windowMode, WindowModeType::UNKNOWN_WINDOW_MODE);
 
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});

@@ -79,7 +79,7 @@ HWTEST_F(EventListenerManagerTest, EventListenerManagerTestRemoveDeathRecipient_
     EXPECT_CALL(*mockCallbackRemove, AsObject())
         .WillRepeatedly(Return(obj));
     
-    AuthEventListenerManager& authEventListenerManager = AuthEventListenerManager::GetInstance();
+    AuthEventListenerManager &authEventListenerManager = AuthEventListenerManager::GetInstance();
     EXPECT_EQ(authEventListenerManager.RemoveDeathRecipient(mockCallbackRemove), SUCCESS);
 }
 
@@ -96,7 +96,7 @@ HWTEST_F(EventListenerManagerTest, EventListenerManagerTestAddDeathRecipient_001
     EXPECT_CALL(*obj, AddDeathRecipient(_))
         .WillOnce(Return(false));
 
-    AuthEventListenerManager& authEventListenerManager = AuthEventListenerManager::GetInstance();
+    AuthEventListenerManager &authEventListenerManager = AuthEventListenerManager::GetInstance();
     EXPECT_EQ(authEventListenerManager.AddDeathRecipient(&authEventListenerManager, mockCallbackAdd), GENERAL_ERROR);
 }
 
@@ -113,7 +113,7 @@ HWTEST_F(EventListenerManagerTest, EventListenerManagerTestAddDeathRecipient_002
     EXPECT_CALL(*obj, AddDeathRecipient(_))
         .WillRepeatedly(Return(true));
 
-    AuthEventListenerManager& authEventListenerManager = AuthEventListenerManager::GetInstance();
+    AuthEventListenerManager &authEventListenerManager = AuthEventListenerManager::GetInstance();
     EXPECT_EQ(authEventListenerManager.AddDeathRecipient(&authEventListenerManager, mockCallbackAdd), SUCCESS);
     EXPECT_EQ(authEventListenerManager.AddDeathRecipient(&authEventListenerManager, mockCallbackAdd), SUCCESS);
 }
@@ -133,7 +133,7 @@ HWTEST_F(EventListenerManagerTest, EventListenerManagerTestAddDeathRecipient_Sam
     EXPECT_CALL(*obj, AddDeathRecipient(_))
         .Times(0);
 
-    CredChangeEventListenerManager& manager = CredChangeEventListenerManager::GetInstance();
+    CredChangeEventListenerManager &manager = CredChangeEventListenerManager::GetInstance();
     EXPECT_EQ(manager.AddDeathRecipient(&manager, mockCallbackAdd), SUCCESS);
 }
 
@@ -155,7 +155,7 @@ HWTEST_F(EventListenerManagerTest, EventListenerManagerTestRemoveDeathRecipient_
     EXPECT_CALL(*obj, RemoveDeathRecipient(_))
         .Times(0);
 
-    CredChangeEventListenerManager& manager = CredChangeEventListenerManager::GetInstance();
+    CredChangeEventListenerManager &manager = CredChangeEventListenerManager::GetInstance();
     // Register with same process stub
     EXPECT_EQ(manager.AddDeathRecipient(&manager, mockCallback), SUCCESS);
     // Remove should succeed without calling RemoveDeathRecipient
@@ -179,7 +179,7 @@ HWTEST_F(EventListenerManagerTest, EventListenerManagerTestRemoveDeathRecipient_
     EXPECT_CALL(*obj, RemoveDeathRecipient(_))
         .WillOnce(Return(true));
 
-    AuthEventListenerManager& manager = AuthEventListenerManager::GetInstance();
+    AuthEventListenerManager &manager = AuthEventListenerManager::GetInstance();
     // Register with proxy object
     EXPECT_EQ(manager.AddDeathRecipient(&manager, mockCallback), SUCCESS);
     // Remove should call RemoveDeathRecipient
@@ -188,7 +188,7 @@ HWTEST_F(EventListenerManagerTest, EventListenerManagerTestRemoveDeathRecipient_
 
 HWTEST_F(EventListenerManagerTest, OnRemoteDiedTest, TestSize.Level0)
 {
-    AuthEventListenerManager& manager = AuthEventListenerManager::GetInstance();
+    AuthEventListenerManager &manager = AuthEventListenerManager::GetInstance();
     sptr<EventListenerManager::EventListenerDeathRecipient> dr(
         new (std::nothrow)AuthEventListenerManager::EventListenerDeathRecipient(&manager));
     wptr<IRemoteObject> remote = nullptr;

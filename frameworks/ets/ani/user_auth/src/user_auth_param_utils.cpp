@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026-2026 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@
 
 #include "taihe/runtime.hpp"
 #include "ani_base_context.h"
+#include "window.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
 #include "ui_holder_extension_context.h"
@@ -31,7 +32,10 @@
 #include "user_auth_common_defines.h"
 #include "user_auth_helper.h"
 
+#include "foundation/window/window_manager/interfaces/kits/ani/window_runtime/window_stage_ani/include/ani_window.h"
+
 #define LOG_TAG "USER_AUTH_ANI"
+#define LOG_FILE_ID LOG_FILE_USER_AUTH_PARAM_UTILS_ANI
 
 namespace userAuth = ohos::userIAM::userAuth::userAuth;
 
@@ -218,7 +222,8 @@ UserAuthResultCode UserAuthParamUtils::InitCredentialIdList(userAuth::AuthParam 
 }
 
 UserAuthResultCode UserAuthParamUtils::InitWidgetParam(userAuth::WidgetParam const &widgetParam,
-    WidgetParamNapi &widgetParamNapi, std::shared_ptr<AbilityRuntime::Context> &abilityContext)
+    WidgetParamNapi &widgetParamNapi, std::shared_ptr<AbilityRuntime::Context> &abilityContext,
+    sptr<OHOS::Rosen::Window> &window)
 {
     IAM_LOGI("InitWidgetParam start.");
     UserAuthResultCode errorCode = InitTitle(widgetParam, widgetParamNapi);
@@ -239,10 +244,20 @@ UserAuthResultCode UserAuthParamUtils::InitWidgetParam(userAuth::WidgetParam con
         return UserAuthResultCode::OHOS_INVALID_PARAM;
     }
 
-    errorCode = InitContext(widgetParam, widgetParamNapi, abilityContext);
-    if (errorCode != UserAuthResultCode::SUCCESS) {
-        IAM_LOGE("InitContext fail:%{public}d", errorCode);
-        return UserAuthResultCode::OHOS_INVALID_PARAM;
+    if (widgetParam.uiContext.has_value()) {
+        IAM_LOGI("widgetParam has uiContext");
+        errorCode = InitContext(widgetParam, widgetParamNapi, abilityContext);
+        if (errorCode != UserAuthResultCode::SUCCESS) {
+            IAM_LOGE("InitContext fail:%{public}d", errorCode);
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+    } else if (widgetParam.appWindow.has_value()) {
+        IAM_LOGI("widgetParam has window");
+        errorCode = InitWindow(widgetParam, widgetParamNapi, window);
+        if (errorCode != UserAuthResultCode::SUCCESS) {
+            IAM_LOGE("InitWindow fail:%{public}d", errorCode);
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
     }
     return UserAuthResultCode::SUCCESS;
 }
@@ -305,26 +320,40 @@ UserAuthResultCode UserAuthParamUtils::InitContext(userAuth::WidgetParam const &
     WidgetParamNapi &widgetParamNapi, std::shared_ptr<AbilityRuntime::Context> &abilityContext)
 {
     IAM_LOGI("InitContext start.");
-    if (widgetParam.uiContext.has_value()) {
-        IAM_LOGI("widgetParam has uiContext");
-        ani_env *env = taihe::get_env();
-        ani_object uiContext = reinterpret_cast<ani_object>(widgetParam.uiContext.value());
-        ani_boolean stageMode = false;
-        ani_status status = OHOS::AbilityRuntime::IsStageContext(env, uiContext, stageMode);
-        if (status != ANI_OK) {
-            IAM_LOGE("uiContext must be stage mode: %{public}d", status);
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
-        }
-        auto context = OHOS::AbilityRuntime::GetStageModeContext(env, uiContext);
-        if (CheckUIContext(context)) {
-            abilityContext = context;
-            widgetParamNapi.hasContext = true;
-            IAM_LOGI("widgetParam has valid uiContext");
-        } else {
-            // Default as modal system
-            IAM_LOGI("widgetParam has invalid uiContext, not base on valid AbilityContext or UIExtensionContext.");
-        }
+    ani_env *env = taihe::get_env();
+    ani_object uiContext = reinterpret_cast<ani_object>(widgetParam.uiContext.value());
+    ani_boolean stageMode = false;
+    ani_status status = OHOS::AbilityRuntime::IsStageContext(env, uiContext, stageMode);
+    if (status != ANI_OK) {
+        IAM_LOGE("uiContext must be stage mode: %{public}d", status);
+        return UserAuthResultCode::OHOS_INVALID_PARAM;
     }
+    auto context = OHOS::AbilityRuntime::GetStageModeContext(env, uiContext);
+    if (CheckUIContext(context)) {
+        abilityContext = context;
+        widgetParamNapi.hasContext = true;
+        IAM_LOGI("widgetParam has valid uiContext");
+    } else {
+        // Default as modal system
+        IAM_LOGI("widgetParam has invalid uiContext, not base on valid AbilityContext or UIExtensionContext.");
+    }
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::InitWindow(userAuth::WidgetParam const &widgetParam,
+    WidgetParamNapi &widgetParamNapi, sptr<OHOS::Rosen::Window> &window)
+{
+    IAM_LOGI("InitWindow start");
+    ani_env *env = taihe::get_env();
+    OHOS::Rosen::AniWindow *aniWindow = Rosen::AniWindow::GetWindowObjectFromEnv(env,
+        reinterpret_cast<ani_object>(widgetParam.appWindow.value()));
+    if (aniWindow == nullptr) {
+        IAM_LOGE("get window object from env failed");
+        return UserAuthResultCode::FAIL;
+    }
+    window = aniWindow->GetWindow();
+    widgetParamNapi.hasContext = true;
+    IAM_LOGI("widgetParam has valid window");
     return UserAuthResultCode::SUCCESS;
 }
 

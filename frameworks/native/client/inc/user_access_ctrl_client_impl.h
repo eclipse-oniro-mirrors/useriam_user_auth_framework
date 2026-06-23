@@ -28,7 +28,7 @@ namespace UserIam {
 namespace UserAuth {
 class UserAccessCtrlClientImpl final : public UserAccessCtrlClient, NoCopyable {
 public:
-    static UserAccessCtrlClientImpl& Instance();
+    static UserAccessCtrlClientImpl &Instance();
     void VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
         const std::shared_ptr<VerifyTokenCallback> &callback) override;
 private:

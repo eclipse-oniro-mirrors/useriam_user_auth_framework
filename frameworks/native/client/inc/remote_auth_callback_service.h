@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,9 +28,9 @@ class RemoteAuthCallbackService : public RemoteAuthCallbackStub {
 public:
     explicit RemoteAuthCallbackService(const std::shared_ptr<RemoteAuthClientCallback> &impl);
     ~RemoteAuthCallbackService() override;
-    
+
     int32_t OnGetRemoteAuthWidgetParam(
-        const std::vector<uint8_t> &challenge, const sptr<ISetWidgetParamCallback>& setWidgetParamCallback) override;
+        const std::vector<uint8_t> &challenge, const sptr<ISetWidgetParamCallback> &setWidgetParamCallback) override;
     int32_t OnRemoteAuthResult(const std::vector<uint8_t> &challenge, int32_t resultCode,
         const std::vector<uint8_t> &extraInfo) override;
 

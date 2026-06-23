@@ -20,6 +20,8 @@
 #include "modal_callback_service.h"
 
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_SET_WIDGET_PARAM_CALLBACK
+
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

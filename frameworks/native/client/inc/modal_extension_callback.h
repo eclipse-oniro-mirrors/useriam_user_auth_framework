@@ -29,9 +29,9 @@ public:
     ModalExtensionCallback();
     ~ModalExtensionCallback();
     void OnRelease(int32_t code);
-    void OnResult(int32_t code, const OHOS::AAFwk::Want& result);
-    void OnReceive(const OHOS::AAFwk::WantParams& request);
-    void OnError(int32_t code, const std::string& name, const std::string &message);
+    void OnResult(int32_t code, const OHOS::AAFwk::Want &result);
+    void OnReceive(const OHOS::AAFwk::WantParams &request);
+    void OnError(int32_t code, const std::string &name, const std::string &message);
     void OnRemoteReady(const std::shared_ptr<OHOS::Ace::ModalUIExtensionProxy> &uiProxy);
     void OnDestroy();
     void SetSessionId(int32_t sessionId);

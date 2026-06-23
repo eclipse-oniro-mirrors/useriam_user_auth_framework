@@ -42,9 +42,9 @@ class UserAuthCallbackV10 : public AuthenticationCallback,
 public:
     explicit UserAuthCallbackV10();
     ~UserAuthCallbackV10() override;
-    void OnAcquireInfo(int32_t module, uint32_t acquireInfo, const Attributes& extraInfo) override;
-    void OnResult(int32_t result, const Attributes& extraInfo) override;
-    void SetResultCallback(const userAuth::IAuthCallback& resultCallback);
+    void OnAcquireInfo(int32_t module, uint32_t acquireInfo, const Attributes &extraInfo) override;
+    void OnResult(int32_t result, const Attributes &extraInfo) override;
+    void SetResultCallback(const userAuth::IAuthCallback &resultCallback);
     void ClearResultCallback();
     bool HasResultCallback();
     void SetTipCallback(taihe::optional<AuthTipCallback> tipCallback);
@@ -53,7 +53,7 @@ public:
 
 private:
     bool DoResultCallback(
-        int32_t result, const std::vector<uint8_t>& token, int32_t authType, EnrolledState enrolledState);
+        int32_t result, const std::vector<uint8_t> &token, int32_t authType, EnrolledState enrolledState);
     bool DoTipInfoCallBack(int32_t tipType, uint32_t tipCode);
     AuthTipCallbackPtr GetTipCallback();
     std::mutex mutex_;

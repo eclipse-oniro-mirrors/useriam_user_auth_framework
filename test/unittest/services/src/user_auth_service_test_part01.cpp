@@ -1953,15 +1953,15 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolutionTest, TestSize.Le
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
-        .WillOnce([](int32_t userId, const std::vector<int32_t>& authTypes,
-            uint32_t authTrustLevel, std::vector<int32_t>& validTypes) {
+        .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
+            uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.clear();
             validTypes.emplace_back(PIN);
             validTypes.emplace_back(FACE);
             return SUCCESS;
         })
-        .WillRepeatedly([](int32_t userId, const std::vector<int32_t>& authTypes,
-            uint32_t authTrustLevel, std::vector<int32_t>& validTypes) {
+        .WillRepeatedly([](int32_t userId, const std::vector<int32_t> &authTypes,
+            uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.clear();
             validTypes.emplace_back(FINGERPRINT);
             validTypes.emplace_back(FACE);
