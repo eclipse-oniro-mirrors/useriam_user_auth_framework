@@ -37,6 +37,7 @@ ohos_shared_library("userauth") {
 
   sources = [
     "src/auth_instance_v9.cpp",
+    "src/get_auth_lock_state_helper.cpp",
     "src/user_auth_callback_v10.cpp",
     "src/user_auth_callback_v6.cpp",
     "src/user_auth_callback_v8.cpp",
@@ -46,15 +47,14 @@ ohos_shared_library("userauth") {
     "src/user_auth_instance_v10.cpp",
     "src/user_auth_napi_helper.cpp",
     "src/user_auth_param_utils.cpp",
+    "src/user_auth_remote_auth_callback.cpp",
     "src/user_auth_widget_callback_v10.cpp",
     "src/user_auth_widget_mgr_v10.cpp",
-    "src/get_auth_lock_state_helper.cpp",
-    "src/user_auth_remote_auth_callback.cpp",
   ]
 
   deps = [
-    "../../../native/client:userauth_client",
     "../../../common:user_auth_common",
+    "../../../native/client:userauth_client",
   ]
 
   external_deps = [
@@ -74,7 +74,7 @@ ohos_shared_library("userauth") {
     "jsoncpp:jsoncpp",
     "napi:ace_napi",
     "samgr:samgr_proxy",
-    "window_manager:window_native_kit"
+    "window_manager:window_native_kit",
   ]
 
   configs = [

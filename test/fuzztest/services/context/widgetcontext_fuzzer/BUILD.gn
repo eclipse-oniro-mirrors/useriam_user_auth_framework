@@ -102,19 +102,18 @@ ohos_fuzztest("WidgetContextFuzzTest") {
   ]
 
   deps = [
+    "../../../../../frameworks/native/client:userauth_client",
+    "../../../../../frameworks/native/ipc:userauth_service_ipc_fuzzer",
     "../../../common_fuzzer:attributes_fuzzer",
     "../../../common_fuzzer:dfx_fuzzer",
     "../../../common_fuzzer:iam_test_fuzzer",
     "../../../common_fuzzer:iam_utils_fuzzer",
     "../../../common_fuzzer:userauth_service_core_fuzzer",
     "../../../common_fuzzer:userauth_service_remote_connect_fuzzer",
-    "../../../../../frameworks/native/client:userauth_client",
-    "../../../../../frameworks/native/ipc:userauth_service_ipc_fuzzer",
   ]
 
-  configs = [
-    "../../../../../frameworks/native/ipc:userauth_client_ipc_config",
-  ]
+  configs =
+      [ "../../../../../frameworks/native/ipc:userauth_client_ipc_config" ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
@@ -127,8 +126,8 @@ ohos_fuzztest("WidgetContextFuzzTest") {
     "ability_runtime:abilitykit_native",
     "ability_runtime:extension_manager",
     "access_token:libaccesstoken_sdk",
-    "access_token:libtokenid_sdk",
     "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
     "c_utils:utils",
     "config_policy:configpolicy_util",
     "drivers_interface_user_auth:libuser_auth_proxy_4.0",

@@ -64,8 +64,11 @@ ohos_unittest("iam_inner_api_test") {
     "mocks/mock_ipc_client_utils.cpp",
     "src/callback_manager_impl_test.cpp",
     "src/co_auth_client_test.cpp",
+    "src/event_listener_callback_service_test.cpp",
     "src/executor_callback_service_test.cpp",
     "src/executor_messenger_client_test.cpp",
+    "src/remote_auth_callback_service_test.cpp",
+    "src/set_widget_param_callback_test.cpp",
     "src/user_access_ctrl_client_test.cpp",
     "src/user_auth_callback_service_test.cpp",
     "src/user_auth_client_test.cpp",
@@ -73,9 +76,6 @@ ohos_unittest("iam_inner_api_test") {
     "src/user_idm_callback_service_test.cpp",
     "src/user_idm_client_test.cpp",
     "src/widget_callback_service_test.cpp",
-    "src/event_listener_callback_service_test.cpp",
-    "src/remote_auth_callback_service_test.cpp",
-    "src/set_widget_param_callback_test.cpp"
   ]
 
   configs = [

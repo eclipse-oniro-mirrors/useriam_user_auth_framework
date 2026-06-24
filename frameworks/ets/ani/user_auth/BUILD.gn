@@ -37,7 +37,7 @@ ohos_taihe("user_auth_taihe") {
 }
 
 taihe_shared_library("userauth_ani") {
-  include_dirs = [ 
+  include_dirs = [
     "inc",
     "../../../common/inc",
   ]
@@ -48,10 +48,10 @@ taihe_shared_library("userauth_ani") {
     "src/user_auth_ani_helper.cpp",
     "src/user_auth_callback_v10.cpp",
     "src/user_auth_instance_v10.cpp",
-    "src/user_auth_widget_callback_v10.cpp",
-    "src/user_auth_widget_mgr_v10.cpp",
     "src/user_auth_param_utils.cpp",
     "src/user_auth_remote_auth_callback.cpp",
+    "src/user_auth_widget_callback_v10.cpp",
+    "src/user_auth_widget_mgr_v10.cpp",
   ]
   external_deps = [
     "ability_base:want",
@@ -86,8 +86,8 @@ taihe_shared_library("userauth_ani") {
 
   deps = [
     ":user_auth_taihe",
-    "../../../native/client:userauth_client",
     "../../../common:user_auth_common",
+    "../../../native/client:userauth_client",
   ]
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
   taihe_generated_file_path = "$taihe_generated_file_path"

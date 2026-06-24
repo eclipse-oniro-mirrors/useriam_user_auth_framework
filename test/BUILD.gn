@@ -17,10 +17,10 @@ import("//build/test.gni")
 group("iam_unittest") {
   testonly = true
   deps = [
+    "unittest/dynamic:iam_dynamic_test",
     "unittest/executors:iam_executors_test",
     "unittest/inner_api:iam_inner_api_test",
     "unittest/services:iam_services_test",
-    "unittest/dynamic:iam_dynamic_test",
     "unittest/services_core:iam_services_core_test",
   ]
 }

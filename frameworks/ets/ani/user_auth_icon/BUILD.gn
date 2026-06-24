@@ -25,12 +25,8 @@ generate_static_abc("user_auth_icon_ets_abc") {
 }
 
 ohos_copy("copy_user_auth_icon_ets_abc") {
-  sources = [
-    target_out_dir + "/user_auth_icon_ets_abc/modules_static.abc"
-  ]
-  outputs = [
-    target_out_dir + "/user_auth_icon_ets_abc.abc"
-  ]
+  sources = [ target_out_dir + "/user_auth_icon_ets_abc/modules_static.abc" ]
+  outputs = [ target_out_dir + "/user_auth_icon_ets_abc.abc" ]
   deps = [ ":user_auth_icon_ets_abc" ]
 }
 

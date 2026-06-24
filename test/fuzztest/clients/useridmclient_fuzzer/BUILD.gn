@@ -61,11 +61,11 @@ ohos_fuzztest("UserIdmClientFuzzTest") {
   ]
 
   deps = [
+    "../../../../frameworks/native/client:userauth_client",
     "../../../../frameworks/native/ipc:userauth_client_ipc_fuzzer",
     "../../common_fuzzer:attributes_fuzzer",
     "../../common_fuzzer:dfx_fuzzer",
     "../../common_fuzzer:iam_test_fuzzer",
-    "../../../../frameworks/native/client:userauth_client",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]

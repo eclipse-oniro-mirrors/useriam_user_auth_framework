@@ -46,9 +46,7 @@ ohos_fuzztest("SetWidgetParamCallbackServiceFuzzTest") {
     "../../../../common/logs",
   ]
 
-  sources = [
-    "set_widget_param_callback_service_fuzzer.cpp",
-  ]
+  sources = [ "set_widget_param_callback_service_fuzzer.cpp" ]
 
   deps = [
     "../../common_fuzzer:attributes_fuzzer",
@@ -71,6 +69,7 @@ ohos_fuzztest("SetWidgetParamCallbackServiceFuzzTest") {
     "ability_runtime:extensionkit_native",
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
+    "config_policy:configpolicy_util",
     "drivers_interface_user_auth:libuser_auth_proxy_4.0",
     "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "eventhandler:libeventhandler",
@@ -83,7 +82,6 @@ ohos_fuzztest("SetWidgetParamCallbackServiceFuzzTest") {
     "napi:ace_napi",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "config_policy:configpolicy_util",
   ]
 
   subsystem_name = "useriam"

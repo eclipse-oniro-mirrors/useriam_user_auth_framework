@@ -25,7 +25,7 @@ ohos_shared_library("useraccessctrl") {
   branch_protector_ret = "pac_ret"
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
-  include_dirs = [ 
+  include_dirs = [
     "inc",
     "../../../common/inc",
   ]

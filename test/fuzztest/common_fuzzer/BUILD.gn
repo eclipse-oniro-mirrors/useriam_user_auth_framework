@@ -100,9 +100,7 @@ ohos_source_set("userauth_service_base_fuzzer") {
     "samgr:samgr_proxy",
   ]
 
-  deps = [
-    "../common_fuzzer:iam_utils_fuzzer",
-  ]
+  deps = [ "../common_fuzzer:iam_utils_fuzzer" ]
 
   public_configs = [ "../../../services:userauth_services_config" ]
 
@@ -194,25 +192,19 @@ ohos_source_set("userauth_service_core_fuzzer") {
       "screenlock_mgr:screenlock_client",
       "window_manager:libdm_lite",
     ]
-    sources += [
-      "../../../services/core/src/strong_auth_status_manager_impl.cpp",
-    ]
+    sources +=
+        [ "../../../services/core/src/strong_auth_status_manager_impl.cpp" ]
   } else {
-    sources += [
-      "../../../services/core/src/strong_auth_status_manager_mock.cpp",
-    ]
+    sources +=
+        [ "../../../services/core/src/strong_auth_status_manager_mock.cpp" ]
   }
 
   if (has_os_account_part) {
     cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
     external_deps += [ "os_account:os_account_innerkits" ]
-    sources += [
-      "../../../services/core/src/os_accounts_manager_impl.cpp",
-    ]
+    sources += [ "../../../services/core/src/os_accounts_manager_impl.cpp" ]
   } else {
-    sources += [
-      "../../../services/core/src/os_accounts_manager_mock.cpp",
-    ]
+    sources += [ "../../../services/core/src/os_accounts_manager_mock.cpp" ]
   }
 
   public_configs = [ "../../../services:userauth_services_config" ]
@@ -240,7 +232,6 @@ ohos_source_set("userauth_service_context_fuzzer") {
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
   sources = [
-    "../dummy/mock_application_state_observer_stub.cpp",
     "../../../services/context/src/auth_widget_helper.cpp",
     "../../../services/context/src/base_context.cpp",
     "../../../services/context/src/context_appstate_observer.cpp",
@@ -269,13 +260,14 @@ ohos_source_set("userauth_service_context_fuzzer") {
     "../../../services/context/src/widget_json.cpp",
     "../../../services/load_mode/src/load_mode_handler.cpp",
     "../../../services/load_mode/src/load_mode_handler_default.cpp",
+    "../dummy/mock_application_state_observer_stub.cpp",
   ]
 
   deps = [
     "../common_fuzzer:attributes_fuzzer",
     "../common_fuzzer:dfx_fuzzer",
-    "../common_fuzzer:userauth_service_core_fuzzer",
     "../common_fuzzer:iam_utils_fuzzer",
+    "../common_fuzzer:userauth_service_core_fuzzer",
   ]
 
   external_deps = [
@@ -288,6 +280,7 @@ ohos_source_set("userauth_service_context_fuzzer") {
     "ability_runtime:extension_manager",
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
+    "config_policy:configpolicy_util",
     "drivers_interface_user_auth:libuser_auth_proxy_4.0",
     "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "hdf_core:libhdf_utils",
@@ -297,8 +290,7 @@ ohos_source_set("userauth_service_context_fuzzer") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "napi:ace_napi",
-    "config_policy:configpolicy_util",
-    "samgr:samgr_proxy"
+    "samgr:samgr_proxy",
   ]
 
   defines = []
@@ -312,8 +304,7 @@ ohos_source_set("userauth_service_context_fuzzer") {
     external_deps += [ "os_account:os_account_innerkits" ]
   }
 
-  public_configs =
-      [ "../../../services:userauth_services_config" ]
+  public_configs = [ "../../../services:userauth_services_config" ]
 
   configs = [
     "../../../services:userauth_services_config",
@@ -349,8 +340,8 @@ ohos_source_set("userauth_service_remote_connect_fuzzer") {
     ]
 
     external_deps += [
-      "hilog:libhilog",
       "c_utils:utils",
+      "hilog:libhilog",
       "init:libbeget_proxy",
     ]
   } else {
@@ -383,9 +374,7 @@ ohos_source_set("userauth_service_remote_connect_fuzzer") {
     include_dirs += [ "../../../services/remote_connect/default/inc" ]
   }
 
-  public_configs = [
-    "../../../services:userauth_services_config",
-  ]
+  public_configs = [ "../../../services:userauth_services_config" ]
 
   configs = [
     "../../../services:userauth_services_config",
@@ -409,6 +398,8 @@ ohos_source_set("userauth_services_ipc_fuzzer") {
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
   sources = [
+    "../../../frameworks/common/src/user_auth_helper.cpp",
+    "../../../frameworks/native/client/src/remote_auth_callback_service.cpp",
     "../../../services/ipc/src/co_auth_service.cpp",
     "../../../services/ipc/src/executor_messenger_service.cpp",
     "../../../services/ipc/src/hdi_message_callback_service.cpp",
@@ -416,8 +407,6 @@ ohos_source_set("userauth_services_ipc_fuzzer") {
     "../../../services/ipc/src/template_cache_manager.cpp",
     "../../../services/ipc/src/user_auth_service.cpp",
     "../../../services/ipc/src/user_idm_service.cpp",
-    "../../../frameworks/common/src/user_auth_helper.cpp",
-    "../../../frameworks/native/client/src/remote_auth_callback_service.cpp",
     "../dummy/mock_ipc_common.cpp",
   ]
 

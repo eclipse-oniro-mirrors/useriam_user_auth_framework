@@ -202,24 +202,6 @@ bool ReadFileIntoJson(const std::string &filePath, nlohmann::json &jsonBuf)
     return true;
 }
 
-void getDefaultAuthWidgetConfigJson(nlohmann::json &jsonBuf)
-{
-    IAM_LOGI("getDefaultAuthWidgetConfigJson start");
-    std::string authWidgetConfig = R"([{
-        "user_auth_sys_dialog_bundle_name": "com.huawei.hmos.useriam.authwidget",
-        "user_auth_sys_dialog_ability_name": "userAuthUiExtensionAbility",
-        "show_with_level_2_window": ["findnetwork", "app_lock_service"],
-        "follow_caller_window_when_folded": ["LEM-", "PSD-"],
-        "sceneboard_bundle_name": "com.ohos.sceneboard",
-        "sceneboard_ability_name": "com.ohos.sceneboard.systemdialog",
-        "always_support_follow_caller_ui": [""]
-    }])";
-    jsonBuf = nlohmann::json::parse(authWidgetConfig, nullptr, false);
-    if (jsonBuf.is_discarded()) {
-        IAM_LOGE("bad config json");
-    }
-}
-
 bool GetStringArrayFromJson(const nlohmann::json &jsonObject,
     std::vector<std::string> &exemptedBundleInfos,
     const std::string &key)

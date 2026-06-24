@@ -44,7 +44,7 @@ idl_gen_interface("auth_user_ipc_interface") {
     "IVerifyTokenCallback.idl",
     "IWidgetCallback.idl",
     "IRemoteAuthCallback.idl",
-    "ISetWidgetParamCallback.idl"
+    "ISetWidgetParamCallback.idl",
   ]
 
   inputs = [
@@ -61,7 +61,7 @@ idl_gen_interface("auth_user_ipc_interface") {
     "idl/IWidgetCallback.idl",
     "idl/UserAuthTypes.idl",
     "idl/IRemoteAuthCallback.idl",
-    "idl/ISetWidgetParamCallback.idl"
+    "idl/ISetWidgetParamCallback.idl",
   ]
   log_domainid = "0xD002401"
   log_tag = "USER_AUTH_SA"
@@ -110,8 +110,8 @@ ohos_source_set("userauth_client_ipc") {
                             [ "*idm_get_secure_user_info_callback_stub.cpp" ])
   sources += filter_include(output_file_path,
                             [ "*set_widget_param_callback_proxy.cpp" ])
-  sources += filter_include(output_file_path,
-                            [ "*remote_auth_callback_stub.cpp" ])
+  sources +=
+      filter_include(output_file_path, [ "*remote_auth_callback_stub.cpp" ])
   sources += filter_include(output_file_path, [ "*user_auth_types.cpp" ])
 
   configs = [
@@ -178,8 +178,8 @@ ohos_source_set("userauth_service_ipc") {
                             [ "*idm_get_secure_user_info_callback_proxy.cpp" ])
   sources += filter_include(output_file_path,
                             [ "*set_widget_param_callback_stub.cpp" ])
-  sources += filter_include(output_file_path,
-                            [ "*remote_auth_callback_proxy.cpp" ])
+  sources +=
+      filter_include(output_file_path, [ "*remote_auth_callback_proxy.cpp" ])
   sources += filter_include(output_file_path, [ "*user_auth_types.cpp" ])
 
   configs = [
@@ -276,8 +276,8 @@ ohos_source_set("userauth_client_ipc_fuzzer") {
                             [ "*idm_get_secure_user_info_callback_stub.cpp" ])
   sources += filter_include(output_file_path,
                             [ "*set_widget_param_callback_proxy.cpp" ])
-  sources += filter_include(output_file_path,
-                            [ "*remote_auth_callback_stub.cpp" ])
+  sources +=
+      filter_include(output_file_path, [ "*remote_auth_callback_stub.cpp" ])
   sources += filter_include(output_file_path, [ "*user_auth_types.cpp" ])
 
   configs = [
@@ -335,8 +335,8 @@ ohos_source_set("userauth_service_ipc_fuzzer") {
                             [ "*idm_get_secure_user_info_callback_proxy.cpp" ])
   sources += filter_include(output_file_path,
                             [ "*set_widget_param_callback_stub.cpp" ])
-  sources += filter_include(output_file_path,
-                            [ "*remote_auth_callback_proxy.cpp" ])
+  sources +=
+      filter_include(output_file_path, [ "*remote_auth_callback_proxy.cpp" ])
   sources += filter_include(output_file_path, [ "*user_auth_types.cpp" ])
 
   configs = [

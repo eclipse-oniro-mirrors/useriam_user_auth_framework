@@ -38,7 +38,6 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
   ]
 
   sources = [
-    "../../dummy/mock_callback_manager_impl.cpp",
     "../../../../frameworks/native/client/src/auth_message_impl.cpp",
     "../../../../frameworks/native/client/src/co_auth_client_impl.cpp",
     "../../../../frameworks/native/client/src/event_listener_callback_manager.cpp",
@@ -57,15 +56,16 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
     "../../../../frameworks/native/client/src/user_idm_callback_service.cpp",
     "../../../../frameworks/native/client/src/user_idm_client_impl.cpp",
     "../../../../frameworks/native/client/src/widget_callback_service.cpp",
+    "../../dummy/mock_callback_manager_impl.cpp",
     "user_auth_client_fuzzer.cpp",
   ]
 
   deps = [
+    "../../../../frameworks/native/client:userauth_client",
     "../../../../frameworks/native/ipc:userauth_client_ipc_fuzzer",
     "../../common_fuzzer:attributes_fuzzer",
     "../../common_fuzzer:dfx_fuzzer",
     "../../common_fuzzer:iam_test_fuzzer",
-    "../../../../frameworks/native/client:userauth_client",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
