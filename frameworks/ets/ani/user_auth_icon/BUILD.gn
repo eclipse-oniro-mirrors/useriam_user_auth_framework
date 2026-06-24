@@ -38,6 +38,6 @@ ohos_prebuilt_etc("user_auth_icon_ets_abc_etc") {
   deps = [ ":copy_user_auth_icon_ets_abc" ]
 }
 
-group("user_auth_icon_ani"){
-    deps = [":user_auth_icon_ets_abc_etc"]
+group("user_auth_icon_ani") {
+  deps = [ ":user_auth_icon_ets_abc_etc" ]
 }

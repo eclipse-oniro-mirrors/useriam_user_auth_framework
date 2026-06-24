@@ -20,6 +20,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_AUTH_SDK"
+#define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {

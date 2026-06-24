@@ -23,7 +23,7 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-class MockRemoteAuthCallback final : public RemoteAuthCallbackStub {
+class MockRemoteAuthCallback : public RemoteAuthCallbackStub {
 public:
     MOCK_METHOD2(OnGetRemoteAuthWidgetParam, ErrCode(const std::vector<uint8_t> &challenge,
         const sptr<ISetWidgetParamCallback> &setWidgetParamCallback));

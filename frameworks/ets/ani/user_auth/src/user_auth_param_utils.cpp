@@ -32,7 +32,7 @@
 #include "user_auth_common_defines.h"
 #include "user_auth_helper.h"
 
-#include "foundation/window/window_manager/interfaces/kits/ani/window_runtime/window_stage_ani/include/ani_window.h"
+#include "ani_window.h"
 
 #define LOG_TAG "USER_AUTH_ANI"
 #define LOG_FILE_ID LOG_FILE_USER_AUTH_PARAM_UTILS_ANI

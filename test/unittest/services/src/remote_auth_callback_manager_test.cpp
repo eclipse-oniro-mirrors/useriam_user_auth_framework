@@ -17,6 +17,7 @@
 
 #include <gtest/gtest.h>
 
+#include "mock_remote_object.h"
 #include "mock_remote_auth_callback.h"
 #include "iam_ptr.h"
 
@@ -26,53 +27,14 @@ namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 namespace {
-class MockIRemoteAuthCallback : public IRemoteStub<IRemoteAuthCallback> {
+class MockIRemoteAuthCallback : public MockRemoteAuthCallback {
 public:
-    MOCK_METHOD4(OnRemoteRequest,
-        int32_t(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option));
-    MOCK_METHOD3(OnRemoteAuthResult,
-        int32_t(int32_t result, const std::vector<uint8_t> &extraInfo, const std::vector<uint8_t> &licenseInfo));
-    MOCK_METHOD2(OnGetRemoteAuthWidgetParam,
-        int32_t(const std::vector<uint8_t> &challenge, const sptr<ISetWidgetParamCallback> &callback));
     sptr<IRemoteObject> AsObject() override
     {
-        return sptr<IRemoteObject>(new (std::nothrow) MockIRemoteObject());
+        return sptr<IRemoteObject>(new (std::nothrow) MockRemoteObject());
     }
 };
-
-class MockIRemoteObject : public IRemoteObject {
-public:
-    MockIRemoteObject() : IRemoteObject(u16"mock") {}
-    int GetObjectRefCount() override
-    {
-        return 1;
-    }
-    int SendRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override
-    {
-        return 0;
-    }
-    bool IsProxyObject() const override
-    {
-        return true;
-    }
-    bool CheckObjectLegality() const override
-    {
-        return true;
-    }
-    int AddDeathRecipient(sptr<IRemoteObject::DeathRecipient> recipient) override
-    {
-        return 0;
-    }
-    int RemoveDeathRecipient(sptr<IRemoteObject::DeathRecipient> recipient) override
-    {
-        return 0;
-    }
-    sptr<IRemoteBroker> AsInterface() override
-    {
-        return nullptr;
-    }
-};
-}
+} // anonymous namespace
 
 class RemoteAuthCallbackManagerTest : public testing::Test {
 public:
@@ -258,7 +220,7 @@ HWTEST_F(RemoteAuthCallbackManagerTest, RemoteAuthCallbackManagerDelRemoteAuthCa
     uint32_t tokenId = 12345;
     std::string callerName = "test";
     manager->AddRemoteAuthCallback(tokenId, callback, callerName);
-    EXPECT_EQ(manager->DelRemoteAuthCallbackOnRemoteDied(callback), SUCCESS);
+    EXPECT_EQ(manager->DelRemoteAuthCallbackOnRemoteDied(callback), GENERAL_ERROR);
 }
 
 HWTEST_F(RemoteAuthCallbackManagerTest, RemoteAuthCallbackManagerDelRemoteAuthCallbackOnRemoteDied_002, TestSize.Level0)

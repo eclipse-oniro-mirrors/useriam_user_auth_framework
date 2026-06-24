@@ -433,10 +433,10 @@ void RegisterRemoteAuthCallback(::ohos::userIAM::userAuth::userAuth::IRemoteAuth
     reporter.ReportSuccess();
 }
 
-void UnRegisterRemoteAuthCallback()
+void UnregisterRemoteAuthCallback()
 {
     IAM_LOGD("begin");
-    UserAuth::UserAuthApiEventReporter reporter("UnRegisterRemoteAuthCallback");
+    UserAuth::UserAuthApiEventReporter reporter("UnregisterRemoteAuthCallback");
     int32_t result = UserAuth::UserAuthClientImpl::Instance().UnregisterRemoteAuthCallback();
     IAM_LOGI("result = %{public}d", result);
     if (result != UserAuth::SUCCESS) {
@@ -460,4 +460,4 @@ TH_EXPORT_CPP_API_QueryReusableAuthResult(QueryReusableAuthResult);
 TH_EXPORT_CPP_API_GetUserAuthWidgetMgr(GetUserAuthWidgetMgr);
 TH_EXPORT_CPP_API_getAuthLockStateSync(getAuthLockStateSync);
 TH_EXPORT_CPP_API_RegisterRemoteAuthCallback(RegisterRemoteAuthCallback);
-TH_EXPORT_CPP_API_UnRegisterRemoteAuthCallback(UnRegisterRemoteAuthCallback);
+TH_EXPORT_CPP_API_UnregisterRemoteAuthCallback(UnregisterRemoteAuthCallback);

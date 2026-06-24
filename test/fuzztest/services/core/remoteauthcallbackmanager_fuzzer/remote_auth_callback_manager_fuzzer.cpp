@@ -25,9 +25,10 @@
 #include "iam_ptr.h"
 #include "iam_logger.h"
 #include "remote_auth_callback_manager.h"
-#include "i_remote_auth_callback.h"
+#include "iremote_auth_callback.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_CALLBACK_MANAGER
 
 #undef private
 
@@ -39,14 +40,18 @@ namespace UserIam {
 namespace UserAuth {
 namespace {
 
-class DummyIRemoteAuthCallback : public IRemoteStub<IRemoteAuthCallback> {
+class DummyIRemoteAuthCallback : public IRemoteAuthCallback {
 public:
-    MOCK_METHOD4(OnRemoteRequest,
-        int32_t(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option));
-    MOCK_METHOD3(OnRemoteAuthResult,
-        int32_t(int32_t result, const std::vector<uint8_t> &extraInfo, const std::vector<uint8_t> &licenseInfo));
-    MOCK_METHOD2(OnGetRemoteAuthWidgetParam,
-        int32_t(const std::vector<uint8_t> &challenge, const sptr<ISetWidgetParamCallback> &callback));
+    ErrCode OnGetRemoteAuthWidgetParam(const std::vector<uint8_t> &challenge,
+        const sptr<ISetWidgetParamCallback> &setWidgetParamCallback) override
+    {
+        return SUCCESS;
+    }
+    ErrCode OnRemoteAuthResult(const std::vector<uint8_t> &challenge, int32_t resultCode,
+        const std::vector<uint8_t> &extraInfo) override
+    {
+        return SUCCESS;
+    }
     sptr<IRemoteObject> AsObject() override
     {
         sptr<IRemoteObject> tmp(nullptr);

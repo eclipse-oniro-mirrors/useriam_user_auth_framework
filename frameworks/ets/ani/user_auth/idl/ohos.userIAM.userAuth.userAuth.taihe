@@ -12,9 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 @!namespace("@ohos.userIAM.userAuth", "userAuth")
- 
+
 @!sts_inject_into_module("""
 import window from '@ohos.window';
 """)
@@ -24,7 +24,7 @@ static { loadLibraryWithPermissionCheck("userauth_ani", "@ohos.userIAM.userAuth"
 export const MAX_ALLOWABLE_REUSE_DURATION : int = 300000;
 export const PERMANENT_LOCKOUT_DURATION : int = 0x7fffffff;
 """)
- 
+
 enum UserAuthType : i32 {
     PIN = 1,
     FACE = 2,
@@ -32,30 +32,30 @@ enum UserAuthType : i32 {
     PRIVATE_PIN = 16,
     COMPANION_DEVICE = 64
 }
- 
+
 enum AuthTrustLevel : i32 {
     ATL1 = 10000,
     ATL2 = 20000,
     ATL3 = 30000,
     ATL4 = 40000
 }
- 
+
 enum WindowModeType : i32 {
     DIALOG_BOX = 1,
     FULLSCREEN = 2
 }
- 
+
 enum ReuseMode : i32 {
     AUTH_TYPE_RELEVANT = 1,
     AUTH_TYPE_IRRELEVANT = 2,
     CALLER_IRRELEVANT_AUTH_TYPE_RELEVANT = 3,
     CALLER_IRRELEVANT_AUTH_TYPE_IRRELEVANT = 4
 }
- 
+
 enum NoticeType : i32 {
     WIDGET_NOTICE = 1
 }
- 
+
 enum UserAuthResultCode : i32 {
     SUCCESS = 12500000,
     FAIL = 12500001,
@@ -89,7 +89,7 @@ struct AuthTipInfo {
     tipType: UserAuthType;
     tipCode: UserAuthTipCode;
 }
- 
+
 struct EnrolledState {
     credentialDigest: i32;
     credentialCount: i32;
@@ -100,12 +100,12 @@ struct AuthLockState {
     remainingAuthAttempts: i32;
     lockoutDuration: i32;
 }
- 
+
 struct ReuseUnlockResult {
     reuseMode: ReuseMode;
     reuseDuration: i32;
 }
- 
+
 struct AuthParam {
     challenge: @typedarray Array<u8>;
     authType: Array<UserAuthType>;
@@ -115,7 +115,7 @@ struct AuthParam {
     skipLockedBiometricAuth: Optional<bool>;
     credentialIdList: Optional<Array<@typedarray Array<u8>>>;
 }
- 
+
 struct WidgetParam {
     title: String;
     navigationButtonText: Optional<String>;
@@ -123,22 +123,22 @@ struct WidgetParam {
     uiContext: Optional<@sts_type("Context") Opaque>;
     appWindow: Optional<@sts_type("window.Window") Opaque>;
 }
- 
+
 struct UserAuthResult {
     result: i32;
     token: Optional<@typedarray Array<u8>>;
     authType: Optional<UserAuthType>;
     enrolledState: Optional<EnrolledState>;
 }
- 
+
 struct IAuthCallback {
     onResult: (result: UserAuthResult) => void;
 }
- 
+
 struct IAuthWidgetCallback {
     sendCommand: (cmdData: String) => void;
 }
- 
+
 interface UserAuthInstance {
     onResult(callback: IAuthCallback): void;
     offResult(callback: Optional<IAuthCallback>): void;
@@ -147,20 +147,20 @@ interface UserAuthInstance {
     onAuthTip(callback: (authTipInfo: AuthTipInfo) => void): void;
     offAuthTip(callback: Optional<(authTipInfo: AuthTipInfo) => void>): void;
 }
- 
+
 interface UserAuthWidgetMgr {
     onCommand(callback: IAuthWidgetCallback): void;
     offCommand(callback: Optional<IAuthWidgetCallback>): void;
 }
- 
+
 function GetAvailableStatus(authType: UserAuthType, authTrustLevel: AuthTrustLevel): void;
- 
+
 function GetEnrolledState(authType: UserAuthType): EnrolledState;
- 
+
 function GetUserAuthInstance(authParam: AuthParam, widgetParam: WidgetParam): UserAuthInstance;
- 
+
 function SendNotice(noticeType: NoticeType, eventData: String): void;
- 
+
 function GetUserAuthWidgetMgr(version: i32): UserAuthWidgetMgr;
 
 function QueryReusableAuthResult(authParam: AuthParam): @typedarray Array<u8>;
@@ -175,4 +175,4 @@ struct IRemoteAuthCallback {
 
 function RegisterRemoteAuthCallback(callback: IRemoteAuthCallback): void;
 
-function UnRegisterRemoteAuthCallback(): void;
+function UnregisterRemoteAuthCallback(): void;

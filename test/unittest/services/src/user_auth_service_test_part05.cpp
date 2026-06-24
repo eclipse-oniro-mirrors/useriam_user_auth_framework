@@ -191,17 +191,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback001, Te
 {
     UserAuthService service;
     EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::CHECK_SYSTEM_APP_FAILED);
-}
 
-HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback002, TestSize.Level0)
-{
-    UserAuthService service;
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::CHECK_SYSTEM_APP_FAILED);
     IpcCommon::DeleteAllPermission();
 }
 
-HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback003, TestSize.Level0)
+HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback002, TestSize.Level0)
 {
     UserAuthService service;
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);

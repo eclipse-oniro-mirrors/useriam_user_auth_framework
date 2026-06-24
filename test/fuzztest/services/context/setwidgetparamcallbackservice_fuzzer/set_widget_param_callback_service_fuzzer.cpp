@@ -21,6 +21,7 @@
 #include "iam_ptr.h"
 
 #define LOG_TAG "USER_AUTH_SA"
+#define LOG_FILE_ID LOG_FILE_SET_WIDGET_PARAM_CALLBACK_SERVICE
 
 namespace OHOS {
 namespace UserIam {

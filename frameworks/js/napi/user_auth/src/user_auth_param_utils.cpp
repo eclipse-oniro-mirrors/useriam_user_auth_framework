@@ -19,7 +19,7 @@
 #include <cinttypes>
 #include <string>
 
-#include "foundation/window/window_manager/interfaces/kits/napi/window_runtime/window_napi/js_window.h"
+#include "js_window.h"
 #include "window.h"
 #include "napi_base_context.h"
 #include "ui_content.h"

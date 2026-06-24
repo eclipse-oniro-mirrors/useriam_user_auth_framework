@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Huawei Device Co., Ltd.
+# Copyright (c) 2026 Huawei Device Co., Ltd.
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -14,10 +14,10 @@
 import("//build/ohos.gni")
 import("//build/test.gni")
 
-ohos_fuzztest("ContextPoolImplFuzzTest") {
+ohos_fuzztest("RemoteAuthCallbackManagerFuzzTest") {
   branch_protector_ret = "pac_ret"
   module_out_path = "user_auth_framework/user_auth/concurrent"
-  fuzz_config_file = "../contextpoolimpl_fuzzer"
+  fuzz_config_file = "../remoteauthcallbackmanager_fuzzer"
 
   cflags = [
     "-g",
@@ -29,59 +29,43 @@ ohos_fuzztest("ContextPoolImplFuzzTest") {
   ]
 
   include_dirs = [
-    "../../../dummy",
     "../../../../../services/base/inc",
     "../../../../../services/core/inc",
     "../../../../../services/core/src",
     "../../../../../services/context/inc",
-    "../../../../../services/context/src",
     "../../../../../services/ipc/inc",
-    "../../../../../interfaces/inner_api",
-    "../../../../../frameworks/common/dfx/inc",
-    "../../../../../frameworks/native/client/inc",
+    "../../../../../services/remote_connect/inc",
+    "../../../../../services/remote_connect/default/inc",
     "../../../../../frameworks/native/ipc/inc",
+    "../../../../../frameworks/native/common/dfx/inc",
     "../../../../../frameworks/native/ipc/common_defines",
     "../../../../../common/utils",
     "../../../../../common/logs",
   ]
 
-  sources = [ "context_pool_impl_fuzzer.cpp" ]
+  sources = [ "remote_auth_callback_manager_fuzzer.cpp" ]
 
   deps = [
     "../../../common_fuzzer:attributes_fuzzer",
-    "../../../common_fuzzer:dfx_fuzzer",
     "../../../common_fuzzer:iam_test_fuzzer",
-    "../../../common_fuzzer:iam_utils_fuzzer",
-    "../../../common_fuzzer:userauth_service_context_fuzzer",
-    "../../../common_fuzzer:userauth_service_core_fuzzer",
     "../../../common_fuzzer:userauth_services_ipc_fuzzer",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
   external_deps = [
-    "ability_base:base",
-    "ability_base:want",
-    "ability_base:zuri",
     "ability_runtime:ability_connect_callback_stub",
-    "ability_runtime:ability_context_native",
-    "ability_runtime:abilitykit_native",
     "ability_runtime:app_manager",
-    "ability_runtime:extension_manager",
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
     "drivers_interface_user_auth:libuser_auth_proxy_4.0",
     "drivers_interface_user_auth:libuser_auth_proxy_4.1",
-    "eventhandler:libeventhandler",
     "hdf_core:libhdf_utils",
     "hdf_core:libhdi",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "init:libbegetutil",
-    "ipc:ipc_single",
-    "libuv:uv",
-    "napi:ace_napi",
-    "node:node_header_notice",
+    "ipc:ipc_core",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

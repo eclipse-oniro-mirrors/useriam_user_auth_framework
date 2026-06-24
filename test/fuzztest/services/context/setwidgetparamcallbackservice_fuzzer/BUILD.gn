@@ -29,31 +29,30 @@ ohos_fuzztest("SetWidgetParamCallbackServiceFuzzTest") {
   ]
 
   include_dirs = [
-    "../inc",
     "../../../dummy",
-    "../../../../services/base/inc",
-    "../../../../services/core/inc",
-    "../../../../services/core/src",
-    "../../../../services/context/inc",
-    "../../../../services/context/src",
-    "../../../../services/ipc/inc",
-    "../../../../interfaces/inner_api",
-    "../../../../frameworks/common/inc",
-    "../../../../frameworks/native/ipc/inc",
-    "../../../../frameworks/native/ipc/common_defines",
-    "../../../../frameworks/native/client/inc",
-    "../../../../common/utils",
-    "../../../../common/logs",
+    "../../../../../services/base/inc",
+    "../../../../../services/core/inc",
+    "../../../../../services/core/src",
+    "../../../../../services/context/inc",
+    "../../../../../services/context/src",
+    "../../../../../services/ipc/inc",
+    "../../../../../interfaces/inner_api",
+    "../../../../../frameworks/common/inc",
+    "../../../../../frameworks/native/ipc/inc",
+    "../../../../../frameworks/native/ipc/common_defines",
+    "../../../../../frameworks/native/client/inc",
+    "../../../../../common/utils",
+    "../../../../../common/logs",
   ]
 
   sources = [ "set_widget_param_callback_service_fuzzer.cpp" ]
 
   deps = [
-    "../../common_fuzzer:attributes_fuzzer",
-    "../../common_fuzzer:dfx_fuzzer",
-    "../../common_fuzzer:iam_test_fuzzer",
-    "../../common_fuzzer:iam_utils_fuzzer",
-    "../../common_fuzzer:userauth_services_ipc_fuzzer",
+    "../../../common_fuzzer:attributes_fuzzer",
+    "../../../common_fuzzer:dfx_fuzzer",
+    "../../../common_fuzzer:iam_test_fuzzer",
+    "../../../common_fuzzer:iam_utils_fuzzer",
+    "../../../common_fuzzer:userauth_services_ipc_fuzzer",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
@@ -62,6 +61,7 @@ ohos_fuzztest("SetWidgetParamCallbackServiceFuzzTest") {
     "ability_base:base",
     "ability_base:want",
     "ability_base:zuri",
+    "ability_runtime:ability_connect_callback_stub",
     "ability_runtime:ability_context_native",
     "ability_runtime:abilitykit_native",
     "ability_runtime:app_manager",
