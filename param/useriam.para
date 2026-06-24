@@ -17,5 +17,6 @@ useriam.idmSessionInfo=""
 useriam.isCredentialChecked=false
 useriam.isPinFunctionReady=false
 useriam.startSa=false
+useriam.startSaInner=false
 useriam.stopSa=false
 useriam.credUpdated

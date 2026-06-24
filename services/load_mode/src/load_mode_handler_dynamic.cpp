@@ -320,7 +320,7 @@ void LoadModeHandlerDynamic::TriggerAllServiceStart()
     }
 
     IAM_LOGI("trigger all service start");
-    SystemParamManager::GetInstance().SetParamTwice(START_SA_KEY, FALSE_STR, TRUE_STR);
+    SystemParamManager::GetInstance().SetParamTwice(START_SA_INNER_KEY, FALSE_STR, TRUE_STR);
 }
 } // namespace UserAuth
 } // namespace UserIam

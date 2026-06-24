@@ -171,6 +171,8 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
     "ipc:ipc_core",
     "ipc:ipc_single",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

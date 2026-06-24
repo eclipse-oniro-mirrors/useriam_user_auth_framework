@@ -169,6 +169,21 @@ ohos_fuzztest("UserAuthServiceFuzzTest") {
     "napi:ace_napi",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "hicollie:libhicollie",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",
+    "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
+    "ability_base:base",
+    "ability_base:want",
+    "ability_base:zuri",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "config_policy:configpolicy_util",
+    "access_token:libtokenid_sdk",
+    "init:libbeget_proxy",
+    "ipc:ipc_core",
   ]
 
   defines = []

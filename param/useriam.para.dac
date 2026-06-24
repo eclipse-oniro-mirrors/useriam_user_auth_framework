@@ -17,5 +17,6 @@ useriam.idmSessionInfo=useriam:useriam:0755
 useriam.isCredentialChecked=useriam:useriam:0755
 useriam.isPinFunctionReady=useriam:useriam:0755
 useriam.startSa=useriam:useriam:0755
+useriam.startSaInner=useriam:useriam:0755
 useriam.stopSa=useriam:useriam:0755
 useriam.credUpdated=useriam:useriam:0755

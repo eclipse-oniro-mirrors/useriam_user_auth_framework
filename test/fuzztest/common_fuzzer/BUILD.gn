@@ -290,7 +290,10 @@ ohos_source_set("userauth_service_context_fuzzer") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "napi:ace_napi",
-    "samgr:samgr_proxy",
+    "node:node_header_notice",
+    "libuv:uv",
+    "config_policy:configpolicy_util",
+    "samgr:samgr_proxy"
   ]
 
   defines = []
@@ -436,6 +439,8 @@ ohos_source_set("userauth_services_ipc_fuzzer") {
     "init:libbegetutil",
     "ipc:ipc_single",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
