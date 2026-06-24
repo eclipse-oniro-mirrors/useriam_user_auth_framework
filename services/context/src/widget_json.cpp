@@ -93,6 +93,7 @@ const std::string SHWO_WITH_LEVEL_2_WINDOW = "show_with_level_2_window";
 const std::string FOLLOW_CALLER_WINDOW_WHEN_FOLDED = "follow_caller_window_when_folded";
 const std::string SCENEBOARD_BUNDLE_NAME = "sceneboard_bundle_name";
 const std::string SCENEBOARD_ABILITY_NAME = "sceneboard_ability_name";
+const std::string ALWAYS_SUPPORT_FOLLOW_CALLER_UI = "always_support_follow_caller_ui";
 
 const uint32_t DISABLE_ROTATE = 0;
 const uint32_t MAX_ERR_BUF_LEN = 256;
@@ -199,6 +200,24 @@ bool ReadFileIntoJson(const std::string &filePath, nlohmann::json &jsonBuf)
     }
 
     return true;
+}
+
+void getDefaultAuthWidgetConfigJson(nlohmann::json &jsonBuf)
+{
+    IAM_LOGI("getDefaultAuthWidgetConfigJson start");
+    std::string authWidgetConfig = R"([{
+        "user_auth_sys_dialog_bundle_name": "com.huawei.hmos.useriam.authwidget",
+        "user_auth_sys_dialog_ability_name": "userAuthUiExtensionAbility",
+        "show_with_level_2_window": ["findnetwork", "app_lock_service"],
+        "follow_caller_window_when_folded": ["LEM-", "PSD-"],
+        "sceneboard_bundle_name": "com.ohos.sceneboard",
+        "sceneboard_ability_name": "com.ohos.sceneboard.systemdialog",
+        "always_support_follow_caller_ui": [""]
+    }])";
+    jsonBuf = nlohmann::json::parse(authWidgetConfig, nullptr, false);
+    if (jsonBuf.is_discarded()) {
+        IAM_LOGE("bad config json");
+    }
 }
 
 bool GetStringArrayFromJson(const nlohmann::json &jsonObject,
@@ -499,6 +518,16 @@ bool GetFollowCallerList(nlohmann::json &jsonBuf, std::vector<std::string> &proc
 {
     IAM_LOGI("enter");
     if (!GetStringArrayFromJson(jsonBuf, processName, FOLLOW_CALLER_WINDOW_WHEN_FOLDED)) {
+        IAM_LOGE("GetStringArrayFromJson failed");
+        return false;
+    }
+    return true;
+}
+
+bool GetAlwaysSupportFollowCallerUi(nlohmann::json &jsonBuf, std::vector<std::string> &processName)
+{
+    IAM_LOGI("enter");
+    if (!GetStringArrayFromJson(jsonBuf, processName, ALWAYS_SUPPORT_FOLLOW_CALLER_UI)) {
         IAM_LOGE("GetStringArrayFromJson failed");
         return false;
     }

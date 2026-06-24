@@ -517,12 +517,13 @@ int32_t WidgetContext::ConnectExtensionAbility(const AAFwk::Want &want, const st
 bool WidgetContext::IsInFollowCallerList()
 {
     IAM_LOGI("enter");
-    std::string devicecollaboration = "com.huawei.hmos.devicecollaboration";
-    if (devicecollaboration == para_.remoteCallerName) {
-        IAM_LOGI("callerName is from cache, skip follow caller list check");
-        return true;
+    std::vector<std::string> supportCallerUiList;
+    GetAlwaysSupportFollowCallerUi(jsonBuf_, supportCallerUiList);
+    for (auto it = supportCallerUiList.begin(); it != supportCallerUiList.end(); ++it) {
+        if (para_.remoteCallerName == *it) {
+            return true;
+        }
     }
-
 #ifdef SCENE_BOARD_ENABLE
     auto foldStatus = Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
 #else

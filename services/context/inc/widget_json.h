@@ -58,6 +58,7 @@ bool GetProcessName(nlohmann::json &jsonBuf, std::vector<std::string> &processNa
 bool GetFollowCallerList(nlohmann::json &jsonBuf, std::vector<std::string> &processName);
 bool GetSceneboardBundleName(nlohmann::json &jsonBuf, std::string &processName);
 bool GetSceneboardAbilityName(nlohmann::json &jsonBuf, std::string &processName);
+bool GetAlwaysSupportFollowCallerUi(nlohmann::json &jsonBuf, std::vector<std::string> &processName);
 
 // WidgetCommand
 struct WidgetCommand {
