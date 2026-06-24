@@ -160,6 +160,8 @@ ohos_fuzztest("UserAuthServiceFuzzTest") {
     "hitrace:hitrace_meter",
     "init:libbegetutil",
     "napi:ace_napi",
+    "node:node_header_notice",
+    "libuv:uv",
     "ability_base:base",
     "ability_base:want",
     "ability_base:zuri",
