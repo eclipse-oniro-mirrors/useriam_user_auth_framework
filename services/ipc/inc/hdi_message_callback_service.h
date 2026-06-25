@@ -26,7 +26,7 @@ public:
     static sptr<HdiMessageCallbackService> GetInstance();
     void OnHdiConnect();
 
-    int32_t OnMessage(uint64_t scheduleId, int32_t destRole, const std::vector<uint8_t>& msg) override;
+    int32_t OnMessage(uint64_t scheduleId, int32_t destRole, const std::vector<uint8_t> &msg) override;
 private:
     ~HdiMessageCallbackService() override = default;
 };

@@ -34,6 +34,9 @@
         OHOS::UserIam::UserAuth::UserAuthNapiClientImpl::CancelAuthentication*;
         OHOS::UserIam::UserAuth::UserAuthClientImpl::QueryReusableAuthResult*;
         OHOS::UserIam::UserAuth::UserAuthClientImpl::GetAuthLockState*;
+        OHOS::UserIam::UserAuth::UserAuthClientImpl::RegisterRemoteAuthCallback*;
+        OHOS::UserIam::UserAuth::UserAuthClientImpl::UnregisterRemoteAuthCallback*;
+        OHOS::UserIam::UserAuth::SetWidgetParamClientCallback::OnSetRemoteAuthWidgetParam*;
     };
     local:
         *;

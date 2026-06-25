@@ -43,11 +43,11 @@ ohos_fuzztest("SoftBusFuzzTest") {
   sources = [
     "../../../../common/utils/iam_time.cpp",
     "../../../../common/utils/xcollie_helper.cpp",
+    "../../../../services/base/src/thread_handler_impl.cpp",
+    "../../dummy/mock_relative_timer.cpp",
     "../../dummy/mock_socket.cpp",
     "../../dummy/mock_system_ability_listener.cpp",
-    "../../dummy/mock_relative_timer.cpp",
     "../../dummy/mock_thread_handler_manager.cpp",
-    "../../../../services/base/src/thread_handler_impl.cpp",
     "soft_bus_fuzzer.cpp",
   ]
 
@@ -63,26 +63,22 @@ ohos_fuzztest("SoftBusFuzzTest") {
     "ability_runtime:ability_connect_callback_stub",
     "access_token:libtoken_setproc",
     "c_utils:utils",
-    "c_utils:utils",
     "drivers_interface_user_auth:libuser_auth_proxy_4.0",
     "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "eventhandler:libeventhandler",
     "hdf_core:libhdi",
-    "hilog:libhilog",
-    "hilog:libhilog",
     "hicollie:libhicollie",
+    "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_single",
     "safwk:system_ability_fwk",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
     "samgr:samgr_proxy",
   ]
 
   if (!user_auth_framework_enable_dynamic_load) {
     external_deps += [
       "device_manager:devicemanagersdk",
-      "dsoftbus:softbus_client"
+      "dsoftbus:softbus_client",
     ]
   }
 

@@ -24,6 +24,8 @@
 #include "nocopyable.h"
 
 #include "schedule_node.h"
+#include "imodal_callback.h"
+#include "user_auth_common_defines.h"
 
 namespace OHOS {
 namespace UserIam {
@@ -62,6 +64,7 @@ public:
     virtual int32_t GetUserId() const = 0;
     virtual int32_t GetAuthType() const = 0;
     virtual std::string GetCallerName() const = 0;
+    virtual void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) = 0;
 
 protected:
     virtual void SetLatestError(int32_t error) = 0;

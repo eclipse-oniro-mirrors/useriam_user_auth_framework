@@ -78,6 +78,8 @@ public:
     MOCK_CONST_METHOD0(GetUserId, int32_t());
     MOCK_CONST_METHOD0(GetAuthType, int32_t());
     MOCK_CONST_METHOD0(GetCallerName, std::string());
+    MOCK_METHOD2(SetRemoteAuthParam, void(const WidgetParamInner &widgetParam,
+	    const sptr<IModalCallback> &modalCallback));
 
     static std::shared_ptr<Context> CreateWithContextId(uint64_t contextId)
     {

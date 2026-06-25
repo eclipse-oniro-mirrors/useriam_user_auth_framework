@@ -56,7 +56,8 @@ namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 WidgetContext::WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
-    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback)
+    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
+    const sptr<IRemoteAuthCallback> &remoteAuthCallback)
 {
     IAM_LOGD("start.");
 }
@@ -118,6 +119,11 @@ std::string WidgetContext::GetCallerName() const
 {
     IAM_LOGD("start.");
     return std::string();
+}
+
+void WidgetContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback)
+{
+    IAM_LOGD("start.");
 }
 
 int32_t WidgetContext::GetLatestError() const
@@ -203,6 +209,12 @@ void WidgetContext::SendAuthTipInfo(int32_t authType, int32_t tipCode)
 void WidgetContext::ClearSchedule()
 {
     IAM_LOGD("start.");
+}
+
+bool WidgetContext::GetRemoteAuthParam()
+{
+    IAM_LOGD("start.");
+    return true;
 }
 } // namespace UserAuth
 } // namespace UserIam

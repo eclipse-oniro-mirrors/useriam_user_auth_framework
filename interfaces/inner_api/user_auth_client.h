@@ -183,6 +183,22 @@ public:
      * @return Return query result(0:success; other:failed).
      */
     virtual int32_t QueryReusableAuthResult(const WidgetAuthParam &authParam, std::vector<uint8_t> &token) = 0;
+
+    /**
+     * @brief Regist remote auth callback, support repeated registration. Note that you need to listen useriam
+     *        process status, and if the process is restarted abnormally, need to re-register the listener.
+     *
+     * @param remoteAuthCallback Callback of remote auth result.
+     * @return Return regist result(0:success; other:failed).
+     */
+    virtual int32_t RegisterRemoteAuthCallback(const std::shared_ptr<RemoteAuthClientCallback> &remoteAuthCallback) = 0;
+
+    /**
+     * @brief UnRegist remote auth callback.
+     *
+     * @return Return unregist result(0:success; other:failed).
+     */
+    virtual int32_t UnregisterRemoteAuthCallback() = 0;
 };
 } // namespace UserAuth
 } // namespace UserIam

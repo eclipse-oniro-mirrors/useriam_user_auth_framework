@@ -52,6 +52,7 @@ public:
     void SetCallback(std::shared_ptr<WidgetScheduleNodeCallback> callback) override;
     void SendAuthTipInfo(const std::vector<AuthType> &authTypeList, int32_t tipCode) override;
     bool ClearSchedule() override;
+    bool GetRemoteAuthParam() override;
 
 protected:
     void OnStartSchedule(FiniteStateMachine &machine, uint32_t event);
@@ -66,9 +67,16 @@ protected:
     void OnWidgetReloadInit(FiniteStateMachine &machine, uint32_t event);
     void OnFailAuth(FiniteStateMachine &machine, uint32_t event);
     void OnWidgetRelease(FiniteStateMachine &machine, uint32_t event);
+    void OnGetRemoteAuthParam(FiniteStateMachine &machine, uint32_t event);
 
 private:
     std::shared_ptr<FiniteStateMachine> MakeFiniteStateMachine();
+    void BuildInitStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
+    void BuildWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
+    void BuildAuthRunningStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
+    void BuildReloadWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
+    void BuildParamWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
+    void BuildAuthFinishedStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
     bool TryKickMachine(Event event);
 
 private:

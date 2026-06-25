@@ -15,6 +15,7 @@
 
 #include "user_auth_client_impl.h"
 
+#include "remote_auth_callback_service.h"
 #include "system_ability_definition.h"
 
 #include "auth_common.h"
@@ -584,6 +585,7 @@ uint64_t UserAuthClientImpl::BeginWidgetAuth(const WidgetAuthParam &authParam, c
         .authTypes = authParam.authTypes,
         .authTrustLevel = authParam.authTrustLevel,
         .reuseUnlockResult = authParam.reuseUnlockResult,
+        .remoteTokenId = authParam.remoteTokenId,
     };
     WidgetParamInner widgetParamInner = {
         .title = widgetParam.title,
@@ -608,6 +610,7 @@ uint64_t UserAuthClientImpl::BeginWidgetAuth(int32_t apiVersion, const WidgetAut
         .authTypes = authParam.authTypes,
         .authTrustLevel = authParam.authTrustLevel,
         .reuseUnlockResult = authParam.reuseUnlockResult,
+        .remoteTokenId = authParam.remoteTokenId,
     };
     WidgetParamInner widgetParamInner = {
         .title = widgetParam.title,
@@ -833,6 +836,37 @@ int32_t UserAuthClientImpl::QueryReusableAuthResult(const WidgetAuthParam &authP
     return ret;
 }
 
+int32_t UserAuthClientImpl::RegisterRemoteAuthCallback(
+    const std::shared_ptr<RemoteAuthClientCallback> &remoteAuthCallback)
+{
+    IAM_LOGI("start");
+    auto proxy = GetProxy();
+    if (!proxy) {
+        IAM_LOGE("proxy is nullptr");
+        return GENERAL_ERROR;
+    }
+
+    sptr<IRemoteAuthCallback> wrapper(new (std::nothrow) RemoteAuthCallbackService(remoteAuthCallback));
+    if (wrapper == nullptr) {
+        IAM_LOGE("failed to create wrapper");
+        return GENERAL_ERROR;
+    }
+
+    return proxy->RegisterRemoteAuthCallback(wrapper);
+}
+
+int32_t UserAuthClientImpl::UnregisterRemoteAuthCallback()
+{
+    IAM_LOGI("start");
+    auto proxy = GetProxy();
+    if (!proxy) {
+        IAM_LOGE("proxy is nullptr");
+        return GENERAL_ERROR;
+    }
+
+    return proxy->UnregisterRemoteAuthCallback();
+}
+
 void UserAuthClientImpl::InitIpcRemoteAuthParam(const std::optional<RemoteAuthParam> &remoteAuthParam,
     IpcRemoteAuthParam &ipcRemoteAuthParam)
 {
@@ -895,6 +929,10 @@ void UserAuthClientImpl::InitIpcAuthParam(const AuthParamInner &authParam,
     ipcAuthParamInner.reuseUnlockResult.isReuse = authParam.reuseUnlockResult.isReuse;
     ipcAuthParamInner.reuseUnlockResult.reuseMode = authParam.reuseUnlockResult.reuseMode;
     ipcAuthParamInner.reuseUnlockResult.reuseDuration = authParam.reuseUnlockResult.reuseDuration;
+    if (authParam.remoteTokenId.has_value()) {
+        ipcAuthParamInner.isHasRemoteTokenId = true;
+        ipcAuthParamInner.remoteTokenId = authParam.remoteTokenId.value();
+    }
 }
 
 void UserAuthClientImpl::InitIpcWidgetParam(const WidgetParamInner &widgetParam,

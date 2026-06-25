@@ -18,6 +18,7 @@
 
 #include <mutex>
 
+#include "window.h"
 #include "nocopyable.h"
 
 #include "ability.h"
@@ -52,7 +53,7 @@ private:
     UserAuthResultCode ClearTipCallback(napi_env env, size_t argc, napi_value *value);
 
     AuthParamInner authParam_ = {};
-    UserAuthNapiClientImpl::WidgetParamNapi widgetParam_ = {};
+    WidgetParamNapi widgetParam_ = {};
 
     uint64_t contextId_ = 0;
     bool isAuthStarted_ = false;
@@ -60,6 +61,7 @@ private:
     std::shared_ptr<UserAuthCallbackV10> callback_ = nullptr;
     std::shared_ptr<UserAuthModalCallback> modalCallback_ = nullptr;
     std::shared_ptr<AbilityRuntime::Context> context_ = nullptr;
+    sptr<OHOS::Rosen::Window> window_ = nullptr;
 };
 } // namespace UserAuth
 } // namespace UserIam

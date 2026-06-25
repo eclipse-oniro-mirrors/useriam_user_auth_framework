@@ -82,6 +82,7 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
     "../../../../../services/context/src/remote_executor_stub.cpp",
     "../../../../../services/context/src/remote_iam_callback.cpp",
     "../../../../../services/context/src/schedule_holder_context.cpp",
+    "../../../../../services/context/src/set_widget_param_callback_service.cpp",
     "../../../../../services/context/src/simple_auth_context.cpp",
     "../../../../../services/context/src/trace.cpp",
     "../../../../../services/context/src/ui_extension_ability_connection.cpp",
@@ -99,6 +100,7 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
     "../../../../../services/core/src/event_listener_manager.cpp",
     "../../../../../services/core/src/identification_impl.cpp",
     "../../../../../services/core/src/publish_event_adapter_mock.cpp",
+    "../../../../../services/core/src/remote_auth_callback_manager.cpp",
     "../../../../../services/core/src/remote_executor_proxy.cpp",
     "../../../../../services/core/src/remote_msg_util.cpp",
     "../../../../../services/core/src/resource_node_impl.cpp",
@@ -124,21 +126,21 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
     "../../../../../services/ipc/src/user_idm_service.cpp",
     "../../../../../services/load_mode/src/load_mode_handler.cpp",
     "../../../../../services/load_mode/src/load_mode_handler_default.cpp",
-    "../../../dummy/mock_iuser_auth_interface.cpp",
-    "../../../dummy/mock_ipc_common.cpp",
-    "../../../dummy/mock_thread_handler_manager.cpp",
     "../../../dummy/mock_application_state_observer_stub.cpp",
+    "../../../dummy/mock_ipc_common.cpp",
+    "../../../dummy/mock_iuser_auth_interface.cpp",
+    "../../../dummy/mock_thread_handler_manager.cpp",
     "remote_auth_context_fuzzer.cpp",
   ]
 
   deps = [
+    "../../../../../frameworks/native/client:userauth_client",
+    "../../../../../frameworks/native/ipc:userauth_service_ipc_fuzzer",
     "../../../common_fuzzer:attributes_fuzzer",
     "../../../common_fuzzer:dfx_fuzzer",
     "../../../common_fuzzer:iam_test_fuzzer",
     "../../../common_fuzzer:iam_utils_fuzzer",
     "../../../common_fuzzer:userauth_service_remote_connect_fuzzer",
-    "../../../../../frameworks/native/client:userauth_client",
-    "../../../../../frameworks/native/ipc:userauth_service_ipc_fuzzer",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
@@ -152,8 +154,8 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
     "ability_runtime:abilitykit_native",
     "ability_runtime:extension_manager",
     "access_token:libaccesstoken_sdk",
-    "access_token:libtokenid_sdk",
     "access_token:libtoken_setproc",
+    "access_token:libtokenid_sdk",
     "c_utils:utils",
     "config_policy:configpolicy_util",
     "drivers_interface_user_auth:libuser_auth_proxy_4.0",
@@ -168,9 +170,9 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
     "init:libbegetutil",
     "ipc:ipc_core",
     "ipc:ipc_single",
+    "libuv:uv",
     "napi:ace_napi",
     "node:node_header_notice",
-    "libuv:uv",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -207,13 +209,11 @@ ohos_fuzztest("RemoteAuthContextFuzzTest") {
   if (has_os_account_part) {
     cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
     external_deps += [ "os_account:os_account_innerkits" ]
-    sources += [
-      "../../../../../services/core/src/os_accounts_manager_impl.cpp",
-    ]
+    sources +=
+        [ "../../../../../services/core/src/os_accounts_manager_impl.cpp" ]
   } else {
-    sources += [
-      "../../../../../services/core/src/os_accounts_manager_mock.cpp",
-    ]
+    sources +=
+        [ "../../../../../services/core/src/os_accounts_manager_mock.cpp" ]
   }
 
   subsystem_name = "useriam"

@@ -123,8 +123,8 @@ HWTEST_F(DeleteImplTest, AbandonUpdateHdiSuccessful_001, TestSize.Level0)
     auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, UpdateAbandonResult(para.userId, _, _))
         .WillRepeatedly(
-            [](int32_t userId, const std::vector<uint8_t>& scheduleResult,
-                std::vector<HdiCredentialInfo>& infos) {
+            [](int32_t userId, const std::vector<uint8_t> &scheduleResult,
+                std::vector<HdiCredentialInfo> &infos) {
                 HdiCredentialInfo info = {
                     .credentialId = 1,
                     .executorIndex = 2,

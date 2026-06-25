@@ -49,6 +49,8 @@ ohos_shared_library("userauth_client") {
     "src/ipc_client_utils.cpp",
     "src/load_mode_client_util.cpp",
     "src/modal_callback_service.cpp",
+    "src/remote_auth_callback_service.cpp",
+    "src/set_widget_param_callback.cpp",
     "src/user_access_ctrl_callback_service.cpp",
     "src/user_access_ctrl_client_impl.cpp",
     "src/user_auth_callback_service.cpp",

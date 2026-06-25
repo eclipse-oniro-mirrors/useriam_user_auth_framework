@@ -30,6 +30,7 @@
 #include "local_remote_auth_context.h"
 #include "identification_impl.h"
 #include "imodal_callback.h"
+#include "iremote_auth_callback.h"
 #include "remote_auth_context.h"
 #include "remote_auth_invoker_context.h"
 
@@ -63,6 +64,7 @@ public:
         bool isBackgroundApplication {false};
         bool skipLockedBiometricAuth {false};
         std::vector<uint64_t> credentialIdList {};
+        std::string remoteCallerName {""};
     };
 
     static std::shared_ptr<Context> CreateSimpleAuthContext(const Authentication::AuthenticationPara &para,
@@ -79,7 +81,8 @@ public:
         const std::shared_ptr<ContextCallback> &callback, bool needSubscribeAppState);
     static std::shared_ptr<Context> CreateWidgetAuthContext(std::shared_ptr<ContextCallback> callback);
     static std::shared_ptr<Context> CreateWidgetContext(const AuthWidgetContextPara &para,
-        std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback);
+        std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
+        const sptr<IRemoteAuthCallback> &remoteAuthCallback);
     static std::shared_ptr<Context> CreateScheduleHolderContext(std::shared_ptr<ScheduleNode> scheduleNode);
     static std::shared_ptr<Context> CreateDeleteContext(const Deletion::DeleteParam &para,
         const std::shared_ptr<ContextCallback> &callback);

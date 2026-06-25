@@ -136,6 +136,8 @@ struct WidgetAuthParam {
     AuthTrustLevel authTrustLevel;
     /** Reuse unlock authentication result. */
     ReuseUnlockResult reuseUnlockResult;
+    /** Remote token id */
+    std::optional<uint32_t> remoteTokenId;
 };
 
 /**
@@ -222,6 +224,20 @@ struct AuthSuccessEventInfo {
     int32_t callerType;
     /** Is widget auth. */
     bool isWidgetAuth {false};
+};
+
+/**
+* @brief Auth widget parameter.
+*/
+struct WidgetParamNapi {
+    /** Title of widget. */
+    std::string title;
+    /** The description text of navigation button. */
+    std::string navigationButtonText;
+    /** Full screen or not. */
+    WindowModeType windowMode;
+    /** Default has't context. */
+    bool hasContext {false};
 };
 } // namespace UserAuth
 } // namespace UserIam

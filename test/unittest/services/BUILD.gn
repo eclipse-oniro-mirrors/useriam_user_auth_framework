@@ -52,6 +52,7 @@ ohos_unittest("iam_services_test") {
   ]
 
   sources = [
+    "../../../frameworks/common/src/user_auth_helper.cpp",
     "../../../services/base/src/finite_state_machine_builder.cpp",
     "../../../services/base/src/finite_state_machine_impl.cpp",
     "../../../services/base/src/system_ability_listener.cpp",
@@ -76,6 +77,7 @@ ohos_unittest("iam_services_test") {
     "../../../services/context/src/remote_executor_stub.cpp",
     "../../../services/context/src/remote_iam_callback.cpp",
     "../../../services/context/src/schedule_holder_context.cpp",
+    "../../../services/context/src/set_widget_param_callback_service.cpp",
     "../../../services/context/src/simple_auth_context.cpp",
     "../../../services/context/src/trace.cpp",
     "../../../services/context/src/ui_extension_ability_connection.cpp",
@@ -94,6 +96,7 @@ ohos_unittest("iam_services_test") {
     "../../../services/core/src/identification_impl.cpp",
     "../../../services/core/src/os_accounts_manager_impl.cpp",
     "../../../services/core/src/publish_event_adapter_mock.cpp",
+    "../../../services/core/src/remote_auth_callback_manager.cpp",
     "../../../services/core/src/remote_executor_proxy.cpp",
     "../../../services/core/src/remote_msg_util.cpp",
     "../../../services/core/src/resource_node_impl.cpp",
@@ -117,7 +120,6 @@ ohos_unittest("iam_services_test") {
     "../../../services/ipc/src/template_cache_manager.cpp",
     "../../../services/ipc/src/user_auth_service.cpp",
     "../../../services/ipc/src/user_idm_service.cpp",
-    "../../../frameworks/common/src/user_auth_helper.cpp",
     "../../../services/load_mode/src/load_mode_handler.cpp",
     "../../../services/load_mode/src/load_mode_handler_default.cpp",
     "../../../services/load_mode/src/service_unload_manager.cpp",
@@ -134,8 +136,8 @@ ohos_unittest("iam_services_test") {
     "../../../services/remote_connect/default/src/soft_bus_socket_listener.cpp",
     "mocks/mock_ipc_common.cpp",
     "mocks/mock_iuser_auth_interface.cpp",
-    "mocks/mock_socket.cpp",
     "mocks/mock_screenlock_manager.cpp",
+    "mocks/mock_socket.cpp",
     "src/attributes_test.cpp",
     "src/auth_widget_helper_test.cpp",
     "src/authentication_impl_test.cpp",
@@ -153,8 +155,8 @@ ohos_unittest("iam_services_test") {
     "src/enrolled_info_test.cpp",
     "src/enrollment_impl_test.cpp",
     "src/event_listener_manager_test.cpp",
-    "src/framework_common_test.cpp",
     "src/executor_messenger_service_test.cpp",
+    "src/framework_common_test.cpp",
     "src/hisysevent_adapter_test.cpp",
     "src/identification_impl_test.cpp",
     "src/identify_context_test.cpp",
@@ -162,7 +164,7 @@ ohos_unittest("iam_services_test") {
     "src/load_mode_handler_default_test.cpp",
     "src/os_accounts_manager_test.cpp",
     "src/relative_timer_test.cpp",
-    "src/service_unload_manager_test.cpp",
+    "src/remote_auth_callback_manager_test.cpp",
     "src/remote_auth_context_test.cpp",
     "src/remote_auth_invoker_context_test.cpp",
     "src/remote_executor_proxy_test.cpp",
@@ -175,6 +177,9 @@ ohos_unittest("iam_services_test") {
     "src/schedule_node_test.cpp",
     "src/screenlock_status_listener_test.cpp",
     "src/secure_user_info_test.cpp",
+    "src/service_init_manager_test.cpp",
+    "src/service_unload_manager_test.cpp",
+    "src/set_widget_param_callback_service_test.cpp",
     "src/simple_auth_context_test.cpp",
     "src/soft_bus_base_socket_test.cpp",
     "src/soft_bus_client_socket_test.cpp",
@@ -203,7 +208,6 @@ ohos_unittest("iam_services_test") {
     "src/widget_context_test.cpp",
     "src/widget_json_test.cpp",
     "src/widget_schedule_node_impl_test.cpp",
-    "src/service_init_manager_test.cpp",
   ]
 
   deps = [
@@ -211,7 +215,7 @@ ohos_unittest("iam_services_test") {
     "../../../frameworks/native/client:userauth_client",
     "../../../frameworks/native/common:attributes",
     "../../../frameworks/native/common:dfx",
-    "../../../frameworks/native/ipc:userauth_service_ipc",
+    "../../../frameworks/native/ipc:iam_inner_api",
   ]
 
   external_deps = [
@@ -228,6 +232,7 @@ ohos_unittest("iam_services_test") {
     "access_token:libtoken_setproc",
     "access_token:libtokenid_sdk",
     "c_utils:utils",
+    "config_policy:configpolicy_util",
     "drivers_interface_user_auth:libuser_auth_proxy_4.0",
     "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "googletest:gmock",
@@ -239,13 +244,12 @@ ohos_unittest("iam_services_test") {
     "init:libbeget_proxy",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "libuv:uv",
     "napi:ace_napi",
     "node:node_header_notice",
-    "libuv:uv",
     "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
-    "config_policy:configpolicy_util"
   ]
 
   if (!user_auth_framework_enable_dynamic_load) {
@@ -261,15 +265,13 @@ ohos_unittest("iam_services_test") {
       "eventhandler:libeventhandler",
       "ffrt:libffrt",
       "preferences:native_preferences",
-      "screenlock_mgr:screenlock_client"
+      "screenlock_mgr:screenlock_client",
     ]
-    sources += [
-      "../../../services/core/src/strong_auth_status_manager_impl.cpp",
-    ]
+    sources +=
+        [ "../../../services/core/src/strong_auth_status_manager_impl.cpp" ]
   } else {
-    sources += [
-      "../../../services/core/src/strong_auth_status_manager_mock.cpp",
-    ]
+    sources +=
+        [ "../../../services/core/src/strong_auth_status_manager_mock.cpp" ]
   }
 
   configs = [

@@ -34,6 +34,7 @@
 #include "in_process_call_wrapper.h"
 #include "iiam_callback.h"
 #include "imodal_callback.h"
+#include "iremote_auth_callback.h"
 #include "nocopyable.h"
 #include "widget_json.h"
 #include "widget_schedule_node.h"
@@ -51,7 +52,8 @@ class WidgetContext : public WidgetScheduleNodeCallback,
                       public NoCopyable {
 public:
     WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
-        std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback);
+        std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
+        const sptr<IRemoteAuthCallback> &remoteAuthCallback);
     ~WidgetContext() override;
 
     // Context API
@@ -65,6 +67,7 @@ public:
     int32_t GetUserId() const override;
     int32_t GetAuthType() const override;
     std::string GetCallerName() const override;
+    void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) override;
 
     // WidgetScheduleNodeCallback API
     bool LaunchWidget() override;
@@ -79,6 +82,7 @@ public:
     bool AuthWidgetReload(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType) override;
     void AuthWidgetReloadInit() override;
+    bool GetRemoteAuthParam() override;
 
     void AuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult);
     void AuthTipInfo(int32_t tipInfo, int32_t authType, const Attributes &extraInfo);
@@ -127,6 +131,9 @@ private:
     void StartOnTerminateTimer();
     void StopOnTerminateTimer();
     void OnTerminateTimerTimeOut(uint64_t contextId);
+    void StartRemoteAuthTimer();
+    void StopRemoteAuthTimer();
+    void OnRemoteAuthTimerTimeOut();
     std::string ProcessCmdData(WidgetCmdParameters &widgetCmdParameters);
     void ProcessElementName(std::string &bundleName, std::string &abilityName);
     bool HandleAuthSuccessResult(Attributes &attr);
@@ -163,6 +170,7 @@ private:
     bool isDirectAuth_ {false};
     std::shared_ptr<WidgetScheduleNode> schedule_ {nullptr};
     sptr<IModalCallback> modalCallback_ {nullptr};
+    sptr<IRemoteAuthCallback> remoteAuthCallback_ {nullptr};
     std::recursive_mutex mutex_;
     std::list<TaskInfo> runTaskInfoList_;
     sptr<UIExtensionAbilityConnection> connection_ {nullptr};
@@ -171,6 +179,7 @@ private:
     uint32_t widgetAlreadyLoad_ {0};
     nlohmann::json jsonBuf_ = {};
     uint32_t onTerminateTimerId_ {0};
+    uint32_t remoteAuthTimerId_ {0};
 };
 } // namespace UserAuth
 } // namespace UserIam

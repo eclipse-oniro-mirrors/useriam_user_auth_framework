@@ -19,6 +19,8 @@
 
 #include "mock_context.h"
 #include "mock_widget_schedule_node.h"
+#include "mock_remote_auth_callback.h"
+#include "mock_modal_callback.h"
 #include "widget_schedule_node_impl.h"
 
 #include "schedule_node_impl.h"
@@ -61,10 +63,11 @@ void WidgetContextTest::TearDown()
 {
 }
 
-std::shared_ptr<WidgetContext> CreateWidgetContext(uint64_t contextId, ContextFactory::AuthWidgetContextPara para)
+std::shared_ptr<WidgetContext> CreateWidgetContext(uint64_t contextId, ContextFactory::AuthWidgetContextPara para,
+    const sptr<IRemoteAuthCallback> remoteAuthCallback = nullptr)
 {
     std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
-    return Common::MakeShared<WidgetContext>(contextId, para, contextCallback, nullptr);
+    return Common::MakeShared<WidgetContext>(contextId, para, contextCallback, nullptr, remoteAuthCallback);
 }
 
 HWTEST_F(WidgetContextTest, WidgetContextTestOnTerminateTimerTimeOut_001, TestSize.Level0)
@@ -1163,7 +1166,7 @@ class TestableWidgetContext : public WidgetContext {
 public:
     TestableWidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
         std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback)
-        : WidgetContext(contextId, para, callback, modalCallback) {}
+        : WidgetContext(contextId, para, callback, modalCallback, nullptr) {}
 
     void SetSchedule(std::shared_ptr<WidgetScheduleNode> schedule)
     {
@@ -1892,6 +1895,205 @@ HWTEST_F(WidgetContextTest, WidgetContextTestProcAuthTipInfo_NavigationAuth_Navi
 
     testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::FACE, extraInfo);
 
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextCreateWithRemoteAuthCallback_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    auto widgetContext = CreateWidgetContext(contextId, para, nullptr);
+    EXPECT_NE(widgetContext, nullptr);
+    EXPECT_EQ(widgetContext->remoteAuthCallback_, nullptr);
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextCreateWithRemoteAuthCallback_002, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
+    EXPECT_NE(mockCallback, nullptr);
+    auto widgetContext = CreateWidgetContext(contextId, para, mockCallback);
+    EXPECT_NE(widgetContext, nullptr);
+    EXPECT_NE(widgetContext->remoteAuthCallback_, nullptr);
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextSetRemoteAuthParam_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::PIN, AuthType::FACE};
+    para.authProfileMap[AuthType::PIN] = {};
+    auto widgetContext = CreateWidgetContext(contextId, para);
+
+    WidgetParamInner widgetParam = {};
+    widgetParam.title = "test title";
+    widgetParam.navigationButtonText = "test navigation";
+    widgetParam.windowMode = WindowModeType::DIALOG_BOX;
+    widgetParam.hasContext = false;
+
+    sptr<MockModalCallback> mockModalCallback = new (std::nothrow) MockModalCallback();
+    EXPECT_NE(mockModalCallback, nullptr);
+
+    EXPECT_TRUE(widgetContext->Start());
+    EXPECT_NO_THROW(widgetContext->SetRemoteAuthParam(widgetParam, mockModalCallback));
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextSetRemoteAuthParam_002, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::PIN, AuthType::FACE};
+    para.authProfileMap[AuthType::PIN] = {};
+    auto widgetContext = CreateWidgetContext(contextId, para);
+
+    WidgetParamInner widgetParam = {};
+    widgetParam.title = "";
+    widgetParam.navigationButtonText = "Navigate";
+    widgetParam.windowMode = WindowModeType::DIALOG_BOX;
+    widgetParam.hasContext = true;
+
+    sptr<MockModalCallback> mockModalCallback = new (std::nothrow) MockModalCallback();
+    EXPECT_NE(mockModalCallback, nullptr);
+
+    EXPECT_TRUE(widgetContext->Start());
+    EXPECT_NO_THROW(widgetContext->SetRemoteAuthParam(widgetParam, mockModalCallback));
+    EXPECT_EQ(widgetContext->para_.authTypeList.size(), 2);
+    EXPECT_NE(widgetContext->para_.authProfileMap.find(AuthType::PIN), widgetContext->para_.authProfileMap.end());
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextSetRemoteAuthParam_003, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FACE};
+    auto widgetContext = CreateWidgetContext(contextId, para);
+
+    WidgetParamInner widgetParam = {};
+    widgetParam.title = "test title";
+    widgetParam.navigationButtonText = "";
+    widgetParam.windowMode = WindowModeType::UNKNOWN_WINDOW_MODE;
+    widgetParam.hasContext = false;
+
+    sptr<MockModalCallback> mockModalCallback = new (std::nothrow) MockModalCallback();
+    EXPECT_NE(mockModalCallback, nullptr);
+
+    EXPECT_TRUE(widgetContext->Start());
+    EXPECT_NO_THROW(widgetContext->SetRemoteAuthParam(widgetParam, mockModalCallback));
+    EXPECT_EQ(widgetContext->para_.widgetParam.windowMode, WindowModeType::UNKNOWN_WINDOW_MODE);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextRemoteAuthCallbackOnResult_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.challenge = {1, 2, 3, 4};
+    sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
+    EXPECT_NE(mockCallback, nullptr);
+    auto widgetContext = CreateWidgetContext(contextId, para, mockCallback);
+
+    EXPECT_CALL(*mockCallback, OnRemoteAuthResult(_, _, _)).Times(1);
+
+    Attributes attr;
+    widgetContext->End(ResultCode::SUCCESS);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextGetRemoteAuthParam_001, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.challenge = {1, 2, 3, 4};
+    sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
+    EXPECT_NE(mockCallback, nullptr);
+    auto widgetContext = CreateWidgetContext(contextId, para, mockCallback);
+    widgetContext->BuildSchedule();
+    EXPECT_TRUE(widgetContext->GetRemoteAuthParam());
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextGetRemoteAuthParam_002, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.challenge = {1, 2, 3, 4};
+    auto widgetContext = CreateWidgetContext(contextId, para, nullptr);
+    widgetContext->BuildSchedule();
+    EXPECT_FALSE(widgetContext->GetRemoteAuthParam());
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextGetRemoteAuthParam_003, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.challenge = {1, 2, 3, 4};
+    sptr<MockRemoteAuthCallback> mockCallback = new (std::nothrow) MockRemoteAuthCallback();
+    EXPECT_NE(mockCallback, nullptr);
+    auto widgetContext = CreateWidgetContext(contextId, para, mockCallback);
+    widgetContext->BuildSchedule();
+    widgetContext->OnStart();
+    EXPECT_TRUE(widgetContext->GetRemoteAuthParam());
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextSetRemoteAuthParam_004, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::PIN};
+    auto widgetContext = CreateWidgetContext(contextId, para);
+    widgetContext->BuildSchedule();
+    widgetContext->OnStart();
+
+    WidgetParamInner widgetParam = {};
+    widgetParam.title = "Remote Title";
+    widgetParam.navigationButtonText = "Remote Nav";
+    widgetParam.windowMode = WindowModeType::DIALOG_BOX;
+    widgetParam.hasContext = true;
+
+    sptr<MockModalCallback> mockModalCallback = new (std::nothrow) MockModalCallback();
+    EXPECT_NE(mockModalCallback, nullptr);
+
+    EXPECT_NO_THROW(widgetContext->SetRemoteAuthParam(widgetParam, mockModalCallback));
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextSetRemoteAuthParam_005, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = {AuthType::FACE, AuthType::FINGERPRINT};
+    para.authProfileMap[AuthType::FACE] = {};
+    auto widgetContext = CreateWidgetContext(contextId, para);
+    widgetContext->BuildSchedule();
+    widgetContext->OnStart();
+
+    WidgetParamInner widgetParam = {};
+    widgetParam.title = "";
+    widgetParam.navigationButtonText = "";
+    widgetParam.windowMode = WindowModeType::UNKNOWN_WINDOW_MODE;
+    widgetParam.hasContext = false;
+
+    sptr<MockModalCallback> mockModalCallback = nullptr;
+
+    EXPECT_NO_THROW(widgetContext->SetRemoteAuthParam(widgetParam, mockModalCallback));
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }

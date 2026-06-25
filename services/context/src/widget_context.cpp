@@ -37,6 +37,7 @@
 #include "relative_timer.h"
 #include "schedule_node.h"
 #include "schedule_node_callback.h"
+#include "set_widget_param_callback_service.h"
 #include "string_wrapper.h"
 #include "system_ability_definition.h"
 #include "want_params_wrapper.h"
@@ -73,12 +74,14 @@ static constexpr uint32_t TERMINATE_TIMER_LEN_MS = 3000;
 #else
 static constexpr uint32_t TERMINATE_TIMER_LEN_MS = 1000;
 #endif
+static constexpr uint32_t REMOTE_AUTH_TIMER_LEN_MS = 10000;
 
 WidgetContext::WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
-    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback)
+    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
+    const sptr<IRemoteAuthCallback> &remoteAuthCallback)
     : contextId_(contextId), description_("UserAuthWidget"), callerCallback_(callback), hasStarted_(false),
     latestError_(ResultCode::GENERAL_ERROR), para_(para), schedule_(nullptr), modalCallback_(modalCallback),
-    connection_(nullptr)
+    remoteAuthCallback_(remoteAuthCallback), connection_(nullptr)
 {
     callback->SetTraceIsWidgetAuth(true);
     AddDeathRecipient(callerCallback_, contextId_);
@@ -250,6 +253,11 @@ bool WidgetContext::OnStart()
         schedule_->StartAuthList(para_.authTypeList, false, AuthIntent::DEFAULT);
         if (!schedule_->StartDirectAuth()) {
             IAM_LOGE("StartDirectAuth failed");
+            return false;
+        }
+    } else if (remoteAuthCallback_) {
+        if (!schedule_->GetRemoteAuthParam()) {
+            IAM_LOGE("GetRemoteAuthParam failed");
             return false;
         }
     } else {
@@ -509,6 +517,13 @@ int32_t WidgetContext::ConnectExtensionAbility(const AAFwk::Want &want, const st
 bool WidgetContext::IsInFollowCallerList()
 {
     IAM_LOGI("enter");
+    std::vector<std::string> supportCallerUiList;
+    GetAlwaysSupportFollowCallerUi(jsonBuf_, supportCallerUiList);
+    for (auto it = supportCallerUiList.begin(); it != supportCallerUiList.end(); ++it) {
+        if (para_.remoteCallerName == *it) {
+            return true;
+        }
+    }
 #ifdef SCENE_BOARD_ENABLE
     auto foldStatus = Rosen::DisplayManagerLite::GetInstance().GetFoldStatus();
 #else
@@ -583,6 +598,9 @@ bool WidgetContext::ConnectExtension(const WidgetRotatePara &widgetRotatePara)
         para_.authProfileMap[para_.authTypeList[0]].remainTimes == 0) {
         Attributes attr;
         callerCallback_->OnResult(ResultCode::LOCKED, attr);
+        if (remoteAuthCallback_ != nullptr) {
+            remoteAuthCallback_->OnRemoteAuthResult(para_.challenge, ResultCode::LOCKED, attr.Serialize());
+        }
         UnSubscribeAppState();
         return true;
     }
@@ -668,37 +686,39 @@ bool WidgetContext::HandleAuthSuccessResult(Attributes &attr)
     if (!attr.SetInt32Value(Attributes::ATTR_AUTH_TYPE, authResultInfo_.authType)) {
         IAM_LOGE("set auth type failed.");
         callerCallback_->SetTraceAuthFinishReason("WidgetContext End set authType fail");
-        callerCallback_->OnResult(ResultCode::GENERAL_ERROR, attr);
-        return false;
+        goto EXIT;
     }
     if (authResultInfo_.token.size() > 0) {
         if (!attr.SetUint8ArrayValue(Attributes::ATTR_SIGNATURE, authResultInfo_.token)) {
             IAM_LOGE("set signature token failed.");
             callerCallback_->SetTraceAuthFinishReason("WidgetContext End set token fail");
-            callerCallback_->OnResult(ResultCode::GENERAL_ERROR, attr);
-            return false;
+            goto EXIT;
         }
     }
     IAM_LOGI("in End, token size: %{public}zu.", authResultInfo_.token.size());
     if (!attr.SetUint64Value(Attributes::ATTR_CREDENTIAL_DIGEST, authResultInfo_.credentialDigest)) {
         IAM_LOGE("set credential digest failed.");
         callerCallback_->SetTraceAuthFinishReason("WidgetContext End set credentialDigest fail");
-        callerCallback_->OnResult(ResultCode::GENERAL_ERROR, attr);
-        return false;
+        goto EXIT;
     }
     if (!attr.SetUint16Value(Attributes::ATTR_CREDENTIAL_COUNT, authResultInfo_.credentialCount)) {
         IAM_LOGE("set credential count failed.");
         callerCallback_->SetTraceAuthFinishReason("WidgetContext End set credentialCount fail");
-        callerCallback_->OnResult(ResultCode::GENERAL_ERROR, attr);
-        return false;
+        goto EXIT;
     }
     if (!attr.SetInt32Value(Attributes::ATTR_USER_ID, authResultInfo_.resultUserId)) {
         IAM_LOGE("set user id failed.");
         callerCallback_->SetTraceAuthFinishReason("WidgetContext End set userId fail");
-        callerCallback_->OnResult(ResultCode::GENERAL_ERROR, attr);
-        return false;
+        goto EXIT;
     }
     return true;
+
+EXIT:
+    callerCallback_->OnResult(ResultCode::GENERAL_ERROR, attr);
+    if (remoteAuthCallback_ != nullptr) {
+        remoteAuthCallback_->OnRemoteAuthResult(para_.challenge, ResultCode::GENERAL_ERROR, attr.Serialize());
+    }
+    return false;
 }
 
 void WidgetContext::End(const ResultCode &resultCode)
@@ -714,6 +734,9 @@ void WidgetContext::End(const ResultCode &resultCode)
         }
     }
     callerCallback_->OnResult(resultCode, attr);
+    if (remoteAuthCallback_ != nullptr) {
+        remoteAuthCallback_->OnRemoteAuthResult(para_.challenge, resultCode, attr.Serialize());
+    }
     if (connection_ == nullptr) {
         IAM_LOGE("invalid connection handle");
         goto EXIT;
@@ -786,10 +809,14 @@ std::string WidgetContext::BuildStartCommand(const WidgetRotatePara &widgetRotat
         }
         cmd.remainAttempts = profile.remainTimes;
         cmd.lockoutDuration = profile.freezingTime;
-        WidgetCommand::ExtraInfo extraInfo {
-            .callingBundleName = GetCallingBundleName(),
-            .challenge = para_.challenge
-        };
+        WidgetCommand::ExtraInfo extraInfo = {};
+        if (remoteAuthCallback_) {
+            extraInfo.callingBundleName = para_.remoteCallerName;
+            extraInfo.challenge = para_.challenge;
+        } else {
+            extraInfo.callingBundleName = GetCallingBundleName();
+            extraInfo.challenge = para_.challenge;
+        }
         cmd.extraInfo = extraInfo;
         widgetCmdParameters.useriamCmdData.cmdList.push_back(cmd);
     }
@@ -1027,6 +1054,77 @@ void WidgetContext::ClearSchedule()
     auto result = ContextPool::Instance().Delete(GetContextId());
     HILOG_COMM_INFO("widget context ****%{public}hx deleted %{public}s",
         static_cast<uint16_t>(contextId_), result ? "succ" : "fail");
+}
+
+void WidgetContext::StartRemoteAuthTimer()
+{
+    IAM_LOGI("start");
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (remoteAuthTimerId_ != 0) {
+        IAM_LOGI("remoteAuthTimer is already start");
+        return;
+    }
+    IAM_LOGI("remoteAuthTimer start, context ****%{public}hx", static_cast<uint16_t>(contextId_));
+    remoteAuthTimerId_ = RelativeTimer::GetInstance().Register(
+        [weakSelf = weak_from_this()] {
+            auto self = weakSelf.lock();
+            if (self == nullptr) {
+                IAM_LOGE("remoteAuthTimer, context is released");
+                return;
+            }
+            self->OnRemoteAuthTimerTimeOut();
+        },
+        REMOTE_AUTH_TIMER_LEN_MS);
+}
+
+void WidgetContext::StopRemoteAuthTimer()
+{
+    IAM_LOGI("start");
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (remoteAuthTimerId_ == 0) {
+        IAM_LOGI("remoteAuthTimer is already stop");
+        return;
+    }
+
+    RelativeTimer::GetInstance().Unregister(remoteAuthTimerId_);
+    remoteAuthTimerId_ = 0;
+}
+
+void WidgetContext::OnRemoteAuthTimerTimeOut()
+{
+    IAM_LOGE("start");
+    OnStop();
+}
+
+bool WidgetContext::GetRemoteAuthParam()
+{
+    IAM_LOGI("start");
+    if (remoteAuthCallback_ == nullptr) {
+        IAM_LOGE("remoteAuthCallback_ is nullptr");
+        return false;
+    }
+    sptr<ISetWidgetParamCallback> setResultCallback =
+        new (std::nothrow) SetWidgetParamCallbackService(contextId_);
+    if (setResultCallback == nullptr) {
+        IAM_LOGE("setResultCallback is nullptr");
+        return false;
+    }
+    remoteAuthCallback_->OnGetRemoteAuthWidgetParam(para_.challenge, setResultCallback);
+    StartRemoteAuthTimer();
+    return true;
+}
+
+void WidgetContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback)
+{
+    IAM_LOGI("start");
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    StopRemoteAuthTimer();
+    para_.widgetParam = widgetParam;
+    modalCallback_ = modalCallback;
+    if (!schedule_->StartSchedule()) {
+        IAM_LOGE("StartSchedule failed");
+        return;
+    }
 }
 } // namespace UserAuth
 } // namespace UserIam

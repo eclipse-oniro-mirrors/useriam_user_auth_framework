@@ -41,6 +41,7 @@ public:
     MOCK_METHOD4(AuthWidgetReload, bool(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType));
     MOCK_METHOD0(AuthWidgetReloadInit, void());
+    MOCK_METHOD0(GetRemoteAuthParam, bool());
 };
 } // namespace UserAuth
 } // namespace UserIam

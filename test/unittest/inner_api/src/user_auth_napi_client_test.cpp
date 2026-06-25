@@ -46,7 +46,7 @@ HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginWidgetAuth001, TestSize.
 {
     static const int32_t apiVersion = 0;
     AuthParamInner authParam;
-    UserAuthNapiClientImpl::WidgetParamNapi widgetParam;
+    WidgetParamNapi widgetParam;
     std::shared_ptr<MockAuthenticationCallback> testCallback = nullptr;
     testCallback = Common::MakeShared<MockAuthenticationCallback>();
     std::shared_ptr<UserAuthModalInnerCallback> testModalCallback = Common::MakeShared<UserAuthModalInnerCallback>();
@@ -94,7 +94,7 @@ HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginWidgetAuth002, TestSize.
     AuthParamInner testAuthParam = {};
     testAuthParam.challenge = {0};
     testAuthParam.authTypes = {ALL};
-    UserAuthNapiClientImpl::WidgetParamNapi testWidgetParam = {};
+    WidgetParamNapi testWidgetParam = {};
     testWidgetParam.title = "title";
     std::shared_ptr<UserAuthModalInnerCallback> testModalCallback = Common::MakeShared<UserAuthModalInnerCallback>();
     uint64_t widgetAuth = UserAuthNapiClientImpl::Instance().BeginWidgetAuth(testVersion, testAuthParam,
@@ -109,7 +109,7 @@ HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginWidgetAuth003, TestSize.
     static const int32_t apiVersion = 0;
     AuthParamInner authParam;
     authParam.userId = 101;
-    UserAuthNapiClientImpl::WidgetParamNapi widgetParam;
+    WidgetParamNapi widgetParam;
     std::shared_ptr<MockAuthenticationCallback> testCallback = nullptr;
     testCallback = Common::MakeShared<MockAuthenticationCallback>();
     std::shared_ptr<UserAuthModalInnerCallback> testModalCallback = Common::MakeShared<UserAuthModalInnerCallback>();
@@ -158,7 +158,7 @@ HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginWidgetAuth004, TestSize.
     AuthParamInner testAuthParam = {};
     testAuthParam.challenge = {0};
     testAuthParam.authTypes = {ALL};
-    UserAuthNapiClientImpl::WidgetParamNapi testWidgetParam = {};
+    WidgetParamNapi testWidgetParam = {};
     testWidgetParam.title = "title";
     std::shared_ptr<UserAuthModalInnerCallback> testModalCallback = Common::MakeShared<UserAuthModalInnerCallback>();
     uint64_t widgetAuth = UserAuthNapiClientImpl::Instance().BeginWidgetAuth(testVersion, testAuthParam,

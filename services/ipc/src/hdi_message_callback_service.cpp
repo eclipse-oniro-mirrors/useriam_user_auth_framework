@@ -46,7 +46,7 @@ void HdiMessageCallbackService::OnHdiConnect()
     IAM_LOGI("success");
 }
 
-int32_t HdiMessageCallbackService::OnMessage(uint64_t scheduleId, int32_t destRole, const std::vector<uint8_t>& msg)
+int32_t HdiMessageCallbackService::OnMessage(uint64_t scheduleId, int32_t destRole, const std::vector<uint8_t> &msg)
 {
     std::shared_ptr<ScheduleNode> scheduleNode = ContextPool::Instance().SelectScheduleNodeByScheduleId(scheduleId);
     IF_FALSE_LOGE_AND_RETURN_VAL(scheduleNode != nullptr, HDF_FAILURE);

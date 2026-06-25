@@ -50,6 +50,8 @@ ohos_unittest("iam_inner_api_test") {
     "../../../frameworks/native/client/src/executor_messenger_client.cpp",
     "../../../frameworks/native/client/src/load_mode_client_util.cpp",
     "../../../frameworks/native/client/src/modal_callback_service.cpp",
+    "../../../frameworks/native/client/src/remote_auth_callback_service.cpp",
+    "../../../frameworks/native/client/src/set_widget_param_callback.cpp",
     "../../../frameworks/native/client/src/user_access_ctrl_callback_service.cpp",
     "../../../frameworks/native/client/src/user_access_ctrl_client_impl.cpp",
     "../../../frameworks/native/client/src/user_auth_callback_service.cpp",
@@ -62,8 +64,11 @@ ohos_unittest("iam_inner_api_test") {
     "mocks/mock_ipc_client_utils.cpp",
     "src/callback_manager_impl_test.cpp",
     "src/co_auth_client_test.cpp",
+    "src/event_listener_callback_service_test.cpp",
     "src/executor_callback_service_test.cpp",
     "src/executor_messenger_client_test.cpp",
+    "src/remote_auth_callback_service_test.cpp",
+    "src/set_widget_param_callback_test.cpp",
     "src/user_access_ctrl_client_test.cpp",
     "src/user_auth_callback_service_test.cpp",
     "src/user_auth_client_test.cpp",
@@ -71,7 +76,6 @@ ohos_unittest("iam_inner_api_test") {
     "src/user_idm_callback_service_test.cpp",
     "src/user_idm_client_test.cpp",
     "src/widget_callback_service_test.cpp",
-    "src/event_listener_callback_service_test.cpp"
   ]
 
   configs = [
@@ -102,9 +106,9 @@ ohos_unittest("iam_inner_api_test") {
     "init:libbeget_proxy",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "libuv:uv",
     "napi:ace_napi",
     "node:node_header_notice",
-    "libuv:uv",
     "samgr:samgr_proxy",
   ]
 

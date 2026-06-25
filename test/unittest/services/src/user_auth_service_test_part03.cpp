@@ -444,8 +444,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceVerifyAuthToken001, TestSize.Level0
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _))
-        .WillOnce([](const std::vector<uint8_t>& tokenIn, uint64_t allowableDuration,
-            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t>& rootSecret) {
+        .WillOnce([](const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) {
             return HDF_SUCCESS;
         });
 
@@ -506,8 +506,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceVerifyAuthToken004, TestSize.Level0
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _))
-        .WillOnce([](const std::vector<uint8_t>& tokenIn, uint64_t allowableDuration,
-            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t>& rootSecret) {
+        .WillOnce([](const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) {
             return HDF_FAILURE;
         });
 
@@ -533,8 +533,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceVerifyAuthToken005, TestSize.Level0
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _))
-        .WillOnce([](const std::vector<uint8_t>& tokenIn, uint64_t allowableDuration,
-            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t>& rootSecret) {
+        .WillOnce([](const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) {
             rootSecret.push_back(1);
             return HDF_SUCCESS;
         });

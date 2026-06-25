@@ -19,6 +19,8 @@
 #include <cinttypes>
 #include <string>
 
+#include "js_window.h"
+#include "window.h"
 #include "napi_base_context.h"
 #include "ui_content.h"
 #include "ui_extension_context.h"
@@ -49,6 +51,7 @@ namespace {
     const std::string WIDGET_PARAM_NAVIBTNTEXT = "navigationButtonText";
     const std::string WIDGET_PARAM_WINDOWMODE = "windowMode";
     const std::string WIDGET_PARAM_CONTEXT = "uiContext";
+    const std::string WIDGET_PARAM_WINDOW = "appWindow";
     const std::string NOTICETYPE = "noticeType";
     const std::string REUSEMODE = "reuseMode";
     const std::string REUSEDURATION = "reuseDuration";
@@ -208,7 +211,7 @@ UserAuthResultCode UserAuthParamUtils::InitUserId(napi_env env, napi_value value
     IAM_LOGI("InitUserId userId: %{public}d", authParam.userId);
     return UserAuthResultCode::SUCCESS;
 }
- 
+
 UserAuthResultCode UserAuthParamUtils::ProcessAuthTrustLevelAndUserId(napi_env env, napi_value value,
     AuthParamInner &authParam)
 {
@@ -223,7 +226,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessAuthTrustLevelAndUserId(napi_env e
         IAM_LOGE("InitAuthTrustLevel fail:%{public}d", errorCode);
         return errorCode;
     }
- 
+
     if (UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_USER_ID)) {
         napi_value napi_userId = UserAuthNapiHelper::GetNamedProperty(env, value, AUTH_PARAM_USER_ID);
         errorCode = InitUserId(env, napi_userId, authParam);
@@ -308,7 +311,8 @@ UserAuthResultCode UserAuthParamUtils::ProcessReuseUnlockResult(napi_env env, na
 }
 
 UserAuthResultCode UserAuthParamUtils::InitWidgetParam(napi_env env, napi_value value,
-    UserAuthNapiClientImpl::WidgetParamNapi &widgetParam, std::shared_ptr<AbilityRuntime::Context> &abilityContext)
+    WidgetParamNapi &widgetParam, std::shared_ptr<AbilityRuntime::Context> &abilityContext,
+    sptr<OHOS::Rosen::Window> &window)
 {
     napi_status ret = UserAuthNapiHelper::CheckNapiType(env, value, napi_null);
     if (ret == napi_ok) {
@@ -345,48 +349,77 @@ UserAuthResultCode UserAuthParamUtils::InitWidgetParam(napi_env env, napi_value 
     if (errorCode != UserAuthResultCode::SUCCESS) {
         return errorCode;
     }
-    errorCode = ProcessContext(env, value, widgetParam, abilityContext);
+
+    if (UserAuthNapiHelper::HasNamedProperty(env, value, WIDGET_PARAM_CONTEXT)) {
+        errorCode = ProcessContext(env, value, widgetParam, abilityContext);
+    } else if (UserAuthNapiHelper::HasNamedProperty(env, value, WIDGET_PARAM_WINDOW)) {
+        errorCode = ProcessWindow(env, value, widgetParam, window);
+    }
     if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGI("context or window is invalid");
         return errorCode;
     }
     return UserAuthResultCode::SUCCESS;
 }
 
 UserAuthResultCode UserAuthParamUtils::ProcessContext(napi_env env, napi_value value,
-    UserAuthNapiClientImpl::WidgetParamNapi &widgetParam, std::shared_ptr<AbilityRuntime::Context> &abilityContext)
+    WidgetParamNapi &widgetParam, std::shared_ptr<AbilityRuntime::Context> &abilityContext)
 {
     IAM_LOGI("process uiContext");
-    if (UserAuthNapiHelper::HasNamedProperty(env, value, WIDGET_PARAM_CONTEXT)) {
-        IAM_LOGI("widgetParam has uiContext");
-        napi_value napi_uiContext = UserAuthNapiHelper::GetNamedProperty(env, value, WIDGET_PARAM_CONTEXT);
-        napi_status ret = UserAuthNapiHelper::CheckNapiType(env, napi_uiContext, napi_object);
-        if (ret != napi_ok) {
-            IAM_LOGE("get uiContext fail: %{public}d", ret);
-            std::string msgStr = "Parameter error. The type of \"uiContext\" must be context.";
-            return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
-        }
-        bool stageMode = false;
-        ret = OHOS::AbilityRuntime::IsStageContext(env, napi_uiContext, stageMode);
-        if (ret != napi_ok) {
-            IAM_LOGE("uiContext must be stage mode: %{public}d", ret);
-            std::string msgStr = "Parameter error. The type of \"uiContext\" must be stage mode.";
-            return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
-        }
-        auto context = OHOS::AbilityRuntime::GetStageModeContext(env, napi_uiContext);
-        if (CheckUIContext(context)) {
-            abilityContext = context;
-            widgetParam.hasContext = true;
-            IAM_LOGI("widgetParam has valid uiContext");
-        } else {
-            // Default as modal system
-            IAM_LOGI("widgetParam has invalid uiContext, not base on valid AbilityContext or UIExtensionContext.");
-        }
+    napi_value napi_uiContext = UserAuthNapiHelper::GetNamedProperty(env, value, WIDGET_PARAM_CONTEXT);
+    napi_status ret = UserAuthNapiHelper::CheckNapiType(env, napi_uiContext, napi_object);
+    if (ret != napi_ok) {
+        IAM_LOGE("get uiContext fail: %{public}d", ret);
+        std::string msgStr = "Parameter error. The type of \"uiContext\" must be context.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    bool stageMode = false;
+    ret = OHOS::AbilityRuntime::IsStageContext(env, napi_uiContext, stageMode);
+    if (ret != napi_ok) {
+        IAM_LOGE("uiContext must be stage mode: %{public}d", ret);
+        std::string msgStr = "Parameter error. The type of \"uiContext\" must be stage mode.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    auto context = OHOS::AbilityRuntime::GetStageModeContext(env, napi_uiContext);
+    if (CheckUIContext(context)) {
+        abilityContext = context;
+        widgetParam.hasContext = true;
+        IAM_LOGI("widgetParam has valid uiContext");
+    } else {
+        // Default as modal system
+        IAM_LOGI("widgetParam has invalid uiContext, not base on valid AbilityContext or UIExtensionContext.");
     }
     return UserAuthResultCode::SUCCESS;
 }
 
+UserAuthResultCode UserAuthParamUtils::ProcessWindow(napi_env env, napi_value value,
+    WidgetParamNapi &widgetParam, sptr<OHOS::Rosen::Window> &window)
+{
+    IAM_LOGI("process window");
+    napi_value napi_window = UserAuthNapiHelper::GetNamedProperty(env, value, WIDGET_PARAM_WINDOW);
+    napi_status ret = UserAuthNapiHelper::CheckNapiType(env, napi_window, napi_object);
+    if (ret != napi_ok) {
+        IAM_LOGE("get window fail: %{public}d", ret);
+        std::string msgStr = "Parameter error. The type of \"window\" must be window.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+
+    OHOS::Rosen::JsWindow *nativeWindow = nullptr;
+    ret = napi_unwrap(env, napi_window, reinterpret_cast<void**>(&nativeWindow));
+    if (ret != napi_ok || nativeWindow == nullptr) {
+        IAM_LOGE("unwrap window fail: %{public}d", ret);
+        std::string msgStr = "Parameter error. Failed to unwrap window object.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+
+    window = nativeWindow->GetWindow();
+    widgetParam.hasContext = true;
+    IAM_LOGI("widgetParam has valid window");
+    return UserAuthResultCode::SUCCESS;
+}
+
 UserAuthResultCode UserAuthParamUtils::ProcessWindowMode(napi_env env, napi_value value,
-    UserAuthNapiClientImpl::WidgetParamNapi &widgetParam)
+    WidgetParamNapi &widgetParam)
 {
     if (UserAuthNapiHelper::HasNamedProperty(env, value, WIDGET_PARAM_WINDOWMODE)) {
         napi_value napi_windowModeType = UserAuthNapiHelper::GetNamedProperty(env, value, WIDGET_PARAM_WINDOWMODE);

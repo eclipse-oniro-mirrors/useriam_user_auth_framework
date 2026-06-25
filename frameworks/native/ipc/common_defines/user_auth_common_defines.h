@@ -75,6 +75,8 @@ struct AuthParamInner {
     bool skipLockedBiometricAuth {false};
     /** Used to specify the credential Ids for authentication */
     std::vector<uint64_t> credentialIdList;
+    /** Remote token id */
+    std::optional<uint32_t> remoteTokenId;
 };
 
 /**

@@ -24,6 +24,7 @@
 #include "iam_ptr.h"
 
 #include "get_auth_lock_state_helper.h"
+#include "user_auth_remote_auth_callback.h"
 #include "user_auth_helper.h"
 #include "user_auth_napi_helper.h"
 #include "user_auth_api_event_reporter.h"
@@ -449,6 +450,75 @@ napi_value UserAuthImpl::GetAuthLockState(napi_env env, napi_callback_info info)
 
     reporter.ReportSuccess();
     return result;
+}
+
+napi_value UserAuthImpl::RegisterRemoteAuthCallback(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    napi_value argv[ARGS_ONE] = {nullptr};
+    size_t argc = ARGS_ONE;
+    UserAuthApiEventReporter reporter("RegisterRemoteAuthCallback");
+    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (argc != ARGS_ONE) {
+        IAM_LOGE("invalid param, argc:%{public}zu", argc);
+        std::string msgStr = "Parameter error. The number of parameters should be 1.";
+        napi_throw(env, UserAuthNapiHelper::GenerateErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr));
+        reporter.ReportFailed(UserAuthResultCode::OHOS_INVALID_PARAM);
+        return nullptr;
+    }
+
+    NAPI_CALL(env, UserAuthNapiHelper::CheckNapiType(env, argv[PARAM0], napi_object));
+    napi_value onGetRemoteAuthWidgetParam;
+    napi_value onRemoteAuthResult;
+    NAPI_CALL(env, napi_get_named_property(env, argv[PARAM0], "onGetRemoteAuthWidgetParam",
+        &onGetRemoteAuthWidgetParam));
+    NAPI_CALL(env, napi_get_named_property(env, argv[PARAM0], "onRemoteAuthResult", &onRemoteAuthResult));
+    auto widgetParamCallback = Common::MakeShared<JsRefHolder>(env, onGetRemoteAuthWidgetParam);
+    auto resultCallback = Common::MakeShared<JsRefHolder>(env, onRemoteAuthResult);
+    if (widgetParamCallback == nullptr || resultCallback == nullptr) {
+        IAM_LOGE("widgetParamCallback or resultCallback is null");
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, UserAuthResultCode::GENERAL_ERROR));
+        reporter.ReportFailed(UserAuthResultCode::GENERAL_ERROR);
+        return nullptr;
+    }
+
+    auto remoteAuthCallback = Common::MakeShared<RemoteAuthCallback>(env, widgetParamCallback, resultCallback);
+    if (remoteAuthCallback == nullptr) {
+        IAM_LOGE("callback is nullptr");
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, UserAuthResultCode::GENERAL_ERROR));
+        reporter.ReportFailed(UserAuthResultCode::GENERAL_ERROR);
+        return nullptr;
+    }
+
+    int32_t ret = UserAuthClientImpl::Instance().RegisterRemoteAuthCallback(remoteAuthCallback);
+    if (ret != SUCCESS) {
+        IAM_LOGE("RegisterRemoteAuthCallback fail, ret:%{public}d", ret);
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV21(env,
+            static_cast<UserAuthResultCode>(ret)));
+        reporter.ReportFailed(static_cast<UserAuthResultCode>(ret));
+        return nullptr;
+    }
+
+    IAM_LOGI("success");
+    reporter.ReportSuccess();
+    return nullptr;
+}
+
+napi_value UserAuthImpl::UnregisterRemoteAuthCallback(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    UserAuthApiEventReporter reporter("UnregisterRemoteAuthCallback");
+    int32_t ret = UserAuthClientImpl::Instance().UnregisterRemoteAuthCallback();
+    if (ret != SUCCESS) {
+        IAM_LOGE("UnregisterRemoteAuthCallback fail, ret:%{public}d", ret);
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV21(env,
+            static_cast<UserAuthResultCode>(ret)));
+        reporter.ReportFailed(static_cast<UserAuthResultCode>(ret));
+        return nullptr;
+    }
+    IAM_LOGI("success");
+    reporter.ReportSuccess();
+    return nullptr;
 }
 } // namespace UserAuth
 } // namespace UserIam

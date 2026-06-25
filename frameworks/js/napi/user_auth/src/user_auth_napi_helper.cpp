@@ -459,6 +459,31 @@ napi_status UserAuthNapiHelper::CallVoidNapiFunc(napi_env env, napi_ref funcRef,
     return ret;
 }
 
+napi_status UserAuthNapiHelper::CallNapiFuncWithResult(napi_env env, napi_ref funcRef, size_t argc,
+    const napi_value *argv, napi_value *result)
+{
+    napi_value funcVal;
+    napi_status ret = napi_get_reference_value(env, funcRef, &funcVal);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_get_reference_value failed %{public}d", ret);
+        return ret;
+    }
+
+    napi_value undefined;
+    ret = napi_get_undefined(env, &undefined);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_get_undefined failed %{public}d", ret);
+        return ret;
+    }
+
+    ret = napi_call_function(env, undefined, funcVal, argc, argv, result);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_call_function failed %{public}d", ret);
+    }
+
+    return ret;
+}
+
 napi_status UserAuthNapiHelper::SetBoolProperty(napi_env env, napi_value obj, const char *name, int32_t value)
 {
     napi_value napiValue = nullptr;

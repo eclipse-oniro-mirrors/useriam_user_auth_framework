@@ -38,8 +38,8 @@ class UserAuthWidgetCallback : public IUserAuthWidgetCallback,
 public:
     explicit UserAuthWidgetCallback();
     ~UserAuthWidgetCallback() override;
-    void SendCommand(const std::string& cmdData) override;
-    void SetCommandCallback(userAuth::IAuthWidgetCallback const& callback);
+    void SendCommand(const std::string &cmdData) override;
+    void SetCommandCallback(userAuth::IAuthWidgetCallback const &callback);
     void ClearCommandCallback();
     bool HasCommandCallback();
 

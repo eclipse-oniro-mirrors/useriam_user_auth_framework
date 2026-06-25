@@ -93,6 +93,7 @@ const std::string SHWO_WITH_LEVEL_2_WINDOW = "show_with_level_2_window";
 const std::string FOLLOW_CALLER_WINDOW_WHEN_FOLDED = "follow_caller_window_when_folded";
 const std::string SCENEBOARD_BUNDLE_NAME = "sceneboard_bundle_name";
 const std::string SCENEBOARD_ABILITY_NAME = "sceneboard_ability_name";
+const std::string ALWAYS_SUPPORT_FOLLOW_CALLER_UI = "always_support_follow_caller_ui";
 
 const uint32_t DISABLE_ROTATE = 0;
 const uint32_t MAX_ERR_BUF_LEN = 256;
@@ -499,6 +500,16 @@ bool GetFollowCallerList(nlohmann::json &jsonBuf, std::vector<std::string> &proc
 {
     IAM_LOGI("enter");
     if (!GetStringArrayFromJson(jsonBuf, processName, FOLLOW_CALLER_WINDOW_WHEN_FOLDED)) {
+        IAM_LOGE("GetStringArrayFromJson failed");
+        return false;
+    }
+    return true;
+}
+
+bool GetAlwaysSupportFollowCallerUi(nlohmann::json &jsonBuf, std::vector<std::string> &processName)
+{
+    IAM_LOGI("enter");
+    if (!GetStringArrayFromJson(jsonBuf, processName, ALWAYS_SUPPORT_FOLLOW_CALLER_UI)) {
         IAM_LOGE("GetStringArrayFromJson failed");
         return false;
     }

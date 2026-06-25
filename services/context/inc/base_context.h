@@ -51,6 +51,7 @@ public:
     void OnScheduleStarted() override;
     void OnScheduleProcessed(ExecutorRole src, int32_t moduleType, const std::vector<uint8_t> &acquireMsg) override;
     void OnScheduleStoped(int32_t resultCode, const std::shared_ptr<Attributes> &finalResult) override;
+    void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) override;
     int32_t GetLatestError() const override;
 
 protected:

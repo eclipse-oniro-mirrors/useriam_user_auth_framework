@@ -1,0 +1,75 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/test.gni")
+
+ohos_fuzztest("RemoteAuthCallbackManagerFuzzTest") {
+  branch_protector_ret = "pac_ret"
+  module_out_path = "user_auth_framework/user_auth/concurrent"
+  fuzz_config_file = "../remoteauthcallbackmanager_fuzzer"
+
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+    "-Dprivate=public",
+    "-Dprotected=public",
+  ]
+
+  include_dirs = [
+    "../../../../../services/base/inc",
+    "../../../../../services/core/inc",
+    "../../../../../services/core/src",
+    "../../../../../services/context/inc",
+    "../../../../../services/ipc/inc",
+    "../../../../../services/remote_connect/inc",
+    "../../../../../services/remote_connect/default/inc",
+    "../../../../../frameworks/native/ipc/inc",
+    "../../../../../frameworks/native/common/dfx/inc",
+    "../../../../../frameworks/native/ipc/common_defines",
+    "../../../../../common/utils",
+    "../../../../../common/logs",
+  ]
+
+  sources = [ "remote_auth_callback_manager_fuzzer.cpp" ]
+
+  deps = [
+    "../../../common_fuzzer:attributes_fuzzer",
+    "../../../common_fuzzer:iam_test_fuzzer",
+    "../../../common_fuzzer:userauth_services_ipc_fuzzer",
+  ]
+
+  remove_configs = [ "//build/config/compiler:no_exceptions" ]
+
+  external_deps = [
+    "ability_runtime:ability_connect_callback_stub",
+    "ability_runtime:app_manager",
+    "access_token:libaccesstoken_sdk",
+    "c_utils:utils",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
+    "hdf_core:libhdf_utils",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
+
+  subsystem_name = "useriam"
+  part_name = "user_auth_framework"
+}

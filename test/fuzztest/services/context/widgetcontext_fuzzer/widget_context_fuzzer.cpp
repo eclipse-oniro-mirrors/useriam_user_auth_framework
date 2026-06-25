@@ -85,7 +85,7 @@ std::shared_ptr<WidgetContext> CreateWidgetContext(Parcel &parcel)
     para.isBackgroundApplication = parcel.ReadBool();
     auto contextCallback = MakeShared<ContextCallbackImpl>(new (std::nothrow) DummyIamCallbackInterface(),
         static_cast<OperationType>(TRACE_AUTH_USER_ALL));
-    return Common::MakeShared<WidgetContext>(contextId, para, contextCallback, nullptr);
+    return Common::MakeShared<WidgetContext>(contextId, para, contextCallback, nullptr, nullptr);
 }
 
 void FillAttributes(Parcel &parcel, Attributes &attributes)
@@ -496,6 +496,46 @@ void FuzzGetContextType(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzGetRemoteAuthParam(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    auto widgetContext = CreateWidgetContext(parcel);
+    if (widgetContext == nullptr) {
+        return;
+    }
+    InitTask(widgetContext, parcel);
+
+    widgetContext->OnStart();
+    widgetContext->GetRemoteAuthParam();
+    ReleaseTask(widgetContext);
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+    IAM_LOGI("end");
+}
+
+void FuzzSetRemoteAuthParam(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    auto widgetContext = CreateWidgetContext(parcel);
+    if (widgetContext == nullptr) {
+        return;
+    }
+    InitTask(widgetContext, parcel);
+
+    widgetContext->OnStart();
+    WidgetParamInner widgetParam = {};
+    FillFuzzString(parcel, widgetParam.title);
+    FillFuzzString(parcel, widgetParam.navigationButtonText);
+    widgetParam.windowMode = static_cast<WindowModeType>(parcel.ReadInt32());
+    widgetParam.hasContext = parcel.ReadBool();
+    sptr<IModalCallback> modalCallback = nullptr;
+    widgetContext->SetRemoteAuthParam(widgetParam, modalCallback);
+    ReleaseTask(widgetContext);
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+    IAM_LOGI("end");
+}
+
 using FuzzFunc = decltype(FuzzStart);
 FuzzFunc *g_fuzzFuncs[] = {
     FuzzStart,
@@ -519,6 +559,8 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzEnd,
     FuzzStopAllRunTask,
     FuzzGetContextType,
+    FuzzGetRemoteAuthParam,
+    FuzzSetRemoteAuthParam,
 };
 
 void WidgetContextFuzzTest(const uint8_t *data, size_t size)

@@ -27,6 +27,7 @@ namespace UserAuth {
 class UserAuthModalCallback : public UserAuthModalClientCallback {
 public:
     explicit UserAuthModalCallback(const std::shared_ptr<AbilityRuntime::Context> context);
+    explicit UserAuthModalCallback(const sptr<OHOS::Rosen::Window> window);
     ~UserAuthModalCallback();
     void SendCommand(uint64_t contextId, const std::string &cmdData) override;
     bool IsModalInit() override;
@@ -34,13 +35,13 @@ public:
 
 private:
     void CancelAuthentication(uint64_t contextId, int32_t cancelReason) override;
-    Ace::UIContent* InitAndGetUIContent(const std::shared_ptr<OHOS::AbilityRuntime::Context> context);
-    bool CreateUIExtension(const std::shared_ptr<OHOS::AbilityRuntime::Context> context, uint64_t contextId,
-        const std::string &cmdData);
+    Ace::UIContent *InitAndGetUIContent();
+    bool CreateUIExtension(uint64_t contextId, const std::string &cmdData);
     void ReleaseModal();
 
     std::shared_ptr<AbilityRuntime::Context> context_ {nullptr};
     std::shared_ptr<ModalExtensionCallback> uiExtCallback_ {nullptr};
+    sptr<OHOS::Rosen::Window> window_;
     uint64_t contextId_ {0};
     bool isInit_ {false};
     bool isInitError_ {false};

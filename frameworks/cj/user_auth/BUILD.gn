@@ -45,10 +45,10 @@ ohos_shared_library("cj_userauth_ffi") {
   deps = [ "../../native/client:userauth_client" ]
 
   external_deps = [
+    "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_core",
     "napi:cj_bind_native",
-    "c_utils:utils",
   ]
 
   innerapi_tags = [ "platformsdk" ]

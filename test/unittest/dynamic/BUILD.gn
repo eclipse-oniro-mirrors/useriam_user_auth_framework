@@ -43,9 +43,7 @@ ohos_unittest("iam_dynamic_test") {
     "src/dynamic_device_manager_util_test.cpp",
   ]
 
-  deps = [
-    "../../../common:iam_utils",
-  ]
+  deps = [ "../../../common:iam_utils" ]
 
   external_deps = [
     "hilog:libhilog",

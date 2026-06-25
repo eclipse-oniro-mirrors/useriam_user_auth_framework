@@ -33,7 +33,7 @@ namespace UserIam {
 namespace UserAuth {
 class UserAuthClientImpl final : public UserAuthClient, NoCopyable {
 public:
-    static UserAuthClientImpl& Instance();
+    static UserAuthClientImpl &Instance();
     int32_t GetAvailableStatus(AuthType authType, AuthTrustLevel authTrustLevel);
     int32_t GetNorthAvailableStatus(int32_t apiVersion, AuthType authType, AuthTrustLevel authTrustLevel);
     int32_t GetAvailableStatus(int32_t userId, AuthType authType, AuthTrustLevel authTrustLevel) override;
@@ -68,6 +68,10 @@ public:
     int32_t PrepareRemoteAuth(const std::string &networkId,
         const std::shared_ptr<PrepareRemoteAuthCallback> &callback) override;
     int32_t QueryReusableAuthResult(const WidgetAuthParam &authParam, std::vector<uint8_t> &token) override;
+
+    int32_t RegisterRemoteAuthCallback(const std::shared_ptr<RemoteAuthClientCallback> &remoteAuthCallback) override;
+    int32_t UnregisterRemoteAuthCallback() override;
+
     void CleanUpResource();
 
 private:

@@ -40,6 +40,7 @@
 #include "remote_msg_util.h"
 #include "remote_iam_callback.h"
 #include "remote_auth_service.h"
+#include "remote_auth_callback_manager.h"
 #include "thread_handler_manager.h"
 #include "user_auth_helper.h"
 #include "device_manager_util.h"
@@ -1256,7 +1257,23 @@ uint64_t UserAuthService::StartWidgetContext(const std::shared_ptr<ContextCallba
         contextCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo);
         return BAD_CONTEXT_ID;
     }
-    auto context = ContextFactory::CreateWidgetContext(para, contextCallback, modalCallback);
+    sptr<IRemoteAuthCallback> remoteAuthCallback = nullptr;
+    if (authParam.remoteTokenId.has_value()) {
+        remoteAuthCallback =
+            RemoteAuthCallbackManager::GetInstance().GetRemoteAuthCallback(authParam.remoteTokenId.value());
+        if (remoteAuthCallback == nullptr) {
+            IAM_LOGE("get remoteAuthCallback failed");
+            contextCallback->SetTraceAuthFinishReason("UserAuthService GetRemoteAuthCallback fail");
+            contextCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo);
+            return BAD_CONTEXT_ID;
+        }
+        std::string callerName =
+            RemoteAuthCallbackManager::GetInstance().GetRemoteAuthCallerName(authParam.remoteTokenId.value());
+        if (!callerName.empty()) {
+            para.remoteCallerName = callerName;
+        }
+    }
+    auto context = ContextFactory::CreateWidgetContext(para, contextCallback, modalCallback, remoteAuthCallback);
     if (context == nullptr || !Insert2ContextPool(context)) {
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget insert context fail");
         contextCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo);
@@ -1973,6 +1990,46 @@ int32_t UserAuthService::QueryReusableAuthResult(const IpcAuthParamInner &ipcAut
     return SUCCESS;
 }
 
+int32_t UserAuthService::RegisterRemoteAuthCallback(const sptr<IRemoteAuthCallback> &remoteAuthCallback)
+{
+    IF_FALSE_LOGE_AND_RETURN_VAL(remoteAuthCallback != nullptr, INVALID_PARAMETERS);
+    if (!IpcCommon::CheckPermission(*this, IS_SYSTEM_APP)) {
+        IAM_LOGE("the caller is not a system application");
+        return ResultCode::CHECK_SYSTEM_APP_FAILED;
+    }
+
+    if (!IpcCommon::CheckPermission(*this, SUPPORT_USER_AUTH)) {
+        IAM_LOGE("CheckPermission failed, no permission");
+        return ResultCode::CHECK_PERMISSION_FAILED;
+    }
+
+    uint32_t tokenId = IpcCommon::GetAccessTokenId(*this);
+    std::string callerName;
+    int32_t callerType;
+    if ((!IpcCommon::GetCallerName(*this, callerName, callerType))) {
+        IAM_LOGE("get bundle name fail");
+        return GENERAL_ERROR;
+    }
+
+    return RemoteAuthCallbackManager::GetInstance().AddRemoteAuthCallback(tokenId, remoteAuthCallback, callerName);
+}
+
+int32_t UserAuthService::UnregisterRemoteAuthCallback()
+{
+    if (!IpcCommon::CheckPermission(*this, IS_SYSTEM_APP)) {
+        IAM_LOGE("the caller is not a system application");
+        return ResultCode::CHECK_SYSTEM_APP_FAILED;
+    }
+
+    if (!IpcCommon::CheckPermission(*this, SUPPORT_USER_AUTH)) {
+        IAM_LOGE("CheckPermission failed, no permission");
+        return ResultCode::CHECK_PERMISSION_FAILED;
+    }
+
+    uint32_t tokenId = IpcCommon::GetAccessTokenId(*this);
+    return RemoteAuthCallbackManager::GetInstance().DelRemoteAuthCallback(tokenId);
+}
+
 void UserAuthService::InitAuthParam(const IpcAuthParamInner &ipcAuthParam, AuthParamInner &authParam)
 {
     authParam.userId = ipcAuthParam.userId;
@@ -1991,6 +2048,9 @@ void UserAuthService::InitAuthParam(const IpcAuthParamInner &ipcAuthParam, AuthP
     authParam.reuseUnlockResult.isReuse = ipcAuthParam.reuseUnlockResult.isReuse;
     authParam.reuseUnlockResult.reuseMode = static_cast<ReuseMode>(ipcAuthParam.reuseUnlockResult.reuseMode);
     authParam.reuseUnlockResult.reuseDuration = ipcAuthParam.reuseUnlockResult.reuseDuration;
+    if (ipcAuthParam.isHasRemoteTokenId) {
+        authParam.remoteTokenId = ipcAuthParam.remoteTokenId;
+    }
 }
 
 void UserAuthService::InitRemoteAuthParam(const IpcRemoteAuthParam &ipcRemoteAuthParam,

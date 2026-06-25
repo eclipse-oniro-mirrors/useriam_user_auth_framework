@@ -63,11 +63,11 @@ ohos_fuzztest("UserAuthDriverManagerFuzzTest") {
   ]
 
   deps = [
+    "../../../../frameworks/native/client:userauth_client",
     "../../common_fuzzer:attributes_fuzzer",
     "../../common_fuzzer:dfx_fuzzer",
     "../../common_fuzzer:iam_test_fuzzer",
     "../../common_fuzzer:iam_utils_fuzzer",
-    "../../../../frameworks/native/client:userauth_client",
   ]
 
   external_deps = [

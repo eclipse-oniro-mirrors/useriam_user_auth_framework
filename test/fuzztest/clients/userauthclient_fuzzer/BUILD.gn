@@ -38,7 +38,6 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
   ]
 
   sources = [
-    "../../dummy/mock_callback_manager_impl.cpp",
     "../../../../frameworks/native/client/src/auth_message_impl.cpp",
     "../../../../frameworks/native/client/src/co_auth_client_impl.cpp",
     "../../../../frameworks/native/client/src/event_listener_callback_manager.cpp",
@@ -48,6 +47,8 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
     "../../../../frameworks/native/client/src/ipc_client_utils.cpp",
     "../../../../frameworks/native/client/src/load_mode_client_util.cpp",
     "../../../../frameworks/native/client/src/modal_callback_service.cpp",
+    "../../../../frameworks/native/client/src/remote_auth_callback_service.cpp",
+    "../../../../frameworks/native/client/src/set_widget_param_callback.cpp",
     "../../../../frameworks/native/client/src/user_auth_callback_service.cpp",
     "../../../../frameworks/native/client/src/user_auth_client_impl.cpp",
     "../../../../frameworks/native/client/src/user_auth_modal_inner_callback.cpp",
@@ -55,15 +56,16 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
     "../../../../frameworks/native/client/src/user_idm_callback_service.cpp",
     "../../../../frameworks/native/client/src/user_idm_client_impl.cpp",
     "../../../../frameworks/native/client/src/widget_callback_service.cpp",
+    "../../dummy/mock_callback_manager_impl.cpp",
     "user_auth_client_fuzzer.cpp",
   ]
 
   deps = [
+    "../../../../frameworks/native/client:userauth_client",
     "../../../../frameworks/native/ipc:userauth_client_ipc_fuzzer",
     "../../common_fuzzer:attributes_fuzzer",
     "../../common_fuzzer:dfx_fuzzer",
     "../../common_fuzzer:iam_test_fuzzer",
-    "../../../../frameworks/native/client:userauth_client",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
@@ -81,9 +83,9 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
     "init:libbeget_proxy",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "libuv:uv",
     "napi:ace_napi",
     "node:node_header_notice",
-    "libuv:uv",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

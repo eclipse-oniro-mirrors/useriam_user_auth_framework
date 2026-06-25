@@ -89,4 +89,3 @@ UserAuthResultCode UserAuthWidgetMgr::OffCommand(taihe::optional_view<userAuth::
 }  // namespace UserAuth
 }  // namespace UserIam
 }  // namespace OHOS
- 

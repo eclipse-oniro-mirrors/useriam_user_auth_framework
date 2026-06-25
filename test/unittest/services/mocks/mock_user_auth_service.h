@@ -76,6 +76,8 @@ public:
         const sptr<IGetExecutorPropertyCallback> &getExecutorPropertyCallback));
     MOCK_METHOD1(CallbackEnter, int32_t(uint32_t code));
     MOCK_METHOD2(CallbackExit, int32_t(uint32_t code, int32_t result));
+    MOCK_METHOD1(RegisterRemoteAuthCallback, int32_t(const sptr<IRemoteAuthCallback> &remoteAuthCallback));
+    MOCK_METHOD0(UnregisterRemoteAuthCallback, int32_t());
 };
 } // namespace UserAuth
 } // namespace UserIam
