@@ -47,6 +47,7 @@ ohos_source_set("user_auth_common") {
     "ability_runtime:extensionkit_native",
     "ability_runtime:ui_extension",
     "ace_engine:ace_uicontent",
+    "bounds_checking_function:libsec_shared",
     "hiappevent:hiappevent_innerapi",
     "hilog:libhilog",
     "window_manager:window_native_kit",
