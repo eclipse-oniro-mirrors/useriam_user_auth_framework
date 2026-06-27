@@ -209,6 +209,112 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUnregisterRemoteAuthCallback002, Te
     EXPECT_EQ(service.UnregisterRemoteAuthCallback(), ResultCode::CHECK_PERMISSION_FAILED);
     IpcCommon::DeleteAllPermission();
 }
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperSensorInfoEnrolledTest, TestSize.Level0)
+{
+    auto service = Common::MakeShared<UserAuthService>();
+    ASSERT_NE(service, nullptr);
+    int32_t userId = 110;
+    AuthType authType = FINGERPRINT;
+    std::vector<Attributes::AttributeKey> testKeys = {Attributes::ATTR_SENSOR_INFO};
+    sptr<MockGetExecutorPropertyCallback> testCallback(new (std::nothrow) MockGetExecutorPropertyCallback());
+    ASSERT_NE(testCallback, nullptr);
+    EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _)).Times(1);
+    sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
+
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    ON_CALL(*mockHdi, GetCredential).WillByDefault([](int32_t, int32_t authType,
+        std::vector<HdiCredentialInfo> &infos) {
+        infos.push_back({.credentialId = 1, .executorIndex = 2, .templateId = 3,
+            .authType = static_cast<HdiAuthType>(authType), .executorMatcher = 2, .executorSensorHint = 3});
+        return HDF_SUCCESS;
+    });
+
+    auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, authType, ALL_IN_ONE);
+    ASSERT_NE(resourceNode, nullptr);
+    EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
+    MockResourceNode *node = static_cast<MockResourceNode *>(resourceNode.get());
+    ON_CALL(*node, GetProperty(_, _)).WillByDefault([](const Attributes &condition, Attributes &values) {
+        std::vector<uint64_t> tplIds;
+        EXPECT_TRUE(condition.GetUint64ArrayValue(Attributes::ATTR_TEMPLATE_ID_LIST, tplIds));
+        EXPECT_EQ(tplIds.size(), 1u);
+        if (!tplIds.empty()) {
+            EXPECT_EQ(tplIds[0], 3u);
+        }
+        return SUCCESS;
+    });
+
+    EXPECT_EQ(service->GetPropertyHelper(userId, authType, testKeys, callbackInterface), SUCCESS);
+    EXPECT_TRUE(ResourceNodePool::Instance().Delete(2));
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperSensorInfoNotEnrolledTest, TestSize.Level0)
+{
+    auto service = Common::MakeShared<UserAuthService>();
+    ASSERT_NE(service, nullptr);
+    int32_t userId = 110;
+    AuthType authType = FINGERPRINT;
+    std::vector<Attributes::AttributeKey> testKeys = {Attributes::ATTR_SENSOR_INFO};
+    sptr<MockGetExecutorPropertyCallback> testCallback(new (std::nothrow) MockGetExecutorPropertyCallback());
+    ASSERT_NE(testCallback, nullptr);
+    EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _)).Times(1);
+    sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
+
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    ON_CALL(*mockHdi, GetCredential).WillByDefault([](int32_t, int32_t, std::vector<HdiCredentialInfo> &) {
+        // Not enrolled: return success with an empty credential list
+        return HDF_SUCCESS;
+    });
+
+    auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, authType, ALL_IN_ONE);
+    ASSERT_NE(resourceNode, nullptr);
+    EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
+    MockResourceNode *node = static_cast<MockResourceNode *>(resourceNode.get());
+    ON_CALL(*node, GetProperty(_, _)).WillByDefault([](const Attributes &condition, Attributes &values) {
+        std::vector<uint64_t> tplIds;
+        EXPECT_TRUE(condition.GetUint64ArrayValue(Attributes::ATTR_TEMPLATE_ID_LIST, tplIds));
+        EXPECT_TRUE(tplIds.empty());
+        return SUCCESS;
+    });
+
+    EXPECT_EQ(service->GetPropertyHelper(userId, authType, testKeys, callbackInterface), SUCCESS);
+    EXPECT_TRUE(ResourceNodePool::Instance().Delete(2));
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperSensorInfoHdiFailTest, TestSize.Level0)
+{
+    // HDI query failure: do not return failure; templateIds stays empty and is forwarded to the executor
+    auto service = Common::MakeShared<UserAuthService>();
+    ASSERT_NE(service, nullptr);
+    int32_t userId = 110;
+    AuthType authType = FINGERPRINT;
+    std::vector<Attributes::AttributeKey> testKeys = {Attributes::ATTR_SENSOR_INFO};
+    sptr<MockGetExecutorPropertyCallback> testCallback(new (std::nothrow) MockGetExecutorPropertyCallback());
+    ASSERT_NE(testCallback, nullptr);
+    EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _)).Times(1);
+    sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
+
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_FAILURE));
+
+    auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, authType, ALL_IN_ONE);
+    ASSERT_NE(resourceNode, nullptr);
+    EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
+    MockResourceNode *node = static_cast<MockResourceNode *>(resourceNode.get());
+    ON_CALL(*node, GetProperty(_, _)).WillByDefault([](const Attributes &condition, Attributes &values) {
+        std::vector<uint64_t> tplIds;
+        EXPECT_TRUE(condition.GetUint64ArrayValue(Attributes::ATTR_TEMPLATE_ID_LIST, tplIds));
+        EXPECT_TRUE(tplIds.empty());
+        return SUCCESS;
+    });
+
+    EXPECT_EQ(service->GetPropertyHelper(userId, authType, testKeys, callbackInterface), SUCCESS);
+    EXPECT_TRUE(ResourceNodePool::Instance().Delete(2));
+}
+
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

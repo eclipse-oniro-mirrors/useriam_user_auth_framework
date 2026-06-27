@@ -101,6 +101,11 @@ bool IsTemplateIdListRequired(const std::vector<Attributes::AttributeKey> &keys)
     return false;
 }
 
+bool IsSensorInfoRequested(const std::vector<Attributes::AttributeKey> &keys)
+{
+    return std::find(keys.begin(), keys.end(), Attributes::AttributeKey::ATTR_SENSOR_INFO) != keys.end();
+}
+
 void GetResourceNodeByTypeAndRole(AuthType authType, ExecutorRole role,
     std::vector<std::weak_ptr<ResourceNode>> &authTypeNodes)
 {
@@ -388,6 +393,11 @@ int32_t UserAuthService::GetPropertyHelper(int32_t userId, int32_t authType,
             IAM_LOGE("template id list is required, but templateIds size is 0");
             getExecutorPropertyCallback->OnGetExecutorPropertyResult(NOT_ENROLLED, values.Serialize());
             return SUCCESS;
+        }
+    } else if (IsSensorInfoRequested(keys)) {
+        int32_t ret = GetTemplatesByAuthType(userId, static_cast<AuthType>(authType), templateIds);
+        if (ret != SUCCESS) {
+            IAM_LOGE("get templates for sensorInfo fail, ret:%{public}d, userId:%{public}d, ignore", ret, userId);
         }
     }
 
