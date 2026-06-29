@@ -35,6 +35,7 @@
         "ability_base",
         "ability_runtime",
         "ace_engine",
+        "bounds_checking_function",
         "bundle_framework",
         "hilog",
         "hicollie",

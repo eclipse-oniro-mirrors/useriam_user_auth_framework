@@ -125,6 +125,7 @@ ohos_source_set("userauth_client_ipc") {
   deps = [ ":auth_user_ipc_interface" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",
@@ -193,6 +194,7 @@ ohos_source_set("userauth_service_ipc") {
   deps = [ ":auth_user_ipc_interface" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",
