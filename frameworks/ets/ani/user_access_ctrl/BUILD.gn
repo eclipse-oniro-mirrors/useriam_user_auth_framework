@@ -18,17 +18,15 @@ import("../../../../user_auth_framework.gni")
 
 copy_taihe_idl("user_access_ctrl_copy_taihe_idl") {
   sources = [ "idl/ohos.userIAM.userAccessCtrl.taihe" ]
-  deps = [ "$user_auth_framework_path/frameworks/ets/ani/user_auth:user_auth_copy_taihe_idl" ]
+  external_deps = [ "user_auth_framework:user_auth_copy_taihe_idl" ]
 }
 
 taihe_generated_file_path =
     "$taihe_file_path/out/useriam/user_auth_frameworks/user_access_ctrl"
 ohos_taihe("user_access_ctrl_taihe") {
   taihe_generated_file_path = "$taihe_generated_file_path"
-  deps = [
-    ":user_access_ctrl_copy_taihe_idl",
-    "$user_auth_framework_path/frameworks/ets/ani/user_auth:user_auth_copy_taihe_idl",
-  ]
+  deps = [ ":user_access_ctrl_copy_taihe_idl" ]
+  external_deps = [ "user_auth_framework:user_auth_copy_taihe_idl" ]
   outputs = [
     "$taihe_generated_file_path/src/ohos.userIAM.userAccessCtrl.ani.cpp",
     "$taihe_generated_file_path/src/ohos.userIAM.userAccessCtrl.abi.c",

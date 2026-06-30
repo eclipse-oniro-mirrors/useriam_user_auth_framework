@@ -132,6 +132,9 @@
         },
         {
           "name": "//base/useriam/user_auth_framework/frameworks/ets/ani/user_auth:userauth_ani"
+        },
+        {
+          "name": "//base/useriam/user_auth_framework/frameworks/ets/ani/user_auth:user_auth_copy_taihe_idl"
         }
       ],
       "test": [
