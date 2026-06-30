@@ -67,14 +67,16 @@ bool DeviceManagerUtil::GetLocalDeviceUdid(std::string &udid)
 
     constexpr uint32_t MAX_UDID_STR_LEN = 65;
     char udidStr[MAX_UDID_STR_LEN] = { 0 };
-    if (GetDevUdid(udidStr, MAX_UDID_STR_LEN) != 0) {
-        IAM_LOGE("GetDevUdid failed");
-        return false;
+    auto udidRes = GetDevUdid(udidStr, MAX_UDID_STR_LEN);
+    if (udidRes == 0 && strnlen(udidStr, MAX_UDID_STR_LEN) <= MAX_UDID_STR_LEN - 1) {
+        IAM_LOGI("GetDevUdid success");
+        udid = udidStr;
+        localUdid_ = udid;
+        return true;
     }
-    udid = udidStr;
-    localUdid_ = udid;
 
-    return true;
+    IAM_LOGE("GetDevUdid failed!");
+    return false;
 }
 
 bool DeviceManagerUtil::GetNetworkIdByUdid(const std::string &udid, std::string &networkId)
