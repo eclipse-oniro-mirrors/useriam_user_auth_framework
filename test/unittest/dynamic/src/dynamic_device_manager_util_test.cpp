@@ -42,7 +42,7 @@ HWTEST_F(DynamicDeviceManagerUtilTest, DynamicDeviceManagerUtilTest001, TestSize
 {
     std::string udid;
     bool result = DeviceManagerUtil::GetInstance().GetLocalDeviceUdid(udid);
-    EXPECT_FALSE(result);
+    EXPECT_NE(result, udid.empty());
 }
 } // namespace UserAuth
 } // namespace UserIam

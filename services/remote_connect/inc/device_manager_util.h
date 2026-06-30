@@ -16,6 +16,7 @@
 #ifndef DEVICE_MANAGER_UTIL_H
 #define DEVICE_MANAGER_UTIL_H
 
+#include <cstring>
 #include <mutex>
 #include <optional>
 #include <string>
