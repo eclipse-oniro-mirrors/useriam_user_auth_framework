@@ -536,6 +536,12 @@ std::string HdiEngineImpl::GetType() const
     return SERVICE_NAME;
 }
 
+bool HdiEngineImpl::IsWidgetCallerAllowedOnLockScreen(const EngCallerAuthInfo &callerInfo) const
+{
+    IAM_LOGI("widget lock-screen launch denied by default, caller %{public}s", callerInfo.callerName.c_str());
+    return false;
+}
+
 bool HdiEngineImpl::SetStatusCallback(const StateCallback &callback)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);

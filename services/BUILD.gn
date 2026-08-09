@@ -22,32 +22,137 @@ declare_args() {
   user_auth_framework_enabled = true
 }
 
-ohos_shared_library("userauthservice") {
-  sanitize = {
-    integer_overflow = true
-    ubsan = true
-    boundary_sanitize = true
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-    blocklist = "../cfi_blocklist.txt"
-  }
+_services_public_configs = [
+  ":userauth_services_config",
+  "../frameworks/native/ipc:userauth_client_ipc_config",
+  "../common:iam_log_config",
+  "../common:iam_utils_config",
+]
+
+_services_sanitize_cfi = {
+  integer_overflow = true
+  ubsan = true
+  boundary_sanitize = true
+  cfi = true
+  cfi_cross_dso = true
+  debug = false
+  blocklist = "../cfi_blocklist.txt"
+}
+
+_services_sanitize_fuzzer = {
+  integer_overflow = true
+  ubsan = true
+  boundary_sanitize = true
+  cfi = false
+  cfi_cross_dso = false
+  debug = false
+}
+
+_services_test_cflags = [
+  "-Oz",
+  "-DIAM_TEST_ENABLE",
+  "-Dprivate=public",
+  "-Dprotected=public",
+]
+
+_services_test_sources = userauth_services_sources + [
+  "../common/utils/iam_time.cpp",
+  "../common/utils/system_param_manager.cpp",
+  "../common/utils/xcollie_helper.cpp",
+]
+_services_test_sources -= [ "base/src/thread_handler_manager.cpp" ]
+_services_test_deps = userauth_services_deps - [ "../common:iam_utils" ]
+_services_test_external_deps = userauth_services_external_deps +
+    [ "hicollie:libhicollie" ]
+
+ohos_static_library("userauthservice_static") {
+  sanitize = _services_sanitize_cfi
   branch_protector_ret = "pac_ret"
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
-
-  cflags = [ "-Oz" ]
 
   sources = userauth_services_sources
   include_dirs = userauth_services_include_dirs
 
-  deps = userauth_services_deps + userauth_engine_deps
-  external_deps = userauth_services_external_deps + userauth_engine_external_deps
-
+  cflags = [ "-Oz" ]
   defines = userauth_services_defines
 
   if (userauth_services_has_os_account_part) {
     cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
   }
+
+  deps = userauth_services_deps
+  external_deps = userauth_services_external_deps
+
+  public_configs = _services_public_configs
+
+  subsystem_name = "useriam"
+  part_name = "user_auth_framework"
+}
+
+ohos_static_library("userauthservice_unittest_common") {
+  testonly = true
+  sanitize = _services_sanitize_cfi
+  branch_protector_ret = "pac_ret"
+  remove_configs = [ "//build/config/compiler:no_exceptions" ]
+
+  sources = _services_test_sources
+  include_dirs = userauth_services_include_dirs
+
+  cflags = _services_test_cflags
+  defines = userauth_services_defines
+
+  if (userauth_services_has_os_account_part) {
+    cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
+  }
+
+  deps = _services_test_deps
+  external_deps = _services_test_external_deps
+
+  public_configs = _services_public_configs
+
+  subsystem_name = "useriam"
+  part_name = "user_auth_framework"
+}
+
+ohos_static_library("userauthservice_fuzzer_common") {
+  testonly = true
+  sanitize = _services_sanitize_fuzzer
+  branch_protector_ret = "pac_ret"
+  remove_configs = [ "//build/config/compiler:no_exceptions" ]
+
+  sources = _services_test_sources
+  include_dirs = userauth_services_include_dirs
+
+  cflags = _services_test_cflags
+  defines = userauth_services_defines
+
+  if (userauth_services_has_os_account_part) {
+    cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
+  }
+
+  deps = _services_test_deps
+  external_deps = _services_test_external_deps
+
+  public_configs = _services_public_configs
+
+  subsystem_name = "useriam"
+  part_name = "user_auth_framework"
+}
+
+ohos_shared_library("userauthservice") {
+  sanitize = _services_sanitize_cfi
+  branch_protector_ret = "pac_ret"
+  remove_configs = [ "//build/config/compiler:no_exceptions" ]
+
+  cflags = [ "-Oz" ]
+
+  deps = [
+    ":userauthservice_static",
+    "engine:userauth_engine",
+  ]
+  external_deps = []
+
+  defines = userauth_services_defines
 
   public_configs = [
     ":userauth_services_config",
@@ -65,4 +170,12 @@ ohos_shared_library("userauthservice") {
 
   subsystem_name = "useriam"
   part_name = "user_auth_framework"
+}
+
+group("userauth_service_group") {
+  if (user_auth_framework_has_ext) {
+    deps = []
+  } else {
+    deps = [ ":userauthservice" ]
+  }
 }

@@ -448,6 +448,27 @@ void FuzzConnectExtension(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+// Exercises BuildStartCommand, which now calls SetLockScreenLaunchPermission and
+// then serializes the resulting allowLockScreenLaunch flag into the widget JSON.
+void FuzzBuildStartCommand(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    auto widgetContext = CreateWidgetContext(parcel);
+    if (widgetContext == nullptr) {
+        return;
+    }
+    InitTask(widgetContext, parcel);
+    WidgetContext::WidgetRotatePara widgetRotatePara;
+    widgetRotatePara.isReload = parcel.ReadBool();
+    widgetRotatePara.orientation = parcel.ReadUint32();
+    widgetRotatePara.needRotate = parcel.ReadUint32();
+    widgetRotatePara.alreadyLoad = parcel.ReadUint32();
+    widgetRotatePara.rotateAuthType = static_cast<AuthType>(parcel.ReadInt32());
+    (void)widgetContext->BuildStartCommand(widgetRotatePara);
+    ReleaseTask(widgetContext);
+    IAM_LOGI("end");
+}
+
 void FuzzEnd(Parcel &parcel)
 {
     IAM_LOGI("begin");
@@ -556,6 +577,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzStopAuthList,
     FuzzSuccessAuth,
     FuzzConnectExtension,
+    FuzzBuildStartCommand,
     FuzzEnd,
     FuzzStopAllRunTask,
     FuzzGetContextType,

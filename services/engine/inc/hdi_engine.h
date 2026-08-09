@@ -105,6 +105,7 @@ public:
     int32_t Load() override;
     int32_t Unload() override;
     std::string GetType() const override;
+    bool IsWidgetCallerAllowedOnLockScreen(const EngCallerAuthInfo &callerInfo) const override;
 
     void OnDriverManagerAdd();
     void OnDriverManagerRemove();

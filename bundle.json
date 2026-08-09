@@ -66,8 +66,7 @@
         "eventhandler",
         "config_policy",
         "runtime_core",
-        "taihe_ffi_gen",
-        "user_auth_framework_ext"
+        "taihe_ffi_gen"
       ]
     },
     "build": {
@@ -85,8 +84,8 @@
          ],
         "service_group": [
           "//base/useriam/user_auth_framework/sa_profile:useriam_init_group",
-          "//base/useriam/user_auth_framework/services:userauthservice",
-          "//base/useriam/user_auth_framework/sa_profile:userauth_sa_profile",
+          "//base/useriam/user_auth_framework/services:userauth_service_group",
+          "//base/useriam/user_auth_framework/sa_profile:userauth_sa_profile_group",
           "//base/useriam/user_auth_framework/param:param_files"
         ]
       },
@@ -139,10 +138,16 @@
           "name": "//base/useriam/user_auth_framework/frameworks/ets/ani/user_auth:user_auth_copy_taihe_idl"
         },
         {
-          "name": "//base/useriam/user_auth_framework/services/engine:userauth_engine_api"
+          "name": "//base/useriam/user_auth_framework/common:iam_utils"
         },
         {
-          "name": "//base/useriam/user_auth_framework/common:iam_utils"
+          "name": "//base/useriam/user_auth_framework/services:userauthservice_static"
+        },
+        {
+          "name": "//base/useriam/user_auth_framework/services:userauthservice_unittest_common"
+        },
+        {
+          "name": "//base/useriam/user_auth_framework/services:userauthservice_fuzzer_common"
         }
       ],
       "test": [

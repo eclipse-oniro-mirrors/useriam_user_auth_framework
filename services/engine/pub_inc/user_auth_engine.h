@@ -105,6 +105,8 @@ public:
     {
         return {};
     }
+
+    virtual bool IsWidgetCallerAllowedOnLockScreen(const EngCallerAuthInfo &callerInfo) const = 0;
 };
 
 IUserAuthEngine &GetUserAuthEngine();

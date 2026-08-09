@@ -520,6 +520,17 @@ void FuzzUnload(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzIsWidgetCallerAllowedOnLockScreen(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    EngCallerAuthInfo callerInfo;
+    Common::FillFuzzString(parcel, callerInfo.callerName);
+    callerInfo.callerType = parcel.ReadInt32();
+    Common::FillFuzzString(parcel, callerInfo.appId);
+    (void)GetUserAuthEngine().IsWidgetCallerAllowedOnLockScreen(callerInfo);
+    IAM_LOGI("end");
+}
+
 // ---- dispatch table ---------------------------------------------------------
 
 using FuzzFunc = void (*)(Parcel &);
@@ -562,6 +573,7 @@ FuzzFunc g_FuzzFuncs[] = {
     FuzzGetAuthResultFromMessage,
     FuzzLoad,
     FuzzUnload,
+    FuzzIsWidgetCallerAllowedOnLockScreen,
 };
 
 } // namespace

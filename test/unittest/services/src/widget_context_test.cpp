@@ -772,6 +772,24 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSetSysDialogZOrder, TestSize.Level0
     EXPECT_NO_THROW(widgetContext->SetSysDialogZOrder(widgetCmdParameters));
 }
 
+// When the screen is unlocked the engine hook is bypassed, so the launch flag
+// must keep its permissive default regardless of the caller identity carried in
+// EngCallerAuthInfo.
+HWTEST_F(WidgetContextTest, WidgetContextTestSetLockScreenLaunchPermission, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    para.callerName = "test_caller";
+    para.callerType = Security::AccessToken::TOKEN_HAP;
+    auto widgetContext = CreateWidgetContext(contextId, para);
+    EXPECT_NE(widgetContext, nullptr);
+    WidgetCmdParameters widgetCmdParameters = {};
+    EXPECT_NO_THROW(widgetContext->SetLockScreenLaunchPermission(widgetCmdParameters));
+    EXPECT_TRUE(widgetCmdParameters.useriamCmdData.allowLockScreenLaunch);
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
 HWTEST_F(WidgetContextTest, WidgetContextTestConnectExtension_001, TestSize.Level0)
 {
     uint64_t contextId = 1;
