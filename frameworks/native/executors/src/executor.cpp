@@ -54,7 +54,7 @@ Executor::Executor(std::shared_ptr<ExecutorMgrWrapper> executorMgrWrapper,
 
 void Executor::OnHdiDisconnect()
 {
-    IAM_LOGI("%{public}s start", GetDescription());
+    IAM_LOGI("Executor %{public}s start", GetDescription());
     {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         executorHdi_ = nullptr;
@@ -65,7 +65,7 @@ void Executor::OnHdiDisconnect()
 
 void Executor::Register()
 {
-    IAM_LOGI("%{public}s start", GetDescription());
+    IAM_LOGI("Executor %{public}s start", GetDescription());
     ExecutorInfo executorInfo = {};
     auto hdi = GetExecutorHdi();
     if (hdi == nullptr) {
@@ -82,7 +82,7 @@ void Executor::Register()
 
 void Executor::RegisterExecutorCallback(ExecutorInfo &executorInfo)
 {
-    IAM_LOGI("%{public}s start", GetDescription());
+    IAM_LOGI("Executor %{public}s start", GetDescription());
     std::lock_guard<std::recursive_mutex> lockRegister(registerMutex_);
     uint32_t combineExecutorId =
         Common::CombineUint16ToUint32(hdiId_, static_cast<uint16_t>(executorInfo.executorSensorHint));
@@ -118,7 +118,7 @@ void Executor::RegisterExecutorCallback(ExecutorInfo &executorInfo)
 
 void Executor::UnregisterExecutorCallback()
 {
-    IAM_LOGI("%{public}s start", GetDescription());
+    IAM_LOGI("Executor %{public}s start", GetDescription());
     std::lock_guard<std::recursive_mutex> lockRegister(registerMutex_);
     uint64_t executorIndex = 0;
     {
@@ -154,7 +154,7 @@ void Executor::RemoveCommand(std::shared_ptr<IAsyncCommand> command)
 
 void Executor::RespondCallbackOnDisconnect()
 {
-    IAM_LOGI("%{public}s start", GetDescription());
+    IAM_LOGI("Executor %{public}s start", GetDescription());
     std::set<std::shared_ptr<IAsyncCommand>> command2NotifyOnHdiDisconnect;
     {
         // cmd->OnHdiDisconnect will invoke RemoveCommand thus modify command2Respond_, make a copy before call

@@ -175,7 +175,8 @@ int32_t CoAuthService::ProcExecutorRegisterSuccess(std::shared_ptr<ResourceNode>
 int32_t CoAuthService::ExecutorRegister(const IpcExecutorRegisterInfo &ipcExecutorRegisterInfo,
     const sptr<IExecutorCallback> &executorCallback, uint64_t &executorIndex)
 {
-    IAM_LOGI("register resource node begin");
+    IAM_LOGI("start, authType:%{public}d, executorRole:%{public}d", ipcExecutorRegisterInfo.authType,
+        ipcExecutorRegisterInfo.executorRole);
     executorIndex = INVALID_EXECUTOR_INDEX;
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
     if (executorCallback == nullptr) {
