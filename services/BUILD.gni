@@ -225,11 +225,3 @@ if (userauth_services_has_notification) {
 } else {
   userauth_services_sources += [ "core/src/publish_event_adapter_mock.cpp" ]
 }
-
-if (user_auth_framework_has_ext) {
-  userauth_engine_deps = []
-  userauth_engine_external_deps = [ "user_auth_framework_ext:userauth_engine_ext" ]
-} else {
-  userauth_engine_deps = [ "engine:userauth_engine" ]
-  userauth_engine_external_deps = []
-}

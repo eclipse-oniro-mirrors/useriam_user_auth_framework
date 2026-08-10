@@ -34,6 +34,14 @@ ohos_sa_profile("userauth_sa_profile") {
   part_name = "user_auth_framework"
 }
 
+group("userauth_sa_profile_group") {
+  if (user_auth_framework_has_ext) {
+    deps = []
+  } else {
+    deps = [ ":userauth_sa_profile" ]
+  }
+}
+
 ohos_prebuilt_etc("useriam.init") {
   if (user_auth_framework_enable_dynamic_load) {
     source = "dynamic_load/useriam.cfg"

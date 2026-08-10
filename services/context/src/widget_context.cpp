@@ -579,6 +579,21 @@ void WidgetContext::SetSysDialogZOrder(WidgetCmdParameters &widgetCmdParameters)
     }
 }
 
+void WidgetContext::SetLockScreenLaunchPermission(WidgetCmdParameters &widgetCmdParameters)
+{
+    bool allow = true;
+    if (ContextAppStateObserverManager::GetInstance().IsScreenLocked()) {
+        EngCallerAuthInfo info {
+            .callerName = para_.callerName,
+            .callerType = para_.callerType,
+            .appId = para_.callingAppID
+        };
+        allow = GetUserAuthEngine().IsWidgetCallerAllowedOnLockScreen(info);
+    }
+    widgetCmdParameters.useriamCmdData.allowLockScreenLaunch = allow;
+    IAM_LOGI("allowLockScreenLaunch=%{public}d", allow);
+}
+
 bool WidgetContext::ConnectExtension(const WidgetRotatePara &widgetRotatePara)
 {
     IAM_LOGI("connect extension start");
@@ -791,6 +806,7 @@ std::string WidgetContext::BuildStartCommand(const WidgetRotatePara &widgetRotat
     widgetCmdParameters.sysDialogZOrder = SYSDIALOG_ZORDER_DEFAULT;
     widgetCmdParameters.focusState = SYSDIALOG_FOCUS_STATE_ENABLE;
     SetSysDialogZOrder(widgetCmdParameters);
+    SetLockScreenLaunchPermission(widgetCmdParameters);
     std::vector<std::string> typeList;
     for (auto &item : para_.authProfileMap) {
         auto &at = item.first;

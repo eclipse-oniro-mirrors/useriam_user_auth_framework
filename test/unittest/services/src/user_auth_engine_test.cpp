@@ -66,6 +66,14 @@ HWTEST_F(UserAuthEngineTest, ReturnsEngineUnavailableWhenEngineDown, TestSize.Le
     // Rebuild the default mock so subsequent tests get a fresh, non-null instance.
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
+
+// The in-tree HDI engine denies lock-screen widget launches by default; the ext
+// engine overrides this hook to apply its own policy.
+HWTEST_F(UserAuthEngineTest, IsWidgetCallerAllowedOnLockScreenDefaultDenied, TestSize.Level0)
+{
+    EngCallerAuthInfo callerInfo { .callerName = "com.test.caller", .callerType = 0, .appId = "test_app_id" };
+    EXPECT_FALSE(GetUserAuthEngine().IsWidgetCallerAllowedOnLockScreen(callerInfo));
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

@@ -71,34 +71,3 @@ ohos_source_set("userauth_engine") {
   subsystem_name = "useriam"
   part_name = "user_auth_framework"
 }
-
-ohos_static_library("userauth_engine_api") {
-  sanitize = {
-    integer_overflow = true
-    ubsan = true
-    boundary_sanitize = true
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-  }
-  branch_protector_ret = "pac_ret"
-  remove_configs = [ "//build/config/compiler:no_exceptions" ]
-
-  sources = [ "src/userauth_engine_api.cpp" ]
-
-  public_configs = [
-    ":userauth_engine_config",
-    "../../frameworks/native/ipc:userauth_client_ipc_config",
-    "../../common:iam_log_config",
-    "../../common:iam_utils_config",
-  ]
-
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-    "ipc:ipc_single",
-  ]
-
-  subsystem_name = "useriam"
-  part_name = "user_auth_framework"
-}

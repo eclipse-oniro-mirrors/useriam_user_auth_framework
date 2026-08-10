@@ -122,6 +122,7 @@ private:
     bool IsSupportFollowCallerUi();
     bool IsInFollowCallerList();
     void SetSysDialogZOrder(WidgetCmdParameters &widgetCmdParameters);
+    void SetLockScreenLaunchPermission(WidgetCmdParameters &widgetCmdParameters);
     bool IsSingleFaceOrFingerPrintAuth();
     bool IsNavigationAuth();
     bool IsSingleCompanionDeviceAuth() const;
