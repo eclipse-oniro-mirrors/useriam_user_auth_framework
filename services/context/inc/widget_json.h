@@ -99,7 +99,6 @@ struct WidgetCommand {
     std::string widgetContextIdStr {""};
     int32_t userId {-1};
     bool skipLockedBiometricAuth {false};
-    bool allowLockScreenLaunch {true};
 };
 
 void to_json(nlohmann::json &jsonCommand, const WidgetCommand &command);

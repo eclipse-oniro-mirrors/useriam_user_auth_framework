@@ -448,8 +448,9 @@ void FuzzConnectExtension(Parcel &parcel)
     IAM_LOGI("end");
 }
 
-// Exercises BuildStartCommand, which now calls SetLockScreenLaunchPermission and
-// then serializes the resulting allowLockScreenLaunch flag into the widget JSON.
+// Exercises BuildStartCommand, which serializes the widget start command JSON.
+// The lock-screen launch permission is judged earlier in ConnectExtension, where
+// a denied caller is short-circuited to CANCELED before the command is built.
 void FuzzBuildStartCommand(Parcel &parcel)
 {
     IAM_LOGI("begin");
