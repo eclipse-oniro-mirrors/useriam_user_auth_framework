@@ -46,8 +46,8 @@ ohos_shared_library("userauth_executors") {
     "src/framework/framework_executor_callback.cpp",
     "src/iauth_executor_hdi.cpp",
     "src/idriver_manager.cpp",
-    "src/listener/auth_executor_mgr_status_listener.cpp",
-    "src/listener/driver_manager_status_listener.cpp",
+    "src/listener/device_manager_listener.cpp",
+    "src/listener/framework_ready_listener.cpp",
   ]
 
   include_dirs = [

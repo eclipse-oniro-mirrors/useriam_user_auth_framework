@@ -18,7 +18,10 @@
 #include <cstdint>
 #include <mutex>
 
+#include "device_manager_listener.h"
+#include "driver.h"
 #include "driver_manager.h"
+#include "framework_ready_listener.h"
 #include "iam_fuzz_test.h"
 #include "iam_logger.h"
 #include "iam_ptr.h"
@@ -54,8 +57,6 @@ public:
     ResultCode GetExecutorInfo(ExecutorInfo &executorInfo) override
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        // GetExecutorInfo is called in Executor constructor, when fuzzParcel_ is null
-        // SUCCESS is returned to generate executor description
         if (fuzzParcel_ == nullptr) {
             return ResultCode::SUCCESS;
         }
@@ -178,7 +179,7 @@ public:
     DummyAuthDriverHdi() = default;
     virtual ~DummyAuthDriverHdi() = default;
 
-    void GetExecutorList(std::vector<std::shared_ptr<UserAuth::IAuthExecutorHdi>> &executorList)
+    void GetExecutorList(std::vector<std::shared_ptr<UserAuth::IAuthExecutorHdi>> &executorList) override
     {
         static const uint32_t maxNum = 20;
         std::lock_guard<std::mutex> lock(mutex_);
@@ -198,7 +199,12 @@ public:
         return;
     }
 
-    void OnHdiDisconnect()
+    void OnHdiDisconnect() override
+    {
+        return;
+    }
+
+    void OnFrameworkDown() override
     {
         return;
     }
@@ -217,32 +223,189 @@ private:
 auto g_authDriverHdi = UserIam::Common::MakeShared<DummyAuthDriverHdi>();
 const std::map<std::string, UserAuth::HdiConfig> GLOBAL_HDI_NAME_TO_CONFIG = {
     {"face_auth_interface_service", {1, g_authDriverHdi}}, {"pin_auth_interface_service", {2, g_authDriverHdi}}};
-const string GLOBAL_SERVICE_NAMES[] = {"face_auth_interface_service", "pin_auth_interface_service"};
+
+std::shared_ptr<Driver> CreateDriver(std::shared_ptr<Parcel> parcel)
+{
+    std::string serviceName = "fuzz_driver_service";
+    HdiConfig config = {};
+    uint32_t id = parcel->ReadUint32();
+    config.id = static_cast<uint16_t>(id);
+    bool useNullDriver = parcel->ReadBool();
+    if (useNullDriver) {
+        config.driver = nullptr;
+    } else {
+        config.driver = g_authDriverHdi;
+    }
+    return MakeShared<Driver>(serviceName, config);
+}
 
 void FuzzStart(std::shared_ptr<Parcel> parcel)
 {
     IAM_LOGI("begin");
-    // driver manager forbids multiple invoke of Start(), it's config must be valid
     Singleton<UserAuth::DriverManager>::GetInstance().Start(GLOBAL_HDI_NAME_TO_CONFIG, true);
-    Singleton<UserAuth::DriverManager>::GetInstance().OnFrameworkReady();
-    Singleton<UserAuth::DriverManager>::GetInstance().SubscribeHdiDriverStatus();
-    std::string serviceName;
-    parcel->ReadString(serviceName);
-    Singleton<UserAuth::DriverManager>::GetInstance().GetDriverByServiceName(serviceName);
-    uint32_t index = parcel->ReadUint32() % (sizeof(GLOBAL_SERVICE_NAMES) / sizeof(GLOBAL_SERVICE_NAMES[0]));
-    std::shared_ptr<Driver> driver =
-        Singleton<UserAuth::DriverManager>::GetInstance().GetDriverByServiceName(GLOBAL_SERVICE_NAMES[index]);
-    // Since config is valid, GetDriverByServiceName should never return null.
-    // If it happens to be null, let fuzz process crash.
+    IAM_LOGI("end");
+}
+
+void FuzzDriverOnHdiConnect(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
+    driver->OnHdiConnect();
+    IAM_LOGI("end");
+}
+
+void FuzzDriverOnHdiDisconnect(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
     driver->OnHdiConnect();
     driver->OnHdiDisconnect();
-    Singleton<UserAuth::DriverManager>::GetInstance().OnAllHdiDisconnect();
+    IAM_LOGI("end");
+}
+
+void FuzzDriverOnFrameworkReady(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
+    driver->OnHdiConnect();
+    driver->OnFrameworkReady();
+    IAM_LOGI("end");
+}
+
+void FuzzDriverOnFrameworkDown(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
+    driver->OnFrameworkReady();
+    driver->OnFrameworkDown();
+    IAM_LOGI("end");
+}
+
+void FuzzDriverConnectThenReady(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
+    driver->OnHdiConnect();
+    driver->OnFrameworkReady();
+    driver->OnFrameworkDown();
+    driver->OnHdiDisconnect();
+    IAM_LOGI("end");
+}
+
+void FuzzDriverReadyThenConnect(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
+    driver->OnFrameworkReady();
+    driver->OnHdiConnect();
+    IAM_LOGI("end");
+}
+
+void FuzzDriverRepeatedCallbacks(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
+    driver->OnHdiConnect();
+    driver->OnHdiConnect();
+    driver->OnFrameworkReady();
+    driver->OnFrameworkReady();
+    driver->OnFrameworkDown();
+    driver->OnFrameworkDown();
+    driver->OnHdiDisconnect();
+    driver->OnHdiDisconnect();
+    IAM_LOGI("end");
+}
+
+void FuzzDriverInit(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
+    driver->Init();
+    IAM_LOGI("end");
+}
+
+void FuzzDriverInitAndCallbacks(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto driver = CreateDriver(parcel);
+    if (driver == nullptr) {
+        return;
+    }
+    driver->Init();
+    driver->OnHdiConnect();
+    driver->OnFrameworkReady();
+    driver->OnFrameworkDown();
+    driver->OnHdiDisconnect();
+    IAM_LOGI("end");
+}
+
+void FuzzDeviceManagerListenerSubscribe(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto listener = MakeShared<DeviceManagerListener>(
+        "fuzz_service",
+        []() {},
+        []() {});
+    if (listener == nullptr) {
+        return;
+    }
+    listener->Subscribe();
+    IAM_LOGI("end");
+}
+
+void FuzzFrameworkReadyListenerSubscribe(std::shared_ptr<Parcel> parcel)
+{
+    IAM_LOGI("begin");
+    auto listener = std::make_unique<FrameworkReadyListener>(
+        []() {},
+        []() {});
+    if (listener == nullptr) {
+        return;
+    }
+    listener->Subscribe();
+    listener->EnsureRegisterExecutors();
+    listener->StopTimer();
     IAM_LOGI("end");
 }
 
 using FuzzFunc = decltype(FuzzStart);
 FuzzFunc *g_fuzzFuncs[] = {
     FuzzStart,
+    FuzzDriverOnHdiConnect,
+    FuzzDriverOnHdiDisconnect,
+    FuzzDriverOnFrameworkReady,
+    FuzzDriverOnFrameworkDown,
+    FuzzDriverConnectThenReady,
+    FuzzDriverReadyThenConnect,
+    FuzzDriverRepeatedCallbacks,
+    FuzzDriverInit,
+    FuzzDriverInitAndCallbacks,
+    FuzzDeviceManagerListenerSubscribe,
+    FuzzFrameworkReadyListenerSubscribe,
 };
 
 void UserAuthDriverManagerFuzzTest(const uint8_t *data, size_t size)

@@ -21,7 +21,9 @@
 
 #include "nocopyable.h"
 
+#include "device_manager_listener.h"
 #include "executor.h"
+#include "framework_ready_listener.h"
 #include "iam_executor_idriver_manager.h"
 
 namespace OHOS {
@@ -32,6 +34,7 @@ public:
     Driver(const std::string &serviceName, HdiConfig hdiConfig);
     ~Driver() override = default;
 
+    void Init();
     void OnHdiConnect();
     void OnHdiDisconnect();
     void OnFrameworkReady();
@@ -39,16 +42,18 @@ public:
 
 private:
     void RegisterExecutors();
-    void EnsureRegisterExecutors();
-    void StopFwkReadyTimer();
+    void SubscribeFrameworkReadyListener();
+    void SubscribeDeviceManagerListener();
 
     std::recursive_mutex mutex_;
-    std::string serviceName_;
-    HdiConfig hdiConfig_;
     bool hdiConnected_ = false;
     bool isFwkReady_ = false;
-    std::optional<int32_t> checkFwkReadyTimerId_ = std::nullopt;
     std::vector<std::shared_ptr<Executor>> executorList_;
+
+    std::string serviceName_;
+    HdiConfig hdiConfig_;
+    std::shared_ptr<DeviceManagerListener> deviceManagerListener_;
+    std::shared_ptr<FrameworkReadyListener> frameworkReadyListener_;
 };
 } // namespace UserAuth
 } // namespace UserIam

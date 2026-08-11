@@ -30,6 +30,7 @@ class MockIAuthDriverHdi : public IAuthDriverHdi {
 public:
     MOCK_METHOD1(GetExecutorList, void(std::vector<std::shared_ptr<IAuthExecutorHdi>> &executorList));
     MOCK_METHOD0(OnHdiDisconnect, void());
+    MOCK_METHOD0(OnFrameworkDown, void());
 };
 } // namespace UserAuth
 } // namespace UserIam

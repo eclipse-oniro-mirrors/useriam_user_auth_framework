@@ -31,7 +31,6 @@ userauth_services_include_dirs = [
 userauth_services_sources = [
   "base/src/finite_state_machine_builder.cpp",
   "base/src/finite_state_machine_impl.cpp",
-  "base/src/system_ability_listener.cpp",
   "base/src/thread_handler_impl.cpp",
   "base/src/thread_handler_manager.cpp",
   "base/src/thread_handler_singleton_impl.cpp",

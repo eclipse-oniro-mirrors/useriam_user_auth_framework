@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <map>
 
-#include "iservstat_listener_hdi.h"
 #include "singleton.h"
 
 #include "driver.h"
@@ -29,44 +28,17 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-using ServStatListenerStub = HDI::ServiceManager::V1_0::ServStatListenerStub;
-using ServiceStatus = HDI::ServiceManager::V1_0::ServiceStatus;
 class DriverManager : public Singleton<DriverManager> {
 public:
     DriverManager();
     ~DriverManager() override = default;
     int32_t Start(const std::map<std::string, HdiConfig> &hdiName2Config, bool hasHdi);
-    void OnFrameworkReady();
-    void OnFrameworkDown();
-    void OnAllHdiDisconnect();
-    void SubscribeHdiDriverStatus();
-    std::shared_ptr<Driver> GetDriverByServiceName(const std::string &serviceName);
 
 private:
-    class HdiServiceStatusListener;
     bool HdiConfigIsValid(const std::map<std::string, HdiConfig> &hdiName2Config);
-    void SubscribeServiceStatus();
-    void SubscribeFrameworkReadyEvent();
 
     std::mutex mutex_;
     std::map<std::string, std::shared_ptr<Driver>> serviceName2Driver_;
-    sptr<HdiServiceStatusListener> hdiServiceStatusListener_ {nullptr};
-};
-
-class DriverManager::HdiServiceStatusListener : public ServStatListenerStub {
-public:
-    using StatusCallback = std::function<void(const ServiceStatus &)>;
-    explicit HdiServiceStatusListener(StatusCallback callback) : callback_(std::move(callback))
-    {
-    }
-    ~HdiServiceStatusListener() override = default;
-    void OnReceive(const ServiceStatus &status) override
-    {
-        callback_(status);
-    }
-
-private:
-    StatusCallback callback_;
 };
 } // namespace UserAuth
 } // namespace UserIam

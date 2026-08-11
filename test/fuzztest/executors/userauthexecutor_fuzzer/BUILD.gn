@@ -32,6 +32,7 @@ ohos_fuzztest("UserAuthExecutorFuzzTest") {
     "../../../../frameworks/native/executors/include/async_command",
     "../../../../frameworks/native/executors/include/framework",
     "../../../../frameworks/native/executors/include/listener",
+    "../../dummy",
     "../../../../common/utils",
     "../../../../common/logs",
     "../../../../interfaces/inner_api/iam_executor",
@@ -52,8 +53,9 @@ ohos_fuzztest("UserAuthExecutorFuzzTest") {
     "../../../../frameworks/native/executors/src/framework/framework_executor_callback.cpp",
     "../../../../frameworks/native/executors/src/iauth_executor_hdi.cpp",
     "../../../../frameworks/native/executors/src/idriver_manager.cpp",
-    "../../../../frameworks/native/executors/src/listener/auth_executor_mgr_status_listener.cpp",
-    "../../../../frameworks/native/executors/src/listener/driver_manager_status_listener.cpp",
+    "../../../../frameworks/native/executors/src/listener/device_manager_listener.cpp",
+    "../../../../frameworks/native/executors/src/listener/framework_ready_listener.cpp",
+    "../../dummy/mock_system_ability_listener.cpp",
     "user_auth_executor_fuzzer.cpp",
   ]
 

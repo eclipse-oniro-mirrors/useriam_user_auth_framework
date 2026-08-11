@@ -57,7 +57,6 @@ ohos_unittest("iam_services_test") {
     "../../../frameworks/common/src/user_auth_helper.cpp",
     "../../../services/base/src/finite_state_machine_builder.cpp",
     "../../../services/base/src/finite_state_machine_impl.cpp",
-    "../../../services/base/src/system_ability_listener.cpp",
     "../../../services/engine/src/hdi_engine.cpp",
     "../../../services/engine/src/hdi_type_convert.cpp",
     "../../../services/base/src/thread_handler_impl.cpp",
