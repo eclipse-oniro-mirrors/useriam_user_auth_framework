@@ -110,7 +110,7 @@ void DeviceManagerListener::OnStart()
 
 void DeviceManagerListener::OnRemove()
 {
-    IAM_LOGE("device manager on remove");
+    IAM_LOGI("device manager on remove");
     if (onHdiDisconnectFunc_ != nullptr) {
         onHdiDisconnectFunc_();
     }

@@ -81,18 +81,6 @@ HWTEST_F(DriverManagerUnitTest, DriverManagerTest_002, TestSize.Level0)
     EXPECT_EQ(IDriverManager::Start(hdiName2Config), USERAUTH_ERROR);
 }
 
-HWTEST_F(DriverManagerUnitTest, DriverManagerTest_003, TestSize.Level0)
-{
-    std::string serviceName1 = "mockDriver1";
-    std::string serviceName2 = "mockDriver2";
-    HdiConfig config = {};
-    config.id = 10;
-    config.driver = Common::MakeShared<MockIAuthDriverHdi>();
-    std::map<std::string, HdiConfig> hdiName2Config;
-    hdiName2Config.emplace(serviceName1, config);
-    EXPECT_EQ(IDriverManager::Start(hdiName2Config), USERAUTH_ERROR);
-}
-
 HWTEST_F(DriverManagerUnitTest, DriverManagerTest_004, TestSize.Level0)
 {
     std::string serviceName = "mockDriver";

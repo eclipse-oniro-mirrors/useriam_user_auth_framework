@@ -94,9 +94,9 @@ void FrameworkReadyListener::SubscribeAuthExecutorMgrStatus()
         [weakSelf]() {
             auto self = weakSelf.lock();
             IF_FALSE_LOGE_AND_RETURN(self != nullptr);
-            IF_FALSE_LOGE_AND_RETURN(self->onFrameworkDownFunc_ != nullptr);
             IAM_LOGE("auth executor mgr SA removed");
             UserIam::UserAuth::ReportSystemFault(Common::GetNowTimeString(), "user_auth_framework");
+            IF_FALSE_LOGE_AND_RETURN(self->onFrameworkDownFunc_ != nullptr);
             self->onFrameworkDownFunc_();
     });
 }
@@ -123,7 +123,7 @@ void FrameworkReadyListener::EnsureRegisterExecutors()
     checkFwkReadyTimerId_ = RelativeTimer::GetInstance().Register(
         [weakSelf]() {
             auto self = weakSelf.lock();
-            if (self == nullptr) {
+            if (self == nullptr || self->onFrameworkReadyFunc_ == nullptr) {
                 return;
             }
             if (SystemParamManager::GetInstance().GetParam(FWK_READY_KEY, FALSE_STR) == TRUE_STR) {
