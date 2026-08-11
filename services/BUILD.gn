@@ -150,7 +150,9 @@ ohos_shared_library("userauthservice") {
     ":userauthservice_static",
     "engine:userauth_engine",
   ]
-  external_deps = []
+  external_deps = [
+    "hilog:libhilog"
+  ]
 
   defines = userauth_services_defines
 

@@ -772,10 +772,10 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSetSysDialogZOrder, TestSize.Level0
     EXPECT_NO_THROW(widgetContext->SetSysDialogZOrder(widgetCmdParameters));
 }
 
-// When the screen is unlocked the engine hook is bypassed, so the launch flag
-// must keep its permissive default regardless of the caller identity carried in
-// EngCallerAuthInfo.
-HWTEST_F(WidgetContextTest, WidgetContextTestSetLockScreenLaunchPermission, TestSize.Level0)
+// When the screen is unlocked the engine hook is bypassed, so the launch is
+// allowed regardless of caller identity. A denied locked-screen launch is
+// short-circuited to CANCELED in ConnectExtension and reported via OnResult.
+HWTEST_F(WidgetContextTest, WidgetContextTestIsWidgetLaunchAllowed, TestSize.Level0)
 {
     uint64_t contextId = 1;
     ContextFactory::AuthWidgetContextPara para;
@@ -783,9 +783,9 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSetLockScreenLaunchPermission, Test
     para.callerType = Security::AccessToken::TOKEN_HAP;
     auto widgetContext = CreateWidgetContext(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
-    WidgetCmdParameters widgetCmdParameters = {};
-    EXPECT_NO_THROW(widgetContext->SetLockScreenLaunchPermission(widgetCmdParameters));
-    EXPECT_TRUE(widgetCmdParameters.useriamCmdData.allowLockScreenLaunch);
+    bool allow = false;
+    EXPECT_NO_THROW(allow = widgetContext->IsWidgetLaunchAllowed());
+    EXPECT_TRUE(allow);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }

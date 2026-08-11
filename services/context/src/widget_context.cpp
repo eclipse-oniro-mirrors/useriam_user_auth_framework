@@ -579,44 +579,61 @@ void WidgetContext::SetSysDialogZOrder(WidgetCmdParameters &widgetCmdParameters)
     }
 }
 
-void WidgetContext::SetLockScreenLaunchPermission(WidgetCmdParameters &widgetCmdParameters)
+bool WidgetContext::IsWidgetLaunchAllowed() const
 {
-    bool allow = true;
-    if (ContextAppStateObserverManager::GetInstance().IsScreenLocked()) {
-        EngCallerAuthInfo info {
-            .callerName = para_.callerName,
-            .callerType = para_.callerType,
-            .appId = para_.callingAppID
-        };
-        allow = GetUserAuthEngine().IsWidgetCallerAllowedOnLockScreen(info);
+    if (!ContextAppStateObserverManager::GetInstance().IsScreenLocked()) {
+        return true;
     }
-    widgetCmdParameters.useriamCmdData.allowLockScreenLaunch = allow;
-    IAM_LOGI("allowLockScreenLaunch=%{public}d", allow);
+    EngCallerAuthInfo info {
+        .callerName = para_.callerName,
+        .callerType = para_.callerType,
+        .appId = para_.callingAppID
+    };
+    bool allow = GetUserAuthEngine().IsWidgetCallerAllowedOnLockScreen(info);
+    IAM_LOGI("widget lock-screen launch allowed=%{public}d, caller %{public}s", allow, para_.callerName.c_str());
+    return allow;
+}
+
+void WidgetContext::ReportResult(ResultCode resultCode)
+{
+    Attributes attr;
+    callerCallback_->OnResult(resultCode, attr);
+    if (remoteAuthCallback_ != nullptr) {
+        remoteAuthCallback_->OnRemoteAuthResult(para_.challenge, resultCode, attr.Serialize());
+    }
+    UnSubscribeAppState();
+}
+
+bool WidgetContext::RefreshAuthProfiles()
+{
+    for (auto &authType : para_.authTypeList) {
+        ContextFactory::AuthProfile profile;
+        if (!AuthWidgetHelper::GetUserAuthProfile(para_.userId, authType, profile, para_.credentialIdList)) {
+            IAM_LOGE("get user authType:%{public}d profile failed", static_cast<int32_t>(authType));
+            return false;
+        }
+        para_.authProfileMap[authType] = profile;
+    }
+    return true;
 }
 
 bool WidgetContext::ConnectExtension(const WidgetRotatePara &widgetRotatePara)
 {
     IAM_LOGI("connect extension start");
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (widgetRotatePara.isReload) {
-        for (auto &authType : para_.authTypeList) {
-            ContextFactory::AuthProfile profile;
-            if (!AuthWidgetHelper::GetUserAuthProfile(para_.userId, authType, profile, para_.credentialIdList)) {
-                IAM_LOGE("get user authType:%{public}d profile failed", static_cast<int32_t>(authType));
-                return false;
-            }
-            para_.authProfileMap[authType] = profile;
-        }
+    if (widgetRotatePara.isReload && !RefreshAuthProfiles()) {
+        return false;
     }
 
     if (IsSingleFaceOrFingerPrintAuth() && para_.skipLockedBiometricAuth &&
         para_.authProfileMap[para_.authTypeList[0]].remainTimes == 0) {
-        Attributes attr;
-        callerCallback_->OnResult(ResultCode::LOCKED, attr);
-        if (remoteAuthCallback_ != nullptr) {
-            remoteAuthCallback_->OnRemoteAuthResult(para_.challenge, ResultCode::LOCKED, attr.Serialize());
-        }
-        UnSubscribeAppState();
+        ReportResult(ResultCode::LOCKED);
+        return true;
+    }
+
+    if (!IsWidgetLaunchAllowed()) {
+        IAM_LOGI("widget launch canceled: caller not allowed on lock screen");
+        ReportResult(ResultCode::CANCELED);
         return true;
     }
 
@@ -806,7 +823,6 @@ std::string WidgetContext::BuildStartCommand(const WidgetRotatePara &widgetRotat
     widgetCmdParameters.sysDialogZOrder = SYSDIALOG_ZORDER_DEFAULT;
     widgetCmdParameters.focusState = SYSDIALOG_FOCUS_STATE_ENABLE;
     SetSysDialogZOrder(widgetCmdParameters);
-    SetLockScreenLaunchPermission(widgetCmdParameters);
     std::vector<std::string> typeList;
     for (auto &item : para_.authProfileMap) {
         auto &at = item.first;

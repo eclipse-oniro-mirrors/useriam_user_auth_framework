@@ -491,51 +491,6 @@ HWTEST_F(WidgetJsonTest, WidgetJsonAuthTypeRoundTrip_CompanionDevice_001, TestSi
     EXPECT_EQ(convertedAuthType, AuthType::COMPANION_DEVICE);
 }
 
-// A default-constructed WidgetCommand keeps allowLockScreenLaunch at its
-// permissive default (true), so the lock-screen UI launches for any caller
-// unless the engine explicitly denies it during BuildStartCommand.
-HWTEST_F(WidgetJsonTest, WidgetJsonAllowLockScreenLaunch_001, TestSize.Level0)
-{
-    WidgetCommand widgetCommand;
-    widgetCommand.widgetContextId = 1;
-    nlohmann::json root = widgetCommand;
-    std::string cmdData = root.dump();
-    auto result = nlohmann::json::parse(cmdData.c_str(), nullptr, false);
-    ASSERT_TRUE(result.is_object());
-    ASSERT_TRUE(result.contains("allowLockScreenLaunch"));
-    EXPECT_EQ(result["allowLockScreenLaunch"], true);
-}
-
-// When the caller is denied a lock-screen launch, allowLockScreenLaunch must be
-// carried through to the widget command JSON as false.
-HWTEST_F(WidgetJsonTest, WidgetJsonAllowLockScreenLaunch_002, TestSize.Level0)
-{
-    WidgetCommand widgetCommand;
-    widgetCommand.widgetContextId = 1;
-    widgetCommand.allowLockScreenLaunch = false;
-    nlohmann::json root = widgetCommand;
-    std::string cmdData = root.dump();
-    auto result = nlohmann::json::parse(cmdData.c_str(), nullptr, false);
-    ASSERT_TRUE(result.is_object());
-    ASSERT_TRUE(result.contains("allowLockScreenLaunch"));
-    EXPECT_EQ(result["allowLockScreenLaunch"], false);
-}
-
-// The flag actually shipped to the UI lives under useriamCmdData of a
-// WidgetCmdParameters; it must be serialized as false there when denied.
-HWTEST_F(WidgetJsonTest, WidgetJsonAllowLockScreenLaunch_003, TestSize.Level0)
-{
-    WidgetCmdParameters widgetCmdParameters;
-    widgetCmdParameters.uiExtensionType = "sysDialog/userAuth";
-    widgetCmdParameters.useriamCmdData.widgetContextId = 1;
-    widgetCmdParameters.useriamCmdData.allowLockScreenLaunch = false;
-    nlohmann::json root = widgetCmdParameters;
-    std::string cmdData = root.dump();
-    auto result = nlohmann::json::parse(cmdData.c_str(), nullptr, false);
-    ASSERT_TRUE(result.is_object());
-    ASSERT_TRUE(result.contains("useriamCmdData"));
-    EXPECT_EQ(result["useriamCmdData"]["allowLockScreenLaunch"], false);
-}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
