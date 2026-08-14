@@ -94,6 +94,7 @@ userauth_services_sources = [
   "ipc/src/template_cache_manager.cpp",
   "ipc/src/user_auth_service.cpp",
   "ipc/src/user_idm_service.cpp",
+  "ipc/src/vab_update_boot_listener.cpp",
   "load_mode/src/load_mode_handler.cpp",
   "../frameworks/common/src/user_auth_helper.cpp",
 ]
