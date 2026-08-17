@@ -380,7 +380,7 @@ void FuzzDeviceManagerListenerSubscribe(std::shared_ptr<Parcel> parcel)
 void FuzzFrameworkReadyListenerSubscribe(std::shared_ptr<Parcel> parcel)
 {
     IAM_LOGI("begin");
-    auto listener = std::make_unique<FrameworkReadyListener>(
+    auto listener = std::make_shared<FrameworkReadyListener>(
         []() {},
         []() {});
     if (listener == nullptr) {
