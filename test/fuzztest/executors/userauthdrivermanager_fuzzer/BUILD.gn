@@ -54,6 +54,7 @@ ohos_fuzztest("UserAuthDriverManagerFuzzTest") {
     "../../../../frameworks/native/executors/src/idriver_manager.cpp",
     "../../../../frameworks/native/executors/src/listener/device_manager_listener.cpp",
     "../../../../frameworks/native/executors/src/listener/framework_ready_listener.cpp",
+    "../../dummy/mock_parameter.cpp",
     "../../dummy/mock_system_ability_listener.cpp",
     "user_auth_driver_manager_fuzzer.cpp",
   ]
@@ -76,7 +77,6 @@ ohos_fuzztest("UserAuthDriverManagerFuzzTest") {
     "c_utils:utils",
     "hdf_core:libhdi",
     "hilog:libhilog",
-    "init:libbeget_proxy",
     "init:libbegetutil",
     "ipc:ipc_single",
     "samgr:samgr_proxy",
