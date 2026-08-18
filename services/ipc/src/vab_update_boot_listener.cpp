@@ -28,7 +28,7 @@ namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 constexpr uint32_t VAB_UPDATE_BOOT_MONITOR_INTERVAL_MS = 500;
-constexpr int32_t MAX_VAB_UPDATE_BOOT_TIMER_COUNT = 40;
+constexpr int32_t MAX_VAB_UPDATE_BOOT_TIMER_COUNT = 720;
 
 VabUpdateBootListener::VabUpdateBootListener(VabUpdateBootCallback cb) : callback_(cb)
 {
@@ -94,11 +94,9 @@ void VabUpdateBootListener::OnVabUpdateBoot()
         return;
     }
 
-    if (!isBootComplete_) {
-        if (SystemParamManager::GetInstance().GetParam(BOOT_COMPLETE_KEY, FALSE_STR) != TRUE_STR) {
-            return;
-        }
-        isBootComplete_ = true;
+    if (SystemParamManager::GetInstance().GetParam(BOOT_COMPLETE_KEY, FALSE_STR) == TRUE_STR) {
+        HandleBootEvent();
+        return;
     }
 
     if (vabUpdateBootTimerCount_ > MAX_VAB_UPDATE_BOOT_TIMER_COUNT) {

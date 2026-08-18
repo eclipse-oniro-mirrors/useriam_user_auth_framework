@@ -40,7 +40,6 @@ private:
 
     std::recursive_mutex mutex_;
     VabUpdateBootCallback callback_;
-    bool isBootComplete_ = false;
 
     std::optional<uint32_t> vabUpdateBootTimerId_;
     int32_t vabUpdateBootTimerCount_ = 0;

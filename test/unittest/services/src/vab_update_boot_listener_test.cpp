@@ -42,13 +42,13 @@ void VabUpdateBootManagerTest::TearDownTestCase()
 void VabUpdateBootManagerTest::SetUp()
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, "");
+    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, FALSE_STR);
 }
 
 void VabUpdateBootManagerTest::TearDown()
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, "");
+    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, FALSE_STR);
 }
 
 // Start() returns nullptr when vab_update_boot is not "booting"
@@ -77,25 +77,10 @@ HWTEST_F(VabUpdateBootManagerTest, StartBooting, TestSize.Level0)
     EXPECT_FALSE(callbackInvoked);
 }
 
-// OnVabUpdateBoot returns early when boot not completed
-HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootNotComplete, TestSize.Level0)
-{
-    SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, FALSE_STR);
-
-    bool callbackInvoked = false;
-    auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
-    ASSERT_NE(listener, nullptr);
-
-    listener->OnVabUpdateBoot();
-    EXPECT_FALSE(callbackInvoked);
-}
-
-// OnVabUpdateBoot returns early when boot completed but vab still "booting"
+// OnVabUpdateBoot returns early when vab still "booting"
 HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootStillBooting, TestSize.Level0)
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
 
     bool callbackInvoked = false;
     auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
@@ -105,11 +90,10 @@ HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootStillBooting, TestSize.Level0)
     EXPECT_FALSE(callbackInvoked);
 }
 
-// OnVabUpdateBoot invokes callback when boot completed and vab no longer "booting"
+// OnVabUpdateBoot invokes callback when vab no longer "booting"
 HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootCompleteAndIdle, TestSize.Level0)
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
 
     bool callbackInvoked = false;
     auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
@@ -121,43 +105,17 @@ HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootCompleteAndIdle, TestSize.Leve
     EXPECT_TRUE(callbackInvoked);
 }
 
-// OnVabUpdateBoot sets isBootComplete_ when boot completes
-HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootBootCompleteTransition, TestSize.Level0)
-{
-    SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, FALSE_STR);
-
-    bool callbackInvoked = false;
-    auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
-    ASSERT_NE(listener, nullptr);
-
-    // Boot not yet complete
-    listener->OnVabUpdateBoot();
-    EXPECT_FALSE(callbackInvoked);
-
-    // Boot becomes complete, but vab still booting
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
-    listener->OnVabUpdateBoot();
-    EXPECT_FALSE(callbackInvoked);
-
-    // Vab also completes
-    SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "idle");
-    listener->OnVabUpdateBoot();
-    EXPECT_TRUE(callbackInvoked);
-}
-
 // Timer count reaches limit triggers HandleBootEvent
 HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootTimerCountReachLimit, TestSize.Level0)
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
 
     bool callbackInvoked = false;
     auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
     ASSERT_NE(listener, nullptr);
 
     // Exhaust timer count to just above limit
-    listener->vabUpdateBootTimerCount_ = 41;
+    listener->vabUpdateBootTimerCount_ = 721;
     // Still "booting" but count exceeded -> HandleBootEvent called
     listener->OnVabUpdateBoot();
     EXPECT_TRUE(callbackInvoked);
@@ -167,24 +125,89 @@ HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootTimerCountReachLimit, TestSize
 HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootTimerCountBelowLimit, TestSize.Level0)
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
+
+    bool callbackInvoked = false;
+    auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
+    ASSERT_NE(listener, nullptr);
+
+    listener->vabUpdateBootTimerCount_ = 719;
+    listener->OnVabUpdateBoot();
+    // vab still "booting", count incremented but no callback
+    EXPECT_FALSE(callbackInvoked);
+    EXPECT_EQ(listener->vabUpdateBootTimerCount_, 720);
+}
+
+// OnVabUpdateBoot invokes callback when BOOT_COMPLETE_KEY is "true"
+HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootBootComplete, TestSize.Level0)
+{
+    SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
     SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
 
     bool callbackInvoked = false;
     auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
     ASSERT_NE(listener, nullptr);
 
-    listener->vabUpdateBootTimerCount_ = 39;
     listener->OnVabUpdateBoot();
-    // vab still "booting", count incremented but no callback
+    EXPECT_TRUE(callbackInvoked);
+}
+
+// OnVabUpdateBoot continues normal flow when BOOT_COMPLETE_KEY is "false"
+HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootBootNotComplete, TestSize.Level0)
+{
+    SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
+    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, FALSE_STR);
+
+    bool callbackInvoked = false;
+    auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
+    ASSERT_NE(listener, nullptr);
+
+    // BOOT_COMPLETE_KEY is "false", vab still "booting" -> continue waiting
+    listener->OnVabUpdateBoot();
     EXPECT_FALSE(callbackInvoked);
-    EXPECT_EQ(listener->vabUpdateBootTimerCount_, 40);
+}
+
+// BOOT_COMPLETE_KEY takes priority over timer count limit
+HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootBootCompleteOverridesTimerCount, TestSize.Level0)
+{
+    SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
+    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
+
+    bool callbackInvoked = false;
+    auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
+    ASSERT_NE(listener, nullptr);
+
+    // Timer count not exhausted, but BOOT_COMPLETE_KEY is "true" -> callback invoked
+    listener->vabUpdateBootTimerCount_ = 0;
+    listener->OnVabUpdateBoot();
+    EXPECT_TRUE(callbackInvoked);
+}
+
+// Integration: vab booting -> BOOT_COMPLETE_KEY becomes "true" -> callback
+HWTEST_F(VabUpdateBootManagerTest, FullIntegrationBootCompleteFlow, TestSize.Level0)
+{
+    SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
+    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, FALSE_STR);
+
+    bool callbackInvoked = false;
+    auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
+    ASSERT_NE(listener, nullptr);
+
+    // First tick: boot not complete, vab still booting
+    listener->OnVabUpdateBoot();
+    EXPECT_FALSE(callbackInvoked);
+
+    // Second tick: boot completes
+    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
+    listener->OnVabUpdateBoot();
+    EXPECT_TRUE(callbackInvoked);
+    EXPECT_FALSE(listener->vabUpdateBootTimerId_.has_value());
+    EXPECT_EQ(listener->callback_, nullptr);
 }
 
 // OnVabUpdateBoot returns early when callback_ is null (already handled)
 HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootCallbackNull, TestSize.Level0)
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
 
     auto listener = VabUpdateBootListener::Start([]() {});
     ASSERT_NE(listener, nullptr);
@@ -198,7 +221,6 @@ HWTEST_F(VabUpdateBootManagerTest, OnVabUpdateBootCallbackNull, TestSize.Level0)
 HWTEST_F(VabUpdateBootManagerTest, DestructorUnregistersTimer, TestSize.Level0)
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, FALSE_STR);
 
     bool callbackInvoked = false;
     {
@@ -226,26 +248,20 @@ HWTEST_F(VabUpdateBootManagerTest, HandleBootEvent, TestSize.Level0)
     EXPECT_EQ(listener->callback_, nullptr);
 }
 
-// Full integration: boot -> vab booting -> boot complete -> vab idle -> callback
+// Full integration: vab booting -> vab idle -> callback
 HWTEST_F(VabUpdateBootManagerTest, FullIntegrationFlow, TestSize.Level0)
 {
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "booting");
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, FALSE_STR);
 
     bool callbackInvoked = false;
     auto listener = VabUpdateBootListener::Start([&callbackInvoked]() { callbackInvoked = true; });
     ASSERT_NE(listener, nullptr);
 
-    // First tick: boot not complete
+    // First tick: vab still booting
     listener->OnVabUpdateBoot();
     EXPECT_FALSE(callbackInvoked);
 
-    // Second tick: boot complete but vab still booting
-    SystemParamManager::GetInstance().SetParam(BOOT_COMPLETE_KEY, TRUE_STR);
-    listener->OnVabUpdateBoot();
-    EXPECT_FALSE(callbackInvoked);
-
-    // Third tick: vab completes
+    // Second tick: vab completes
     SystemParamManager::GetInstance().SetParam(VAB_UPDATE_BOOT_KEY, "idle");
     listener->OnVabUpdateBoot();
     EXPECT_TRUE(callbackInvoked);
