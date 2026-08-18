@@ -16,6 +16,7 @@
 #include "co_auth_service.h"
 
 #include <cinttypes>
+#include <fstream>
 #include <thread>
 
 #include "string_ex.h"
@@ -362,6 +363,16 @@ void CoAuthService::NotifyFwkReady()
 {
     IAM_LOGD("start.");
     if (IsFwkReady()) {
+        std::string path = "/mnt/useriam_status";
+        std::ofstream ofs(path, std::ios::binary);
+        if (ofs.is_open()) {
+            ofs << "true";
+            ofs.close();
+            IAM_LOGI("success to write %{public}s", path.c_str());
+        } else {
+            IAM_LOGE("failed to open %{public}s, errno:%{public}d", path.c_str(), errno);
+        }
+
         LoadModeHandler::GetInstance().OnFwkReady();
     }
 }
