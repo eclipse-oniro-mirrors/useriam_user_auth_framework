@@ -26,6 +26,7 @@
 #include "iservice_registry.h"
 #include "remote_connect_listener_manager.h"
 #include "socket_factory.h"
+#include "iam_scope_guard.h"
 #include "soft_bus_base_socket.h"
 #include "softbus_error_code.h"
 #include "soft_bus_socket_listener.h"
@@ -311,6 +312,8 @@ ResultCode SoftBusManager::DoServiceSocketInit()
         return GENERAL_ERROR;
     }
 
+    Common::IamScopeGuard socketGuard([socketId]() { Shutdown(socketId); });
+
     int ret = ServiceSocketListen(socketId);
     if (ret != SUCCESS) {
         IAM_LOGE("socket listen failed, ret is %{public}d.", ret);
@@ -325,6 +328,7 @@ ResultCode SoftBusManager::DoServiceSocketInit()
 
     AddSocket(socketId, serverSocket);
     SetServerSocket(serverSocket);
+    socketGuard.Cancel();
     IAM_LOGI("ServiceSocketInit success.");
     return SUCCESS;
 }
@@ -445,6 +449,8 @@ ResultCode SoftBusManager::DoOpenConnectionInner(const std::string &connectionNa
     }
     trace.socketId = socketId;
 
+    Common::IamScopeGuard socketGuard([socketId]() { Shutdown(socketId); });
+
     auto clientSocket = SocketFactory::CreateClientSocket(socketId, connectionName, networkId);
     if (clientSocket == nullptr) {
         IAM_LOGE("CreateClientSocket failed, connectionName:%{public}s", connectionName.c_str());
@@ -459,6 +465,7 @@ ResultCode SoftBusManager::DoOpenConnectionInner(const std::string &connectionNa
 
     AddConnection(connectionName, clientSocket);
     AddSocket(socketId, clientSocket);
+    socketGuard.Cancel();
     IAM_LOGI("Bind service success, connectionName:%{public}s socketId:%{public}d.", connectionName.c_str(), socketId);
     return SUCCESS;
 }

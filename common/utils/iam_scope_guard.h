@@ -42,6 +42,11 @@ public:
         }
     }
 
+    void Cancel()
+    {
+        action_ = nullptr;
+    }
+
 private:
     ExitAction action_;
 };
