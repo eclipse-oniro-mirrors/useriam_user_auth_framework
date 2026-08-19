@@ -692,7 +692,7 @@ int32_t UserAuthClientImpl::SetWidgetCallback(int32_t version, const std::shared
     return proxy->RegisterWidgetCallback(version, wrapper);
 }
 
-void UserAuthClientImpl::RemoveSensitiveInfoFromNotice(NoticeType noticeType, const std::string &eventData)
+void UserAuthClientImpl::PrintNoticeInfo(NoticeType noticeType, const std::string &eventData)
 {
     nlohmann::json temp = nlohmann::json::parse(eventData, nullptr, false);
     if (temp.is_object() && temp.contains("authToken")) {
@@ -704,7 +704,7 @@ void UserAuthClientImpl::RemoveSensitiveInfoFromNotice(NoticeType noticeType, co
 
 int32_t UserAuthClientImpl::Notice(NoticeType noticeType, const std::string &eventData)
 {
-    RemoveSensitiveInfoFromNotice(noticeType, eventData);
+    PrintNoticeInfo(noticeType, eventData);
     auto proxy = GetProxy();
     if (!proxy) {
         IAM_LOGE("proxy is nullptr");
