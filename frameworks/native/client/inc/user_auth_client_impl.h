@@ -88,6 +88,7 @@ private:
     void InitIpcAuthParam(const AuthParamInner &authParam, IpcAuthParamInner &ipcAuthParam);
     void InitIpcWidgetParam(const WidgetParamInner &widgetParam, IpcWidgetParamInner &ipcWidgetParam);
     void PrintNoticeInfo(NoticeType noticeType, const std::string &eventData);
+
     friend class UserAuthClient;
     UserAuthClientImpl() = default;
     ~UserAuthClientImpl() override;

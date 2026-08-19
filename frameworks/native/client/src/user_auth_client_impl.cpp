@@ -698,7 +698,7 @@ void UserAuthClientImpl::PrintNoticeInfo(NoticeType noticeType, const std::strin
     if (temp.is_object() && temp.contains("authToken")) {
         temp.erase("authToken");
     }
-    HILOG_COMM_INFO("auth client notice noticeType:%{public}d, eventData:%{public}s",
+    HILOG_COMM_INFO("auth client notice noticeType:%{public}d, eventDat:%{public}s",
         static_cast<int32_t>(noticeType), temp.dump().c_str());
 }
 
