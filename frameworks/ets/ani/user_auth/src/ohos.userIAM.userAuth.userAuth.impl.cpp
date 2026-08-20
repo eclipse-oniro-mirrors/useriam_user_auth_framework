@@ -288,7 +288,6 @@ void SendNotice(NoticeType noticeType, string_view eventData)
 {
     IAM_LOGI("SendNotice begin");
     UserAuth::NoticeType type = UserAuth::NoticeType(noticeType.get_value());
-    IAM_LOGI("recv SendNotice noticeType:%{public}d eventData:%{public}s", type, eventData.c_str());
     if (!UserAuth::UserAuthAniHelper::VerifyNoticeParam(eventData.c_str())) {
         IAM_LOGE("Invalid notice parameter");
         UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM);

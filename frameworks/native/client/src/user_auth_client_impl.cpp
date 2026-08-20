@@ -28,6 +28,7 @@
 #include "iam_ptr.h"
 #include "ipc_client_utils.h"
 #include "modal_callback_service.h"
+#include "nlohmann/json.hpp"
 #include "user_auth_callback_service.h"
 #include "user_auth_modal_inner_callback.h"
 #include "widget_callback_service.h"
@@ -691,16 +692,24 @@ int32_t UserAuthClientImpl::SetWidgetCallback(int32_t version, const std::shared
     return proxy->RegisterWidgetCallback(version, wrapper);
 }
 
+void UserAuthClientImpl::PrintNoticeInfo(NoticeType noticeType, const std::string &eventData)
+{
+    nlohmann::json temp = nlohmann::json::parse(eventData, nullptr, false);
+    if (temp.is_object() && temp.contains("authToken")) {
+        temp.erase("authToken");
+    }
+    HILOG_COMM_INFO("auth client notice noticeType:%{public}d, eventDat:%{public}s",
+        static_cast<int32_t>(noticeType), temp.dump().c_str());
+}
+
 int32_t UserAuthClientImpl::Notice(NoticeType noticeType, const std::string &eventData)
 {
-    IAM_LOGI("start, noticeType:%{public}d", noticeType);
+    PrintNoticeInfo(noticeType, eventData);
     auto proxy = GetProxy();
     if (!proxy) {
         IAM_LOGE("proxy is nullptr");
         return GENERAL_ERROR;
     }
-    HILOG_COMM_INFO("auth client notice noticeType:%{public}d, eventDat:%{public}s",
-        static_cast<int32_t>(noticeType), eventData.c_str());
     return proxy->Notice(static_cast<int32_t>(noticeType), eventData);
 }
 

@@ -73,7 +73,6 @@ ResultCode WidgetClient::OnNotice(NoticeType type, const std::string &eventData)
         IAM_LOGE("Invalid notice event data");
         return ResultCode::INVALID_PARAMETERS;
     }
-    IAM_LOGI("recv notice eventData: %{public}s", eventData.c_str());
     auto root = nlohmann::json::parse(eventData.c_str(), nullptr, false);
     if (root.is_null() || root.is_discarded()) {
         IAM_LOGE("OnNotice eventData is not json format");

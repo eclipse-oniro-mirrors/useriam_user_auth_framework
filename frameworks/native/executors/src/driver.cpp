@@ -177,6 +177,10 @@ void Driver::OnFrameworkDown()
         frameworkReadyListener_->StopTimer();
     }
 
+    if (!isFwkReady_) {
+        IAM_LOGI("already fwk down, skip");
+        return;
+    }
     isFwkReady_ = false;
     IF_FALSE_LOGE_AND_RETURN(hdiConfig_.driver != nullptr);
     hdiConfig_.driver->OnFrameworkDown();

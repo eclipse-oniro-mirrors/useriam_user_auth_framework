@@ -507,7 +507,6 @@ napi_value SendNotice(napi_env env, napi_callback_info info)
     }
 
     std::string eventData = UserAuthNapiHelper::GetStringFromValueUtf8(env, argv[PARAM1]);
-    IAM_LOGI("recv SendNotice type:%{public}d, eventData:%{public}s", noticeType_value, eventData.c_str());
     if (!VerifyNoticeParam(eventData)) {
         IAM_LOGE("Invalid notice parameter");
         std::string msgStr = "Parameter error. The value of \"eventData\" for WIDGET_NOTICE must be json string.";

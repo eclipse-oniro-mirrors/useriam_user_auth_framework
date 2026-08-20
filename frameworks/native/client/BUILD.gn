@@ -95,6 +95,7 @@ ohos_shared_library("userauth_client") {
   }
 
   external_deps = [
+    "ability_base:want",
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
     "hilog:libhilog",
