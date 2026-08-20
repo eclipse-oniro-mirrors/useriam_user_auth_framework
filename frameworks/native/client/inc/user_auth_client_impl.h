@@ -27,6 +27,7 @@
 #include "remote_auth_client_callback.h"
 #include "user_auth_client.h"
 #include "user_auth_common_defines.h"
+#include "user_recognition_callback_service.h"
 
 namespace OHOS {
 namespace UserIam {
@@ -64,6 +65,12 @@ public:
         const std::shared_ptr<AuthSuccessEventListener> &listener) override;
     int32_t UnRegistUserAuthSuccessEventListener(
         const std::shared_ptr<AuthSuccessEventListener> &listener) override;
+    int32_t CheckUserRecognitionCapability() override;
+    int32_t GetUserRecognitionResult(UserRecognitionResult &result) override;
+    int32_t RegisterUserRecognitionEventListener(
+        const std::shared_ptr<UserRecognitionEventListener> &listener) override;
+    int32_t UnregisterUserRecognitionEventListener(
+        const std::shared_ptr<UserRecognitionEventListener> &listener) override;
     int32_t SetGlobalConfigParam(const GlobalConfigParam &param) override;
     int32_t PrepareRemoteAuth(const std::string &networkId,
         const std::shared_ptr<PrepareRemoteAuthCallback> &callback) override;
@@ -88,8 +95,12 @@ private:
     void InitIpcAuthParam(const AuthParamInner &authParam, IpcAuthParamInner &ipcAuthParam);
     void InitIpcWidgetParam(const WidgetParamInner &widgetParam, IpcWidgetParamInner &ipcWidgetParam);
     void PrintNoticeInfo(NoticeType noticeType, const std::string &eventData);
+    void EnsureUserRecognitionServiceStatusSubscription();
+    void ReregisterUserRecognitionListeners();
+    void NotifyUserRecognitionServiceUnavailable();
 
     friend class UserAuthClient;
+    friend class UserRecognitionServiceListener;
     UserAuthClientImpl() = default;
     ~UserAuthClientImpl() override;
     class UserAuthImplDeathRecipient : public IRemoteObject::DeathRecipient, public NoCopyable {
@@ -104,6 +115,8 @@ private:
     sptr<IRemoteObject::DeathRecipient> deathRecipient_ {nullptr};
     constexpr static int32_t MINIMUM_VERSION {0};
     std::mutex mutex_;
+    sptr<UserRecognitionCallbackService> recognitionService_ {nullptr};
+    bool recognitionServiceStatusSubscribed_ {false};
 };
 } // namespace UserAuth
 } // namespace UserIam

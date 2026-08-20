@@ -55,6 +55,7 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
     "../../../../frameworks/native/client/src/user_auth_napi_client_impl.cpp",
     "../../../../frameworks/native/client/src/user_idm_callback_service.cpp",
     "../../../../frameworks/native/client/src/user_idm_client_impl.cpp",
+    "../../../../frameworks/native/client/src/user_recognition_callback_service.cpp",
     "../../../../frameworks/native/client/src/widget_callback_service.cpp",
     "../../dummy/mock_callback_manager_impl.cpp",
     "user_auth_client_fuzzer.cpp",

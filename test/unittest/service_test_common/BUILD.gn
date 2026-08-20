@@ -1,0 +1,68 @@
+# Copyright (c) 2026 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+
+# Exports services/core/inc (user_recognition_state_manager.h) so consumers (the
+# ext part's tests, which compile the controller directly) can include it once
+# they link the fake accessor below. userauth_client_ipc_config supplies the
+# idl-generated headers the manager header pulls in (user_recognition_callback_stub.h).
+config("userauthservice_test_common_config") {
+  include_dirs = [ "../../../services/core/inc" ]
+}
+
+# Testonly static lib that publishes the framework base utilities the ext part's
+# unit/fuzz tests link: FiniteStateMachine (impl + builder), RelativeTimer,
+# IamEventDispatcher + SystemAbilityListener (used by the controller / sub-profile
+# manager), plus a fake ThreadHandler that backs the FSM's default executor and the
+# dispatcher (PostTask runs inline, so transitions are synchronous and the real
+# ThreadHandler/hicollie deps never enter the test binary). Consumed via external_deps
+# by user_auth_framework_ext. No cfi (test helper) -> on bypass_user_auth_framework.
+ohos_static_library("userauthservice_test_common") {
+  testonly = true
+  remove_configs = [ "//build/config/compiler:no_exceptions" ]
+
+  sources = [
+    "../../../services/base/src/finite_state_machine_impl.cpp",
+    "../../../services/base/src/finite_state_machine_builder.cpp",
+    "../../../services/base/src/iam_event_dispatcher.cpp",
+    "../../../common/utils/system_ability_listener.cpp",
+    "../../../common/utils/relative_timer.cpp",
+    "fake_thread_handler.cpp",
+    "fake_user_recognition_state_manager.cpp",
+  ]
+
+  include_dirs = [
+    "../../../common/logs",
+    "../../../common/utils",
+    "../../../interfaces/inner_api",
+    "../../../services/base/inc",
+    "../../../services/base/src",
+  ]
+
+  # Propagates services/core/inc (user_recognition_state_manager.h) to the ext
+  # tests that compile the controller directly. fake_user_recognition_state_manager.cpp
+  # is forward-declaration-only, so this lib itself needs no services/core header.
+  public_configs = [ ":userauthservice_test_common_config" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hilog:libhilog",
+    "ipc:ipc_single",
+    "samgr:samgr_proxy",
+  ]
+
+  subsystem_name = "useriam"
+  part_name = "user_auth_framework"
+}
+

@@ -67,6 +67,15 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV10_001, TestSize.Level
         static_cast<int32_t>(UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED));
     EXPECT_EQ(UserAuthHelper::GetResultCodeV10(HARDWARE_NOT_SUPPORTED),
         static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR));
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV10(DEVICE_CAPABILITY_NOT_SUPPORT),
+        static_cast<int32_t>(UserAuthResultCode::OHOS_CAPABILITY_NOT_SUPPORTED));
+}
+
+// ENGINE_UNAVAILABLE (e.g. auth engine not loaded) must map to GENERAL_ERROR.
+HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV10EngineUnavailable, TestSize.Level0)
+{
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV10(ENGINE_UNAVAILABLE),
+        static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR));
 }
 
 HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV10_002, TestSize.Level0)

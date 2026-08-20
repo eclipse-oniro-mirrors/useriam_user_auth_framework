@@ -61,6 +61,7 @@ ohos_unittest("iam_inner_api_test") {
     "../../../frameworks/native/client/src/user_auth_napi_client_impl.cpp",
     "../../../frameworks/native/client/src/user_idm_callback_service.cpp",
     "../../../frameworks/native/client/src/user_idm_client_impl.cpp",
+    "../../../frameworks/native/client/src/user_recognition_callback_service.cpp",
     "../../../frameworks/native/client/src/widget_callback_service.cpp",
     "mocks/mock_ipc_client_utils.cpp",
     "src/callback_manager_impl_test.cpp",
@@ -76,6 +77,7 @@ ohos_unittest("iam_inner_api_test") {
     "src/user_auth_napi_client_test.cpp",
     "src/user_idm_callback_service_test.cpp",
     "src/user_idm_client_test.cpp",
+    "src/user_recognition_callback_service_test.cpp",
     "src/widget_callback_service_test.cpp",
   ]
 

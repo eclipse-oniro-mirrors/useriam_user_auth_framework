@@ -15,19 +15,39 @@
 
 #include "simple_auth_context.h"
 
+#include <functional>
 #include <future>
+
+#include <chrono>
 
 #include "mock_authentication.h"
 #include "mock_context.h"
 #include "mock_resource_node.h"
 #include "mock_schedule_node.h"
 #include "schedule_node_impl.h"
+#include "mock_user_idm_database.h"
 
 using namespace testing;
 using namespace testing::ext;
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+namespace {
+// RAII: redirects UserIdmDatabase::Instance() to a mock for the test's scope,
+// restoring the real instance on destruction (even on ASSERT_* early return).
+class UserIdmDatabaseInstanceGuard {
+public:
+    explicit UserIdmDatabaseInstanceGuard(UserIdmDatabase &db)
+    {
+        UserIdmDatabase::SetInstanceForTesting(&db);
+    }
+    ~UserIdmDatabaseInstanceGuard()
+    {
+        UserIdmDatabase::ResetInstanceForTesting();
+    }
+};
+} // namespace
+
 class SimpleAuthContextTest : public testing::Test {
 public:
     static void SetUpTestCase();
@@ -606,6 +626,143 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_OnScheduleStoped_006, Test
     nodeCallback->OnScheduleStoped(testResultCode, result);
 }
 
+// Drives one schedule round through SimpleAuthContext::OnScheduleStoped: mockAuth->Update
+// validates the schedule result, stamps resultCode and lets fillResultInfo decorate the
+// AuthResultInfo before the result callback fires.
+static void TriggerAuthResult(uint64_t contextId, int32_t resultCode,
+    const std::vector<uint8_t> &scheduleResult,
+    const std::function<void(Authentication::AuthResultInfo &)> &fillResultInfo)
+{
+    std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
+    ASSERT_NE(mockAuth, nullptr);
+    EXPECT_CALL(*mockAuth, Update(_, _))
+        .Times(Exactly(1))
+        .WillOnce([scheduleResult, resultCode, fillResultInfo](const std::vector<uint8_t> &scheduleResultArg,
+                       Authentication::AuthResultInfo &resultInfo) {
+            EXPECT_EQ(scheduleResultArg, scheduleResult);
+            resultInfo.result = resultCode;
+            fillResultInfo(resultInfo);
+            return true;
+        });
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, OnResult(_, _)).Times(Exactly(1));
+
+    std::shared_ptr<ScheduleNodeCallback> nodeCallback =
+        Common::MakeShared<SimpleAuthContext>(contextId, mockAuth, contextCallback, true);
+    ASSERT_NE(nodeCallback, nullptr);
+    std::shared_ptr<Attributes> result = Common::MakeShared<Attributes>();
+    ASSERT_NE(result, nullptr);
+    bool ret = result->SetUint8ArrayValue(Attributes::ATTR_RESULT, scheduleResult);
+    ASSERT_EQ(ret, true);
+    nodeCallback->OnScheduleStoped(resultCode, result);
+}
+
+// PostEvent: a successful auth result carries the token (ATTR_SIGNATURE) together with the
+// result code, ATL and credentialId in the EVENT_AUTH_RESULT payload.
+HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_PostEventCarriesSignature, TestSize.Level0)
+{
+    static const uint64_t testContestId = 2;
+    static const std::vector<uint8_t> testScheduleResult = {3, 4, 5, 6};
+    static const std::vector<uint8_t> testSignature = {10, 11, 12, 13};
+    static const uint32_t testAuthTrustLevel = static_cast<uint32_t>(AuthTrustLevel::ATL3);
+    static const int32_t testResultCode = ResultCode::SUCCESS;
+
+    // Fresh dispatcher so only this test's subscription observes the post.
+    SetIamEventDispatcher(CreateIamEventDispatcher());
+    std::promise<void> posted;
+    auto postedFuture = posted.get_future();
+    auto subscription = GetIamEventDispatcher().Subscribe(EVENT_AUTH_RESULT,
+        [&posted](const IamEventData &data) {
+            EXPECT_NE(data, nullptr);
+            if (data == nullptr) {
+                posted.set_value();
+                return;
+            }
+            int32_t resultCode = 0;
+            EXPECT_TRUE(data->GetInt32Value(Attributes::ATTR_RESULT_CODE, resultCode));
+            EXPECT_EQ(resultCode, testResultCode);
+            int32_t userId = 0;
+            EXPECT_TRUE(data->GetInt32Value(Attributes::ATTR_USER_ID, userId));
+            uint32_t authTrustLevel = 0;
+            EXPECT_TRUE(data->GetUint32Value(Attributes::ATTR_AUTH_TRUST_LEVEL, authTrustLevel));
+            EXPECT_EQ(authTrustLevel, testAuthTrustLevel);
+            uint64_t credentialId = 0;
+            EXPECT_TRUE(data->GetUint64Value(Attributes::ATTR_CREDENTIAL_ID, credentialId));
+            std::vector<uint8_t> signature;
+            EXPECT_TRUE(data->GetUint8ArrayValue(Attributes::ATTR_SIGNATURE, signature));
+            EXPECT_EQ(signature, testSignature);
+            posted.set_value();
+        });
+    ASSERT_NE(subscription, nullptr);
+
+    TriggerAuthResult(testContestId, testResultCode, testScheduleResult,
+        [](Authentication::AuthResultInfo &resultInfo) {
+            resultInfo.token = testSignature;
+            resultInfo.authTrustLevel = testAuthTrustLevel;
+            resultInfo.credentialId = 12345;
+        });
+
+    // The dispatcher posts to the resident thread; wait (bounded) for the event.
+    EXPECT_EQ(postedFuture.wait_for(std::chrono::seconds(5)), std::future_status::ready);
+    subscription.reset();
+    SetIamEventDispatcher(nullptr);
+}
+
+// PostEvent: a failed auth result carries no token (ATTR_SIGNATURE) in the EVENT_AUTH_RESULT
+// payload (credentialId is filled unconditionally).
+HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_PostEventFailureHasNoSignature, TestSize.Level0)
+{
+    static const uint64_t testContestId = 2;
+    static const std::vector<uint8_t> testScheduleResult = {3, 4, 5, 6};
+    static const int32_t testResultCode = ResultCode::GENERAL_ERROR;
+
+    SetIamEventDispatcher(CreateIamEventDispatcher());
+    std::promise<void> posted;
+    auto postedFuture = posted.get_future();
+    auto subscription = GetIamEventDispatcher().Subscribe(EVENT_AUTH_RESULT,
+        [&posted](const IamEventData &data) {
+            EXPECT_NE(data, nullptr);
+            if (data == nullptr) {
+                posted.set_value();
+                return;
+            }
+            int32_t resultCode = 0;
+            EXPECT_TRUE(data->GetInt32Value(Attributes::ATTR_RESULT_CODE, resultCode));
+            EXPECT_EQ(resultCode, testResultCode);
+            std::vector<uint8_t> signature;
+            EXPECT_FALSE(data->GetUint8ArrayValue(Attributes::ATTR_SIGNATURE, signature));
+            posted.set_value();
+        });
+    ASSERT_NE(subscription, nullptr);
+
+    std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
+    ASSERT_NE(mockAuth, nullptr);
+    EXPECT_CALL(*mockAuth, Update(_, _))
+        .Times(Exactly(1))
+        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo) {
+            EXPECT_EQ(scheduleResult, testScheduleResult);
+            resultInfo.result = testResultCode;
+            return true;
+        });
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, OnResult(_, _)).Times(Exactly(1));
+
+    std::shared_ptr<ScheduleNodeCallback> nodeCallback =
+        Common::MakeShared<SimpleAuthContext>(testContestId, mockAuth, contextCallback, true);
+    ASSERT_NE(nodeCallback, nullptr);
+    std::shared_ptr<Attributes> result = Common::MakeShared<Attributes>();
+    ASSERT_NE(result, nullptr);
+    bool ret = result->SetUint8ArrayValue(Attributes::ATTR_RESULT, testScheduleResult);
+    ASSERT_EQ(ret, true);
+    nodeCallback->OnScheduleStoped(testResultCode, result);
+
+    EXPECT_EQ(postedFuture.wait_for(std::chrono::seconds(5)), std::future_status::ready);
+    subscription.reset();
+    SetIamEventDispatcher(nullptr);
+}
+
 HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_ContextFree, TestSize.Level0)
 {
     static const uint64_t testContestId = 2;
@@ -709,6 +866,9 @@ HWTEST_F(SimpleAuthContextTest, GetPropertyTemplateIds_0003, TestSize.Level0)
     std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     auto context = Common::MakeShared<SimpleAuthContext>(testContestId, mockAuth, contextCallback, true);
     ASSERT_NE(context, nullptr);
+    MockUserIdmDatabase mockDb;
+    EXPECT_CALL(mockDb, GetCredentialInfo(_, _, _)).WillOnce(Return(GENERAL_ERROR));
+    UserIdmDatabaseInstanceGuard guard(mockDb);
     context->Start();
     auto result = context->GetPropertyTemplateIds(resultInfo);
     EXPECT_FALSE(result.has_value());
@@ -734,6 +894,9 @@ HWTEST_F(SimpleAuthContextTest, GetPropertyTemplateIds_0004, TestSize.Level0)
     std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     auto context = Common::MakeShared<SimpleAuthContext>(testContestId, mockAuth, contextCallback, true);
     ASSERT_NE(context, nullptr);
+    MockUserIdmDatabase mockDb;
+    EXPECT_CALL(mockDb, GetCredentialInfo(_, _, _)).WillOnce(Return(GENERAL_ERROR));
+    UserIdmDatabaseInstanceGuard guard(mockDb);
     context->Start();
     auto result = context->GetPropertyTemplateIds(resultInfo);
     EXPECT_FALSE(result.has_value());

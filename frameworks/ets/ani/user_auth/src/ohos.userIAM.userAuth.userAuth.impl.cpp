@@ -13,10 +13,17 @@
  * limitations under the License.
  */
 
-#include "ohos.userIAM.userAuth.userAuth.proj.hpp"
 #include "ohos.userIAM.userAuth.userAuth.impl.hpp"
+
+#include <algorithm>
+#include <mutex>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
+#include "ohos.userIAM.userAuth.userAuth.proj.hpp"
 #include "taihe/runtime.hpp"
-#include "stdexcept"
+
 #include "attributes.h"
 #include "iam_check.h"
 #include "iam_ptr.h"
@@ -452,6 +459,186 @@ void UnregisterRemoteAuthCallback()
     IAM_LOGD("success");
     reporter.ReportSuccess();
 }
+
+UserRecognitionStatus ConvertUserRecognitionStatus(int32_t status)
+{
+    if (status == static_cast<int32_t>(UserAuth::UserRecognitionStatus::MATCH)) {
+        return UserRecognitionStatus(UserRecognitionStatus::key_t::MATCH);
+    }
+    if (status == static_cast<int32_t>(UserAuth::UserRecognitionStatus::MISMATCH)) {
+        return UserRecognitionStatus(UserRecognitionStatus::key_t::MISMATCH);
+    }
+    return UserRecognitionStatus(UserRecognitionStatus::key_t::UNCERTAIN);
+}
+
+// The wire value (10000-40000) must map to the generated enum's named key; key_t is a dense
+// index enum, so casting the wire value into key_t produces an invalid enum item.
+taihe::optional<AuthTrustLevel> ConvertAuthTrustLevel(int32_t authTrustLevel)
+{
+    switch (authTrustLevel) {
+        case UserAuth::ATL1:
+            return taihe::optional<AuthTrustLevel>::make(AuthTrustLevel(AuthTrustLevel::key_t::ATL1));
+        case UserAuth::ATL2:
+            return taihe::optional<AuthTrustLevel>::make(AuthTrustLevel(AuthTrustLevel::key_t::ATL2));
+        case UserAuth::ATL3:
+            return taihe::optional<AuthTrustLevel>::make(AuthTrustLevel(AuthTrustLevel::key_t::ATL3));
+        case UserAuth::ATL4:
+            return taihe::optional<AuthTrustLevel>::make(AuthTrustLevel(AuthTrustLevel::key_t::ATL4));
+        default:
+            IAM_LOGE("invalid authTrustLevel:%{public}d", authTrustLevel);
+            return taihe::optional<AuthTrustLevel>();
+    }
+}
+
+UserRecognitionResult FillAniRecognitionResult(const UserAuth::UserRecognitionResult &src)
+{
+    taihe::optional<AuthTrustLevel> authTrustLevel;
+    if (src.authTrustLevel.has_value() && src.status == UserAuth::UserRecognitionStatus::MATCH) {
+        authTrustLevel = ConvertAuthTrustLevel(static_cast<int32_t>(*src.authTrustLevel));
+    }
+    return UserRecognitionResult{
+        ConvertUserRecognitionStatus(static_cast<int32_t>(src.status)),
+        src.userId,
+        taihe::string(src.userInfo),
+        authTrustLevel,
+    };
+}
+
+class UserRecognitionAniCallback : public UserAuth::UserRecognitionEventListener {
+public:
+    explicit UserRecognitionAniCallback(callback<void(UserRecognitionResult const&)> cb) : cb_(std::move(cb)) {}
+    void OnUserRecognitionEvent(const UserAuth::UserRecognitionResult &result) override
+    {
+        if (cb_.is_error()) {
+            IAM_LOGE("recognition ani callback is in error state, skip event");
+            return;
+        }
+        taihe::env_guard guard;
+        if (guard.get_env() == nullptr) {
+            IAM_LOGE("attach ani env fail, drop user recognition event");
+            return;
+        }
+        UserRecognitionResult ani = FillAniRecognitionResult(result);
+        cb_(ani);
+    }
+
+private:
+    callback<void(UserRecognitionResult const&)> cb_;
+};
+
+using RecognitionCb = callback<void(UserRecognitionResult const&)>;
+using RecognitionListenerEntry = std::pair<optional<RecognitionCb>, std::shared_ptr<UserRecognitionAniCallback>>;
+
+class UserRecognitionManagerImpl {
+public:
+    UserRecognitionManagerImpl() = default;
+    ~UserRecognitionManagerImpl()
+    {
+        std::lock_guard<std::mutex> guard(listenersMutex_);
+        for (const auto &entry : listeners_) {
+            UserAuth::UserAuthClient::GetInstance().UnregisterUserRecognitionEventListener(entry.second);
+        }
+        listeners_.clear();
+    }
+
+    UserRecognitionResult getUserRecognitionResult()
+    {
+        UserAuth::UserAuthApiEventReporter reporter("GetUserRecognitionResult");
+        UserAuth::UserRecognitionResult result = {};
+        int32_t ret = UserAuth::UserAuthClient::GetInstance().GetUserRecognitionResult(result);
+        if (ret != UserAuth::SUCCESS) {
+            IAM_LOGE("get user recognition result fail, ret:%{public}d", ret);
+            UserAuth::UserAuthResultCode resultCode =
+                UserAuth::UserAuthResultCode(UserAuth::UserAuthHelper::GetResultCodeV10(ret));
+            reporter.ReportFailed(resultCode);
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(resultCode);
+            return FillAniRecognitionResult(result);
+        }
+        reporter.ReportSuccess();
+        return FillAniRecognitionResult(result);
+    }
+
+    void onUserRecognitionChange(callback_view<void(UserRecognitionResult const&)> callback)
+    {
+        UserAuth::UserAuthApiEventReporter reporter("OnUserRecognitionChange");
+        optional<RecognitionCb> eventCb{std::in_place_t{}, callback};
+        auto aniCb = MakeShared<UserRecognitionAniCallback>(RecognitionCb(callback));
+        if (aniCb == nullptr) {
+            IAM_LOGE("create recognition ani callback fail");
+            reporter.ReportFailed(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        std::lock_guard<std::mutex> guard(listenersMutex_);
+        auto it = std::find_if(listeners_.begin(), listeners_.end(),
+            [&eventCb](const RecognitionListenerEntry &entry) { return entry.first == eventCb; });
+        if (it != listeners_.end()) {
+            IAM_LOGI("user recognition callback already registered, skip");
+            reporter.ReportSuccess();
+            return;
+        }
+        int32_t ret = UserAuth::UserAuthClient::GetInstance().RegisterUserRecognitionEventListener(aniCb);
+        if (ret != UserAuth::SUCCESS) {
+            IAM_LOGE("register user recognition listener fail, ret:%{public}d", ret);
+            UserAuth::UserAuthResultCode resultCode =
+                UserAuth::UserAuthResultCode(UserAuth::UserAuthHelper::GetResultCodeV10(ret));
+            reporter.ReportFailed(resultCode);
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(resultCode);
+            return;
+        }
+        listeners_.emplace_back(std::move(eventCb), aniCb);
+        reporter.ReportSuccess();
+    }
+
+    void offUserRecognitionChange(optional_view<callback<void(UserRecognitionResult const&)>> callback)
+    {
+        UserAuth::UserAuthApiEventReporter reporter("OffUserRecognitionChange");
+        std::lock_guard<std::mutex> guard(listenersMutex_);
+        if (callback.has_value()) {
+            auto it = std::find_if(listeners_.begin(), listeners_.end(),
+                [&callback](const RecognitionListenerEntry &entry) { return entry.first == callback; });
+            if (it != listeners_.end()) {
+                UserAuth::UserAuthClient::GetInstance().UnregisterUserRecognitionEventListener(it->second);
+                listeners_.erase(it);
+            } else {
+                IAM_LOGI("user recognition callback not found");
+            }
+        } else {
+            for (const auto &entry : listeners_) {
+                UserAuth::UserAuthClient::GetInstance().UnregisterUserRecognitionEventListener(entry.second);
+            }
+            listeners_.clear();
+        }
+        reporter.ReportSuccess();
+    }
+
+private:
+    std::vector<RecognitionListenerEntry> listeners_;
+    std::mutex listenersMutex_;
+};
+
+optional<UserRecognitionMgr> getUserRecognitionMgr()
+{
+    IAM_LOGI("getUserRecognitionMgr begin");
+    UserAuth::UserAuthApiEventReporter reporter("GetUserRecognitionMgr");
+    int32_t ret = UserAuth::UserAuthClient::GetInstance().CheckUserRecognitionCapability();
+    if (ret == UserAuth::SUCCESS) {
+        reporter.ReportSuccess();
+        return optional<UserRecognitionMgr>(std::in_place,
+            make_holder<UserRecognitionManagerImpl, UserRecognitionMgr>());
+    }
+    if (ret == UserAuth::DEVICE_CAPABILITY_NOT_SUPPORT) {
+        IAM_LOGI("user recognition not supported, return null");
+        reporter.ReportSuccess();
+        return {};
+    }
+    UserAuth::UserAuthResultCode resultCode =
+        UserAuth::UserAuthResultCode(UserAuth::UserAuthHelper::GetResultCodeV10(ret));
+    IAM_LOGE("check capability fail, ret:%{public}d", ret);
+    reporter.ReportFailed(resultCode);
+    UserAuth::UserAuthAniHelper::ThrowBusinessError(resultCode);
+    return {};
+}
 }  // namespace
 
 TH_EXPORT_CPP_API_GetAvailableStatus(GetAvailableStatus);
@@ -464,3 +651,4 @@ TH_EXPORT_CPP_API_getAuthLockStateSync(getAuthLockStateSync);
 TH_EXPORT_CPP_API_getAuthLockState(getAuthLockStateSync);
 TH_EXPORT_CPP_API_RegisterRemoteAuthCallback(RegisterRemoteAuthCallback);
 TH_EXPORT_CPP_API_UnregisterRemoteAuthCallback(UnregisterRemoteAuthCallback);
+TH_EXPORT_CPP_API_getUserRecognitionMgr(getUserRecognitionMgr);

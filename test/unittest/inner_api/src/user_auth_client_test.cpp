@@ -129,6 +129,38 @@ HWTEST_F(UserAuthClientTest, UserAuthClientGetAvailableStatus002, TestSize.Level
     IpcClientUtils::ResetObj();
 }
 
+HWTEST_F(UserAuthClientTest, UserAuthClientCheckUserRecognitionCapability001, TestSize.Level0)
+{
+    IpcClientUtils::ResetObj();
+    int32_t ret = UserAuthClientImpl::Instance().CheckUserRecognitionCapability();
+    EXPECT_EQ(ret, GENERAL_ERROR);
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientCheckUserRecognitionCapability002, TestSize.Level0)
+{
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, CheckUserRecognitionCapability).Times(2);
+    ON_CALL(*service, CheckUserRecognitionCapability)
+        .WillByDefault([](int32_t &checkResult) { checkResult = SUCCESS; return SUCCESS; });
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr, 2);
+
+    EXPECT_EQ(UserAuthClientImpl::Instance().CheckUserRecognitionCapability(), SUCCESS);
+    // capability/permission codes must pass through unchanged (factory maps them to null/201)
+    ON_CALL(*service, CheckUserRecognitionCapability)
+        .WillByDefault([](int32_t &checkResult) {
+            checkResult = DEVICE_CAPABILITY_NOT_SUPPORT;
+            return SUCCESS;
+        });
+    EXPECT_EQ(UserAuthClientImpl::Instance().CheckUserRecognitionCapability(), DEVICE_CAPABILITY_NOT_SUPPORT);
+
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
 HWTEST_F(UserAuthClientTest, UserAuthClientGetProperty001, TestSize.Level0)
 {
     int32_t testUserId = 200;
@@ -717,7 +749,7 @@ HWTEST_F(UserAuthClientTest, UserAuthClientNotice002, TestSize.Level0)
 }
 
 void UserAuthClientTest::CallRemoteObject(const std::shared_ptr<MockUserAuthService> service,
-    const sptr<MockRemoteObject> &obj, sptr<IRemoteObject::DeathRecipient> &dr)
+    const sptr<MockRemoteObject> &obj, sptr<IRemoteObject::DeathRecipient> &dr, uint32_t sendRequestTimes)
 {
     EXPECT_NE(obj, nullptr);
     EXPECT_CALL(*obj, IsProxyObject()).WillRepeatedly(Return(true));
@@ -729,7 +761,7 @@ void UserAuthClientTest::CallRemoteObject(const std::shared_ptr<MockUserAuthServ
         });
 
     IpcClientUtils::SetObj(obj);
-    EXPECT_CALL(*obj, SendRequest(_, _, _, _)).Times(1);
+    EXPECT_CALL(*obj, SendRequest(_, _, _, _)).Times(sendRequestTimes);
     ON_CALL(*obj, SendRequest)
         .WillByDefault([service](uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) {
             service->OnRemoteRequest(code, data, reply, option);

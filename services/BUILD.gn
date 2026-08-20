@@ -39,6 +39,7 @@ _services_sanitize_cfi = {
   blocklist = "../cfi_blocklist.txt"
 }
 
+# Fuzzers drive their own coverage instrumentation, so CFI is off here.
 _services_sanitize_fuzzer = {
   integer_overflow = true
   ubsan = true
@@ -146,6 +147,10 @@ ohos_shared_library("userauthservice") {
 
   cflags = [ "-Oz" ]
 
+  # MAIN builds libuserauthservice.z.so only in standalone mode (no ext part),
+  # always pairing the base service with the in-tree HDI engine. When the ext part
+  # is present it owns the final .so and supplies its own non-HDI engine, so MAIN
+  # never links the ext engine here (this is what breaks the component cycle).
   deps = [
     ":userauthservice_static",
     "engine:userauth_engine",
@@ -174,6 +179,8 @@ ohos_shared_library("userauthservice") {
   part_name = "user_auth_framework"
 }
 
+# When the ext part is present it owns the final libuserauthservice.z.so; MAIN
+# yields and builds nothing here. Mirrors companion_device_auth_service_group.
 group("userauth_service_group") {
   if (user_auth_framework_has_ext) {
     deps = []

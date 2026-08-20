@@ -33,6 +33,10 @@ public:
     virtual int32_t OnMessage(uint64_t scheduleId, int32_t destRole, const std::vector<uint8_t> &msg) = 0;
 };
 
+enum EngineCapability : uint32_t {
+    SUPPORT_USER_RECOGNITION = 1 << 0,
+};
+
 class IUserAuthEngine {
 public:
     virtual ~IUserAuthEngine() = default;
@@ -107,6 +111,11 @@ public:
     }
 
     virtual bool IsWidgetCallerAllowedOnLockScreen(const EngCallerAuthInfo &callerInfo) const = 0;
+
+    virtual uint32_t GetCapability() const
+    {
+        return 0;
+    }
 };
 
 IUserAuthEngine &GetUserAuthEngine();

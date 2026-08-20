@@ -38,7 +38,7 @@ public:
     void TearDown() override;
 
     void CallRemoteObject(const std::shared_ptr<MockUserAuthService> service, const sptr<MockRemoteObject> &obj,
-        sptr<IRemoteObject::DeathRecipient> &dr);
+        sptr<IRemoteObject::DeathRecipient> &dr, uint32_t sendRequestTimes = 1);
 };
 } // namespace UserAuth
 } // namespace UserIam

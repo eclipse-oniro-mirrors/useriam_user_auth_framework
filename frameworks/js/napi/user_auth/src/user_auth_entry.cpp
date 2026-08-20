@@ -22,6 +22,7 @@
 #include "user_auth_impl.h"
 #include "user_auth_instance_v10.h"
 #include "user_auth_widget_mgr_v10.h"
+#include "user_recognition_manager.h"
 #include "user_auth_client_impl.h"
 
 #define LOG_TAG "USER_AUTH_NAPI"
@@ -1078,6 +1079,7 @@ napi_value UserAuthInit(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getAuthInstance", UserAuth::GetAuthInstanceV9),
         DECLARE_NAPI_FUNCTION("getUserAuthInstance", UserAuth::GetUserAuthInstanceV10),
         DECLARE_NAPI_FUNCTION("getUserAuthWidgetMgr", UserAuth::GetUserAuthWidgetMgrV10),
+        DECLARE_NAPI_FUNCTION("getUserRecognitionMgr", UserRecognitionManagerNapi::GetInstance),
         DECLARE_NAPI_FUNCTION("getEnrolledState", UserAuth::GetEnrolledState),
         DECLARE_NAPI_FUNCTION("sendNotice", UserAuth::SendNotice),
         DECLARE_NAPI_FUNCTION("queryReusableAuthResult", UserAuth::QueryReusableAuthResult),
@@ -1114,6 +1116,7 @@ napi_value EnumExport(napi_env env, napi_value exports)
 {
     napi_property_descriptor descriptors[] = {
         DECLARE_NAPI_PROPERTY("AuthTrustLevel", AuthTrustLevelConstructor(env)),
+        DECLARE_NAPI_PROPERTY("UserRecognitionStatus", UserRecognitionStatusConstructor(env)),
         DECLARE_NAPI_PROPERTY("ResultCode", ResultCodeConstructor(env)),
         DECLARE_NAPI_PROPERTY("UserAuthResultCode", UserAuthResultCodeConstructor(env)),
         DECLARE_NAPI_PROPERTY("FingerprintTips", FingerprintTipsConstructorForKits(env)),

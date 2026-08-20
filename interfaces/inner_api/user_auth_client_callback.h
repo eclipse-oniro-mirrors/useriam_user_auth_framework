@@ -105,6 +105,17 @@ public:
         const AuthSuccessEventInfo &eventInfo) = 0;
 };
 
+class UserRecognitionEventListener {
+public:
+    virtual ~UserRecognitionEventListener() = default;
+    /**
+     * @brief Notify a user recognition result.
+     *
+     * @param result The recognition result.
+     */
+    virtual void OnUserRecognitionEvent(const UserRecognitionResult &result) = 0;
+};
+
 class PrepareRemoteAuthCallback {
 public:
     /**

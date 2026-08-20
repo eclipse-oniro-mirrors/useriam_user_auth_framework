@@ -228,3 +228,21 @@ struct IpcAuthSuccessEventInfo {
     /** Is widget auth. */
     boolean isWidgetAuth;
 };
+
+/**
+ * @brief User recognition result.
+ */
+struct IpcUserRecognitionResult {
+    /** Recognition status. See UserRecognitionStatus. */
+    int status;
+    /** The user id that the recognition result applies to. */
+    int userId;
+    /** The user info that the recognition result applies to. */
+    String userInfo;
+    /** Whether authTrustLevel is carried. */
+    boolean hasAuthTrustLevel;
+    /** Trust level of the underlying authentication. */
+    unsigned int authTrustLevel;
+    /** Auth token of the underlying authentication; empty when not carried. Only delivered to native(SA) callers. */
+    unsigned char[] authToken;
+};

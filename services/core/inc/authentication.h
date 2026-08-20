@@ -47,6 +47,7 @@ public:
 
     struct AuthResultInfo {
         int32_t result;
+        uint32_t authTrustLevel {0};
         int32_t freezingTime;
         int32_t remainTimes;
         std::vector<uint8_t> token;

@@ -14,13 +14,16 @@
  */
 #include "simple_auth_context.h"
 
+#include <memory>
 #include <set>
 #include <vector>
 
 #include "auth_common.h"
 #include "iam_check.h"
+#include "iam_event_dispatcher.h"
 #include "iam_logger.h"
 #include "iam_para2str.h"
+#include "iam_ptr.h"
 #include "publish_event_adapter.h"
 #include "resource_node.h"
 #include "resource_node_utils.h"
@@ -35,6 +38,39 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+void SimpleAuthContext::PostEvent(EventId eventId, const AuthEventInfo &info) const
+{
+    auto data = Common::MakeShared<Attributes>();
+    IF_FALSE_LOGE_AND_RETURN(data != nullptr);
+
+    if (!data->SetUint64Value(Attributes::ATTR_CONTEXT_ID, GetContextId()) ||
+        !data->SetInt32Value(Attributes::ATTR_USER_ID, GetUserId()) ||
+        !data->SetInt32Value(Attributes::ATTR_AUTH_TYPE, GetAuthType())) {
+        IAM_LOGE("build auth event %{public}d payload fail", eventId);
+        return;
+    }
+    if (info.resultCode.has_value()) {
+        bool setResultCodeRet = data->SetInt32Value(Attributes::ATTR_RESULT_CODE, info.resultCode.value());
+        IF_FALSE_LOGE_AND_RETURN(setResultCodeRet == true);
+    }
+    if (info.credentialId.has_value()) {
+        bool setCredentialIdRet = data->SetUint64Value(Attributes::ATTR_CREDENTIAL_ID,
+            info.credentialId.value());
+        IF_FALSE_LOGE_AND_RETURN(setCredentialIdRet == true);
+    }
+    if (info.authTrustLevel.has_value()) {
+        bool setAuthTrustLevelRet = data->SetUint32Value(Attributes::ATTR_AUTH_TRUST_LEVEL,
+            info.authTrustLevel.value());
+        IF_FALSE_LOGE_AND_RETURN(setAuthTrustLevelRet == true);
+    }
+    if (!info.token.empty()) {
+        bool setSignatureRet = data->SetUint8ArrayValue(Attributes::ATTR_SIGNATURE, info.token);
+        IF_FALSE_LOGE_AND_RETURN(setSignatureRet == true);
+    }
+    GetIamEventDispatcher().Post(eventId, data);
+    IAM_LOGI("post auth event %{public}d, userId:%{public}d, authType:%{public}d", eventId, GetUserId(), GetAuthType());
+}
+
 std::optional<std::vector<uint64_t>> SimpleAuthContext::GetPropertyTemplateIds(
     Authentication::AuthResultInfo &resultInfo)
 {
@@ -184,6 +220,7 @@ bool SimpleAuthContext::OnStart()
     IF_FALSE_LOGE_AND_RETURN_VAL(scheduleList[0] != nullptr, false);
     bool startScheduleRet = scheduleList[0]->StartSchedule();
     IF_FALSE_LOGE_AND_RETURN_VAL(startScheduleRet, false);
+    PostEvent(EVENT_AUTH_INITIATED, AuthEventInfo {});
     IAM_LOGI("%{public}s Schedule:%{public}s Type:%{public}d success", GetDescription(),
         GET_MASKED_STRING(scheduleList[0]->GetScheduleId()).c_str(), scheduleList[0]->GetAuthType());
     return true;
@@ -292,11 +329,24 @@ void SimpleAuthContext::InvokeResultCallback(const Authentication::AuthResultInf
         GetDescription(), resultInfo.result, resultInfo.reEnrollFlag);
     IF_FALSE_LOGE_AND_RETURN(callback_ != nullptr);
     Attributes finalResult;
+    SetAuthResultAttributes(resultInfo, finalResult);
+    callback_->SetTraceAuthFinishReason("SimpleAuthContext InvokeResultCallback");
+    callback_->OnResult(resultInfo.result, finalResult);
+    IAM_LOGI("%{public}s invoke result callback success, result %{public}d", GetDescription(), resultInfo.result);
+}
+
+void SimpleAuthContext::SetAuthResultAttributes(const Authentication::AuthResultInfo &resultInfo,
+    Attributes &finalResult) const
+{
     bool setResultCodeRet = finalResult.SetInt32Value(Attributes::ATTR_RESULT_CODE, resultInfo.result);
     IF_FALSE_LOGE_AND_RETURN(setResultCodeRet == true);
     bool setNextDurationRet = finalResult.SetInt32Value(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION,
         resultInfo.nextFailLockoutDuration);
     IF_FALSE_LOGE_AND_RETURN(setNextDurationRet == true);
+    PostEvent(EVENT_AUTH_RESULT,
+        {static_cast<int32_t>(resultInfo.result), std::make_optional(resultInfo.credentialId),
+            resultInfo.authTrustLevel != 0 ? std::make_optional(resultInfo.authTrustLevel) : std::nullopt,
+            resultInfo.token});
     if (resultInfo.result == FAIL || resultInfo.result == LOCKED || resultInfo.result == SUCCESS) {
         bool setFreezingTimeRet = finalResult.SetInt32Value(Attributes::ATTR_FREEZING_TIME, resultInfo.freezingTime);
         IF_FALSE_LOGE_AND_RETURN(setFreezingTimeRet == true);
@@ -333,10 +383,6 @@ void SimpleAuthContext::InvokeResultCallback(const Authentication::AuthResultInf
     }
     bool setReEnrollFlagRet = finalResult.SetBoolValue(Attributes::ATTR_RE_ENROLL_FLAG, resultInfo.reEnrollFlag);
     IF_FALSE_LOGE_AND_RETURN(setReEnrollFlagRet == true);
-
-    callback_->SetTraceAuthFinishReason("SimpleAuthContext InvokeResultCallback");
-    callback_->OnResult(resultInfo.result, finalResult);
-    IAM_LOGI("%{public}s invoke result callback success, result %{public}d", GetDescription(), resultInfo.result);
 }
 
 void SimpleAuthContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam,

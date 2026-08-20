@@ -183,6 +183,43 @@ public:
      * @return Return query result(0:success; other:failed).
      */
     virtual int32_t QueryReusableAuthResult(const WidgetAuthParam &authParam, std::vector<uint8_t> &token) = 0;
+
+    /**
+     * @brief Check whether user recognition is supported and the caller is authorized.
+     *
+     * Used by the JS factory to gate manager creation: returns SUCCESS only when the device
+     * supports user recognition and the caller holds the required permission.
+     *
+     * @return SUCCESS if supported and authorized; DEVICE_CAPABILITY_NOT_SUPPORT if unsupported;
+     *     CHECK_PERMISSION_FAILED if the caller lacks permission.
+     */
+    virtual int32_t CheckUserRecognitionCapability() = 0;
+
+    /**
+     * @brief Obtain the latest user recognition result.
+     *
+     * @param result The recognition result.
+     * @return Return result(0:success; other:failed).
+     */
+    virtual int32_t GetUserRecognitionResult(UserRecognitionResult &result) = 0;
+
+    /**
+     * @brief Subscribe to user recognition change events. Each call registers the given callback.
+     *
+     * @param listener Callback used to receive the recognition result.
+     * @return Return register result(0:success; other:failed).
+     */
+    virtual int32_t RegisterUserRecognitionEventListener(
+        const std::shared_ptr<UserRecognitionEventListener> &listener) = 0;
+
+    /**
+     * @brief Unsubscribe a specific user recognition change callback.
+     *
+     * @param listener The callback to unregister.
+     * @return Return unregister result(0:success; other:failed).
+     */
+    virtual int32_t UnregisterUserRecognitionEventListener(
+        const std::shared_ptr<UserRecognitionEventListener> &listener) = 0;
 };
 } // namespace UserAuth
 } // namespace UserIam

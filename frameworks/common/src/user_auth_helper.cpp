@@ -40,6 +40,9 @@ int32_t UserAuthHelper::GetResultCodeV10(int32_t result)
     if (result == HARDWARE_NOT_SUPPORTED) {
         return static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR);
     }
+    if (result == DEVICE_CAPABILITY_NOT_SUPPORT) {
+        return static_cast<int32_t>(UserAuthResultCode::OHOS_CAPABILITY_NOT_SUPPORTED);
+    }
     if (result > (INT32_MAX - static_cast<int32_t>(UserAuthResultCode::RESULT_CODE_V10_MIN))) {
         return static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR);
     }

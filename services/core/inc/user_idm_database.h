@@ -30,6 +30,10 @@ namespace UserAuth {
 class UserIdmDatabase {
 public:
     static UserIdmDatabase &Instance();
+#ifdef IAM_TEST_ENABLE
+    static void SetInstanceForTesting(UserIdmDatabase *instance);
+    static void ResetInstanceForTesting();
+#endif
     virtual int32_t GetSecUserInfo(int32_t userId, std::shared_ptr<SecureUserInfoInterface> &secUserInfo) = 0;
     virtual int32_t GetCredentialInfo(int32_t userId, AuthType authType,
         std::vector<std::shared_ptr<CredentialInfoInterface>> &credInfos) = 0;

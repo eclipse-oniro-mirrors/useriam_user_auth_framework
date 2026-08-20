@@ -41,6 +41,7 @@ idl_gen_interface("auth_user_ipc_interface") {
     "IIdmGetSecureUserInfoCallback.idl",
     "IModalCallback.idl",
     "ISetExecutorPropertyCallback.idl",
+    "IUserRecognitionCallback.idl",
     "IVerifyTokenCallback.idl",
     "IWidgetCallback.idl",
     "IRemoteAuthCallback.idl",
@@ -57,6 +58,7 @@ idl_gen_interface("auth_user_ipc_interface") {
     "idl/IIdmGetSecureUserInfoCallback.idl",
     "idl/IModalCallback.idl",
     "idl/ISetExecutorPropertyCallback.idl",
+    "idl/IUserRecognitionCallback.idl",
     "idl/IVerifyTokenCallback.idl",
     "idl/IWidgetCallback.idl",
     "idl/UserAuthTypes.idl",
@@ -90,6 +92,8 @@ ohos_source_set("userauth_client_ipc") {
   sources = filter_include(output_file_path, [ "*co_auth_proxy.cpp" ])
   sources +=
       filter_include(output_file_path, [ "*event_listener_callback_stub.cpp" ])
+  sources +=
+      filter_include(output_file_path, [ "*user_recognition_callback_stub.cpp" ])
   sources += filter_include(output_file_path, [ "*executor_callback_stub.cpp" ])
   sources +=
       filter_include(output_file_path, [ "*executor_messenger_proxy.cpp" ])
@@ -156,6 +160,8 @@ ohos_source_set("userauth_service_ipc") {
   sources = filter_include(output_file_path, [ "*co_auth_stub.cpp" ])
   sources +=
       filter_include(output_file_path, [ "*event_listener_callback_proxy.cpp" ])
+  sources +=
+      filter_include(output_file_path, [ "*user_recognition_callback_proxy.cpp" ])
   sources +=
       filter_include(output_file_path, [ "*executor_callback_proxy.cpp" ])
   sources +=
@@ -256,6 +262,8 @@ ohos_source_set("userauth_client_ipc_fuzzer") {
   sources = filter_include(output_file_path, [ "*co_auth_proxy.cpp" ])
   sources +=
       filter_include(output_file_path, [ "*event_listener_callback_stub.cpp" ])
+  sources +=
+      filter_include(output_file_path, [ "*user_recognition_callback_stub.cpp" ])
   sources += filter_include(output_file_path, [ "*executor_callback_stub.cpp" ])
   sources +=
       filter_include(output_file_path, [ "*executor_messenger_proxy.cpp" ])
@@ -314,6 +322,8 @@ ohos_source_set("userauth_service_ipc_fuzzer") {
   sources = filter_include(output_file_path, [ "*co_auth_stub.cpp" ])
   sources +=
       filter_include(output_file_path, [ "*event_listener_callback_proxy.cpp" ])
+  sources +=
+      filter_include(output_file_path, [ "*user_recognition_callback_proxy.cpp" ])
   sources +=
       filter_include(output_file_path, [ "*executor_callback_proxy.cpp" ])
   sources +=

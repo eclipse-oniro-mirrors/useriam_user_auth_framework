@@ -67,6 +67,10 @@ public:
         int32_t &funcResult) override;
     int32_t RegistUserAuthSuccessEventListener(const sptr<IEventListenerCallback> &listener) override;
     int32_t UnRegistUserAuthSuccessEventListener(const sptr<IEventListenerCallback> &listener) override;
+    int32_t GetUserRecognitionResult(IpcUserRecognitionResult &result, int32_t &funcResult) override;
+    int32_t RegisterUserRecognitionEventListener(const sptr<IUserRecognitionCallback> &listener) override;
+    int32_t UnregisterUserRecognitionEventListener(const sptr<IUserRecognitionCallback> &listener) override;
+    int32_t CheckUserRecognitionCapability(int32_t &checkResult) override;
     int32_t SetGlobalConfigParam(const IpcGlobalConfigParam &ipcGlobalConfigParam) override;
     int32_t PrepareRemoteAuth(const std::string &networkId,
         const sptr<IIamCallback> &userAuthCallback) override;

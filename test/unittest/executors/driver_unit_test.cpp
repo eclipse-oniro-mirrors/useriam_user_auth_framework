@@ -294,6 +294,7 @@ HWTEST_F(DriverUnitTest, Driver_OnFrameworkDown_001, TestSize.Level0)
     EXPECT_CALL(*driverHdi, OnFrameworkDown()).Times(Exactly(1));
     auto driver = MakeShared<Driver>(serviceName, config);
     ASSERT_NE(driver, nullptr);
+    driver->OnFrameworkReady();
     driver->OnFrameworkDown();
 }
 
