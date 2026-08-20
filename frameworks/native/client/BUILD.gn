@@ -44,6 +44,7 @@ ohos_shared_library("userauth_client") {
     "src/co_auth_client_impl.cpp",
     "src/event_listener_callback_manager.cpp",
     "src/event_listener_callback_service.cpp",
+    "src/user_recognition_callback_service.cpp",
     "src/executor_callback_service.cpp",
     "src/executor_messenger_client.cpp",
     "src/ipc_client_utils.cpp",

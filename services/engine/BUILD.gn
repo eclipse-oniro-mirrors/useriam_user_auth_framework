@@ -18,6 +18,7 @@ config("userauth_engine_config") {
     "pub_inc",
     "../../interfaces/inner_api",
     "../../frameworks/native/ipc/common_defines",
+    "../../services/base/inc",
   ]
 }
 

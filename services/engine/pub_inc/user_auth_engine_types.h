@@ -59,6 +59,7 @@ struct EngExecutorSendMsg {
 
 struct EngAuthResultInfo {
     int32_t result {};
+    uint32_t authTrustLevel {};
     int32_t lockoutDuration {};
     int32_t remainAttempts {};
     std::vector<EngExecutorSendMsg> msgs;

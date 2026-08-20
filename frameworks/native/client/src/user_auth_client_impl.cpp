@@ -20,6 +20,7 @@
 
 #include "auth_common.h"
 #include "callback_manager.h"
+#include "iservice_registry.h"
 #include "load_mode_client_util.h"
 #include "iam_check.h"
 #include "iam_defines.h"
@@ -29,6 +30,7 @@
 #include "ipc_client_utils.h"
 #include "modal_callback_service.h"
 #include "nlohmann/json.hpp"
+#include "system_ability_status_change_stub.h"
 #include "user_auth_callback_service.h"
 #include "user_auth_modal_inner_callback.h"
 #include "widget_callback_service.h"
@@ -50,6 +52,30 @@ public:
 private:
     std::shared_ptr<AuthenticationCallback> innerCallback_ = nullptr;
 };
+} // namespace
+
+class UserRecognitionServiceListener : public SystemAbilityStatusChangeStub {
+public:
+    UserRecognitionServiceListener() = default;
+    ~UserRecognitionServiceListener() override = default;
+    void OnAddSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override
+    {
+        if (systemAbilityId != SUBSYS_USERIAM_SYS_ABILITY_USERAUTH) {
+            return;
+        }
+        IAM_LOGI("OnAddSystemAbility systemAbilityId:%{public}d added", systemAbilityId);
+        UserAuthClientImpl::Instance().ReregisterUserRecognitionListeners();
+    }
+    void OnRemoveSystemAbility(int32_t systemAbilityId, const std::string &deviceId) override
+    {
+        if (systemAbilityId != SUBSYS_USERIAM_SYS_ABILITY_USERAUTH) {
+            return;
+        }
+        IAM_LOGI("OnRemoveSystemAbility systemAbilityId:%{public}d remove", systemAbilityId);
+        UserAuthClientImpl::Instance().NotifyUserRecognitionServiceUnavailable();
+    }
+};
+namespace {
 
 NorthAuthenticationCallback::NorthAuthenticationCallback(std::shared_ptr<AuthenticationCallback> innerCallback)
     : innerCallback_(innerCallback) {};
@@ -786,6 +812,157 @@ int32_t UserAuthClientImpl::UnRegistUserAuthSuccessEventListener(
 {
     IAM_LOGI("start");
     return EventListenerCallbackManager<AuthSuccessEventListener>::GetInstance().UnRegisterListener(listener);
+}
+
+int32_t UserAuthClientImpl::CheckUserRecognitionCapability()
+{
+    IAM_LOGI("start");
+    auto proxy = GetProxy();
+    IF_FALSE_LOGE_AND_RETURN_VAL(proxy != nullptr, GENERAL_ERROR);
+    int32_t checkResult = GENERAL_ERROR;
+    int32_t ret = proxy->CheckUserRecognitionCapability(checkResult);
+    if (ret != SUCCESS) {
+        IAM_LOGI("check user recognition capability ret:%{public}d", ret);
+        return ret;
+    }
+    return checkResult;
+}
+
+int32_t UserAuthClientImpl::GetUserRecognitionResult(UserRecognitionResult &result)
+{
+    IAM_LOGI("start");
+    auto proxy = GetProxy();
+    IF_FALSE_LOGE_AND_RETURN_VAL(proxy != nullptr, GENERAL_ERROR);
+    IpcUserRecognitionResult ipcResult {};
+    int32_t funcResult = GENERAL_ERROR;
+    int32_t ret = proxy->GetUserRecognitionResult(ipcResult, funcResult);
+    if (ret != SUCCESS) {
+        IAM_LOGE("ipc call return fail, ret:%{public}d", ret);
+        return GENERAL_ERROR;
+    }
+    if (funcResult != SUCCESS) {
+        IAM_LOGI("service call return fail, ret:%{public}d", funcResult);
+        return funcResult;
+    }
+
+    result = ConvertIpcUserRecognitionResult(ipcResult);
+    return SUCCESS;
+}
+
+int32_t UserAuthClientImpl::RegisterUserRecognitionEventListener(
+    const std::shared_ptr<UserRecognitionEventListener> &listener)
+{
+    IAM_LOGI("start");
+    IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
+    EnsureUserRecognitionServiceStatusSubscription();
+    auto proxy = GetProxy();
+    IF_FALSE_LOGE_AND_RETURN_VAL(proxy != nullptr, GENERAL_ERROR);
+
+    sptr<UserRecognitionCallbackService> service;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (recognitionService_ == nullptr) {
+            service = new (std::nothrow) UserRecognitionCallbackService();
+            IF_FALSE_LOGE_AND_RETURN_VAL(service != nullptr, GENERAL_ERROR);
+            int32_t ret = proxy->RegisterUserRecognitionEventListener(service);
+            if (ret != SUCCESS) {
+                IAM_LOGE("register listener fail, ret:%{public}d", ret);
+                return ret;
+            }
+            recognitionService_ = service;
+        } else {
+            service = recognitionService_;
+        }
+    }
+    service->AddListenerWithCatchUp(listener);
+    return SUCCESS;
+}
+
+int32_t UserAuthClientImpl::UnregisterUserRecognitionEventListener(
+    const std::shared_ptr<UserRecognitionEventListener> &listener)
+{
+    IAM_LOGI("start");
+    IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
+    auto proxy = GetProxy();
+
+    // Local listener state is torn down even when the SA is down (proxy == nullptr); otherwise a
+    // later ReregisterUserRecognitionListeners would resurrect a listener the caller removed.
+    sptr<UserRecognitionCallbackService> serviceToUnregister;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (recognitionService_ == nullptr) {
+            IAM_LOGI("listener is not registered, treat as idempotent success");
+            return SUCCESS;
+        }
+        recognitionService_->RemoveListener(listener);
+        if (recognitionService_->Empty()) {
+            recognitionService_->MarkInactive();
+            serviceToUnregister = recognitionService_;
+            recognitionService_ = nullptr;
+        }
+    }
+    if (serviceToUnregister == nullptr) {
+        return SUCCESS;
+    }
+    if (proxy == nullptr) {
+        IAM_LOGI("service unavailable, local listener removed");
+        return SUCCESS;
+    }
+    return proxy->UnregisterUserRecognitionEventListener(serviceToUnregister);
+}
+
+void UserAuthClientImpl::EnsureUserRecognitionServiceStatusSubscription()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (recognitionServiceStatusSubscribed_) {
+        return;
+    }
+    auto sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    IF_FALSE_LOGE_AND_RETURN(sam != nullptr);
+    auto listener = sptr<UserRecognitionServiceListener>(new (std::nothrow) UserRecognitionServiceListener());
+    IF_FALSE_LOGE_AND_RETURN(listener != nullptr);
+    int32_t ret = sam->SubscribeSystemAbility(SUBSYS_USERIAM_SYS_ABILITY_USERAUTH, listener);
+    if (ret != SUCCESS) {
+        IAM_LOGE("failed to subscribe user_auth service status, ret:%{public}d", ret);
+        return;
+    }
+    recognitionServiceStatusSubscribed_ = true;
+}
+
+void UserAuthClientImpl::ReregisterUserRecognitionListeners()
+{
+    IAM_LOGI("start");
+    auto proxy = iface_cast<IUserAuth>(IpcClientUtils::GetRemoteObject(SUBSYS_USERIAM_SYS_ABILITY_USERAUTH));
+    IF_FALSE_LOGE_AND_RETURN(proxy != nullptr);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (recognitionService_ == nullptr) {
+            IAM_LOGI("no recognition listener to re-register");
+            return;
+        }
+        recognitionService_->ClearLatestResult();
+        int32_t ret = proxy->RegisterUserRecognitionEventListener(recognitionService_);
+        if (ret != SUCCESS) {
+            IAM_LOGE("re-register recognition listener fail, ret:%{public}d", ret);
+        }
+    }
+}
+
+void UserAuthClientImpl::NotifyUserRecognitionServiceUnavailable()
+{
+    IAM_LOGI("start");
+    sptr<UserRecognitionCallbackService> service;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        service = recognitionService_;
+    }
+    if (service == nullptr) {
+        return;
+    }
+
+    IpcUserRecognitionResult result {};
+    result.status = static_cast<int32_t>(UserRecognitionStatus::UNCERTAIN);
+    service->OnUserRecognitionEvent(result);
 }
 
 int32_t UserAuthClientImpl::PrepareRemoteAuth(const std::string &networkId,

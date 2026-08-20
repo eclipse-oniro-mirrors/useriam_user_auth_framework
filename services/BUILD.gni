@@ -29,11 +29,13 @@ userauth_services_include_dirs = [
 ]
 
 userauth_services_sources = [
+  "base/src/callback_death_recipient.cpp",
   "base/src/finite_state_machine_builder.cpp",
   "base/src/finite_state_machine_impl.cpp",
   "base/src/thread_handler_impl.cpp",
   "base/src/thread_handler_manager.cpp",
   "base/src/thread_handler_singleton_impl.cpp",
+  "base/src/iam_event_dispatcher.cpp",
   "context/src/auth_widget_helper.cpp",
   "context/src/base_context.cpp",
   "context/src/context_appstate_observer.cpp",
@@ -68,6 +70,7 @@ userauth_services_sources = [
   "core/src/enrolled_info_impl.cpp",
   "core/src/enrollment_impl.cpp",
   "core/src/event_listener_manager.cpp",
+  "core/src/user_recognition_state_manager.cpp",
   "core/src/identification_impl.cpp",
   "core/src/ipc_common.cpp",
   "core/src/remote_auth_callback_manager.cpp",

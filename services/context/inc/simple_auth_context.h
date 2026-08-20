@@ -18,15 +18,25 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <vector>
 
 #include "authentication_impl.h"
 #include "base_context.h"
+#include "iam_event_dispatcher.h"
 
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 constexpr int32_t FIRST_LOCKOUT_DURATION_OF_PIN = 60 * 1000;
 constexpr int32_t FIRST_LOCKOUT_DURATION_EXCEPT_PIN = 30 * 1000;
+
+struct AuthEventInfo {
+    std::optional<int32_t> resultCode {};
+    std::optional<uint64_t> credentialId {};
+    std::optional<uint32_t> authTrustLevel {};
+    std::vector<uint8_t> token {};
+};
 
 class SimpleAuthContext : public BaseContext {
 public:
@@ -53,7 +63,10 @@ private:
     bool UpdateScheduleResult(const std::shared_ptr<Attributes> &scheduleResultAttr,
         Authentication::AuthResultInfo &resultInfo);
     void SendAuthExecutorMsg();
+    void PostEvent(EventId eventId, const AuthEventInfo &info) const;
     void InvokeResultCallback(const Authentication::AuthResultInfo &resultInfo) const;
+    void SetAuthResultAttributes(const Authentication::AuthResultInfo &resultInfo,
+        Attributes &finalResult) const;
     ResultCode SetFreezingTimeAndRemainTimes(int32_t &freezingTime, int32_t &remainTimes);
     ResultCode GetPropertyForAuthResult(Authentication::AuthResultInfo &resultInfo);
     bool SetCredentialDigest(const Authentication::AuthResultInfo &resultInfo,

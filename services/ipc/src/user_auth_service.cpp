@@ -43,6 +43,7 @@
 #include "remote_auth_callback_manager.h"
 #include "thread_handler_manager.h"
 #include "user_auth_helper.h"
+#include "user_recognition_state_manager.h"
 #include "device_manager_util.h"
 #include "xcollie_helper.h"
 
@@ -1741,6 +1742,91 @@ int32_t UserAuthService::UnRegistUserAuthSuccessEventListener(const sptr<IEventL
     int32_t result = AuthEventListenerManager::GetInstance().UnRegistEventListener(listener);
     if (result != SUCCESS) {
         IAM_LOGE("failed to unregist auth event listener");
+        return result;
+    }
+
+    return SUCCESS;
+}
+
+int32_t UserAuthService::CheckUserRecognitionCapability(int32_t &checkResult)
+{
+    IAM_LOGI("start");
+    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
+    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+        IAM_LOGE("failed to check permission");
+        checkResult = CHECK_PERMISSION_FAILED;
+        return SUCCESS;
+    }
+    if ((GetUserAuthEngine().GetCapability() & EngineCapability::SUPPORT_USER_RECOGNITION) == 0) {
+        IAM_LOGI("user recognition is not supported on this device");
+        checkResult = DEVICE_CAPABILITY_NOT_SUPPORT;
+        return SUCCESS;
+    }
+    checkResult = SUCCESS;
+    return SUCCESS;
+}
+
+int32_t UserAuthService::GetUserRecognitionResult(IpcUserRecognitionResult &result, int32_t &funcResult)
+{
+    IAM_LOGI("start");
+    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
+    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+        IAM_LOGE("failed to check permission");
+        funcResult = CHECK_PERMISSION_FAILED;
+        return SUCCESS;
+    }
+    if ((GetUserAuthEngine().GetCapability() & EngineCapability::SUPPORT_USER_RECOGNITION) == 0) {
+        IAM_LOGI("user recognition is not supported on this device");
+        funcResult = DEVICE_CAPABILITY_NOT_SUPPORT;
+        return SUCCESS;
+    }
+    result = GetUserRecognitionStateManager().GetCachedUserRecognitionResultForCaller(
+        IpcCommon::GetDirectCallerType(*this));
+    funcResult = SUCCESS;
+    return SUCCESS;
+}
+
+int32_t UserAuthService::RegisterUserRecognitionEventListener(const sptr<IUserRecognitionCallback> &listener)
+{
+    IAM_LOGI("start");
+    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
+    IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
+    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+        IAM_LOGE("failed to check permission");
+        return CHECK_PERMISSION_FAILED;
+    }
+    if ((GetUserAuthEngine().GetCapability() & EngineCapability::SUPPORT_USER_RECOGNITION) == 0) {
+        IAM_LOGI("user recognition is not supported on this device");
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+
+    int32_t callerType = IpcCommon::GetDirectCallerType(*this);
+    int32_t result = GetUserRecognitionStateManager().RegisterListener(callerType, listener);
+    if (result != SUCCESS) {
+        IAM_LOGE("failed to register user recognition listener");
+        return result;
+    }
+
+    return SUCCESS;
+}
+
+int32_t UserAuthService::UnregisterUserRecognitionEventListener(const sptr<IUserRecognitionCallback> &listener)
+{
+    IAM_LOGI("start");
+    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
+    IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
+    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+        IAM_LOGE("failed to check permission");
+        return CHECK_PERMISSION_FAILED;
+    }
+    if ((GetUserAuthEngine().GetCapability() & EngineCapability::SUPPORT_USER_RECOGNITION) == 0) {
+        IAM_LOGI("user recognition is not supported on this device");
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+
+    int32_t result = GetUserRecognitionStateManager().UnregisterListener(listener);
+    if (result != SUCCESS) {
+        IAM_LOGE("failed to unregister user recognition listener");
         return result;
     }
 

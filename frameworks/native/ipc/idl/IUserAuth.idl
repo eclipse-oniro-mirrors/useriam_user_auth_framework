@@ -21,6 +21,7 @@ import IWidgetCallback;
 import IVerifyTokenCallback;
 import IModalCallback;
 import IEventListenerCallback;
+import IUserRecognitionCallback;
 import IRemoteAuthCallback;
 
 option_stub_hooks on;
@@ -79,4 +80,12 @@ interface OHOS.UserIam.UserAuth.IUserAuth {
 
     void RegisterRemoteAuthCallback([in] IRemoteAuthCallback remoteAuthCallback);
     void UnregisterRemoteAuthCallback();
+
+    int GetUserRecognitionResult([out] IpcUserRecognitionResult ipcUserRecognitionResult);
+
+    void RegisterUserRecognitionEventListener([in] IUserRecognitionCallback listener);
+
+    void UnregisterUserRecognitionEventListener([in] IUserRecognitionCallback listener);
+
+    void CheckUserRecognitionCapability([out] int checkResult);
 }

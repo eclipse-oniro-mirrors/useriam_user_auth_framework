@@ -78,6 +78,7 @@ enum class UserAuthResultCode : int32_t {
     OHOS_CHECK_PERMISSION_FAILED = 201,
     OHOS_CHECK_SYSTEM_APP_FAILED = 202,
     OHOS_INVALID_PARAM = 401,
+    OHOS_CAPABILITY_NOT_SUPPORTED = 801,
     RESULT_CODE_V9_MIN = 12500000,
     RESULT_CODE_V10_MIN = 12500000,
     RESULT_CODE_V16_MIN = 12500000,
@@ -139,6 +140,7 @@ enum UserAuthTipCode {
 
 const std::map<UserAuthResultCode, std::string> g_resultV92Str = {
     {UserAuthResultCode::OHOS_INVALID_PARAM, "Parameter error."},
+    {UserAuthResultCode::OHOS_CAPABILITY_NOT_SUPPORTED, "Capability not supported."},
     {UserAuthResultCode::OHOS_CHECK_PERMISSION_FAILED, "Permission denied."},
     {UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED, "Permission denied. Called by non-system application."},
     {UserAuthResultCode::SUCCESS, "Authentication succeeded."},

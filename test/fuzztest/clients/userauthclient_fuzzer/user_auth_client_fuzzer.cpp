@@ -172,6 +172,13 @@ void FuzzClientGetAvailableStatus(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzClientCheckUserRecognitionCapability(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    UserAuthClientImpl::Instance().CheckUserRecognitionCapability();
+    IAM_LOGI("end");
+}
+
 void FuzzClientGetProperty(Parcel &parcel)
 {
     IAM_LOGI("start");
@@ -484,6 +491,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzClientGetAuthLockState,
     FuzzClientGetEnrolledState,
     FuzzClientGetAvailableStatus,
+    FuzzClientCheckUserRecognitionCapability,
     FuzzClientGetProperty,
     FuzzClientSetProperty,
     FuzzClientBeginAuthentication001,

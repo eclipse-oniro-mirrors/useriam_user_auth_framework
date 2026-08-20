@@ -200,8 +200,31 @@ int32_t UserIdmDatabaseImpl::ClearUnavailableCredential(int32_t userId,
     return SUCCESS;
 }
 
+#ifdef IAM_TEST_ENABLE
+namespace {
+// Test-only override for UserIdmDatabase::Instance(); nullptr means use the real singleton.
+// Production code never touches this pointer.
+UserIdmDatabase *g_testingInstance = nullptr;
+} // namespace
+
+void UserIdmDatabase::SetInstanceForTesting(UserIdmDatabase *instance)
+{
+    g_testingInstance = instance;
+}
+
+void UserIdmDatabase::ResetInstanceForTesting()
+{
+    g_testingInstance = nullptr;
+}
+#endif
+
 UserIdmDatabase &UserIdmDatabase::Instance()
 {
+#ifdef IAM_TEST_ENABLE
+    if (g_testingInstance != nullptr) {
+        return *g_testingInstance;
+    }
+#endif
     return UserIdmDatabaseImpl::GetInstance();
 }
 } // namespace UserAuth

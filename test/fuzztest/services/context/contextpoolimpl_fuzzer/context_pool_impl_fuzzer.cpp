@@ -27,6 +27,7 @@
 #include "attributes.h"
 #include "context_pool.h"
 #include "context_callback_impl.h"
+#include "iam_event_dispatcher.h"
 #include "simple_auth_context.h"
 #include "iam_fuzz_test.h"
 #include "iam_logger.h"
@@ -49,6 +50,7 @@ constexpr uint32_t OPERATION_TYPE = 1;
 void FillTest(Parcel &parcel)
 {
     IAM_LOGI("begin");
+    SetIamEventDispatcher(CreateIamEventDispatcher());
     ContextPool::Instance().GetNewContextId();
     
     auto dummyAuth = MakeShared<DummyAuthentication>();

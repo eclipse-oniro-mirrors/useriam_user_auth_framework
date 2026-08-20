@@ -24,6 +24,7 @@
 #ifndef USER_AUTH_CLIENT_DEFINES_H
 #define USER_AUTH_CLIENT_DEFINES_H
 
+#include <optional>
 #include <vector>
 
 #include "attributes.h"
@@ -224,6 +225,43 @@ struct AuthSuccessEventInfo {
     int32_t callerType;
     /** Is widget auth. */
     bool isWidgetAuth {false};
+};
+
+/**
+ * @brief User recognition status.
+ */
+enum class UserRecognitionStatus : int32_t {
+    UNCERTAIN = 0,
+    MISMATCH = 1,
+    MATCH = 2,
+};
+
+/**
+ * @brief Convert int32_t to UserRecognitionStatus; out-of-range values clamp to UNCERTAIN.
+ */
+inline UserRecognitionStatus UserRecognitionStatusFromInt(int32_t status)
+{
+    if (status < static_cast<int32_t>(UserRecognitionStatus::UNCERTAIN) ||
+        status > static_cast<int32_t>(UserRecognitionStatus::MATCH)) {
+        return UserRecognitionStatus::UNCERTAIN;
+    }
+    return static_cast<UserRecognitionStatus>(status);
+}
+
+/**
+ * @brief User recognition result.
+ */
+struct UserRecognitionResult {
+    /** Recognition status. */
+    UserRecognitionStatus status { UserRecognitionStatus::UNCERTAIN };
+    /** The user id that the recognition result applies to. */
+    int32_t userId {};
+    /** The user info that the recognition result applies to. */
+    std::string userInfo;
+    /** Trust level of the underlying authentication; empty when not carried. */
+    std::optional<uint32_t> authTrustLevel;
+    /** Auth token of the underlying authentication; empty when not carried. */
+    std::vector<uint8_t> authToken;
 };
 } // namespace UserAuth
 } // namespace UserIam

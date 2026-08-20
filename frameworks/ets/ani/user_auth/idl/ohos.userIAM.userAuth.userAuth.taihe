@@ -178,3 +178,25 @@ struct IRemoteAuthCallback {
 function RegisterRemoteAuthCallback(callback: IRemoteAuthCallback): void;
 
 function UnregisterRemoteAuthCallback(): void;
+
+enum UserRecognitionStatus : i32 {
+    UNCERTAIN = 0,
+    MISMATCH = 1,
+    MATCH = 2
+}
+
+struct UserRecognitionResult {
+    status: UserRecognitionStatus;
+    userId: i32;
+    userInfo: String;
+    authTrustLevel: Optional<AuthTrustLevel>;
+}
+
+interface UserRecognitionMgr {
+    @promise
+    getUserRecognitionResult(): UserRecognitionResult;
+    onUserRecognitionChange(callback: (result: UserRecognitionResult) => void): void;
+    offUserRecognitionChange(callback: Optional<(result: UserRecognitionResult) => void>): void;
+}
+
+function getUserRecognitionMgr(): Optional<UserRecognitionMgr>;

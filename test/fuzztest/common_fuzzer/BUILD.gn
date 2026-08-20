@@ -79,6 +79,7 @@ ohos_source_set("userauth_service_base_fuzzer") {
   sources = [
     "../../../services/base/src/finite_state_machine_builder.cpp",
     "../../../services/base/src/finite_state_machine_impl.cpp",
+    "../../../services/base/src/iam_event_dispatcher.cpp",
     "../../../services/engine/src/hdi_engine.cpp",
     "../../../services/engine/src/hdi_type_convert.cpp",
     "../../../services/base/src/thread_handler_impl.cpp",
@@ -152,6 +153,8 @@ ohos_source_set("userauth_service_core_fuzzer") {
     "../../../services/core/src/update_pin_param_impl.cpp",
     "../../../services/core/src/user_idm_database_impl.cpp",
     "../../../services/core/src/user_info_impl.cpp",
+    "../../../services/core/src/user_recognition_state_manager.cpp",
+    "../../../services/base/src/callback_death_recipient.cpp",
     "../../../services/core/src/widget_schedule_node_impl.cpp",
   ]
 

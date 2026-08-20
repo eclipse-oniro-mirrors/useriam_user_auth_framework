@@ -50,6 +50,7 @@ ohos_unittest("iam_services_core_test") {
   include_dirs += [ "../mocks/inc" ]
 
   sources = [
+    project_path + "services/base/src/iam_event_dispatcher.cpp",
     project_path + "services/base/src/finite_state_machine_builder.cpp",
     project_path + "services/base/src/finite_state_machine_impl.cpp",
     project_path + "services/base/src/thread_handler_impl.cpp",
@@ -72,6 +73,8 @@ ohos_unittest("iam_services_core_test") {
     project_path + "services/core/src/credential_info_impl.cpp",
     project_path + "services/core/src/publish_event_adapter_mock.cpp",
     project_path + "services/core/src/event_listener_manager.cpp",
+    project_path + "services/core/src/user_recognition_state_manager.cpp",
+    project_path + "services/base/src/callback_death_recipient.cpp",
     project_path + "services/core/src/update_pin_param_impl.cpp",
     project_path + "services/core/src/enrolled_info_impl.cpp",
     project_path + "services/core/src/secure_user_info_impl.cpp",
