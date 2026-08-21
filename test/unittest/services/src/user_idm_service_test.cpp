@@ -121,13 +121,10 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceCloseSession, TestSize.Level0)
     service.CloseSession(testUserId);
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, CloseSession(_))
-        .Times(2)
-        .WillOnce(Return(HDF_SUCCESS))
-        .WillOnce(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, CloseSession(_)).Times(0);
     IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
     EXPECT_EQ(service.CloseSession(testUserId), SUCCESS);
-    EXPECT_EQ(service.CloseSession(testUserId), GENERAL_ERROR);
+    EXPECT_EQ(service.CloseSession(testUserId), SUCCESS);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1443,6 +1440,52 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceClearRedundancyCredTest, TestSize.Lev
         .WillOnce(Return(HDF_SUCCESS));
     EXPECT_EQ(service.ClearRedundancyCredentialInner(callerName,
         callerType), SUCCESS);
+}
+
+HWTEST_F(UserIdmServiceTest, UserIdmServiceCloseSession_TokenIdMismatch, TestSize.Level0)
+{
+    UserIdmService service(123123, true);
+    int32_t testUserId = 3546;
+    std::vector<uint8_t> challenge;
+    uint32_t tokenIdA = 123456;
+    uint32_t tokenIdB = 789012;
+
+    IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, OpenSession(_, _)).WillOnce(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, CloseSession(_)).Times(0);
+
+    IpcCommon::SetAccessTokenId(tokenIdA, true);
+    EXPECT_EQ(service.OpenSession(testUserId, challenge), SUCCESS);
+
+    IpcCommon::SetAccessTokenId(tokenIdB, true);
+    EXPECT_EQ(service.CloseSession(testUserId), SUCCESS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserIdmServiceTest, UserIdmServiceCloseSession_TokenIdMatch, TestSize.Level0)
+{
+    UserIdmService service(123123, true);
+    int32_t testUserId = 3546;
+    std::vector<uint8_t> challenge;
+    uint32_t tokenId = 123456;
+
+    IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, OpenSession(_, _)).WillOnce(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, CloseSession(_))
+        .Times(2)
+        .WillOnce(Return(HDF_FAILURE))
+        .WillOnce(Return(HDF_SUCCESS));
+
+    IpcCommon::SetAccessTokenId(tokenId, true);
+    EXPECT_EQ(service.OpenSession(testUserId, challenge), SUCCESS);
+
+    EXPECT_EQ(service.CloseSession(testUserId), GENERAL_ERROR);
+    EXPECT_EQ(service.CloseSession(testUserId), SUCCESS);
+    IpcCommon::DeleteAllPermission();
 }
 } // namespace UserAuth
 } // namespace UserIam

@@ -19,6 +19,7 @@
 #include "user_idm_stub.h"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -91,6 +92,7 @@ private:
     int32_t ConvertGetCredentialResult(int32_t resultCode, bool isNotEnrollReturnSuccess);
     std::string GetSessionInfoMasked(std::vector<uint8_t> &challenge);
     std::mutex mutex_;
+    std::optional<uint32_t> sessionTokenId_;
 };
 } // namespace UserAuth
 } // namespace UserIam
