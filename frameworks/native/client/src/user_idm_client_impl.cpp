@@ -374,6 +374,35 @@ void UserIdmClientImpl::ClearRedundancyCredential(const std::shared_ptr<UserIdmC
     }
 }
 
+void UserIdmClientImpl::DeleteSubProfile(int32_t subProfileId,
+    const std::shared_ptr<UserIdmClientCallback> &callback)
+{
+    IAM_LOGI("start, subProfileId:%{public}d", subProfileId);
+    if (!callback) {
+        IAM_LOGE("user idm client callback is nullptr");
+        return;
+    }
+    auto proxy = GetProxy();
+    if (!proxy) {
+        IAM_LOGE("proxy is nullptr");
+        Attributes extraInfo;
+        callback->OnResult(GENERAL_ERROR, extraInfo);
+        return;
+    }
+    sptr<IIamCallback> wrapper(new (std::nothrow) IdmCallbackService(callback));
+    if (wrapper == nullptr) {
+        IAM_LOGE("failed to create wrapper");
+        Attributes extraInfo;
+        callback->OnResult(GENERAL_ERROR, extraInfo);
+        return;
+    }
+    auto ret = proxy->DeleteSubProfile(subProfileId, wrapper);
+    if (ret != SUCCESS) {
+        IAM_LOGE("delete sub profile fail, ret:%{public}d, subProfileId:%{public}d", ret, subProfileId);
+        return;
+    }
+}
+
 int32_t UserIdmClientImpl::RegistCredChangeEventListener(const std::vector<AuthType> &authTypes,
     const std::shared_ptr<CredChangeEventListener> &listener)
 {
