@@ -104,6 +104,9 @@ int32_t UserIdmService::OpenSession(int32_t userId, std::vector<uint8_t> &challe
         return GENERAL_ERROR;
     }
 
+    sessionTokenId_ = IpcCommon::GetAccessTokenId(*this);
+    IAM_LOGI("open session, tokenId:%{public}s", GET_MASKED_STRING(sessionTokenId_.value_or(0)).c_str());
+
     std::string sessionInfo = GetSessionInfoMasked(challenge);
     IAM_LOGI("set sessionInfo:%{public}s", sessionInfo.c_str());
     SystemParamManager::GetInstance().SetParam(IDM_SESSION_INFO, sessionInfo);
@@ -119,6 +122,13 @@ int32_t UserIdmService::CloseSession(int32_t userId)
         return CHECK_PERMISSION_FAILED;
     }
     std::lock_guard<std::mutex> lock(mutex_);
+    uint32_t tokenId = IpcCommon::GetAccessTokenId(*this);
+    IAM_LOGI("close session, tokenId:%{public}s, sessionTokenId:%{public}s",
+        GET_MASKED_STRING(tokenId).c_str(), GET_MASKED_STRING(sessionTokenId_.value_or(0)).c_str());
+    if (!sessionTokenId_.has_value() || tokenId != sessionTokenId_.value()) {
+        IAM_LOGI("tokenId mismatch, skip close session");
+        return SUCCESS;
+    }
     int32_t ret = GetUserAuthEngine().CloseSession(userId);
     if (ret != SUCCESS) {
         IAM_LOGE("failed to close session, error code:%{public}d", ret);
