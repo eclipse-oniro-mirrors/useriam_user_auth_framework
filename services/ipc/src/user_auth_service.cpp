@@ -535,12 +535,24 @@ int32_t UserAuthService::StartAuth(int32_t apiVersion, Authentication::Authentic
     std::shared_ptr<ContextCallback> &contextCallback, uint64_t &contextId)
 {
     IAM_LOGI("start");
+    int32_t callerUserId = GetCallerUserId();
+    para.callerUserId = callerUserId;
     contextId = StartAuthContext(apiVersion, para, contextCallback, true);
     if (contextId == BAD_CONTEXT_ID) {
         IAM_LOGE("StartAuthContext fail");
         return GENERAL_ERROR;
     }
     return SUCCESS;
+}
+
+int32_t UserAuthService::GetCallerUserId()
+{
+    int32_t userId = INVALID_USER_ID;
+    if (IpcCommon::GetCallingUserId(*this, userId) != SUCCESS) {
+        IAM_LOGE("get callingUserId failed");
+        return INVALID_USER_ID;
+    }
+    return userId;
 }
 
 int32_t UserAuthService::Auth(int32_t apiVersion, const IpcAuthParamInner &ipcAuthParamInner,

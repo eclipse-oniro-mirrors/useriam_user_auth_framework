@@ -110,6 +110,7 @@ bool AuthenticationImpl::GetAuthParam(EngAuthParamExt &param)
             .callerName = authPara_.callerName,
             .callerType = static_cast<int32_t>(callerType.value()),
             .apiVersion = authPara_.sdkVersion,
+            .callerUserId = authPara_.callerUserId,
         },
         .authType = authPara_.authType,
         .authIntent = authPara_.authIntent,

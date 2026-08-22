@@ -28,6 +28,7 @@
 #include "iam_check.h"
 #include "iam_logger.h"
 #include "iam_para2str.h"
+#include "iam_ptr.h"
 #include "iam_defines.h"
 #include "iam_time.h"
 #include "ipc_common.h"
@@ -463,6 +464,50 @@ void UserIdmService::CancelCurrentEnrollIfExist()
             ctx->Stop();
         }
     }
+}
+
+int32_t UserIdmService::DeleteSubProfile(int32_t subProfileId, const sptr<IIamCallback> &idmCallback)
+{
+    IAM_LOGI("delete sub profile, subProfileId: %{public}d", subProfileId);
+    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
+    IF_FALSE_LOGE_AND_RETURN_VAL(idmCallback != nullptr, INVALID_PARAMETERS);
+
+    Attributes extraInfo;
+    if (!IpcCommon::CheckPermission(*this, MANAGE_USER_IDM_PERMISSION)) {
+        IAM_LOGE("failed to check permission");
+        idmCallback->OnResult(CHECK_PERMISSION_FAILED, extraInfo.Serialize());
+        return CHECK_PERMISSION_FAILED;
+    }
+    std::vector<EngCredentialInfo> hdiInfos;
+    int32_t ret = GetUserAuthEngine().DeleteSubProfile(subProfileId, hdiInfos);
+    if (ret != SUCCESS) {
+        IAM_LOGE("failed to delete sub profile, ret: %{public}d, subProfileId: %{public}d", ret, subProfileId);
+        idmCallback->OnResult(ret, extraInfo.Serialize());
+        return ret;
+    }
+    int32_t userId = INVALID_USER_ID;
+    if (IpcCommon::GetCallingUserId(*this, userId) != SUCCESS) {
+        IAM_LOGE("get callingUserId failed");
+        return GENERAL_ERROR;
+    }
+    std::vector<std::shared_ptr<CredentialInfoInterface>> credInfos;
+    for (const auto &hdiInfo : hdiInfos) {
+        auto infoRet = Common::MakeShared<CredentialInfoImpl>(userId, hdiInfo);
+        if (infoRet == nullptr) {
+            IAM_LOGE("bad alloc");
+            return GENERAL_ERROR;
+        }
+        credInfos.emplace_back(infoRet);
+    }
+
+    ret = ResourceNodeUtils::NotifyExecutorToDeleteTemplates(credInfos, "DeleteSubProfile");
+    if (ret != SUCCESS) {
+        IAM_LOGE("failed to delete executor info, err:%{public}d", ret);
+    }
+
+    IAM_LOGI("delete sub profile success");
+    idmCallback->OnResult(SUCCESS, extraInfo.Serialize());
+    return SUCCESS;
 }
 
 int32_t UserIdmService::EnforceDelUser(int32_t userId, const sptr<IIamCallback> &idmCallback)

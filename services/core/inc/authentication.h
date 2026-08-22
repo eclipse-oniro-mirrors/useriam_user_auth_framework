@@ -43,6 +43,7 @@ public:
         std::vector<uint64_t> credentialIdList;
         std::string title;
         AuthScene authScene {AUTH_SCENE_DEFAULT};
+        int32_t callerUserId {0};
     };
 
     struct AuthResultInfo {
