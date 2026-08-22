@@ -26,6 +26,7 @@
         OHOS::UserIam::UserAuth::AuthMessage::As*;
         OHOS::UserIam::UserAuth::UserAuthClient::GetInstance*;
         OHOS::UserIam::UserAuth::UserIdmClient::GetInstance*;
+        OHOS::UserIam::UserAuth::UserIdmClientImpl::DeleteSubProfile*;
         OHOS::UserIam::UserAuth::Attributes*;
         OHOS::UserIam::UserAuth::UserAuthClientImpl::GetEnrolledState*;
         OHOS::UserIam::UserAuth::UserAccessCtrlClient::GetInstance*;
