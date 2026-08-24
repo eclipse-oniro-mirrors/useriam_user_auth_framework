@@ -18,8 +18,6 @@
 
 #include <mutex>
 
-#include "vab_update_boot_listener.h"
-
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
@@ -43,14 +41,11 @@ private:
     void CheckAllServiceStart();
     void CheckAllServiceStop();
 
-    void DoServiceStart();
-
     std::recursive_mutex mutex_;
 
     bool isUserAuthServiceStart_ = false;
     bool isCoAuthServiceStart_ = false;
     bool isIdmServiceStart_ = false;
-    std::shared_ptr<VabUpdateBootListener> vabUpdateBootListener_;
 };
 } // namespace UserAuth
 } // namespace UserIam

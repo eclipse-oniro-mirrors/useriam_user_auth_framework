@@ -27,7 +27,6 @@
 #include "remote_connect_manager.h"
 #include "strong_auth_status_manager.h"
 #include "system_param_manager.h"
-#include "vab_update_boot_listener.h"
 
 #define LOG_TAG "USER_AUTH_SA"
 #define LOG_FILE_ID LOG_FILE_SERVICE_INIT_MANAGER
@@ -35,7 +34,6 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-
 ServiceInitManager &ServiceInitManager::GetInstance()
 {
     static ServiceInitManager instance;
@@ -106,17 +104,8 @@ void ServiceInitManager::CheckAllServiceStart()
 
     LoadModeHandler::GetInstance().CancelCheckServiceReadyTimer();
 
-    vabUpdateBootListener_ = VabUpdateBootListener::Start([this]() { DoServiceStart(); });
-    if (vabUpdateBootListener_ != nullptr) {
-        return;
-    }
-
-    DoServiceStart();
-}
-
-void ServiceInitManager::DoServiceStart()
-{
     IAM_LOGI("all service start, init global instance begin");
+
     RemoteConnectionManager::GetInstance().Start();
     const bool REMOTE_AUTH_SERVICE_RESULT = RemoteAuthService::GetInstance().Start();
     (void)REMOTE_AUTH_SERVICE_RESULT;
@@ -169,7 +158,6 @@ void ServiceInitManager::CheckAllServiceStop()
     auto coAuthService = CoAuthService::GetInstance();
     IF_FALSE_LOGE_AND_RETURN(coAuthService != nullptr);
     coAuthService->UnRegisterAccessTokenListener();
-    vabUpdateBootListener_ = nullptr;
 
     IAM_LOGI("all service stop, destroy global instance end");
 }

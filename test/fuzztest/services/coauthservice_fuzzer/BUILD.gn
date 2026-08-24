@@ -125,7 +125,6 @@ ohos_fuzztest("CoAuthServiceFuzzTest") {
     "../../../../services/ipc/src/template_cache_manager.cpp",
     "../../../../services/ipc/src/user_auth_service.cpp",
     "../../../../services/ipc/src/user_idm_service.cpp",
-    "../../../../services/ipc/src/vab_update_boot_listener.cpp",
     "../../../../services/load_mode/src/load_mode_handler.cpp",
     "../../../../services/load_mode/src/load_mode_handler_default.cpp",
     "../../dummy/mock_ipc_common.cpp",
