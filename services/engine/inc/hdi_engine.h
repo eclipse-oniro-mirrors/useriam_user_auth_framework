@@ -74,6 +74,7 @@ public:
     int32_t GetCredentialById(uint64_t credentialId, EngCredentialInfo &info) override;
     int32_t ClearUnavailableCredential(const std::vector<int32_t> &userIds,
         std::vector<EngCredentialInfo> &infos) override;
+    int32_t DeleteSubProfile(int32_t subProfileId, std::vector<EngCredentialInfo> &deletedInfos) override;
     int32_t UpdateAbandonResult(int32_t userId, const std::vector<uint8_t> &scheduleResult,
         std::vector<EngCredentialInfo> &infos) override;
     int32_t BeginIdentification(uint64_t contextId, int32_t authType, const std::vector<uint8_t> &challenge,
@@ -83,7 +84,7 @@ public:
     int32_t CancelIdentification(uint64_t contextId) override;
     int32_t BeginEnrollmentExt(const std::vector<uint8_t> &authToken, const EngEnrollParamExt &param,
         EngScheduleInfo &info) override;
-    int32_t BeginAuthenticationExt(uint64_t contextId, const EngAuthParamExt &param,
+    int32_t BeginAuthenticationExt(uint64_t contextId, EngAuthParamExt &param,
         std::vector<EngScheduleInfo> &scheduleInfos) override;
     int32_t SendMessage(uint64_t scheduleId, int32_t srcRole, const std::vector<uint8_t> &msg) override;
     int32_t GetSignedExecutorInfo(const std::vector<int32_t> &authTypes, int32_t executorRole,

@@ -128,6 +128,7 @@ struct EngAuthParamBase {
     std::string callerName;
     int32_t callerType {};
     int32_t apiVersion {};
+    int32_t callerUserId {};
 };
 
 struct EngCallerAuthInfo {
