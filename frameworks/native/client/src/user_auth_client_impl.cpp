@@ -721,6 +721,10 @@ int32_t UserAuthClientImpl::SetWidgetCallback(int32_t version, const std::shared
 void UserAuthClientImpl::PrintNoticeInfo(NoticeType noticeType, const std::string &eventData)
 {
     nlohmann::json temp = nlohmann::json::parse(eventData, nullptr, false);
+    if (temp.is_discarded()) {
+        IAM_LOGE("auth client failed to parse eventData");
+        return;
+    }
     if (temp.is_object() && temp.contains("authToken")) {
         temp.erase("authToken");
     }
