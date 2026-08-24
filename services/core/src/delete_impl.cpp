@@ -94,14 +94,14 @@ bool DeleteImpl::Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
         return DeleteCredential(deletePara_.userId, hdiResult.credentialInfos);
     } else if (hdiResult.operateType == EngCredentialOperateType::CREDENTIAL_ABANDON) {
         return StartSchedule(deletePara_.userId, hdiResult.scheduleInfo, scheduleList, callback);
-    } else if (hdiResult.operateType == EngCredentialOperateType::PIN_UPDATE_FOR_PC) {
-        return PinUpdateForPc();
+    } else if (hdiResult.operateType == EngCredentialOperateType::PIN_UPDATE) {
+        return HandlePinUpdate();
     }
 
     return false;
 }
 
-bool DeleteImpl::PinUpdateForPc()
+bool DeleteImpl::HandlePinUpdate()
 {
     CredentialUpdatedManager::GetInstance().ProcessCredentialDeleted(deletePara_, deletePara_.credentialId, PIN);
     return true;
