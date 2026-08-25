@@ -135,6 +135,9 @@ private:
     void StartOnTerminateTimer();
     void StopOnTerminateTimer();
     void OnTerminateTimerTimeOut(uint64_t contextId);
+    void InitFaceAlgo();
+    void UninitFaceAlgo();
+    void SendFaceAlgoCommand(const std::string &operation);
     std::string ProcessCmdData(WidgetCmdParameters &widgetCmdParameters);
     void ProcessElementName(std::string &bundleName, std::string &abilityName);
     bool HandleAuthSuccessResult(Attributes &attr);
@@ -180,6 +183,8 @@ private:
     uint32_t widgetAlreadyLoad_ {0};
     nlohmann::json jsonBuf_ = {};
     uint32_t onTerminateTimerId_ {0};
+    std::string faceAlgoCaller_ {};
+    static std::atomic_uint32_t faceAlgoCallerSeq_;
 };
 } // namespace UserAuth
 } // namespace UserIam

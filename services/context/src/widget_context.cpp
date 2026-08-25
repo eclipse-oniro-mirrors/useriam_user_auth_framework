@@ -15,6 +15,7 @@
 #include "widget_context.h"
 
 #include <algorithm>
+#include <atomic>
 #include "bool_wrapper.h"
 #include "double_wrapper.h"
 #include "int_wrapper.h"
@@ -29,12 +30,15 @@
 #include "context_death_recipient.h"
 #include "hisysevent_adapter.h"
 #include "iam_check.h"
+#include "iam_common_defines.h"
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
 #include "iam_time.h"
 #include "parameters.h"
 #include "relative_timer.h"
+#include "resource_node_pool.h"
+#include "resource_node_utils.h"
 #include "schedule_node.h"
 #include "schedule_node_callback.h"
 #include "set_widget_param_callback_service.h"
@@ -76,6 +80,8 @@ static constexpr uint32_t TERMINATE_TIMER_LEN_MS = 3000;
 static constexpr uint32_t TERMINATE_TIMER_LEN_MS = 1000;
 #endif
 
+std::atomic_uint32_t WidgetContext::faceAlgoCallerSeq_ = 0;
+
 WidgetContext::WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
     std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
     const sptr<IRemoteAuthCallback> &remoteAuthCallback)
@@ -97,6 +103,7 @@ WidgetContext::~WidgetContext()
     StopOnTerminateTimer();
     RemoveDeathRecipient(callerCallback_);
     UnSubscribeAppState();
+    UninitFaceAlgo();
 }
 
 bool WidgetContext::Start()
@@ -326,12 +333,51 @@ bool WidgetContext::LaunchWidget()
     WidgetRotatePara widgetRotatePara;
     widgetRotatePara.isReload = false;
     widgetRotatePara.needRotate = 0;
+    if (std::find(para_.authTypeList.begin(), para_.authTypeList.end(), AuthType::FACE) !=
+        para_.authTypeList.end()) {
+        InitFaceAlgo();
+    }
     if (!ConnectExtension(widgetRotatePara)) {
         HILOG_COMM_ERROR("widget context: ****%{public}hx, failed to launch widget.",
             static_cast<uint16_t>(contextId_));
         return false;
     }
     return true;
+}
+
+void WidgetContext::InitFaceAlgo()
+{
+    const std::string FACE_ALGO_CALLER_PREFIX = "widget_";
+    const std::string FACE_ALGO_OP_INIT = "init";
+    faceAlgoCaller_ = FACE_ALGO_CALLER_PREFIX + std::to_string(faceAlgoCallerSeq_++);
+    IAM_LOGI("init face algo start, caller: %{public}s", faceAlgoCaller_.c_str());
+    SendFaceAlgoCommand(FACE_ALGO_OP_INIT);
+}
+
+void WidgetContext::UninitFaceAlgo()
+{
+    const std::string FACE_ALGO_OP_UNINIT = "uninit";
+    IAM_LOGI("uninit face algo start, caller: %{public}s", faceAlgoCaller_.c_str());
+    SendFaceAlgoCommand(FACE_ALGO_OP_UNINIT);
+}
+
+void WidgetContext::SendFaceAlgoCommand(const std::string &operation)
+{
+    std::vector<std::weak_ptr<ResourceNode>> authTypeNodes;
+    ResourceNodePool::Instance().GetResourceNodeByTypeAndRole(
+        AuthType::FACE, ExecutorRole::ALL_IN_ONE, authTypeNodes);
+    if (authTypeNodes.empty()) {
+        IAM_LOGE("face executor resource node not found");
+        return;
+    }
+    auto resourceNode = authTypeNodes[0].lock();
+    if (resourceNode == nullptr) {
+        IAM_LOGE("face resourceNode is nullptr");
+        return;
+    }
+    std::string extraInfoStr = "{\"operation\":\"" + operation + "\",\"caller\":\"" + faceAlgoCaller_ + "\"}";
+    std::vector<uint8_t> extraInfo(extraInfoStr.begin(), extraInfoStr.end());
+    ResourceNodeUtils::SendMsgToExecutor(resourceNode->GetExecutorIndex(), PROPERTY_INIT_ALGORITHM, extraInfo);
 }
 
 void WidgetContext::ExecuteAuthList(const std::set<AuthType> &authTypeList, bool endAfterFirstFail,
