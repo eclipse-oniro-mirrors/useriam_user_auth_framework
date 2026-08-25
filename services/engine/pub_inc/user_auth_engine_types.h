@@ -40,6 +40,7 @@ enum class EngGlobalConfigType : int32_t {
 enum EngCredentialOperateType : int32_t {
     CREDENTIAL_DELETE = 1,
     CREDENTIAL_ABANDON = 2,
+    PIN_UPDATE = 3,
 };
 
 // Caller-type contract passed to the auth engine / HDI driver. Mapped

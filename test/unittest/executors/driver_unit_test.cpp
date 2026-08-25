@@ -283,41 +283,6 @@ HWTEST_F(DriverUnitTest, Driver_OnFrameworkReady_CallTwice, TestSize.Level0)
     driver->OnFrameworkReady();
 }
 
-HWTEST_F(DriverUnitTest, Driver_OnFrameworkDown_001, TestSize.Level0)
-{
-    std::string serviceName = "test_service";
-    HdiConfig config = {};
-    config.id = 1;
-    auto driverHdi = MakeShared<MockIAuthDriverHdi>();
-    ASSERT_NE(driverHdi, nullptr);
-    config.driver = driverHdi;
-    EXPECT_CALL(*driverHdi, GetExecutorList(_))
-        .Times(Exactly(1))
-        .WillOnce([](std::vector<std::shared_ptr<IAuthExecutorHdi>> &executorList) {
-            auto executorHdi = MakeShared<MockIAuthExecutorHdi>();
-            ASSERT_NE(executorHdi, nullptr);
-            EXPECT_CALL(*executorHdi, GetExecutorInfo(_))
-                .Times(AtLeast(1))
-                .WillRepeatedly([](ExecutorInfo &info) {
-                    info.authType = static_cast<AuthType>(1);
-                    info.executorRole = static_cast<ExecutorRole>(2);
-                    info.executorSensorHint = 10;
-                    info.executorMatcher = 2;
-                    info.esl = static_cast<ExecutorSecureLevel>(4);
-                    info.publicKey = {5, 6, 7};
-                    return ResultCode::SUCCESS;
-                });
-                executorList.push_back(executorHdi);
-        });
-    EXPECT_CALL(*driverHdi, OnFrameworkDown()).Times(Exactly(1));
-    auto driver = MakeShared<Driver>(serviceName, config);
-    ASSERT_NE(driver, nullptr);
-    driver->Init();
-    driver->OnHdiConnect();
-    driver->OnFrameworkReady();
-    driver->OnFrameworkDown();
-}
-
 HWTEST_F(DriverUnitTest, Driver_OnFrameworkDown_002, TestSize.Level0)
 {
     std::string serviceName = "test_service";

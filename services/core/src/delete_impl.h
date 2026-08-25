@@ -49,6 +49,7 @@ private:
     bool StartSchedule(int32_t userId, EngScheduleInfo &info,
         std::vector<std::shared_ptr<ScheduleNode>> &scheduleList, std::shared_ptr<ScheduleNodeCallback> callback);
     bool DeleteCredential(int32_t userId, std::vector<EngCredentialInfo> &credentialInfo);
+    bool HandlePinUpdate();
 
     DeleteParam deletePara_;
 
