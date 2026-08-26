@@ -106,7 +106,6 @@ int32_t UserIdmService::OpenSession(int32_t userId, std::vector<uint8_t> &challe
     }
 
     sessionTokenId_ = IpcCommon::GetAccessTokenId(*this);
-    IAM_LOGI("open session, tokenId:%{public}s", GET_MASKED_STRING(sessionTokenId_.value_or(0)).c_str());
 
     std::string sessionInfo = GetSessionInfoMasked(challenge);
     IAM_LOGI("set sessionInfo:%{public}s", sessionInfo.c_str());
@@ -124,10 +123,9 @@ int32_t UserIdmService::CloseSession(int32_t userId)
     }
     std::lock_guard<std::mutex> lock(mutex_);
     uint32_t tokenId = IpcCommon::GetAccessTokenId(*this);
-    IAM_LOGI("close session, tokenId:%{public}s, sessionTokenId:%{public}s",
-        GET_MASKED_STRING(tokenId).c_str(), GET_MASKED_STRING(sessionTokenId_.value_or(0)).c_str());
     if (!sessionTokenId_.has_value() || tokenId != sessionTokenId_.value()) {
-        IAM_LOGI("tokenId mismatch, skip close session");
+        IAM_LOGI("close session mismatch, tokenId:%{public}s, sessionTokenId:%{public}s",
+            GET_MASKED_STRING(tokenId).c_str(), GET_MASKED_STRING(sessionTokenId_.value_or(0)).c_str());
         return SUCCESS;
     }
     int32_t ret = GetUserAuthEngine().CloseSession(userId);
