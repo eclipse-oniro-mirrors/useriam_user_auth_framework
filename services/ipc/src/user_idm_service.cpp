@@ -473,7 +473,7 @@ int32_t UserIdmService::DeleteSubProfile(int32_t subProfileId, const sptr<IIamCa
     IF_FALSE_LOGE_AND_RETURN_VAL(idmCallback != nullptr, INVALID_PARAMETERS);
 
     Attributes extraInfo;
-    if (!IpcCommon::CheckPermission(*this, MANAGE_USER_IDM_PERMISSION)) {
+    if (!IpcCommon::CheckPermission(*this, ENFORCE_USER_IDM)) {
         IAM_LOGE("failed to check permission");
         idmCallback->OnResult(CHECK_PERMISSION_FAILED, extraInfo.Serialize());
         return CHECK_PERMISSION_FAILED;
