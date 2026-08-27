@@ -59,6 +59,7 @@ public:
         std::map<AuthType, AuthProfile> authProfileMap {};
         int32_t callerType {0};
         std::string callingAppID {""};
+        std::string callingAppIdentifier {""};
         bool isPinExpired {false};
         bool isOsAccountVerified {false};
         bool isBackgroundApplication {false};

@@ -526,7 +526,7 @@ void FuzzIsWidgetCallerAllowedOnLockScreen(Parcel &parcel)
     EngCallerAuthInfo callerInfo;
     Common::FillFuzzString(parcel, callerInfo.callerName);
     callerInfo.callerType = parcel.ReadInt32();
-    Common::FillFuzzString(parcel, callerInfo.appId);
+    Common::FillFuzzString(parcel, callerInfo.appIdentifier);
     (void)GetUserAuthEngine().IsWidgetCallerAllowedOnLockScreen(callerInfo);
     IAM_LOGI("end");
 }
