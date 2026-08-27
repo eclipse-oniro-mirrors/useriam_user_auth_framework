@@ -56,7 +56,7 @@ public:
     static bool GetCallerName(IPCObjectStub &stub, std::string &callerName, int32_t &callerType);
     static bool GetCallerNameByTokenId(uint32_t tokenId, std::string &callerName, int32_t &callerType);
     static std::optional<EngCallerType> GetEngCallerType(int32_t callerType);
-    static bool GetCallingAppID(IPCObjectStub &stub, std::string &callingAppID);
+    static bool GetCallingAppID(IPCObjectStub &stub, std::string &callingAppID, std::string &callingAppIdentifier);
     static bool CheckForegroundApplication(const std::string &bundleName);
     static bool IsOsAccountVerified(int32_t userId);
     static int32_t GetDirectCallerType(IPCObjectStub &stub);

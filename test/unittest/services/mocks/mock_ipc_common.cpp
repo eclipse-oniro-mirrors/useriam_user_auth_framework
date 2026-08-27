@@ -182,9 +182,10 @@ bool IpcCommon::GetCallerNameByTokenId(uint32_t tokenId, std::string &callerName
     return true;
 }
 
-bool IpcCommon::GetCallingAppID(IPCObjectStub &stub, std::string &callingAppID)
+bool IpcCommon::GetCallingAppID(IPCObjectStub &stub, std::string &callingAppID, std::string &callingAppIdentifier)
 {
     callingAppID = "";
+    callingAppIdentifier = "";
     return true;
 }
 

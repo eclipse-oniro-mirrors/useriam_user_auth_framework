@@ -633,7 +633,7 @@ bool WidgetContext::IsWidgetLaunchAllowed() const
     EngCallerAuthInfo info {
         .callerName = para_.callerName,
         .callerType = para_.callerType,
-        .appId = para_.callingAppID
+        .appIdentifier = para_.callingAppIdentifier
     };
     bool allow = GetUserAuthEngine().IsWidgetCallerAllowedOnLockScreen(info);
     IAM_LOGI("widget lock-screen launch allowed=%{public}d, caller %{public}s", allow, para_.callerName.c_str());

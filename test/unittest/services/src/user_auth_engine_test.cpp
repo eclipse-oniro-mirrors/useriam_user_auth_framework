@@ -71,7 +71,8 @@ HWTEST_F(UserAuthEngineTest, ReturnsEngineUnavailableWhenEngineDown, TestSize.Le
 // engine overrides this hook to apply its own policy.
 HWTEST_F(UserAuthEngineTest, IsWidgetCallerAllowedOnLockScreenDefaultDenied, TestSize.Level0)
 {
-    EngCallerAuthInfo callerInfo { .callerName = "com.test.caller", .callerType = 0, .appId = "test_app_id" };
+    EngCallerAuthInfo callerInfo { .callerName = "com.test.caller", .callerType = 0,
+        .appIdentifier = "test_app_identifier" };
     EXPECT_FALSE(GetUserAuthEngine().IsWidgetCallerAllowedOnLockScreen(callerInfo));
 }
 } // namespace UserAuth

@@ -17,6 +17,7 @@
 #include "ipc_skeleton.h"
 #include "accesstoken_kit.h"
 #include "app_mgr_interface.h"
+#include "bundle_mgr_interface.h"
 #include "iam_common_defines.h"
 #include "iam_logger.h"
 #include "iam_para2str.h"
@@ -365,13 +366,54 @@ std::optional<EngCallerType> IpcCommon::GetEngCallerType(int32_t callerType)
     return std::nullopt;
 }
 
-bool IpcCommon::GetCallingAppID(IPCObjectStub &stub, std::string &callingAppID)
+namespace {
+bool GetAppIDAndIdentifierByUid(int32_t callingUid, std::string &callingAppID, std::string &callingAppIdentifier)
 {
+    sptr<ISystemAbilityManager> samgrClient = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgrClient == nullptr) {
+        IAM_LOGE("Get system ability manager failed");
+        return false;
+    }
+    sptr<AppExecFwk::IBundleMgr> bundleMgr =
+        iface_cast<AppExecFwk::IBundleMgr>(samgrClient->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID));
+    if (bundleMgr == nullptr) {
+        IAM_LOGE("Failed to get bundle manager service");
+        return false;
+    }
+    AppExecFwk::SignatureInfo signatureInfo;
+    ErrCode result = bundleMgr->GetSignatureInfoByUid(callingUid, signatureInfo);
+    if (result != ERR_OK) {
+        IAM_LOGE("failed to get signature info, result = %{public}d", result);
+        return false;
+    }
+    if (signatureInfo.appId.empty()) {
+        IAM_LOGE("signature info carries no app ID");
+        return false;
+    }
+    callingAppID = signatureInfo.appId;
+    callingAppIdentifier = signatureInfo.appIdentifier;
+    return true;
+}
+} // namespace
+
+bool IpcCommon::GetCallingAppID(IPCObjectStub &stub, std::string &callingAppID, std::string &callingAppIdentifier)
+{
+    callingAppID = "";
+    callingAppIdentifier = "";
     uint32_t tokenId = GetAccessTokenId(stub);
     using namespace Security::AccessToken;
     ATokenTypeEnum callerTypeTemp = AccessTokenKit::GetTokenTypeFlag(tokenId);
     if (callerTypeTemp != Security::AccessToken::TOKEN_HAP) {
         return false;
+    }
+
+    if (stub.GetFirstTokenID() == 0) {
+        if (!GetAppIDAndIdentifierByUid(IPCSkeleton::GetCallingUid(), callingAppID, callingAppIdentifier)) {
+            IAM_LOGE("failed to get caller app ID and app identifier");
+            return false;
+        }
+        IAM_LOGI("succeeded in getting caller app ID and app identifier");
+        return true;
     }
 
     HapTokenInfoExt hapTokenInfo;
@@ -381,7 +423,7 @@ bool IpcCommon::GetCallingAppID(IPCObjectStub &stub, std::string &callingAppID)
         return false;
     }
     callingAppID = hapTokenInfo.appID;
-    IAM_LOGI("successed in getting caller app ID");
+    IAM_LOGI("fallback to access token for caller app ID");
     return true;
 }
 

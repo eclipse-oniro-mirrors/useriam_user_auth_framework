@@ -1424,7 +1424,7 @@ int32_t UserAuthService::GetCallerInfo(bool isUserIdSpecified, int32_t userId,
     static_cast<void>(IpcCommon::GetCallerName(*this, para.callerName, para.callerType));
     contextCallback->SetTraceCallerName(para.callerName);
     contextCallback->SetTraceCallerType(para.callerType);
-    static_cast<void>(IpcCommon::GetCallingAppID(*this, para.callingAppID));
+    static_cast<void>(IpcCommon::GetCallingAppID(*this, para.callingAppID, para.callingAppIdentifier));
 
     if (para.sdkVersion < INNER_API_VERSION_10000 && para.callerType == Security::AccessToken::TOKEN_HAP &&
         (!IpcCommon::CheckForegroundApplication(para.callerName))) {

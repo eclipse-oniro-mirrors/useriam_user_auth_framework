@@ -134,7 +134,7 @@ struct EngAuthParamBase {
 struct EngCallerAuthInfo {
     std::string callerName;
     int32_t callerType {};
-    std::string appId;
+    std::string appIdentifier;
 };
 
 struct EngAuthParam {
