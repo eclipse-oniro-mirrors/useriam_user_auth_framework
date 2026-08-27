@@ -137,7 +137,6 @@ private:
         const WidgetParamInner &widgetParam, std::vector<AuthType> &validType);
     int32_t GetCallerInfo(bool isUserIdSpecified, int32_t userId, ContextFactory::AuthWidgetContextPara &para,
         std::shared_ptr<ContextCallback> &contextCallback);
-    int32_t GetCallerUserId();
     int32_t CheckCallerPermissionForPrivatePin(const AuthParamInner &authParam);
     void FillGetPropertyKeys(AuthType authType, const std::vector<Attributes::AttributeKey> &keys,
         std::vector<uint32_t> &uint32Keys);
