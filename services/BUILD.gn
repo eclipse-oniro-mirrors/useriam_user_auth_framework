@@ -39,8 +39,9 @@ _services_sanitize_cfi = {
   blocklist = "../cfi_blocklist.txt"
 }
 
-# Fuzzers drive their own coverage instrumentation, so CFI is off here.
-_services_sanitize_fuzzer = {
+# Test binaries (fuzzers drive their own coverage instrumentation; unittests
+# link seam fakes that would trip cross-DSO CFI checks), so CFI is off here.
+_services_sanitize_no_cfi = {
   integer_overflow = true
   ubsan = true
   boundary_sanitize = true
@@ -92,7 +93,7 @@ ohos_static_library("userauthservice_static") {
 
 ohos_static_library("userauthservice_unittest_common") {
   testonly = true
-  sanitize = _services_sanitize_cfi
+  sanitize = _services_sanitize_no_cfi
   branch_protector_ret = "pac_ret"
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
@@ -117,7 +118,7 @@ ohos_static_library("userauthservice_unittest_common") {
 
 ohos_static_library("userauthservice_fuzzer_common") {
   testonly = true
-  sanitize = _services_sanitize_fuzzer
+  sanitize = _services_sanitize_no_cfi
   branch_protector_ret = "pac_ret"
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
