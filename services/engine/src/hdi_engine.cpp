@@ -49,6 +49,7 @@ public:
             return;
         }
         IAM_LOGI("receive service %{public}s status %{public}u", status.serviceName.c_str(), status.status);
+        IF_FALSE_LOGE_AND_RETURN(owner_ != nullptr);
         if (status.status == SERVIE_STATUS_START) {
             owner_->NotifyDriverState(true);
         } else if (status.status == SERVIE_STATUS_STOP) {

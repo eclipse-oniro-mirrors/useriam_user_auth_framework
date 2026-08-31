@@ -17,7 +17,7 @@ import("//build/test.gni")
 ohos_fuzztest("HdiTypeConvertFuzzTest") {
   branch_protector_ret = "pac_ret"
   module_out_path = "user_auth_framework/user_auth/concurrent"
-  fuzz_config_file = "../hdi_type_convert_fuzzer"
+  fuzz_config_file = "../hditypeconvert_fuzzer"
 
   cflags = [
     "-g",
