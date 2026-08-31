@@ -25,7 +25,7 @@ group("iam_services_fuzztest") {
     "context/widgetcontext_fuzzer:WidgetContextFuzzTest",
     "core/remoteauthcallbackmanager_fuzzer:RemoteAuthCallbackManagerFuzzTest",
     "core/remoteexecutorstub_fuzzer:RemoteExecutorStubFuzzTest",
-    "hdi_type_convert_fuzzer:HdiTypeConvertFuzzTest",
+    "hditypeconvert_fuzzer:HdiTypeConvertFuzzTest",
     "servicecore_fuzzer:ServiceCoreFuzzTest",
     "softbus_fuzzer:SoftBusFuzzTest",
     "templatecachemanager_fuzzer:TemplateCacheManagerFuzzTest",
