@@ -45,7 +45,7 @@ public:
         const std::shared_ptr<GetCredentialInfoCallback> &callback) override;
     int32_t GetSecUserInfo(int32_t userId, const std::shared_ptr<GetSecUserInfoCallback> &callback) override;
     void ClearRedundancyCredential(const std::shared_ptr<UserIdmClientCallback> &callback) override;
-    void DeleteSubProfile(int32_t subProfileId,
+    void DeleteSubProfile(int32_t userId, int32_t subProfileId,
         const std::shared_ptr<UserIdmClientCallback> &callback) override;
     int32_t RegistCredChangeEventListener(const std::vector<AuthType> &authTypes,
         const std::shared_ptr<CredChangeEventListener> &listener) override;

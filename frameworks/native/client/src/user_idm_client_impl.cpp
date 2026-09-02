@@ -374,7 +374,7 @@ void UserIdmClientImpl::ClearRedundancyCredential(const std::shared_ptr<UserIdmC
     }
 }
 
-void UserIdmClientImpl::DeleteSubProfile(int32_t subProfileId,
+void UserIdmClientImpl::DeleteSubProfile(int32_t userId, int32_t subProfileId,
     const std::shared_ptr<UserIdmClientCallback> &callback)
 {
     IAM_LOGI("start, subProfileId:%{public}d", subProfileId);
@@ -396,7 +396,7 @@ void UserIdmClientImpl::DeleteSubProfile(int32_t subProfileId,
         callback->OnResult(GENERAL_ERROR, extraInfo);
         return;
     }
-    auto ret = proxy->DeleteSubProfile(subProfileId, wrapper);
+    auto ret = proxy->DeleteSubProfile(userId, subProfileId, wrapper);
     if (ret != SUCCESS) {
         IAM_LOGE("delete sub profile fail, ret:%{public}d, subProfileId:%{public}d", ret, subProfileId);
         return;
