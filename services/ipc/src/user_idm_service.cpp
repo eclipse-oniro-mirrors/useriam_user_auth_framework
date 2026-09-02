@@ -682,16 +682,6 @@ int32_t UserIdmService::DelCredential(int32_t userId, uint64_t credentialId,
     contextCallback->SetTraceCallerType(callerType);
     contextCallback->SetTraceUserId(userId);
 
-    if (authToken.empty()) {
-        std::shared_ptr<CredentialInfoInterface> credInfo;
-        int32_t ret = UserIdmDatabase::Instance().GetCredentialInfoById(credentialId, credInfo);
-        if (ret != SUCCESS || credInfo == nullptr || credInfo->GetAuthType() != CUSTOM_AUTH) {
-            IAM_LOGE("empty authToken for non-custom-auth credential");
-            contextCallback->OnResult(INVALID_PARAMETERS, extraInfo);
-            return INVALID_PARAMETERS;
-        }
-    }
-
     if (!IpcCommon::CheckPermission(*this, MANAGE_USER_IDM_PERMISSION)) {
         IAM_LOGE("failed to check permission");
         contextCallback->OnResult(CHECK_PERMISSION_FAILED, extraInfo);
