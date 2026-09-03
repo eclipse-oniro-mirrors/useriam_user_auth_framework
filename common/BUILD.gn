@@ -79,6 +79,7 @@ ohos_static_library("iam_utils") {
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hicollie:libhicollie",
     "hilog:libhilog",

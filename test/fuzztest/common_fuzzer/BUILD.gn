@@ -33,6 +33,7 @@ ohos_source_set("attributes_fuzzer") {
   public_configs = [ "../../../frameworks/native/common:attributes_config" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hicollie:libhicollie",
     "hilog:libhilog",
@@ -349,6 +350,7 @@ ohos_source_set("userauth_service_remote_connect_fuzzer") {
     ]
 
     external_deps += [
+      "bounds_checking_function:libsec_shared",
       "c_utils:utils",
       "hilog:libhilog",
       "init:libbeget_proxy",
@@ -370,6 +372,7 @@ ohos_source_set("userauth_service_remote_connect_fuzzer") {
     ]
 
     external_deps = [
+      "bounds_checking_function:libsec_shared",
       "access_token:libtoken_setproc",
       "c_utils:utils",
       "dsoftbus:softbus_client",
@@ -500,6 +503,7 @@ ohos_source_set("iam_utils_fuzzer") {
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hicollie:libhicollie",
     "hilog:libhilog",
@@ -520,6 +524,7 @@ ohos_source_set("iam_test_fuzzer") {
   include_dirs = [ "../../../common/logs" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "hicollie:libhicollie",
     "hilog:libhilog",
