@@ -36,7 +36,6 @@ UserRecognitionResult ConvertIpcUserRecognitionResult(const IpcUserRecognitionRe
     if (result.hasAuthTrustLevel) {
         clientResult.authTrustLevel = result.authTrustLevel;
     }
-    clientResult.authToken = result.authToken;
     return clientResult;
 }
 

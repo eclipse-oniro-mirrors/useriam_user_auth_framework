@@ -30,6 +30,7 @@
 #include "mock_user_access_ctrl_callback.h"
 #include "mock_user_auth_callback.h"
 #include "mock_user_auth_service.h"
+#include "mock_user_recognition_callback.h"
 #include "mock_resource_node.h"
 #include "mock_widget_callback_interface.h"
 #include "resource_node_pool.h"
@@ -301,7 +302,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceRegistEventListerner_004, TestSize.
 {
     UserAuthService service;
     sptr<IEventListenerCallback> testCallback = new MockEventListener();
-    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
     EXPECT_EQ(service.RegistUserAuthSuccessEventListener(testCallback),
         ResultCode::GENERAL_ERROR);
     IpcCommon::DeleteAllPermission();
@@ -338,7 +339,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUnRegistEventListerner_003, TestSiz
 {
     UserAuthService service;
     sptr<IEventListenerCallback> testCallback = new MockEventListener();
-    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
     EXPECT_EQ(service.UnRegistUserAuthSuccessEventListener(testCallback), ResultCode::GENERAL_ERROR);
     IpcCommon::DeleteAllPermission();
 }
@@ -347,9 +348,72 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUnRegistEventListerner_004, TestSiz
 {
     UserAuthService service;
     sptr<IEventListenerCallback> testCallback = new MockEventListener();
-    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
     EXPECT_EQ(service.RegistUserAuthSuccessEventListener(testCallback), ResultCode::GENERAL_ERROR);
     EXPECT_EQ(service.UnRegistUserAuthSuccessEventListener(testCallback), ResultCode::GENERAL_ERROR);
+    IpcCommon::DeleteAllPermission();
+}
+
+// CheckUserRecognitionCapability: permission failure is reported via checkResult (IPC ret stays
+// SUCCESS); with ACCESS_USER_PASSIVE_RECOGNITION granted and the default engine reporting no
+// SUPPORT_USER_RECOGNITION capability the result is DEVICE_CAPABILITY_NOT_SUPPORT.
+HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckUserRecognitionCapability001, TestSize.Level0)
+{
+    UserAuthService service;
+    int32_t checkResult = SUCCESS;
+    EXPECT_EQ(service.CheckUserRecognitionCapability(checkResult), ResultCode::SUCCESS);
+    EXPECT_EQ(checkResult, ResultCode::CHECK_PERMISSION_FAILED);
+
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
+    checkResult = SUCCESS;
+    EXPECT_EQ(service.CheckUserRecognitionCapability(checkResult), ResultCode::SUCCESS);
+    EXPECT_EQ(checkResult, ResultCode::DEVICE_CAPABILITY_NOT_SUPPORT);
+    IpcCommon::DeleteAllPermission();
+}
+
+// GetUserRecognitionResult mirrors CheckUserRecognitionCapability: permission failure lands in
+// funcResult, and the absent engine capability yields DEVICE_CAPABILITY_NOT_SUPPORT.
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetUserRecognitionResult001, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcUserRecognitionResult result;
+    int32_t funcResult = SUCCESS;
+    EXPECT_EQ(service.GetUserRecognitionResult(result, funcResult), ResultCode::SUCCESS);
+    EXPECT_EQ(funcResult, ResultCode::CHECK_PERMISSION_FAILED);
+
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
+    funcResult = SUCCESS;
+    EXPECT_EQ(service.GetUserRecognitionResult(result, funcResult), ResultCode::SUCCESS);
+    EXPECT_EQ(funcResult, ResultCode::DEVICE_CAPABILITY_NOT_SUPPORT);
+    IpcCommon::DeleteAllPermission();
+}
+
+// Register/UnregisterUserRecognitionEventListener: nullptr listener is rejected before the
+// permission check; ACCESS_USER_PASSIVE_RECOGNITION does NOT gate these two endpoints (they keep
+// ACCESS_BIOMETRIC), so it alone still yields CHECK_PERMISSION_FAILED; adding
+// ACCESS_BIOMETRIC reaches the engine capability check, which reports
+// DEVICE_CAPABILITY_NOT_SUPPORT by default.
+HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterUserRecognitionEventListener001, TestSize.Level0)
+{
+    UserAuthService service;
+    sptr<IUserRecognitionCallback> testCallback = nullptr;
+    EXPECT_EQ(service.RegisterUserRecognitionEventListener(testCallback), ResultCode::INVALID_PARAMETERS);
+    EXPECT_EQ(service.UnregisterUserRecognitionEventListener(testCallback), ResultCode::INVALID_PARAMETERS);
+
+    testCallback = new (std::nothrow) MockUserRecognitionCallback();
+    EXPECT_NE(testCallback, nullptr);
+    EXPECT_EQ(service.RegisterUserRecognitionEventListener(testCallback), ResultCode::CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(service.UnregisterUserRecognitionEventListener(testCallback), ResultCode::CHECK_PERMISSION_FAILED);
+
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
+    EXPECT_EQ(service.RegisterUserRecognitionEventListener(testCallback), ResultCode::CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(service.UnregisterUserRecognitionEventListener(testCallback), ResultCode::CHECK_PERMISSION_FAILED);
+
+    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    EXPECT_EQ(service.RegisterUserRecognitionEventListener(testCallback),
+        ResultCode::DEVICE_CAPABILITY_NOT_SUPPORT);
+    EXPECT_EQ(service.UnregisterUserRecognitionEventListener(testCallback),
+        ResultCode::DEVICE_CAPABILITY_NOT_SUPPORT);
     IpcCommon::DeleteAllPermission();
 }
 

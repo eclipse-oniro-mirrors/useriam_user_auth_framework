@@ -243,6 +243,4 @@ struct IpcUserRecognitionResult {
     boolean hasAuthTrustLevel;
     /** Trust level of the underlying authentication. */
     unsigned int authTrustLevel;
-    /** Auth token of the underlying authentication; empty when not carried. Only delivered to native(SA) callers. */
-    unsigned char[] authToken;
 };

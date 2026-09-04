@@ -40,6 +40,7 @@ namespace PermissionString {
     const std::string USE_USER_IDM_PERMISSION = "ohos.permission.USE_USER_IDM";
     const std::string ACCESS_USER_AUTH_INTERNAL_PERMISSION = "ohos.permission.ACCESS_USER_AUTH_INTERNAL";
     const std::string ACCESS_BIOMETRIC_PERMISSION = "ohos.permission.ACCESS_BIOMETRIC";
+    const std::string ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION = "ohos.permission.ACCESS_USER_PASSIVE_RECOGNITION";
     const std::string ACCESS_AUTH_RESPOOL = "ohos.permission.ACCESS_AUTH_RESPOOL";
     const std::string ENFORCE_USER_IDM = "ohos.permission.ENFORCE_USER_IDM";
     const std::string SUPPORT_USER_AUTH = "ohos.permission.SUPPORT_USER_AUTH";
@@ -198,6 +199,9 @@ bool IpcCommon::CheckPermission(IPCObjectStub &stub, Permission permission)
             return CheckDirectCallerAndFirstCallerIfSet(stub, PermissionString::ACCESS_USER_AUTH_INTERNAL_PERMISSION);
         case ACCESS_BIOMETRIC_PERMISSION:
             return CheckDirectCallerAndFirstCallerIfSet(stub, PermissionString::ACCESS_BIOMETRIC_PERMISSION);
+        case ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION:
+            return CheckDirectCallerAndFirstCallerIfSet(stub,
+                PermissionString::ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
         case ACCESS_AUTH_RESPOOL:
             return CheckDirectCaller(stub, PermissionString::ACCESS_AUTH_RESPOOL);
         case ENFORCE_USER_IDM:

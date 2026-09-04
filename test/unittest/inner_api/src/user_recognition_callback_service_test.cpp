@@ -188,47 +188,6 @@ HWTEST_F(UserRecognitionCallbackServiceTest, CallbackEnterExitSuccess, TestSize.
     EXPECT_EQ(service->CallbackEnter(0), SUCCESS);
     EXPECT_EQ(service->CallbackExit(0, SUCCESS), SUCCESS);
 }
-
-// A carried authToken is forwarded to the user listener byte-for-byte.
-HWTEST_F(UserRecognitionCallbackServiceTest, OnUserRecognitionEventForwardsAuthToken, TestSize.Level0)
-{
-    auto listener = Common::MakeShared<MockUserRecognitionEventListener>();
-    ASSERT_NE(listener, nullptr);
-    auto service = Common::MakeShared<UserRecognitionCallbackService>();
-    ASSERT_NE(service, nullptr);
-    service->AddListener(listener);
-
-    IpcUserRecognitionResult ipc {};
-    ipc.status = static_cast<int32_t>(UserRecognitionStatus::MATCH);
-    ipc.userId = TEST_USER_ID;
-    ipc.authToken = {1, 2, 3};
-
-    EXPECT_CALL(*listener, OnUserRecognitionEvent(_))
-        .WillOnce([](const UserRecognitionResult &r) {
-            EXPECT_EQ(std::vector<uint8_t>({1, 2, 3}), r.authToken);
-        });
-    EXPECT_EQ(service->OnUserRecognitionEvent(ipc), SUCCESS);
-}
-
-// A stripped result leaves the user listener's authToken empty.
-HWTEST_F(UserRecognitionCallbackServiceTest, OnUserRecognitionEventWithoutAuthToken, TestSize.Level0)
-{
-    auto listener = Common::MakeShared<MockUserRecognitionEventListener>();
-    ASSERT_NE(listener, nullptr);
-    auto service = Common::MakeShared<UserRecognitionCallbackService>();
-    ASSERT_NE(service, nullptr);
-    service->AddListener(listener);
-
-    IpcUserRecognitionResult ipc {};
-    ipc.status = static_cast<int32_t>(UserRecognitionStatus::MATCH);
-    ipc.userId = TEST_USER_ID;
-
-    EXPECT_CALL(*listener, OnUserRecognitionEvent(_))
-        .WillOnce([](const UserRecognitionResult &r) {
-            EXPECT_TRUE(r.authToken.empty());
-        });
-    EXPECT_EQ(service->OnUserRecognitionEvent(ipc), SUCCESS);
-}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

@@ -33,24 +33,19 @@ public:
     ~UserRecognitionStateManager() override = default;
     friend std::shared_ptr<IUserRecognitionStateManager> CreateUserRecognitionStateManager();
 
-    int32_t RegisterListener(int32_t callerType,
-        const sptr<IUserRecognitionCallback> &listener) override;
+    int32_t RegisterListener(const sptr<IUserRecognitionCallback> &listener) override;
     int32_t UnregisterListener(const sptr<IUserRecognitionCallback> &listener) override;
     void OnUserRecognitionEvent(const IpcUserRecognitionResult &result) override;
     void SetUserRecognitionResult(IpcUserRecognitionResult result) override;
     IpcUserRecognitionResult GetCachedUserRecognitionResult() override;
-    IpcUserRecognitionResult GetCachedUserRecognitionResultForCaller(int32_t callerType) override;
 
 private:
     UserRecognitionStateManager() = default;
-    static IpcUserRecognitionResult BuildUserRecognitionResultForCaller(int32_t callerType,
-        IpcUserRecognitionResult result);
     static bool IsSameRecognitionResult(const IpcUserRecognitionResult &a, const IpcUserRecognitionResult &b);
 
     struct ListenerEntry {
         sptr<IUserRecognitionCallback> callback;
         sptr<CallbackDeathRecipient> deathRecipient;
-        int32_t callerType {0};
     };
 
     std::recursive_mutex mutex_;

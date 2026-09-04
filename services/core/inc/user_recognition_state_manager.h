@@ -28,13 +28,11 @@ namespace UserAuth {
 class IUserRecognitionStateManager {
 public:
     virtual ~IUserRecognitionStateManager() = default;
-    virtual int32_t RegisterListener(int32_t callerType,
-        const sptr<IUserRecognitionCallback> &listener) = 0;
+    virtual int32_t RegisterListener(const sptr<IUserRecognitionCallback> &listener) = 0;
     virtual int32_t UnregisterListener(const sptr<IUserRecognitionCallback> &listener) = 0;
     virtual void OnUserRecognitionEvent(const IpcUserRecognitionResult &result) = 0;
     virtual void SetUserRecognitionResult(IpcUserRecognitionResult result) = 0;
     virtual IpcUserRecognitionResult GetCachedUserRecognitionResult() = 0;
-    virtual IpcUserRecognitionResult GetCachedUserRecognitionResultForCaller(int32_t callerType) = 0;
 };
 
 IUserRecognitionStateManager &GetUserRecognitionStateManager();

@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "accesstoken_kit.h"
 #include "callback_death_recipient.h"
 #include "iam_check.h"
 #include "iam_logger.h"
@@ -78,10 +77,9 @@ void SetUserRecognitionStateManager(std::shared_ptr<IUserRecognitionStateManager
     store.instance = std::move(manager);
 }
 
-int32_t UserRecognitionStateManager::RegisterListener(int32_t callerType,
-    const sptr<IUserRecognitionCallback> &listener)
+int32_t UserRecognitionStateManager::RegisterListener(const sptr<IUserRecognitionCallback> &listener)
 {
-    IAM_LOGI("start, callerType:%{public}d", callerType);
+    IAM_LOGI("start");
     IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, GENERAL_ERROR);
 
     auto obj = listener->AsObject();
@@ -102,7 +100,6 @@ int32_t UserRecognitionStateManager::RegisterListener(int32_t callerType,
 
         ListenerEntry entry;
         entry.callback = listener;
-        entry.callerType = callerType;
         if (obj->IsProxyObject()) {
             auto cleanup = [weakSelf = weak_from_this(), listener]() {
                 auto self = weakSelf.lock();
@@ -117,7 +114,7 @@ int32_t UserRecognitionStateManager::RegisterListener(int32_t callerType,
         listenerSize = listenerMap_.size();
         // Post under the lock: SetUserRecognitionResult updates cachedResult_ under the same
         // mutex, so the catch-up event can never be overtaken by a newer result.
-        syncResult = BuildUserRecognitionResultForCaller(entry.callerType, cachedResult_);
+        syncResult = cachedResult_;
         IAM_LOGI("sync cached result to new listener, status:%{public}d", syncResult.status);
         handler->PostTask([listener, syncResult]() { listener->OnUserRecognitionEvent(syncResult); });
     }
@@ -170,7 +167,7 @@ void UserRecognitionStateManager::OnUserRecognitionEvent(const IpcUserRecognitio
             if (entry.callback == nullptr) {
                 continue;
             }
-            entry.callback->OnUserRecognitionEvent(BuildUserRecognitionResultForCaller(entry.callerType, result));
+            entry.callback->OnUserRecognitionEvent(result);
         }
     });
 }
@@ -181,7 +178,6 @@ void UserRecognitionStateManager::SetUserRecognitionResult(IpcUserRecognitionRes
     if (result.status != static_cast<int32_t>(UserRecognitionStatus::MATCH)) {
         result.hasAuthTrustLevel = false;
         result.authTrustLevel = 0;
-        result.authToken.clear();
     }
 
     bool shouldDispatch = false;
@@ -199,33 +195,17 @@ void UserRecognitionStateManager::SetUserRecognitionResult(IpcUserRecognitionRes
     }
 }
 
-IpcUserRecognitionResult UserRecognitionStateManager::BuildUserRecognitionResultForCaller(int32_t callerType,
-    IpcUserRecognitionResult result)
-{
-    if (callerType == Security::AccessToken::TOKEN_NATIVE) {
-        return result;
-    }
-    result.authToken.clear();
-    return result;
-}
-
 bool UserRecognitionStateManager::IsSameRecognitionResult(const IpcUserRecognitionResult &a,
     const IpcUserRecognitionResult &b)
 {
     return a.status == b.status && a.userId == b.userId && a.userInfo == b.userInfo &&
-        a.hasAuthTrustLevel == b.hasAuthTrustLevel && a.authTrustLevel == b.authTrustLevel &&
-        a.authToken == b.authToken;
+        a.hasAuthTrustLevel == b.hasAuthTrustLevel && a.authTrustLevel == b.authTrustLevel;
 }
 
 IpcUserRecognitionResult UserRecognitionStateManager::GetCachedUserRecognitionResult()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     return cachedResult_;
-}
-
-IpcUserRecognitionResult UserRecognitionStateManager::GetCachedUserRecognitionResultForCaller(int32_t callerType)
-{
-    return BuildUserRecognitionResultForCaller(callerType, GetCachedUserRecognitionResult());
 }
 } // namespace UserAuth
 } // namespace UserIam
