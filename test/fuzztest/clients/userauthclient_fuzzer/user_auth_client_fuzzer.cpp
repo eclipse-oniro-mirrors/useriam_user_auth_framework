@@ -119,6 +119,15 @@ public:
     }
 };
 
+class DummyUserRecognitionEventListener final : public UserRecognitionEventListener {
+public:
+    void OnUserRecognitionEvent(const UserRecognitionResult &result) override
+    {
+        IAM_LOGI("start");
+        static_cast<void>(result);
+    }
+};
+
 class DummyUserAuthModalClientCallback final : public UserAuthModalClientCallback {
 public:
     void SendCommand(uint64_t contextId, const std::string &cmdData)
@@ -176,6 +185,29 @@ void FuzzClientCheckUserRecognitionCapability(Parcel &parcel)
 {
     IAM_LOGI("start");
     UserAuthClientImpl::Instance().CheckUserRecognitionCapability();
+    IAM_LOGI("end");
+}
+
+void FuzzClientGetUserRecognitionResult(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    UserRecognitionResult result;
+    UserAuthClientImpl::Instance().GetUserRecognitionResult(result);
+    IAM_LOGI("end");
+}
+
+void FuzzClientRegisterUserRecognitionEventListener(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    if (parcel.ReadBool()) {
+        auto listener = Common::MakeShared<DummyUserRecognitionEventListener>();
+        UserAuthClientImpl::Instance().RegisterUserRecognitionEventListener(listener);
+        UserAuthClientImpl::Instance().UnregisterUserRecognitionEventListener(listener);
+        return;
+    }
+    std::shared_ptr<UserRecognitionEventListener> nullListener = nullptr;
+    UserAuthClientImpl::Instance().RegisterUserRecognitionEventListener(nullListener);
+    UserAuthClientImpl::Instance().UnregisterUserRecognitionEventListener(nullListener);
     IAM_LOGI("end");
 }
 
@@ -492,6 +524,8 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzClientGetEnrolledState,
     FuzzClientGetAvailableStatus,
     FuzzClientCheckUserRecognitionCapability,
+    FuzzClientGetUserRecognitionResult,
+    FuzzClientRegisterUserRecognitionEventListener,
     FuzzClientGetProperty,
     FuzzClientSetProperty,
     FuzzClientBeginAuthentication001,

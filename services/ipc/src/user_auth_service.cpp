@@ -1714,7 +1714,7 @@ int32_t UserAuthService::RegistUserAuthSuccessEventListener(const sptr<IEventLis
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
     IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
 
-    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION)) {
         IAM_LOGE("failed to check permission");
         return CHECK_PERMISSION_FAILED;
     }
@@ -1734,7 +1734,7 @@ int32_t UserAuthService::UnRegistUserAuthSuccessEventListener(const sptr<IEventL
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
     IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
 
-    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION)) {
         IAM_LOGE("failed to check permission");
         return CHECK_PERMISSION_FAILED;
     }
@@ -1752,7 +1752,7 @@ int32_t UserAuthService::CheckUserRecognitionCapability(int32_t &checkResult)
 {
     IAM_LOGI("start");
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
-    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION)) {
         IAM_LOGE("failed to check permission");
         checkResult = CHECK_PERMISSION_FAILED;
         return SUCCESS;
@@ -1770,7 +1770,7 @@ int32_t UserAuthService::GetUserRecognitionResult(IpcUserRecognitionResult &resu
 {
     IAM_LOGI("start");
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
-    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION)) {
         IAM_LOGE("failed to check permission");
         funcResult = CHECK_PERMISSION_FAILED;
         return SUCCESS;
@@ -1780,8 +1780,7 @@ int32_t UserAuthService::GetUserRecognitionResult(IpcUserRecognitionResult &resu
         funcResult = DEVICE_CAPABILITY_NOT_SUPPORT;
         return SUCCESS;
     }
-    result = GetUserRecognitionStateManager().GetCachedUserRecognitionResultForCaller(
-        IpcCommon::GetDirectCallerType(*this));
+    result = GetUserRecognitionStateManager().GetCachedUserRecognitionResult();
     funcResult = SUCCESS;
     return SUCCESS;
 }
@@ -1800,8 +1799,7 @@ int32_t UserAuthService::RegisterUserRecognitionEventListener(const sptr<IUserRe
         return DEVICE_CAPABILITY_NOT_SUPPORT;
     }
 
-    int32_t callerType = IpcCommon::GetDirectCallerType(*this);
-    int32_t result = GetUserRecognitionStateManager().RegisterListener(callerType, listener);
+    int32_t result = GetUserRecognitionStateManager().RegisterListener(listener);
     if (result != SUCCESS) {
         IAM_LOGE("failed to register user recognition listener");
         return result;

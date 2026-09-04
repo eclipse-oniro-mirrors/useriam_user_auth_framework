@@ -26,6 +26,7 @@
 #include "mock_ipc_common.h"
 #include "user_auth_service.h"
 #include "user_auth_common_defines.h"
+#include "user_recognition_callback_stub.h"
 #include "dummy_iam_callback_interface.h"
 
 #undef private
@@ -143,6 +144,24 @@ public:
         const IpcCredChangeEventInfo &changeInfo) override
     {
         IAM_LOGI("start");
+        return SUCCESS;
+    }
+};
+
+class DummyUserRecognitionCallback : public IUserRecognitionCallback {
+public:
+    ~DummyUserRecognitionCallback() override = default;
+
+    sptr<IRemoteObject> AsObject() override
+    {
+        sptr<IRemoteObject> tmp(nullptr);
+        return tmp;
+    }
+
+    int32_t OnUserRecognitionEvent(const IpcUserRecognitionResult &result) override
+    {
+        IAM_LOGI("start");
+        static_cast<void>(result);
         return SUCCESS;
     }
 };
@@ -489,6 +508,49 @@ void FuzzRegistUserAuthSuccessEventListener(Parcel &parcel)
 
     g_userAuthService.RegistUserAuthSuccessEventListener(callback);
     g_userAuthService.UnRegistUserAuthSuccessEventListener(callback);
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzCheckUserRecognitionCapability(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t checkResult = GENERAL_ERROR;
+    g_userAuthService.CheckUserRecognitionCapability(checkResult);
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
+    g_userAuthService.CheckUserRecognitionCapability(checkResult);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzGetUserRecognitionResult(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    IpcUserRecognitionResult result;
+    int32_t funcResult = GENERAL_ERROR;
+    g_userAuthService.GetUserRecognitionResult(result, funcResult);
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
+    g_userAuthService.GetUserRecognitionResult(result, funcResult);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzRegisterUserRecognitionEventListener(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    sptr<IUserRecognitionCallback> callback(nullptr);
+    if (parcel.ReadBool()) {
+        callback = sptr<IUserRecognitionCallback>(new (std::nothrow) DummyUserRecognitionCallback());
+    }
+
+    g_userAuthService.RegisterUserRecognitionEventListener(callback);
+    g_userAuthService.UnregisterUserRecognitionEventListener(callback);
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
+    g_userAuthService.RegisterUserRecognitionEventListener(callback);
+    g_userAuthService.UnregisterUserRecognitionEventListener(callback);
+    IpcCommon::DeleteAllPermission();
     EnsureTask();
     IAM_LOGI("end");
 }
@@ -1001,6 +1063,9 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzNotice,
     FuzzRegisterWidgetCallback,
     FuzzRegistUserAuthSuccessEventListener,
+    FuzzCheckUserRecognitionCapability,
+    FuzzGetUserRecognitionResult,
+    FuzzRegisterUserRecognitionEventListener,
     FuzzSetGlobalConfigParam,
     FuzzSetGlobalConfigParamWithPinAlgo,
     FuzzSetGlobalConfigParamWithUserIds,

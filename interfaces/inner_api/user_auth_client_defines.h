@@ -260,8 +260,6 @@ struct UserRecognitionResult {
     std::string userInfo;
     /** Trust level of the underlying authentication; empty when not carried. */
     std::optional<uint32_t> authTrustLevel;
-    /** Auth token of the underlying authentication; empty when not carried. */
-    std::vector<uint8_t> authToken;
 };
 } // namespace UserAuth
 } // namespace UserIam
