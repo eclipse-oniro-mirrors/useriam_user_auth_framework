@@ -464,7 +464,8 @@ void UserIdmService::CancelCurrentEnrollIfExist()
     }
 }
 
-int32_t UserIdmService::DeleteSubProfile(int32_t subProfileId, const sptr<IIamCallback> &idmCallback)
+int32_t UserIdmService::DeleteSubProfile(int32_t userId,
+    int32_t subProfileId, const sptr<IIamCallback> &idmCallback)
 {
     IAM_LOGI("delete sub profile, subProfileId: %{public}d", subProfileId);
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
@@ -482,11 +483,6 @@ int32_t UserIdmService::DeleteSubProfile(int32_t subProfileId, const sptr<IIamCa
         IAM_LOGE("failed to delete sub profile, ret: %{public}d, subProfileId: %{public}d", ret, subProfileId);
         idmCallback->OnResult(ret, extraInfo.Serialize());
         return ret;
-    }
-    int32_t userId = INVALID_USER_ID;
-    if (IpcCommon::GetCallingUserId(*this, userId) != SUCCESS) {
-        IAM_LOGE("get callingUserId failed");
-        return GENERAL_ERROR;
     }
     std::vector<std::shared_ptr<CredentialInfoInterface>> credInfos;
     for (const auto &hdiInfo : hdiInfos) {

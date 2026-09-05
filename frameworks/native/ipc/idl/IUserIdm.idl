@@ -56,5 +56,6 @@ interface OHOS.UserIam.UserAuth.IUserIdm {
     void GetCredentialInfoSync([in] int userId, [in] int authType,
         [out] IpcCredentialInfo[] credentialInfoList);
 
-    void DeleteSubProfile([in] int subProfileId, [in] IIamCallback idmCallback);
+    void DeleteSubProfile([in] int userId, [in] int subProfileId,
+        [in] IIamCallback idmCallback);
 }
