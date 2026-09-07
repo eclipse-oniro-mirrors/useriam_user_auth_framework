@@ -49,6 +49,7 @@ ohos_source_set("dfx_fuzzer") {
   sources = [
     "../../../frameworks/native/common/dfx/src/hisysevent_adapter.cpp",
     "../../../frameworks/native/common/dfx/src/iam_hitrace_helper.cpp",
+    "../../../frameworks/native/common/dfx/src/timing_tracer.cpp",
   ]
 
   configs = [

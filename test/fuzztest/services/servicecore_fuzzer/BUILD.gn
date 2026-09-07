@@ -53,6 +53,7 @@ ohos_fuzztest("ServiceCoreFuzzTest") {
 
   deps = [
     "../../common_fuzzer:attributes_fuzzer",
+    "../../common_fuzzer:dfx_fuzzer",
     "../../common_fuzzer:iam_test_fuzzer",
     "../../common_fuzzer:iam_utils_fuzzer",
     "../../common_fuzzer:userauth_services_ipc_fuzzer",

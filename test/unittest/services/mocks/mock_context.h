@@ -63,6 +63,10 @@ public:
     MOCK_METHOD1(SetTraceAuthFinishReason, void(const std::string &authFinishReason));
     MOCK_METHOD1(SetTraceIsBackgroundApplication, void(const bool isBackgroundApplication));
     MOCK_METHOD1(SetTraceIsWidgetAuth, void(const bool isWidgetAuth));
+
+    MOCK_METHOD1(Mark, void(StageId id));
+    MOCK_METHOD1(EnterWait, void(StageId id));
+    MOCK_METHOD1(ExitWait, void(StageId id));
 };
 
 class MockContext final : public Context {

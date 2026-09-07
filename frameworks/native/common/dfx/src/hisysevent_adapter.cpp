@@ -64,6 +64,10 @@ constexpr char STR_ERROR_CODE[] = "ERROR_CODE";
 constexpr char STR_PREVIOUS_STATUS[] = "PREVIOUS_STATUS";
 constexpr char STR_UPDATED_STATUS[] = "UPDATED_STATUS";
 constexpr char STRONG_AUTH_REASON[] = "STRONG_AUTH_REASON";
+constexpr char STR_TOTAL_TIME[] = "TOTAL_TIME";
+constexpr char STR_LOCAL_TIME[] = "LOCAL_TIME";
+constexpr char STR_AUTH_SUCC_TIP_TIME[] = "AUTH_SUCC_TIP_TIME";
+constexpr char STR_EXTRA_INFO[] = "EXTRA_INFO";
 
 static std::string MaskForStringId(const std::string &id)
 {
@@ -156,7 +160,11 @@ void ReportUserAuth(const UserAuthTrace &info)
         STR_REMOTE_UDID, MaskForStringId(info.remoteUdid),
         STR_CONNECTION_NAME, info.connectionName,
         STR_AUTH_FINISH_REASON, info.authFinishReason,
-        STR_IS_BACKGROUND_APPLICATION, info.isBackgroundApplication);
+        STR_IS_BACKGROUND_APPLICATION, info.isBackgroundApplication,
+        STR_TOTAL_TIME, info.timeTraceInfo.totalTime,
+        STR_LOCAL_TIME, info.timeTraceInfo.localTime,
+        STR_AUTH_SUCC_TIP_TIME, info.timeTraceInfo.authSuccTipTime,
+        STR_EXTRA_INFO, info.timeTraceInfo.extraInfo);
     if (ret != 0) {
         IAM_LOGE("hisysevent write failed! ret %{public}d", ret);
     }
@@ -179,7 +187,11 @@ void ReportSecurityUserAuthFwk(const UserAuthFwkTrace &info)
         STR_LOCAL_UDID, MaskForStringId(info.localUdid),
         STR_REMOTE_UDID, MaskForStringId(info.remoteUdid),
         STR_CONNECTION_NAME, info.connectionName,
-        STR_AUTH_FINISH_REASON, info.authFinishReason);
+        STR_AUTH_FINISH_REASON, info.authFinishReason,
+        STR_TOTAL_TIME, info.timeTraceInfo.totalTime,
+        STR_LOCAL_TIME, info.timeTraceInfo.localTime,
+        STR_AUTH_SUCC_TIP_TIME, info.timeTraceInfo.authSuccTipTime,
+        STR_EXTRA_INFO, info.timeTraceInfo.extraInfo);
     if (ret != 0) {
         IAM_LOGE("hisysevent write failed! ret %{public}d", ret);
     }

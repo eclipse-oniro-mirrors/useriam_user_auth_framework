@@ -201,6 +201,7 @@ ohos_unittest("iam_services_test") {
     "src/template_cache_manager_test.cpp",
     "src/thread_handler_impl_test.cpp",
     "src/thread_handler_manager_test.cpp",
+    "src/timing_tracer_test.cpp",
     "src/trace_test.cpp",
     "src/ui_extension_ability_connection_test.cpp",
     "src/update_pin_param_test.cpp",

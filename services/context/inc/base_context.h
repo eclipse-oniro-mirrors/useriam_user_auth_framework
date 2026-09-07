@@ -60,6 +60,9 @@ protected:
     virtual bool OnStart() = 0;
     virtual void OnResult(int32_t resultCode, const std::shared_ptr<Attributes> &scheduleResultAttr) = 0;
     virtual bool OnStop() = 0;
+    void Mark(StageId id);
+    void EnterWait(StageId id);
+    void ExitWait(StageId id);
     std::vector<std::shared_ptr<ScheduleNode>> GetScheduleList() const;
     void SetScheduleList(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList);
     std::shared_ptr<ContextCallback> callback_ = nullptr;

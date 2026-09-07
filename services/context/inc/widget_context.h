@@ -141,7 +141,9 @@ private:
     std::string ProcessCmdData(WidgetCmdParameters &widgetCmdParameters);
     void ProcessElementName(std::string &bundleName, std::string &abilityName);
     bool HandleAuthSuccessResult(Attributes &attr);
-
+    void Mark(StageId id);
+    void EnterWait(StageId id);
+    void ExitWait(StageId id);
 private:
     struct TaskInfo {
         AuthType authType {0};

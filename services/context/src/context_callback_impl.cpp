@@ -38,6 +38,7 @@ ContextCallbackImpl::ContextCallbackImpl(sptr<IIamCallback> iamCallback, Operati
     std::ostringstream ss;
     ss << "IAM(operation:" << operationType << ")";
     iamHitraceHelper_ = Common::MakeShared<IamHitraceHelper>(ss.str());
+    timingTracer_.Start();
 }
 
 void ContextCallbackImpl::OnAcquireInfo(ExecutorRole src, int32_t moduleType,
@@ -56,6 +57,9 @@ void ContextCallbackImpl::OnAcquireInfo(ExecutorRole src, int32_t moduleType,
     bool getExtraInfoRet = attr.GetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo);
     if (getExtraInfoRet) {
         ProcessAuthResult(acquireInfo, extraInfo);
+    }
+    if (acquireInfo == TIP_CODE_AUTH_SUCC) {
+        Mark(StageId::S_ON_TIP_AUTH_SUCC);
     }
 
     iamCallback_->OnAcquireInfo(moduleType, acquireInfo, acquireMsg);
@@ -86,6 +90,7 @@ int32_t ContextCallbackImpl::ParseAuthTipInfo(int32_t tip, const std::vector<uin
         return ResultCode::GENERAL_ERROR;
     }
     root.at(tipJsonKeyAuthResult).get_to(authResult);
+
     if (authResult == SUCCESS) {
         IAM_LOGI("authResult is success");
         return ResultCode::SUCCESS;
@@ -134,7 +139,15 @@ void ContextCallbackImpl::OnResult(int32_t resultCode, const Attributes &finalRe
 
     if (iamCallback_ != nullptr) {
         iamCallback_->OnResult(resultCode, finalResult.Serialize());
+        Mark(StageId::S_ON_RESULT);
     }
+
+    timingTracer_.Finish();
+    metaData_.totalTime = timingTracer_.TotalMs();
+    metaData_.localTime = timingTracer_.LocalMs();
+    metaData_.authSuccTipTime = timingTracer_.AuthTipMs();
+    metaData_.extraInfo = timingTracer_.ExportTrace();
+
     HandleAuthSuccessResult(resultCode, finalResult);
 
     ContextCallbackNotifyListener::GetInstance().Process(metaData_, TRACE_FLAG_DEFAULT);
@@ -282,6 +295,21 @@ std::string ContextCallbackImpl::GetCallerName()
         return metaData_.callerName.value();
     }
     return "";
+}
+
+void ContextCallbackImpl::Mark(StageId id)
+{
+    timingTracer_.Mark(id);
+}
+
+void ContextCallbackImpl::EnterWait(StageId id)
+{
+    timingTracer_.EnterWait(id);
+}
+
+void ContextCallbackImpl::ExitWait(StageId id)
+{
+    timingTracer_.ExitWait(id);
 }
 
 ContextCallbackNotifyListener &ContextCallbackNotifyListener::GetInstance()

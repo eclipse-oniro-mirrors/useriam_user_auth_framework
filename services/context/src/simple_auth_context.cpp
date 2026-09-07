@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "auth_common.h"
+#include "iam_framework_stages.h"
 #include "iam_check.h"
 #include "iam_event_dispatcher.h"
 #include "iam_logger.h"
@@ -218,7 +219,9 @@ bool SimpleAuthContext::OnStart()
 
     IF_FALSE_LOGE_AND_RETURN_VAL(scheduleList.size() == 1, false);
     IF_FALSE_LOGE_AND_RETURN_VAL(scheduleList[0] != nullptr, false);
+    EnterWait(StageId::S_BEGIN_SCHEDULE_START);
     bool startScheduleRet = scheduleList[0]->StartSchedule();
+    ExitWait(StageId::S_BEGIN_SCHEDULE_END);
     IF_FALSE_LOGE_AND_RETURN_VAL(startScheduleRet, false);
     PostEvent(EVENT_AUTH_INITIATED, AuthEventInfo {});
     IAM_LOGI("%{public}s Schedule:%{public}s Type:%{public}d success", GetDescription(),
@@ -294,10 +297,13 @@ bool SimpleAuthContext::UpdateScheduleResult(const std::shared_ptr<Attributes> &
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(auth_ != nullptr, false);
     IF_FALSE_LOGE_AND_RETURN_VAL(scheduleResultAttr != nullptr, false);
+    IF_FALSE_LOGE_AND_RETURN_VAL(callback_ != nullptr, false);
     std::vector<uint8_t> scheduleResult;
     bool getResultCodeRet = scheduleResultAttr->GetUint8ArrayValue(Attributes::ATTR_RESULT, scheduleResult);
     IF_FALSE_LOGE_AND_RETURN_VAL(getResultCodeRet == true, false);
+    EnterWait(StageId::S_UPDATE_SCHEDULE_RESULT_START);
     bool updateRet = auth_->Update(scheduleResult, resultInfo);
+    ExitWait(StageId::S_UPDATE_SCHEDULE_RESULT_END);
     if (!updateRet) {
         HILOG_COMM_ERROR("%{public}s auth update fail", GetDescription());
         SetLatestError(auth_->GetLatestError());
