@@ -58,7 +58,7 @@ void ContextCallbackImpl::OnAcquireInfo(ExecutorRole src, int32_t moduleType,
     if (getExtraInfoRet) {
         ProcessAuthResult(acquireInfo, extraInfo);
     }
-    if (acquireInfo == TIP_CODE_AUTH_SUCC) {
+    if (acquireInfo == USER_AUTH_TIP_AUTH_SUCC) {
         Mark(StageId::S_ON_TIP_AUTH_SUCC);
     }
 

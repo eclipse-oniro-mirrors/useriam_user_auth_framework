@@ -999,7 +999,7 @@ void WidgetContext::SendAuthTipInfo(int32_t authType, int32_t tipCode)
     }
 
     IF_FALSE_LOGE_AND_RETURN(callerCallback_ != nullptr);
-    if (tipCode == TIP_CODE_AUTH_SUCC) {
+    if (tipCode == USER_AUTH_TIP_AUTH_SUCC) {
         Mark(StageId::S_ON_TIP_AUTH_SUCC);
     }
 
