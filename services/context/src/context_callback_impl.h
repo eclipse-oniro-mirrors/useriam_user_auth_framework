@@ -18,6 +18,7 @@
 
 #include "iam_hitrace_helper.h"
 #include "iam_defines.h"
+#include "timing_tracer.h"
 
 #include "context_callback.h"
 
@@ -57,12 +58,17 @@ public:
     sptr<IIamCallback> GetIamCallback() override;
     std::string GetCallerName() override;
 
+    void Mark(StageId id) override;
+    void EnterWait(StageId id) override;
+    void ExitWait(StageId id) override;
+
 private:
     void HandleAuthSuccessResult(int32_t resultCode, const Attributes &finalResult);
     sptr<IIamCallback> iamCallback_ {nullptr};
     Context::ContextStopCallback stopCallback_ {nullptr};
     ContextCallbackNotifyListener::MetaData metaData_;
     std::shared_ptr<IamHitraceHelper> iamHitraceHelper_;
+    TimingTracer timingTracer_;
 };
 } // namespace UserAuth
 } // namespace UserIam

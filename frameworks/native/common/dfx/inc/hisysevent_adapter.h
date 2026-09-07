@@ -21,6 +21,14 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+
+struct TimeTraceInfo {
+    uint32_t totalTime = 0;
+    uint32_t localTime = 0;
+    uint32_t authSuccTipTime = 0;
+    std::string extraInfo;
+};
+
 struct UserAuthTrace {
     std::string callerName;
     uint32_t sdkVersion = 0;
@@ -39,6 +47,7 @@ struct UserAuthTrace {
     std::string connectionName;
     std::string authFinishReason;
     bool isBackgroundApplication = false;
+    TimeTraceInfo timeTraceInfo;
 };
 
 struct UserAuthFwkTrace {
@@ -54,6 +63,7 @@ struct UserAuthFwkTrace {
     std::string remoteUdid;
     std::string connectionName;
     std::string authFinishReason;
+    TimeTraceInfo timeTraceInfo;
 };
 
 struct UserCredManagerTrace {

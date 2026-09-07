@@ -27,6 +27,7 @@
 #include "iam_defines.h"
 #include "iiam_callback.h"
 #include "user_auth_common_defines.h"
+#include "iam_framework_stages.h"
 
 namespace OHOS {
 namespace UserIam {
@@ -58,6 +59,10 @@ public:
         std::optional<std::string> authFinishReason;
         std::optional<bool> isBackgroundApplication;
         std::optional<bool> isWidgetAuth;
+        std::optional<uint32_t> totalTime;
+        std::optional<uint32_t> localTime;
+        std::optional<uint32_t> authSuccTipTime;
+        std::optional<std::string> extraInfo;
     };
     using Notify = std::function<void(const MetaData &metaData, TraceFlag flag)>;
     static ContextCallbackNotifyListener &GetInstance();
@@ -102,6 +107,10 @@ public:
     virtual void ProcessAuthResult(int32_t tip, const std::vector<uint8_t> &extraInfo) = 0;
     virtual sptr<IIamCallback> GetIamCallback() = 0;
     virtual std::string GetCallerName() = 0;
+
+    virtual void Mark(StageId id) = 0;
+    virtual void EnterWait(StageId id) = 0;
+    virtual void ExitWait(StageId id) = 0;
 };
 } // namespace UserAuth
 } // namespace UserIam

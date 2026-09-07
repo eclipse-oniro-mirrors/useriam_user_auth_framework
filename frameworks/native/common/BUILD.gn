@@ -66,6 +66,7 @@ ohos_source_set("dfx") {
   sources = [
     "dfx/src/hisysevent_adapter.cpp",
     "dfx/src/iam_hitrace_helper.cpp",
+    "dfx/src/timing_tracer.cpp",
   ]
 
   configs = [ "../../../common:iam_log_config" ]

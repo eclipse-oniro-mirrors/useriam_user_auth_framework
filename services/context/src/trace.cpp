@@ -101,56 +101,48 @@ void Trace::ProcessCredManagerEvent(const ContextCallbackNotifyListener::MetaDat
     IAM_LOGI("start to process cred manager event");
 }
 
+template<typename T, typename U>
+void CopyOptionalValue(const std::optional<T> &src, U &dst)
+{
+    if (src.has_value()) {
+        dst = static_cast<U>(src.value());
+    }
+}
+
+template<typename T>
+void CopyOptionalValue(const std::optional<T> &src, T &dst)
+{
+    if (src.has_value()) {
+        dst = src.value();
+    }
+}
+
 void Trace::CopyMetaDataToTraceInfo(const ContextCallbackNotifyListener::MetaData &metaData, UserAuthTrace &info)
 {
-    if (metaData.callerName.has_value()) {
-        info.callerName = metaData.callerName.value();
+    CopyOptionalValue(metaData.callerName, info.callerName);
+    CopyOptionalValue(metaData.sdkVersion, info.sdkVersion);
+    CopyOptionalValue(metaData.atl, info.atl);
+    if (metaData.operationResult == SUCCESS) {
+        CopyOptionalValue(metaData.authType, info.authType);
     }
-    if (metaData.sdkVersion.has_value()) {
-        info.sdkVersion = metaData.sdkVersion.value();
-    }
-    if (metaData.atl.has_value()) {
-        info.atl = metaData.atl.value();
-    }
-    if (metaData.authType.has_value() && metaData.operationResult == SUCCESS) {
-        info.authType = metaData.authType.value();
-    }
-    if (metaData.userId.has_value()) {
-        info.userId = metaData.userId.value();
-    }
-    if (metaData.callerType.has_value()) {
-        info.callerType = metaData.callerType.value();
-    }
+    CopyOptionalValue(metaData.userId, info.userId);
+    CopyOptionalValue(metaData.callerType, info.callerType);
     info.authResult = metaData.operationResult;
-    info.authtimeSpan = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(metaData.endTime -
-        metaData.startTime).count());
-    if (metaData.authWidgetType.has_value()) {
-        info.authWidgetType = metaData.authWidgetType.value();
-    }
-    if (metaData.reuseUnlockResultMode.has_value()) {
-        info.reuseUnlockResultMode = metaData.reuseUnlockResultMode.value();
-    }
-    if (metaData.reuseUnlockResultDuration.has_value()) {
-        info.reuseUnlockResultDuration = metaData.reuseUnlockResultDuration.value();
-    }
-    if (metaData.isRemoteAuth.has_value()) {
-        info.isRemoteAuth = metaData.isRemoteAuth.value();
-    }
-    if (metaData.remoteUdid.has_value()) {
-        info.remoteUdid = metaData.remoteUdid.value();
-    }
-    if (metaData.localUdid.has_value()) {
-        info.localUdid = metaData.localUdid.value();
-    }
-    if (metaData.connectionName.has_value()) {
-        info.connectionName = metaData.connectionName.value();
-    }
-    if (metaData.authFinishReason.has_value()) {
-        info.authFinishReason = metaData.authFinishReason.value();
-    }
-    if (metaData.isBackgroundApplication.has_value()) {
-        info.isBackgroundApplication = metaData.isBackgroundApplication.value();
-    }
+    info.authtimeSpan = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+        metaData.endTime - metaData.startTime).count());
+    CopyOptionalValue(metaData.authWidgetType, info.authWidgetType);
+    CopyOptionalValue(metaData.reuseUnlockResultMode, info.reuseUnlockResultMode);
+    CopyOptionalValue(metaData.reuseUnlockResultDuration, info.reuseUnlockResultDuration);
+    CopyOptionalValue(metaData.isRemoteAuth, info.isRemoteAuth);
+    CopyOptionalValue(metaData.remoteUdid, info.remoteUdid);
+    CopyOptionalValue(metaData.localUdid, info.localUdid);
+    CopyOptionalValue(metaData.connectionName, info.connectionName);
+    CopyOptionalValue(metaData.authFinishReason, info.authFinishReason);
+    CopyOptionalValue(metaData.isBackgroundApplication, info.isBackgroundApplication);
+    CopyOptionalValue(metaData.totalTime, info.timeTraceInfo.totalTime);
+    CopyOptionalValue(metaData.localTime, info.timeTraceInfo.localTime);
+    CopyOptionalValue(metaData.authSuccTipTime, info.timeTraceInfo.authSuccTipTime);
+    CopyOptionalValue(metaData.extraInfo, info.timeTraceInfo.extraInfo);
 }
 
 void Trace::ProcessUserAuthEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag)
@@ -204,6 +196,10 @@ void Trace::ProcessUserAuthFwkEvent(const ContextCallbackNotifyListener::MetaDat
     if (metaData.authFinishReason.has_value()) {
         securityInfo.authFinishReason = metaData.authFinishReason.value();
     }
+    CopyOptionalValue(metaData.totalTime, securityInfo.timeTraceInfo.totalTime);
+    CopyOptionalValue(metaData.localTime, securityInfo.timeTraceInfo.localTime);
+    CopyOptionalValue(metaData.authSuccTipTime, securityInfo.timeTraceInfo.authSuccTipTime);
+    CopyOptionalValue(metaData.extraInfo, securityInfo.timeTraceInfo.extraInfo);
     securityInfo.authResult = metaData.operationResult;
     uint64_t timeSpan = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(metaData.endTime -
         metaData.startTime).count());

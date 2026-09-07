@@ -31,6 +31,7 @@
 #include "hisysevent_adapter.h"
 #include "iam_check.h"
 #include "iam_common_defines.h"
+#include "iam_framework_stages.h"
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
@@ -114,6 +115,7 @@ bool WidgetContext::Start()
         IAM_LOGI("%{public}s context has started, cannot start again", description_.c_str());
         return false;
     }
+    Mark(StageId::S_CONTEXT_START);
     hasStarted_ = true;
     return OnStart();
 }
@@ -268,7 +270,10 @@ bool WidgetContext::OnStart()
         }
     } else {
         IAM_LOGI("widget auth mode, launch widget UI");
-        if (!schedule_->StartSchedule()) {
+        EnterWait(StageId::S_BEGIN_SCHEDULE_START);
+        bool ret = schedule_->StartSchedule();
+        ExitWait(StageId::S_BEGIN_SCHEDULE_END);
+        if (!ret) {
             IAM_LOGE("StartSchedule failed");
             return false;
         }
@@ -803,6 +808,9 @@ void WidgetContext::End(const ResultCode &resultCode)
 {
     HILOG_COMM_INFO("widget context: ****%{public}hx in End, resultCode: %{public}d",
         static_cast<uint16_t>(contextId_), static_cast<int32_t>(resultCode));
+    if (resultCode == ResultCode::CANCELED) {
+        Mark(StageId::S_CANCEL);
+    }
     StopAllRunTask(resultCode);
     IF_FALSE_LOGE_AND_RETURN(callerCallback_ != nullptr);
     Attributes attr;
@@ -991,6 +999,9 @@ void WidgetContext::SendAuthTipInfo(int32_t authType, int32_t tipCode)
     }
 
     IF_FALSE_LOGE_AND_RETURN(callerCallback_ != nullptr);
+    if (tipCode == TIP_CODE_AUTH_SUCC) {
+        Mark(StageId::S_ON_TIP_AUTH_SUCC);
+    }
 
     callerCallback_->OnAcquireInfo(ALL_IN_ONE, authType, attr.Serialize());
 }
@@ -1186,6 +1197,24 @@ void WidgetContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam, cons
         IAM_LOGE("StartSchedule failed");
         return;
     }
+}
+
+void WidgetContext::Mark(StageId id)
+{
+    IF_FALSE_LOGE_AND_RETURN(callerCallback_);
+    callerCallback_->Mark(id);
+}
+
+void WidgetContext::EnterWait(StageId id)
+{
+    IF_FALSE_LOGE_AND_RETURN(callerCallback_);
+    callerCallback_->EnterWait(id);
+}
+
+void WidgetContext::ExitWait(StageId id)
+{
+    IF_FALSE_LOGE_AND_RETURN(callerCallback_);
+    callerCallback_->ExitWait(id);
 }
 } // namespace UserAuth
 } // namespace UserIam

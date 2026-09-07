@@ -64,6 +64,10 @@ USERIAM_USER_AUTH:
   CONNECTION_NAME: {type: STRING, desc: connection name}
   AUTH_FINISH_REASON: {type: STRING, desc: auth finish reason}
   IS_BACKGROUND_APPLICATION: {type: BOOL, desc: is foreground application}
+  TOTAL_TIME: {type: UINT32, desc: total wall-clock duration ms}
+  LOCAL_TIME: {type: UINT32, desc: local processing duration ms}
+  AUTH_SUCC_TIP_TIME: {type: UINT32, desc: auth succ tip duration ms}
+  EXTRA_INFO: {type: STRING, desc: extra info includes timing trace}
 
 USERIAM_USER_AUTH_FWK:
   __BASE: {type: SECURITY, level: CRITICAL, tag: UserAuth, desc: user auth security message}
@@ -80,6 +84,10 @@ USERIAM_USER_AUTH_FWK:
   REMOTE_UDID: {type: STRING, desc: remote udid mask}
   CONNECTION_NAME: {type: STRING, desc: connection name}
   AUTH_FINISH_REASON: {type: STRING, desc: auth finish reason}
+  TOTAL_TIME: {type: UINT32, desc: total wall-clock duration ms}
+  LOCAL_TIME: {type: UINT32, desc: local processing duration ms}
+  AUTH_SUCC_TIP_TIME: {type: UINT32, desc: auth succ tip duration ms}
+  EXTRA_INFO: {type: STRING, desc: extra info includes timing trace}
 
 USERIAM_REMOTE_EXECUTE:
   __BASE: {type: SECURITY, level: CRITICAL, tag: UserAuth, desc: user auth remote execute message}

@@ -16,6 +16,7 @@
 
 #include <sstream>
 
+#include "iam_framework_stages.h"
 #include "context_death_recipient.h"
 #include "iam_check.h"
 #include "iam_logger.h"
@@ -102,6 +103,7 @@ bool BaseContext::Start()
             IAM_LOGI("%{public}s context has started, cannot start again", GetDescription());
             return false;
         }
+        Mark(StageId::S_CONTEXT_START);
         hasStarted_ = true;
     }
     return OnStart();
@@ -110,6 +112,7 @@ bool BaseContext::Start()
 bool BaseContext::Stop()
 {
     IAM_LOGD("%{public}s start", GetDescription());
+    callback_->Mark(StageId::S_CANCEL);
     return OnStop();
 }
 
@@ -167,6 +170,24 @@ void BaseContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam, const 
     static_cast<void>(widgetParam);
     static_cast<void>(modalCallback);
     IAM_LOGE("not implemented");
+}
+
+void BaseContext::Mark(StageId id)
+{
+    IF_FALSE_LOGE_AND_RETURN(callback_);
+    callback_->Mark(id);
+}
+
+void BaseContext::EnterWait(StageId id)
+{
+    IF_FALSE_LOGE_AND_RETURN(callback_);
+    callback_->EnterWait(id);
+}
+
+void BaseContext::ExitWait(StageId id)
+{
+    IF_FALSE_LOGE_AND_RETURN(callback_);
+    callback_->ExitWait(id);
 }
 } // namespace UserAuth
 } // namespace UserIam
