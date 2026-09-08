@@ -32,7 +32,7 @@ namespace UserIam {
 namespace UserAuth {
 /** Max length of challenge. */
 constexpr size_t MAX_CHALLENG_LEN = 32;
-constexpr int32_t TIP_CODE_AUTH_SUCC = 9998;
+constexpr int32_t USER_AUTH_TIP_AUTH_SUCC = 9998;
 constexpr int32_t USER_AUTH_TIP_SINGLE_AUTH_RESULT = 9999;
 constexpr int INVALID_SOCKET_ID = -1;
 constexpr int INVALID_USER_ID = -1;
