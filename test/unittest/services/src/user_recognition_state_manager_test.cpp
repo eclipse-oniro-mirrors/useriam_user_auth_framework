@@ -218,8 +218,8 @@ HWTEST_F(UserRecognitionStateManagerTest, UserRecognitionManagerMatchResultDedup
             fired.fetch_add(1);
             return SUCCESS;
         });
-    GetUserRecognitionStateManager().SetUserRecognitionResult(eng);
-    GetUserRecognitionStateManager().SetUserRecognitionResult(eng);
+    GetUserRecognitionStateManager().SetUserRecognitionResult(eng, "");
+    GetUserRecognitionStateManager().SetUserRecognitionResult(eng, "");
     // Fan-out is posted to the resident thread; wait for the single dispatch (dedup drops the 2nd)
     // before the mock is torn down.
     WaitUntilDispatched(fired, 1);
@@ -276,8 +276,8 @@ HWTEST_F(UserRecognitionStateManagerTest, UserRecognitionManagerMatchToMismatchD
             fired.fetch_add(1);
             return SUCCESS;
         });
-    GetUserRecognitionStateManager().SetUserRecognitionResult(match);
-    GetUserRecognitionStateManager().SetUserRecognitionResult(mismatch);
+    GetUserRecognitionStateManager().SetUserRecognitionResult(match, "");
+    GetUserRecognitionStateManager().SetUserRecognitionResult(mismatch, "");
     // Fan-out is posted to the resident thread; wait for both dispatches before teardown.
     WaitUntilDispatched(fired, 2);
     EXPECT_EQ(fired.load(), 2);
@@ -314,7 +314,7 @@ HWTEST_F(UserRecognitionStateManagerTest, UserRecognitionManagerUncertainDropsAt
             fired.fetch_add(1);
             return SUCCESS;
         });
-    GetUserRecognitionStateManager().SetUserRecognitionResult(eng);
+    GetUserRecognitionStateManager().SetUserRecognitionResult(eng, "");
     // Fan-out is posted to the resident thread; wait for the dispatch before teardown.
     WaitUntilDispatched(fired, 1);
     EXPECT_EQ(fired.load(), 1);
@@ -376,7 +376,7 @@ HWTEST_F(UserRecognitionStateManagerTest, UserRecognitionManagerOnRemoteDied, Te
 HWTEST_F(UserRecognitionStateManagerTest, UserRecognitionManagerCatchUpReplaysCachedResult,
     TestSize.Level0)
 {
-    GetUserRecognitionStateManager().SetUserRecognitionResult(MakeMatchResult(TEST_USER_ID_BOB));
+    GetUserRecognitionStateManager().SetUserRecognitionResult(MakeMatchResult(TEST_USER_ID_BOB), "");
 
     sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject);
     ASSERT_NE(obj, nullptr);

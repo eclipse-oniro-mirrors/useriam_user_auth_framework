@@ -1790,7 +1790,7 @@ int32_t UserAuthService::RegisterUserRecognitionEventListener(const sptr<IUserRe
     IAM_LOGI("start");
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
     IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
-    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION)) {
         IAM_LOGE("failed to check permission");
         return CHECK_PERMISSION_FAILED;
     }
@@ -1813,7 +1813,7 @@ int32_t UserAuthService::UnregisterUserRecognitionEventListener(const sptr<IUser
     IAM_LOGI("start");
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
     IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
-    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION)) {
         IAM_LOGE("failed to check permission");
         return CHECK_PERMISSION_FAILED;
     }

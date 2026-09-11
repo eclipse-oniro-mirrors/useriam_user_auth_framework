@@ -68,6 +68,8 @@ constexpr char STR_TOTAL_TIME[] = "TOTAL_TIME";
 constexpr char STR_LOCAL_TIME[] = "LOCAL_TIME";
 constexpr char STR_AUTH_SUCC_TIP_TIME[] = "AUTH_SUCC_TIP_TIME";
 constexpr char STR_EXTRA_INFO[] = "EXTRA_INFO";
+constexpr char STR_STATUS[] = "STATUS";
+constexpr char STR_USER_INFO[] = "USER_INFO";
 
 static std::string MaskForStringId(const std::string &id)
 {
@@ -264,6 +266,20 @@ void ReportScreenLockStrongAuth(const ScreenLockStrongAuthTrace &info)
         HiSysEvent::EventType::SECURITY,
         STR_USER_ID, info.userId,
         STRONG_AUTH_REASON, info.strongAuthReason);
+    if (ret != 0) {
+        IAM_LOGE("hisysevent write failed! ret %{public}d", ret);
+    }
+}
+
+void ReportUserRecognitionStateChange(const UserRecognitionStateChangeTrace &info)
+{
+    int32_t ret = HiSysEventWrite(HiSysEvent::Domain::USERIAM_FWK, "USER_RECOGNITION_EVENT",
+        HiSysEvent::EventType::STATISTIC,
+        STR_STATUS, info.status,
+        STR_USER_ID, info.userId,
+        STR_USER_INFO, info.userInfo,
+        STR_AUTH_TRUST_LEVEL, info.authTrustLevel,
+        STR_EXTRA_INFO, info.extraInfo);
     if (ret != 0) {
         IAM_LOGE("hisysevent write failed! ret %{public}d", ret);
     }

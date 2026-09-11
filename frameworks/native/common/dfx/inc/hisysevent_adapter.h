@@ -129,6 +129,14 @@ struct ScreenLockStrongAuthTrace {
     int32_t strongAuthReason = 0;
 };
 
+struct UserRecognitionStateChangeTrace {
+    int32_t status = 0;
+    int32_t userId = 0;
+    std::string userInfo;
+    uint32_t authTrustLevel = 0;
+    std::string extraInfo;
+};
+
 void ReportSystemFault(const std::string &timeString, const std::string &moduleName);
 void ReportSecurityTemplateChange(const TemplateChangeTrace &info);
 void ReportBehaviorCredManager(const UserCredManagerTrace &info);
@@ -141,6 +149,7 @@ void ReportConnectFaultTrace(const RemoteConnectFaultTrace &info);
 void ReportSaLoadEngineFailure(const SaLoadEngineFailureTrace &info);
 void ReportIsCredentialEnrolledMismatch(const IsCredentialEnrolledMismatchTrace &info);
 void ReportScreenLockStrongAuth(const ScreenLockStrongAuthTrace &info);
+void ReportUserRecognitionStateChange(const UserRecognitionStateChangeTrace &info);
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

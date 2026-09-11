@@ -25,6 +25,7 @@
 #include "callback_death_recipient.h"
 #include "iam_check.h"
 #include "iam_logger.h"
+#include "hisysevent_adapter.h"
 #include "thread_handler.h"
 #include "user_auth_client_defines.h"
 
@@ -172,9 +173,11 @@ void UserRecognitionStateManager::OnUserRecognitionEvent(const IpcUserRecognitio
     });
 }
 
-void UserRecognitionStateManager::SetUserRecognitionResult(IpcUserRecognitionResult result)
+void UserRecognitionStateManager::SetUserRecognitionResult(IpcUserRecognitionResult result,
+    const std::string &extraInfo)
 {
-    IAM_LOGI("start, status:%{public}d userId:%{public}d", result.status, result.userId);
+    IAM_LOGI("start, status:%{public}d userId:%{public}d extraInfo:%{public}s", result.status, result.userId,
+        extraInfo.c_str());
     if (result.status != static_cast<int32_t>(UserRecognitionStatus::MATCH)) {
         result.hasAuthTrustLevel = false;
         result.authTrustLevel = 0;
@@ -188,11 +191,18 @@ void UserRecognitionStateManager::SetUserRecognitionResult(IpcUserRecognitionRes
             shouldDispatch = true;
         }
     }
-    if (shouldDispatch) {
-        OnUserRecognitionEvent(result);
-    } else {
+    if (!shouldDispatch) {
         IAM_LOGI("dropping duplicate user recognition result");
+        return;
     }
+    UserRecognitionStateChangeTrace trace;
+    trace.status = result.status;
+    trace.userId = result.userId;
+    trace.userInfo = result.userInfo;
+    trace.authTrustLevel = result.hasAuthTrustLevel ? result.authTrustLevel : 0;
+    trace.extraInfo = extraInfo;
+    ReportUserRecognitionStateChange(trace);
+    OnUserRecognitionEvent(result);
 }
 
 bool UserRecognitionStateManager::IsSameRecognitionResult(const IpcUserRecognitionResult &a,

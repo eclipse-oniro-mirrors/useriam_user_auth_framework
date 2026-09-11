@@ -36,7 +36,7 @@ public:
     int32_t RegisterListener(const sptr<IUserRecognitionCallback> &listener) override;
     int32_t UnregisterListener(const sptr<IUserRecognitionCallback> &listener) override;
     void OnUserRecognitionEvent(const IpcUserRecognitionResult &result) override;
-    void SetUserRecognitionResult(IpcUserRecognitionResult result) override;
+    void SetUserRecognitionResult(IpcUserRecognitionResult result, const std::string &extraInfo) override;
     IpcUserRecognitionResult GetCachedUserRecognitionResult() override;
 
 private:
