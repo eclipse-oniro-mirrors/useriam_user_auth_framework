@@ -63,6 +63,13 @@ HWTEST_F(HiSysEventAdapterTest, ReportIsCredentialEnrolledMismatchTest001, TestS
     EXPECT_NO_THROW(ReportIsCredentialEnrolledMismatch(trace));
 }
 
+HWTEST_F(HiSysEventAdapterTest, ReportUserRecognitionStateChangeTest001, TestSize.Level3)
+{
+    UserRecognitionStateChangeTrace trace = {};
+    trace.extraInfo = "recentTransitions:0,1,0";
+    EXPECT_NO_THROW(ReportUserRecognitionStateChange(trace));
+}
+
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

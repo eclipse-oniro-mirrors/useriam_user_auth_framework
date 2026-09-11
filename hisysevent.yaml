@@ -119,3 +119,11 @@ SCREENLOCK_STRONG_AUTH:
   __BASE: {type: SECURITY, level: CRITICAL, tag: UserAuth, desc: screen lock triggers strong authentication}
   USER_ID: {type: INT32, desc: user id}
   STRONG_AUTH_REASON: {type: INT32, desc: reason for screenlock activates strong authentication}
+
+USER_RECOGNITION_EVENT:
+  __BASE: {type: STATISTIC, level: CRITICAL, tag: UserAuth, desc: user recognition event}
+  STATUS: {type: INT32, desc: recognition status}
+  USER_ID: {type: INT32, desc: user id}
+  USER_INFO: {type: STRING, desc: user info}
+  AUTH_TRUST_LEVEL: {type: UINT32, desc: auth trust level}
+  EXTRA_INFO: {type: STRING, desc: extra info includes recent state transitions}

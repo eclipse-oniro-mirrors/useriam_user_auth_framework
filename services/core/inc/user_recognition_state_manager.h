@@ -17,6 +17,7 @@
 #define IAM_USER_RECOGNITION_STATE_MANAGER_H
 
 #include <memory>
+#include <string>
 
 #include "iremote_object.h"
 #include "user_recognition_callback_stub.h"
@@ -31,7 +32,7 @@ public:
     virtual int32_t RegisterListener(const sptr<IUserRecognitionCallback> &listener) = 0;
     virtual int32_t UnregisterListener(const sptr<IUserRecognitionCallback> &listener) = 0;
     virtual void OnUserRecognitionEvent(const IpcUserRecognitionResult &result) = 0;
-    virtual void SetUserRecognitionResult(IpcUserRecognitionResult result) = 0;
+    virtual void SetUserRecognitionResult(IpcUserRecognitionResult result, const std::string &extraInfo) = 0;
     virtual IpcUserRecognitionResult GetCachedUserRecognitionResult() = 0;
 };
 
