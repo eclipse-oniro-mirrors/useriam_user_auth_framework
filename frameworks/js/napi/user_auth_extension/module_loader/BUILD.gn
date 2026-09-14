@@ -59,6 +59,10 @@ ohos_shared_library("user_auth_extension") {
     external_deps += [ "window_manager:libwm" ]
   }
 
+  if (use_musl) {
+    version_script = "user_auth_extension_map"
+  }
+
   subsystem_name = "useriam"
   part_name = "user_auth_framework"
 }
@@ -93,6 +97,9 @@ ohos_shared_library("user_auth_extension_module") {
   ]
 
   relative_install_dir = "extensionability/"
+  if (use_musl) {
+    version_script = "user_auth_extension_module_map"
+  }
   subsystem_name = "useriam"
   part_name = "user_auth_framework"
 }

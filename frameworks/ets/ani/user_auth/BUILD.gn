@@ -91,6 +91,7 @@ taihe_shared_library("userauth_ani") {
     "../../../native/client:userauth_client",
   ]
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
+  shlib_type = "ani"
   taihe_generated_file_path = "$taihe_generated_file_path"
   output_extension = "so"
   part_name = "$part_name"
