@@ -389,9 +389,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetUserRecognitionResult001, TestSi
 }
 
 // Register/UnregisterUserRecognitionEventListener: nullptr listener is rejected before the
-// permission check; ACCESS_USER_PASSIVE_RECOGNITION does NOT gate these two endpoints (they keep
-// ACCESS_BIOMETRIC), so it alone still yields CHECK_PERMISSION_FAILED; adding
-// ACCESS_BIOMETRIC reaches the engine capability check, which reports
+// permission check; both endpoints are gated by ACCESS_USER_PASSIVE_RECOGNITION, so the legacy
+// ACCESS_BIOMETRIC alone still yields CHECK_PERMISSION_FAILED; adding
+// ACCESS_USER_PASSIVE_RECOGNITION reaches the engine capability check, which reports
 // DEVICE_CAPABILITY_NOT_SUPPORT by default.
 HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterUserRecognitionEventListener001, TestSize.Level0)
 {
@@ -405,11 +405,11 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterUserRecognitionEventListene
     EXPECT_EQ(service.RegisterUserRecognitionEventListener(testCallback), ResultCode::CHECK_PERMISSION_FAILED);
     EXPECT_EQ(service.UnregisterUserRecognitionEventListener(testCallback), ResultCode::CHECK_PERMISSION_FAILED);
 
-    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
+    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
     EXPECT_EQ(service.RegisterUserRecognitionEventListener(testCallback), ResultCode::CHECK_PERMISSION_FAILED);
     EXPECT_EQ(service.UnregisterUserRecognitionEventListener(testCallback), ResultCode::CHECK_PERMISSION_FAILED);
 
-    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    IpcCommon::AddPermission(ACCESS_USER_PASSIVE_RECOGNITION_PERMISSION);
     EXPECT_EQ(service.RegisterUserRecognitionEventListener(testCallback),
         ResultCode::DEVICE_CAPABILITY_NOT_SUPPORT);
     EXPECT_EQ(service.UnregisterUserRecognitionEventListener(testCallback),
