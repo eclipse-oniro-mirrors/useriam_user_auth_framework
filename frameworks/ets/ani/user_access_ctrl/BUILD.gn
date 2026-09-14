@@ -91,9 +91,7 @@ taihe_shared_library("useraccessctrl_ani") {
     "runtime_core:libarkruntime",
   ]
 
-  if (use_musl) {
-    version_script = "user_access_ctrl_ani_map"
-  }
+  shlib_type = "ani"
 
   part_name = "user_auth_framework"
   subsystem_name = "useriam"
