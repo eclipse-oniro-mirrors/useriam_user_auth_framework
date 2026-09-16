@@ -257,6 +257,8 @@ enum ResultCode : int32_t {
     REMOTE_DEVICE_CONNECTION_FAIL = 1008,
     /** The result is fail, because device capability is not support. */
     DEVICE_CAPABILITY_NOT_SUPPORT = 1009,
+    /** The result is fail, because env is not trusted. */
+    NOT_TRUSTED_ENV = 1010,
     /** The result is fail, because something wrong from vendor. */
     VENDOR_ERROR_CODE_BEGIN = 10000,
 };

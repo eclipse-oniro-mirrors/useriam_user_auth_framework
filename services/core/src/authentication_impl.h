@@ -39,8 +39,10 @@ public:
     void SetCollectorUdid(std::string &collectorUdid) override;
 
     bool Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+        AcquireInfoCallback &acquireInfoCallback,
         std::shared_ptr<ScheduleNodeCallback> callback) override;
-    bool Update(const std::vector<uint8_t> &scheduleResult, AuthResultInfo &resultInfo) override;
+    bool Update(const std::vector<uint8_t> &scheduleResult, AuthResultInfo &resultInfo,
+        AcquireInfoCallback &acquireInfoCallback) override;
     std::vector<Authentication::AuthExecutorMsg> GetAuthExecutorMsgs() const override;
     bool Cancel() override;
     uint32_t GetAccessTokenId() const override;

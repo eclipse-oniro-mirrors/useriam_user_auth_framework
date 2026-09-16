@@ -175,9 +175,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_Start_001, TestSize.Level0
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
     EXPECT_CALL(*mockAuth, GetLatestError()).Times(1);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             // Error: process authentication start fail
             return false;
@@ -196,9 +197,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_Start_002, TestSize.Level0
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             // Error: scheduleNodeList size = 0
             return true;
@@ -217,9 +219,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_Start_003, TestSize.Level0
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             // Error: scheduleNodeList size = 2
             scheduleList.push_back(Common::MakeShared<MockScheduleNode>());
@@ -240,9 +243,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_Start_004, TestSize.Level0
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             // Error: schedule node start fail
             auto scheduleNode = Common::MakeShared<MockScheduleNode>();
@@ -265,9 +269,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_Start_005, TestSize.Level0
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             // Success
             EXPECT_EQ(scheduleList.size(), 0U);
@@ -330,10 +335,11 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_Stop_003, TestSize.Level0)
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _)).Times(1);
+    EXPECT_CALL(*mockAuth, Start(_, _, _)).Times(1);
     ON_CALL(*mockAuth, Start)
         .WillByDefault(
             [](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                AcquireInfoCallback &acquireInfoCallback,
                 std::shared_ptr<ScheduleNodeCallback> callback) {
                 scheduleList.push_back(nullptr);
                 return true;
@@ -357,10 +363,11 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_Stop_004, TestSize.Level0)
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _)).Times(1);
+    EXPECT_CALL(*mockAuth, Start(_, _, _)).Times(1);
     ON_CALL(*mockAuth, Start)
         .WillByDefault(
             [](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                AcquireInfoCallback &acquireInfoCallback,
                 std::shared_ptr<ScheduleNodeCallback> callback) {
                 auto scheduleNode = Common::MakeShared<MockScheduleNode>();
                 EXPECT_NE(scheduleNode, nullptr);
@@ -498,9 +505,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_OnScheduleStoped_004, Test
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
     EXPECT_CALL(*mockAuth, GetLatestError()).Times(1);
-    EXPECT_CALL(*mockAuth, Update(_, _))
+    EXPECT_CALL(*mockAuth, Update(_, _, _))
         .Times(Exactly(1))
-        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo) {
+        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo,
+            AcquireInfoCallback &acquireInfoCallback) {
             EXPECT_EQ(scheduleResult, testScheduleResult);
             return false;
         });
@@ -564,9 +572,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_OnScheduleStoped_005, Test
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Update(_, _))
+    EXPECT_CALL(*mockAuth, Update(_, _, _))
         .Times(Exactly(1))
-        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo) {
+        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo,
+            AcquireInfoCallback &acquireInfoCallback) {
             EXPECT_EQ(scheduleResult, testScheduleResult);
             resultInfo.result = testResultCode;
             resultInfo.freezingTime = testFreezingTime;
@@ -600,9 +609,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_OnScheduleStoped_006, Test
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Update(_, _))
+    EXPECT_CALL(*mockAuth, Update(_, _, _))
         .Times(Exactly(1))
-        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo) {
+        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo,
+            AcquireInfoCallback &acquireInfoCallback) {
             EXPECT_EQ(scheduleResult, testScheduleResult);
             resultInfo.result = testResultCode;
             resultInfo.freezingTime = testFreezingTime;
@@ -635,10 +645,11 @@ static void TriggerAuthResult(uint64_t contextId, int32_t resultCode,
 {
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Update(_, _))
+    EXPECT_CALL(*mockAuth, Update(_, _, _))
         .Times(Exactly(1))
         .WillOnce([scheduleResult, resultCode, fillResultInfo](const std::vector<uint8_t> &scheduleResultArg,
-                       Authentication::AuthResultInfo &resultInfo) {
+                       Authentication::AuthResultInfo &resultInfo,
+                       AcquireInfoCallback &acquireInfoCallback) {
             EXPECT_EQ(scheduleResultArg, scheduleResult);
             resultInfo.result = resultCode;
             fillResultInfo(resultInfo);
@@ -738,9 +749,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_PostEventFailureHasNoSigna
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Update(_, _))
+    EXPECT_CALL(*mockAuth, Update(_, _, _))
         .Times(Exactly(1))
-        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo) {
+        .WillOnce([](const std::vector<uint8_t> &scheduleResult, Authentication::AuthResultInfo &resultInfo,
+            AcquireInfoCallback &acquireInfoCallback) {
             EXPECT_EQ(scheduleResult, testScheduleResult);
             resultInfo.result = testResultCode;
             return true;
@@ -769,9 +781,10 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_ContextFree, TestSize.Leve
 
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             EXPECT_EQ(scheduleList.size(), 0U);
             auto faceAllInOne = MockResourceNode::CreateWithExecuteIndex(1, FACE, ALL_IN_ONE);
@@ -826,9 +839,10 @@ HWTEST_F(SimpleAuthContextTest, GetPropertyTemplateIds_0002, TestSize.Level0)
     const uint64_t testContestId = 2;
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             auto scheduleNode = Common::MakeShared<MockScheduleNode>();
             EXPECT_CALL(*scheduleNode, GetAuthType()).WillRepeatedly(Return(FACE));
@@ -853,9 +867,10 @@ HWTEST_F(SimpleAuthContextTest, GetPropertyTemplateIds_0003, TestSize.Level0)
     const uint64_t testContestId = 2;
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             auto scheduleNode = Common::MakeShared<MockScheduleNode>();
             EXPECT_CALL(*scheduleNode, GetAuthType()).WillRepeatedly(Return(PRIVATE_PIN));
@@ -881,9 +896,10 @@ HWTEST_F(SimpleAuthContextTest, GetPropertyTemplateIds_0004, TestSize.Level0)
     const uint64_t testContestId = 2;
     std::shared_ptr<MockAuthentication> mockAuth = Common::MakeShared<MockAuthentication>();
     ASSERT_NE(mockAuth, nullptr);
-    EXPECT_CALL(*mockAuth, Start(_, _))
+    EXPECT_CALL(*mockAuth, Start(_, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+                      AcquireInfoCallback &acquireInfoCallback,
                       std::shared_ptr<ScheduleNodeCallback> callback) {
             auto scheduleNode = Common::MakeShared<MockScheduleNode>();
             EXPECT_CALL(*scheduleNode, GetAuthType()).WillRepeatedly(Return(PRIVATE_PIN));

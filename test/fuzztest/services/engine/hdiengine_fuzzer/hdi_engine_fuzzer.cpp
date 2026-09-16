@@ -25,6 +25,7 @@
 #include "iam_fuzz_test.h"
 #include "iam_logger.h"
 #include "parcel.h"
+#include "user_auth_engine_types.h"
 
 #define LOG_TAG "USER_AUTH_SA"
 
@@ -226,7 +227,9 @@ void FuzzUpdateAuthenticationResult(Parcel &parcel)
     Common::FillFuzzUint8Vector(parcel, scheduleResult);
     EngAuthResultInfo info;
     EngEnrolledState enrolledState;
-    (void)GetUserAuthEngine().UpdateAuthenticationResult(contextId, scheduleResult, info, enrolledState);
+    AcquireInfoCallback acquireInfoCallback;
+    (void)GetUserAuthEngine().UpdateAuthenticationResult(
+        contextId, scheduleResult, info, enrolledState, acquireInfoCallback);
     IAM_LOGI("end");
 }
 
@@ -392,7 +395,9 @@ void FuzzBeginAuthenticationExt(Parcel &parcel)
     EngAuthParamExt param;
     FillEngAuthParamExt(parcel, param);
     std::vector<EngScheduleInfo> scheduleInfos;
-    (void)GetUserAuthEngine().BeginAuthenticationExt(contextId, param, scheduleInfos);
+    AcquireInfoCallback acquireInfoCallback;
+    (void)GetUserAuthEngine().BeginAuthenticationExt(
+        contextId, param, scheduleInfos, acquireInfoCallback);
     IAM_LOGI("end");
 }
 

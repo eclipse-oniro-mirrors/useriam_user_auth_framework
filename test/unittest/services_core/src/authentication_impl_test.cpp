@@ -62,11 +62,13 @@ HWTEST_F(AuthenticationImplTest, BadHdiTest, TestSize.Level0)
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
 
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
-    EXPECT_FALSE(authentication->Start(scheduleList, nullptr));
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    EXPECT_FALSE(authentication->Start(scheduleList, acquireInfoCallback, nullptr));
 
     std::vector<uint8_t> scheduleResult;
     Authentication::AuthResultInfo info = {};
-    EXPECT_FALSE(authentication->Update(scheduleResult, info));
+    EXPECT_FALSE(authentication->Update(scheduleResult, info, acquireInfoCallback));
 
     authentication->running_ = true;
     EXPECT_FALSE(authentication->Cancel());

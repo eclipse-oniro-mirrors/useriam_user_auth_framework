@@ -478,7 +478,7 @@ int32_t UserIdmService::DeleteSubProfile(int32_t userId,
         return CHECK_PERMISSION_FAILED;
     }
     std::vector<EngCredentialInfo> hdiInfos;
-    int32_t ret = GetUserAuthEngine().DeleteSubProfile(subProfileId, hdiInfos);
+    int32_t ret = GetUserAuthEngine().DeleteSubProfile(userId, subProfileId, hdiInfos);
     if (ret != SUCCESS) {
         IAM_LOGE("failed to delete sub profile, ret: %{public}d, subProfileId: %{public}d", ret, subProfileId);
         idmCallback->OnResult(ret, extraInfo.Serialize());

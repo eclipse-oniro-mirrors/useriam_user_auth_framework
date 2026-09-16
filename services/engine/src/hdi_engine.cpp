@@ -186,8 +186,10 @@ int32_t HdiEngineImpl::BeginAuthentication(uint64_t contextId, const EngAuthPara
     return SUCCESS;
 }
 
-int32_t HdiEngineImpl::UpdateAuthenticationResult(uint64_t contextId, const std::vector<uint8_t> &scheduleResult,
-    EngAuthResultInfo &info, EngEnrolledState &enrolledState)
+int32_t HdiEngineImpl::UpdateAuthenticationResult(
+    uint64_t contextId, const std::vector<uint8_t> &scheduleResult,
+    EngAuthResultInfo &info, EngEnrolledState &enrolledState,
+    AcquireInfoCallback &acquireInfoCallback)
 {
     auto hdi = HdiWrapper::GetHdiInstance();
     IF_FALSE_LOGE_AND_RETURN_VAL(hdi != nullptr, ENGINE_UNAVAILABLE);
@@ -285,7 +287,8 @@ int32_t HdiEngineImpl::EnforceDeleteUser(int32_t userId, std::vector<EngCredenti
     return SUCCESS;
 }
 
-int32_t HdiEngineImpl::DeleteSubProfile(int32_t subProfileId, std::vector<EngCredentialInfo> &deletedInfos)
+int32_t HdiEngineImpl::DeleteSubProfile(
+    int32_t userId, int32_t subProfileId, std::vector<EngCredentialInfo> &deletedInfos)
 {
     IAM_LOGI("start, subProfileId:%{public}d", subProfileId);
     return SUCCESS;
@@ -395,7 +398,7 @@ int32_t HdiEngineImpl::BeginEnrollmentExt(const std::vector<uint8_t> &authToken,
 }
 
 int32_t HdiEngineImpl::BeginAuthenticationExt(uint64_t contextId, EngAuthParamExt &param,
-    std::vector<EngScheduleInfo> &scheduleInfos)
+    std::vector<EngScheduleInfo> &scheduleInfos, AcquireInfoCallback &acquireInfoCallback)
 {
     auto hdi = HdiWrapper::GetHdiInstance();
     IF_FALSE_LOGE_AND_RETURN_VAL(hdi != nullptr, ENGINE_UNAVAILABLE);

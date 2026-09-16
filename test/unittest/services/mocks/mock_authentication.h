@@ -30,9 +30,12 @@ public:
     MOCK_METHOD1(SetAccessTokenId, void(uint32_t tokenId));
     MOCK_METHOD1(SetEndAfterFirstFail, void(bool endAfterFirstFail));
     MOCK_METHOD1(SetCollectorUdid, void(std::string &collectorUdid));
-    MOCK_METHOD2(Start,
-        bool(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList, std::shared_ptr<ScheduleNodeCallback> callback));
-    MOCK_METHOD2(Update, bool(const std::vector<uint8_t> &scheduleResult, AuthResultInfo &resultInfo));
+    MOCK_METHOD3(Start,
+        bool(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
+        AcquireInfoCallback &acquireInfoCallback,
+        std::shared_ptr<ScheduleNodeCallback> callback));
+    MOCK_METHOD3(Update, bool(const std::vector<uint8_t> &scheduleResult,
+        AuthResultInfo &resultInfo, AcquireInfoCallback &acquireInfoCallback));
     MOCK_CONST_METHOD0(GetAuthExecutorMsgs, std::vector<Authentication::AuthExecutorMsg>());
     MOCK_METHOD0(Cancel, bool());
     MOCK_CONST_METHOD0(GetAccessTokenId, uint32_t());

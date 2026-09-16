@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "schedule_node.h"
+#include "user_auth_engine_types.h"
 
 namespace OHOS {
 namespace UserIam {
@@ -76,8 +77,9 @@ public:
     virtual void SetCollectorUdid(std::string &collectorUdid) = 0;
 
     virtual bool Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-        std::shared_ptr<ScheduleNodeCallback> callback) = 0;
-    virtual bool Update(const std::vector<uint8_t> &scheduleResult, AuthResultInfo &resultInfo) = 0;
+        AcquireInfoCallback &acquireInfoCallback, std::shared_ptr<ScheduleNodeCallback> callback) = 0;
+    virtual bool Update(const std::vector<uint8_t> &scheduleResult,
+        AuthResultInfo &resultInfo, AcquireInfoCallback &acquireInfoCallback) = 0;
     virtual std::vector<Authentication::AuthExecutorMsg> GetAuthExecutorMsgs() const = 0;
     virtual bool Cancel() = 0;
     virtual uint32_t GetAccessTokenId() const = 0;

@@ -55,7 +55,8 @@ public:
     virtual int32_t BeginAuthentication(uint64_t contextId, const EngAuthParam &param,
         std::vector<EngScheduleInfo> &scheduleInfos) = 0;
     virtual int32_t UpdateAuthenticationResult(uint64_t contextId, const std::vector<uint8_t> &scheduleResult,
-        EngAuthResultInfo &info, EngEnrolledState &enrolledState) = 0;
+        EngAuthResultInfo &info, EngEnrolledState &enrolledState,
+        AcquireInfoCallback &acquireInfoCallback) = 0;
     virtual int32_t CancelAuthentication(uint64_t contextId) = 0;
     virtual int32_t GetCredential(int32_t userId, int32_t authType, std::vector<EngCredentialInfo> &infos) = 0;
     virtual int32_t DeleteCredential(int32_t userId, uint64_t credentialId, const std::vector<uint8_t> &authToken,
@@ -71,7 +72,8 @@ public:
     virtual int32_t GetCredentialById(uint64_t credentialId, EngCredentialInfo &info) = 0;
     virtual int32_t ClearUnavailableCredential(const std::vector<int32_t> &userIds,
         std::vector<EngCredentialInfo> &infos) = 0;
-    virtual int32_t DeleteSubProfile(int32_t subProfileId, std::vector<EngCredentialInfo> &deletedInfos) = 0;
+    virtual int32_t DeleteSubProfile(
+        int32_t userId, int32_t subProfileId, std::vector<EngCredentialInfo> &deletedInfos) = 0;
     virtual int32_t UpdateAbandonResult(int32_t userId, const std::vector<uint8_t> &scheduleResult,
         std::vector<EngCredentialInfo> &infos) = 0;
     virtual int32_t BeginIdentification(uint64_t contextId, int32_t authType, const std::vector<uint8_t> &challenge,
@@ -82,7 +84,7 @@ public:
     virtual int32_t BeginEnrollmentExt(const std::vector<uint8_t> &authToken, const EngEnrollParamExt &param,
         EngScheduleInfo &info) = 0;
     virtual int32_t BeginAuthenticationExt(uint64_t contextId, EngAuthParamExt &param,
-        std::vector<EngScheduleInfo> &scheduleInfos) = 0;
+        std::vector<EngScheduleInfo> &scheduleInfos, AcquireInfoCallback &acquireInfoCallback) = 0;
     virtual int32_t SendMessage(uint64_t scheduleId, int32_t srcRole, const std::vector<uint8_t> &msg) = 0;
     virtual int32_t GetSignedExecutorInfo(const std::vector<int32_t> &authTypes, int32_t executorRole,
         const std::string &remoteUdid, std::vector<uint8_t> &signedExecutorInfo) = 0;
