@@ -16,7 +16,6 @@
 #include "user_recognition_callback_service.h"
 
 #include <algorithm>
-#include <exception>
 
 #include "iam_check.h"
 #include "iam_logger.h"
@@ -27,6 +26,17 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+namespace {
+UserRecognitionStatus UserRecognitionStatusFromInt(int32_t status)
+{
+    if (status < static_cast<int32_t>(UserRecognitionStatus::UNCERTAIN) ||
+        status > static_cast<int32_t>(UserRecognitionStatus::MATCH)) {
+        return UserRecognitionStatus::UNCERTAIN;
+    }
+    return static_cast<UserRecognitionStatus>(status);
+}
+}
+
 UserRecognitionResult ConvertIpcUserRecognitionResult(const IpcUserRecognitionResult &result)
 {
     UserRecognitionResult clientResult;
@@ -61,13 +71,7 @@ void UserRecognitionCallbackService::AddListenerWithCatchUp(
     }
     listeners_.push_back(listener);
     if (latestResult_.has_value()) {
-        try {
-            listener->OnUserRecognitionEvent(*latestResult_);
-        } catch (const std::exception &e) {
-            IAM_LOGE("catch-up OnUserRecognitionEvent threw, isolating: %{public}s", e.what());
-        } catch (...) {
-            IAM_LOGE("catch-up OnUserRecognitionEvent threw non-exception, isolating");
-        }
+        listener->OnUserRecognitionEvent(*latestResult_);
     }
 }
 
@@ -107,13 +111,7 @@ int32_t UserRecognitionCallbackService::OnUserRecognitionEvent(const IpcUserReco
         if (listener == nullptr) {
             continue;
         }
-        try {
-            listener->OnUserRecognitionEvent(clientResult);
-        } catch (const std::exception &e) {
-            IAM_LOGE("OnUserRecognitionEvent listener threw, isolating: %{public}s", e.what());
-        } catch (...) {
-            IAM_LOGE("OnUserRecognitionEvent listener threw non-exception, isolating");
-        }
+        listener->OnUserRecognitionEvent(clientResult);
     }
     return SUCCESS;
 }

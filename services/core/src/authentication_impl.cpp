@@ -183,8 +183,7 @@ bool AuthenticationImpl::Update(const std::vector<uint8_t> &scheduleResult,
     // The HDI driver does not yet report the achieved trust level; fall back to the requested ATL.
     // Only a successful auth achieves the requested trust level; never advertise it for failures.
     if (info.result == SUCCESS) {
-        resultInfo.authTrustLevel =
-            info.authTrustLevel != 0 ? info.authTrustLevel : static_cast<uint32_t>(authPara_.atl);
+        resultInfo.authTrustLevel = info.authTrustLevel.value_or(static_cast<uint32_t>(authPara_.atl));
     }
     resultInfo.freezingTime = info.lockoutDuration;
     resultInfo.remainTimes = info.remainAttempts;

@@ -35,7 +35,6 @@ struct AuthEventInfo {
     std::optional<int32_t> resultCode {};
     std::optional<uint64_t> credentialId {};
     std::optional<uint32_t> authTrustLevel {};
-    std::vector<uint8_t> token {};
 };
 
 class SimpleAuthContext : public BaseContext {

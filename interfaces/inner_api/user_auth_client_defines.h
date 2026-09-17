@@ -237,18 +237,6 @@ enum class UserRecognitionStatus : int32_t {
 };
 
 /**
- * @brief Convert int32_t to UserRecognitionStatus; out-of-range values clamp to UNCERTAIN.
- */
-inline UserRecognitionStatus UserRecognitionStatusFromInt(int32_t status)
-{
-    if (status < static_cast<int32_t>(UserRecognitionStatus::UNCERTAIN) ||
-        status > static_cast<int32_t>(UserRecognitionStatus::MATCH)) {
-        return UserRecognitionStatus::UNCERTAIN;
-    }
-    return static_cast<UserRecognitionStatus>(status);
-}
-
-/**
  * @brief User recognition result.
  */
 struct UserRecognitionResult {

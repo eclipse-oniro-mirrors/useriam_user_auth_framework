@@ -67,8 +67,10 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV10_001, TestSize.Level
         static_cast<int32_t>(UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED));
     EXPECT_EQ(UserAuthHelper::GetResultCodeV10(HARDWARE_NOT_SUPPORTED),
         static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR));
+    // DEVICE_CAPABILITY_NOT_SUPPORT falls through the generic offset formula, lands out of the
+    // V10 range and clamps to GENERAL_ERROR; bindings special-case it before calling in.
     EXPECT_EQ(UserAuthHelper::GetResultCodeV10(DEVICE_CAPABILITY_NOT_SUPPORT),
-        static_cast<int32_t>(UserAuthResultCode::OHOS_CAPABILITY_NOT_SUPPORTED));
+        static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR));
 }
 
 // ENGINE_UNAVAILABLE (e.g. auth engine not loaded) must map to GENERAL_ERROR.
