@@ -64,10 +64,6 @@ void SimpleAuthContext::PostEvent(EventId eventId, const AuthEventInfo &info) co
             info.authTrustLevel.value());
         IF_FALSE_LOGE_AND_RETURN(setAuthTrustLevelRet == true);
     }
-    if (!info.token.empty()) {
-        bool setSignatureRet = data->SetUint8ArrayValue(Attributes::ATTR_SIGNATURE, info.token);
-        IF_FALSE_LOGE_AND_RETURN(setSignatureRet == true);
-    }
     GetIamEventDispatcher().Post(eventId, data);
     IAM_LOGI("post auth event %{public}d, userId:%{public}d, authType:%{public}d", eventId, GetUserId(), GetAuthType());
 }
@@ -345,6 +341,9 @@ void SimpleAuthContext::InvokeResultCallback(const Authentication::AuthResultInf
     IF_FALSE_LOGE_AND_RETURN(callback_ != nullptr);
     Attributes finalResult;
     SetAuthResultAttributes(resultInfo, finalResult);
+    PostEvent(EVENT_AUTH_RESULT,
+        {static_cast<int32_t>(resultInfo.result), std::make_optional(resultInfo.credentialId),
+            std::make_optional(resultInfo.authTrustLevel)});
     callback_->SetTraceAuthFinishReason("SimpleAuthContext InvokeResultCallback");
     callback_->OnResult(resultInfo.result, finalResult);
     IAM_LOGI("%{public}s invoke result callback success, result %{public}d", GetDescription(), resultInfo.result);
@@ -358,10 +357,6 @@ void SimpleAuthContext::SetAuthResultAttributes(const Authentication::AuthResult
     bool setNextDurationRet = finalResult.SetInt32Value(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION,
         resultInfo.nextFailLockoutDuration);
     IF_FALSE_LOGE_AND_RETURN(setNextDurationRet == true);
-    PostEvent(EVENT_AUTH_RESULT,
-        {static_cast<int32_t>(resultInfo.result), std::make_optional(resultInfo.credentialId),
-            resultInfo.authTrustLevel != 0 ? std::make_optional(resultInfo.authTrustLevel) : std::nullopt,
-            resultInfo.token});
     if (resultInfo.result == FAIL || resultInfo.result == LOCKED || resultInfo.result == SUCCESS) {
         bool setFreezingTimeRet = finalResult.SetInt32Value(Attributes::ATTR_FREEZING_TIME, resultInfo.freezingTime);
         IF_FALSE_LOGE_AND_RETURN(setFreezingTimeRet == true);

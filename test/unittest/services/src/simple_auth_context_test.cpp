@@ -669,9 +669,9 @@ static void TriggerAuthResult(uint64_t contextId, int32_t resultCode,
     nodeCallback->OnScheduleStoped(resultCode, result);
 }
 
-// PostEvent: a successful auth result carries the token (ATTR_SIGNATURE) together with the
-// result code, ATL and credentialId in the EVENT_AUTH_RESULT payload.
-HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_PostEventCarriesSignature, TestSize.Level0)
+// PostEvent: a successful auth result carries the result code, ATL and credentialId in the
+// EVENT_AUTH_RESULT payload; the token (ATTR_SIGNATURE) is never part of the event.
+HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_PostEventSuccessHasNoSignature, TestSize.Level0)
 {
     static const uint64_t testContestId = 2;
     static const std::vector<uint8_t> testScheduleResult = {3, 4, 5, 6};
@@ -701,8 +701,7 @@ HWTEST_F(SimpleAuthContextTest, SimpleAuthContextTest_PostEventCarriesSignature,
             uint64_t credentialId = 0;
             EXPECT_TRUE(data->GetUint64Value(Attributes::ATTR_CREDENTIAL_ID, credentialId));
             std::vector<uint8_t> signature;
-            EXPECT_TRUE(data->GetUint8ArrayValue(Attributes::ATTR_SIGNATURE, signature));
-            EXPECT_EQ(signature, testSignature);
+            EXPECT_FALSE(data->GetUint8ArrayValue(Attributes::ATTR_SIGNATURE, signature));
             posted.set_value();
         });
     ASSERT_NE(subscription, nullptr);
