@@ -209,7 +209,12 @@ bool SimpleAuthContext::OnStart()
     IAM_LOGD("%{public}s start", GetDescription());
     IF_FALSE_LOGE_AND_RETURN_VAL(auth_ != nullptr, false);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList = {};
-    bool startRet = auth_->Start(scheduleList, shared_from_this());
+    IF_FALSE_LOGE_AND_RETURN_VAL(callback_ != nullptr, false);
+    AcquireInfoCallback acquireInfoCallback = [callback = callback_](
+        ExecutorRole src, int32_t moduleType, const std::vector<uint8_t> &acquireMsg) {
+            callback->OnAcquireInfo(src, moduleType, acquireMsg);
+        };
+    bool startRet = auth_->Start(scheduleList, acquireInfoCallback, shared_from_this());
     if (!startRet) {
         IAM_LOGE("%{public}s auth start fail", GetDescription());
         SetLatestError(auth_->GetLatestError());
@@ -302,7 +307,11 @@ bool SimpleAuthContext::UpdateScheduleResult(const std::shared_ptr<Attributes> &
     bool getResultCodeRet = scheduleResultAttr->GetUint8ArrayValue(Attributes::ATTR_RESULT, scheduleResult);
     IF_FALSE_LOGE_AND_RETURN_VAL(getResultCodeRet == true, false);
     EnterWait(StageId::S_UPDATE_SCHEDULE_RESULT_START);
-    bool updateRet = auth_->Update(scheduleResult, resultInfo);
+    AcquireInfoCallback acquireInfoCallback = [callback = callback_](
+        ExecutorRole src, int32_t moduleType, const std::vector<uint8_t> &acquireMsg) {
+            callback->OnAcquireInfo(src, moduleType, acquireMsg);
+        };
+    bool updateRet = auth_->Update(scheduleResult, resultInfo, acquireInfoCallback);
     ExitWait(StageId::S_UPDATE_SCHEDULE_RESULT_END);
     if (!updateRet) {
         HILOG_COMM_ERROR("%{public}s auth update fail", GetDescription());

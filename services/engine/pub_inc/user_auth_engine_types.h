@@ -16,6 +16,7 @@
 #define USER_AUTH_ENGINE_TYPES_H
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,9 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+
+using AcquireInfoCallback =
+    std::function<void(ExecutorRole src, int32_t moduleType, const std::vector<uint8_t> &acquireMsg)>;
 
 enum EngUserType : int32_t {
     MAIN = 0,

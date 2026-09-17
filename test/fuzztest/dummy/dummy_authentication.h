@@ -33,11 +33,12 @@ public:
     void SetCollectorUdid(std::string &collectorUdid){};
     void SetLatestError(int32_t error){};
     bool Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-        std::shared_ptr<ScheduleNodeCallback> callback)
+        AcquireInfoCallback &acquireInfoCallback, std::shared_ptr<ScheduleNodeCallback> callback)
         {
             return true;
         };
-    bool Update(const std::vector<uint8_t> &scheduleResult, AuthResultInfo &resultInfo)
+    bool Update(const std::vector<uint8_t> &scheduleResult,
+        AuthResultInfo &resultInfo, AcquireInfoCallback &acquireInfoCallback)
         {
             return true;
         };

@@ -121,7 +121,7 @@ bool AuthenticationImpl::GetAuthParam(EngAuthParamExt &param)
 }
 
 bool AuthenticationImpl::Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-    std::shared_ptr<ScheduleNodeCallback> callback)
+    AcquireInfoCallback &acquireInfoCallback, std::shared_ptr<ScheduleNodeCallback> callback)
 {
     IAM_LOGI("UserId:%{public}d AuthType:%{public}d ATL:%{public}u authIntent:%{public}d",
         authPara_.userId, authPara_.authType, authPara_.atl, authPara_.authIntent);
@@ -133,7 +133,7 @@ bool AuthenticationImpl::Start(std::vector<std::shared_ptr<ScheduleNode>> &sched
 
     std::vector<EngScheduleInfo> infos;
     IamHitraceHelper traceHelper("hdi BeginAuthentication");
-    auto result = GetUserAuthEngine().BeginAuthenticationExt(contextId_, param, infos);
+    auto result = GetUserAuthEngine().BeginAuthenticationExt(contextId_, param, infos, acquireInfoCallback);
     if (result != SUCCESS) {
         IAM_LOGE("BeginAuthentication failed, err is %{public}d", result);
         SetLatestError(result);
@@ -162,11 +162,13 @@ bool AuthenticationImpl::Start(std::vector<std::shared_ptr<ScheduleNode>> &sched
     return true;
 }
 
-bool AuthenticationImpl::Update(const std::vector<uint8_t> &scheduleResult, AuthResultInfo &resultInfo)
+bool AuthenticationImpl::Update(const std::vector<uint8_t> &scheduleResult,
+    AuthResultInfo &resultInfo, AcquireInfoCallback &acquireInfoCallback)
 {
     EngAuthResultInfo info;
     EngEnrolledState enrolledState;
-    auto result = GetUserAuthEngine().UpdateAuthenticationResult(contextId_, scheduleResult, info, enrolledState);
+    auto result = GetUserAuthEngine().UpdateAuthenticationResult(
+        contextId_, scheduleResult, info, enrolledState, acquireInfoCallback);
     if (result != SUCCESS) {
         HILOG_COMM_ERROR("hdi update auth result failed, err is %{public}d", result);
         SetLatestError(result);

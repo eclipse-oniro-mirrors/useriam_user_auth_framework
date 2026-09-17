@@ -77,7 +77,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationHdiError, TestSize.Level0)
 
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
-    EXPECT_FALSE(authentication->Start(scheduleList, nullptr));
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    EXPECT_FALSE(authentication->Start(scheduleList, acquireInfoCallback, nullptr));
 }
 
 HWTEST_F(AuthenticationImplTest, AuthenticationHdiEmpty, TestSize.Level0)
@@ -95,7 +97,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationHdiEmpty, TestSize.Level0)
 
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
-    EXPECT_FALSE(authentication->Start(scheduleList, nullptr));
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    EXPECT_FALSE(authentication->Start(scheduleList, acquireInfoCallback, nullptr));
 }
 
 HWTEST_F(AuthenticationImplTest, AuthenticationInvalidExecutor, TestSize.Level0)
@@ -133,7 +137,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationInvalidExecutor, TestSize.Level0)
 
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
-    EXPECT_FALSE(authentication->Start(scheduleList, nullptr));
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    EXPECT_FALSE(authentication->Start(scheduleList, acquireInfoCallback, nullptr));
 }
 
 HWTEST_F(AuthenticationImplTest, AuthenticationImplTestUpdate001, TestSize.Level0)
@@ -164,7 +170,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestUpdate001, TestSize.Level
     EXPECT_NE(authentication, nullptr);
     std::vector<uint8_t> scheduleResult;
     Authentication::AuthResultInfo info = {};
-    EXPECT_TRUE(authentication->Update(scheduleResult, info));
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    EXPECT_TRUE(authentication->Update(scheduleResult, info, acquireInfoCallback));
     EXPECT_EQ(info.userId, TEST_USER_ID);
     EXPECT_EQ(info.credentialId, 1);
 }
@@ -199,7 +207,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestUpdate002, TestSize.Level
     EXPECT_NE(authentication, nullptr);
     std::vector<uint8_t> scheduleResult;
     Authentication::AuthResultInfo info = {};
-    EXPECT_FALSE(authentication->Update(scheduleResult, info));
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    EXPECT_FALSE(authentication->Update(scheduleResult, info, acquireInfoCallback));
 }
 
 HWTEST_F(AuthenticationImplTest, AuthenticationImplTestSetEndAfterFirstFail, TestSize.Level0)
@@ -286,11 +296,13 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestStart, TestSize.Level0)
     EXPECT_NE(authentication, nullptr);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
     auto callback = Common::MakeShared<MockScheduleNodeCallback>();
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
     EXPECT_NE(callback, nullptr);
-    EXPECT_FALSE(authentication->Start(scheduleList, callback));
+    EXPECT_FALSE(authentication->Start(scheduleList, acquireInfoCallback, callback));
     EXPECT_FALSE(authentication->Cancel());
 
-    EXPECT_FALSE(authentication->Start(scheduleList, callback));
+    EXPECT_FALSE(authentication->Start(scheduleList, acquireInfoCallback, callback));
     EXPECT_FALSE(authentication->Cancel());
 
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
@@ -332,9 +344,11 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplHdiFail_001, TestSize.Level0)
 
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
     auto callback = Common::MakeShared<MockScheduleNodeCallback>();
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
     EXPECT_NE(callback, nullptr);
 
-    bool result = authentication->Start(scheduleList, callback);
+    bool result = authentication->Start(scheduleList, acquireInfoCallback, callback);
     EXPECT_FALSE(result);
     int32_t latestError = authentication->GetLatestError();
     EXPECT_NE(latestError, ResultCode::SUCCESS);
@@ -379,7 +393,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplUpdateFail_001, TestSize.Leve
 
     std::vector<uint8_t> scheduleResult = {1, 2, 3, 4};
     Authentication::AuthResultInfo resultInfo = {};
-    bool result = authentication->Update(scheduleResult, resultInfo);
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    bool result = authentication->Update(scheduleResult, resultInfo, acquireInfoCallback);
     EXPECT_FALSE(result); // Update returns false when HDI fails
 
     int32_t latestError = authentication->GetLatestError();
@@ -481,9 +497,11 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplEmptyScheduleList_001, TestSi
 
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
     auto callback = Common::MakeShared<MockScheduleNodeCallback>();
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
     EXPECT_NE(callback, nullptr);
 
-    bool result = authentication->Start(scheduleList, callback);
+    bool result = authentication->Start(scheduleList, acquireInfoCallback, callback);
     EXPECT_FALSE(result);
 }
 
@@ -517,7 +535,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplSuccessWithToken_001, TestSiz
 
     std::vector<uint8_t> scheduleResult = {1, 2, 3, 4};
     Authentication::AuthResultInfo resultInfo = {};
-    bool result = authentication->Update(scheduleResult, resultInfo);
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    bool result = authentication->Update(scheduleResult, resultInfo, acquireInfoCallback);
     EXPECT_TRUE(result);
     EXPECT_EQ(resultInfo.result, ResultCode::SUCCESS);
     EXPECT_EQ(resultInfo.token.size(), 4);
