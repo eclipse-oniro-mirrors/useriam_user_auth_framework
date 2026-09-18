@@ -61,7 +61,7 @@ void FiniteStateMachineImpl::Schedule(uint32_t event)
 
 void FiniteStateMachineImpl::ScheduleInner(FiniteStateMachine &machine)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     for (uint32_t runTimes = 0; runTimes < FiniteStateMachineImpl::MAX_SCHEDULE_TIMES; runTimes++) {
         uint32_t event = 0;
         bool result = pendingEvents_.Pop(event);

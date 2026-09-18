@@ -69,7 +69,7 @@ private:
     FiniteStateMachineImpl::EnterMap enterMap_;
     FiniteStateMachineImpl::LeaveMap leaveMap_;
 
-    std::mutex mutex_;
+    std::recursive_mutex mutex_;
     SafeQueue<uint32_t> pendingEvents_ {};
 };
 
