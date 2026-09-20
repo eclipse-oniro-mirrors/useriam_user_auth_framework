@@ -17,6 +17,7 @@
 #define USER_AUTH_FRAMEWORK_TIMING_TRACER_H
 
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -60,6 +61,8 @@ private:
     uint32_t waitMs_ = 0;
     bool inWait_ = false;
     uint64_t waitEnterMs_ = 0;
+
+    mutable std::recursive_mutex mutex_;
 };
 
 } // namespace UserAuth

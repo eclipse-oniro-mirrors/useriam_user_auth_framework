@@ -31,6 +31,7 @@ uint64_t TimingTracer::Now() const
 
 void TimingTracer::Start()
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     startMs_ = Now();
     endMs_.reset();
     points_.clear();
@@ -63,6 +64,7 @@ uint32_t TimingTracer::SafeSubToU32(uint64_t end, uint64_t start) const
 
 void TimingTracer::Mark(StageId id)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!startMs_.has_value()) {
         return;
     }
@@ -73,6 +75,7 @@ void TimingTracer::Mark(StageId id)
 
 void TimingTracer::EnterWait(StageId id)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!startMs_.has_value()) {
         return;
     }
@@ -85,6 +88,7 @@ void TimingTracer::EnterWait(StageId id)
 
 void TimingTracer::ExitWait(StageId id)
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!startMs_.has_value()) {
         return;
     }
@@ -95,6 +99,7 @@ void TimingTracer::ExitWait(StageId id)
 
 void TimingTracer::Finish()
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!startMs_.has_value()) {
         return;
     }
@@ -105,6 +110,7 @@ void TimingTracer::Finish()
 
 uint32_t TimingTracer::TotalMs() const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!startMs_.has_value() || !endMs_.has_value() || *endMs_ < *startMs_) {
         return 0;
     }
@@ -113,12 +119,14 @@ uint32_t TimingTracer::TotalMs() const
 
 uint32_t TimingTracer::LocalMs() const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     uint32_t total = TotalMs();
     return (total >= waitMs_) ? (total - waitMs_) : 0;
 }
 
 uint32_t TimingTracer::AuthTipMs() const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!startMs_.has_value()) {
         return 0;
     }
@@ -132,6 +140,7 @@ uint32_t TimingTracer::AuthTipMs() const
 
 std::string TimingTracer::ExportTrace() const
 {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (!startMs_.has_value() || points_.empty()) {
         return "";
     }
