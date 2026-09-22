@@ -46,6 +46,7 @@ ohos_fuzztest("ServiceCoreFuzzTest") {
     "../../dummy/mock_common_event_manager.cpp",
     "src/resource_node_fuzzer.cpp",
     "src/resource_node_pool_fuzzer.cpp",
+    "src/resource_node_utils_fuzzer.cpp",
     "src/risk_event_manager_fuzzer.cpp",
     "src/schedule_node_fuzzer.cpp",
     "src/service_core_fuzzer.cpp",
