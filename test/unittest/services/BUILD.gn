@@ -216,6 +216,7 @@ ohos_unittest("iam_services_test") {
     "src/user_info_test.cpp",
     "src/widget_client_test.cpp",
     "src/widget_context_callback_impl_test.cpp",
+    "src/widget_context_test_part02.cpp",
     "src/widget_context_test.cpp",
     "src/widget_json_test.cpp",
     "src/widget_schedule_node_impl_test.cpp",
