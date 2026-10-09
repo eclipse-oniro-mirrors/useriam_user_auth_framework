@@ -1511,6 +1511,10 @@ int32_t UserAuthService::AuthWidget(int32_t apiVersion, const IpcAuthParamInner 
         contextCallback->OnResult(checkRet, extraInfo);
         return checkRet;
     }
+    if (IpcCommon::CheckPermission(*this, ENTERPRISE_MANAGE_SECURITY)) {
+        IAM_LOGI("caller has enterprise manage security permission");
+        para.callerPermissions |= ENG_CALLER_PERM_ENTERPRISE_MANAGE_SECURITY;
+    }
 
     if (AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo) == SUCCESS) {
         IAM_LOGE("check reuse unlock result success");

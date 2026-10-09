@@ -42,6 +42,7 @@ enum Permission {
     USE_USER_ACCESS_MANAGER,
     USER_AUTH_FROM_BACKGROUND,
     ENTERPRISE_DEVICE_MGR,
+    ENTERPRISE_MANAGE_SECURITY,
 };
 
 class IpcCommon final : public NoCopyable {

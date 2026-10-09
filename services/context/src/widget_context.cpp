@@ -228,6 +228,7 @@ std::shared_ptr<Context> WidgetContext::BuildTask(const std::vector<uint8_t> &ch
     para.credentialIdList = para_.credentialIdList;
     para.title = para_.widgetParam.title;
     para.authScene = AuthScene::AUTH_SCENE_WIDGET_AUTH_NO_DISTURB;
+    para.callerPermissions = para_.callerPermissions;
     auto context = ContextFactory::CreateSimpleAuthContext(para, widgetCallback, true);
     if (context == nullptr || !ContextPool::Instance().Insert(context)) {
         IAM_LOGE("failed to insert context");
