@@ -20,6 +20,7 @@
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
+#include "ipc_common.h"
 
 #include "context_factory.h"
 #include "context_helper.h"
@@ -203,6 +204,13 @@ int32_t RemoteAuthServiceImpl::ProcStartRemoteAuthRequest(const std::string &con
     AuthParamInner authParam = {};
     bool getAuthParamRet = RemoteMsgUtil::DecodeAuthParam(*request, authParam);
     IF_FALSE_LOGE_AND_RETURN_VAL(getAuthParamRet, GENERAL_ERROR);
+
+    if (authParam.userId == INVALID_USER_ID) {
+        std::optional<int32_t> activeUserId;
+        IF_FALSE_LOGE_AND_RETURN_VAL(IpcCommon::GetActiveUserId(activeUserId) == SUCCESS, GENERAL_ERROR);
+        authParam.userId = activeUserId.value();
+        IAM_LOGI("remote auth with invalid userId, use active userId %{public}d", authParam.userId);
+    }
 
     std::string collectorNetworkId;
     bool getCollectorNetworkIdRet = request->GetStringValue(Attributes::ATTR_COLLECTOR_NETWORK_ID, collectorNetworkId);
