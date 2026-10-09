@@ -786,6 +786,10 @@ int32_t UserIdmService::ClearRedundancyCredentialInner(const std::string &caller
     std::vector<std::shared_ptr<UserInfoInterface>> userInfos;
     ret = UserIdmDatabase::Instance().GetAllExtUserInfo(userInfos);
     if (ret != SUCCESS) {
+        if (ret == NOT_ENROLLED) {
+            IAM_LOGI("GetAllExtUserInfo returned NOT_ENROLLED, treated as success");
+            return SUCCESS;
+        }
         IAM_LOGE("GetAllExtUserInfo failed, ret:%{public}d", ret);
         return ret;
     }
