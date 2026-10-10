@@ -125,6 +125,10 @@ struct EngExtUserInfo {
     EngUserInfo userInfo;
 };
 
+enum EngCallerPermission : uint32_t {
+    ENG_CALLER_PERM_ENTERPRISE_MANAGE_SECURITY = 0x1,
+};
+
 struct EngAuthParamBase {
     int32_t userId {};
     uint32_t authTrustLevel {};
@@ -133,6 +137,7 @@ struct EngAuthParamBase {
     std::string callerName;
     int32_t callerType {};
     int32_t apiVersion {};
+    uint32_t callerPermissions {};
 };
 
 struct EngCallerAuthInfo {

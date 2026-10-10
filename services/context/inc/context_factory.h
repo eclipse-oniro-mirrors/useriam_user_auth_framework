@@ -66,6 +66,7 @@ public:
         bool skipLockedBiometricAuth {false};
         std::vector<uint64_t> credentialIdList {};
         std::string remoteCallerName {""};
+        uint32_t callerPermissions {0};
     };
 
     static std::shared_ptr<Context> CreateSimpleAuthContext(const Authentication::AuthenticationPara &para,

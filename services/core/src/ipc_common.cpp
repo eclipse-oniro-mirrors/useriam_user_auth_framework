@@ -47,6 +47,7 @@ namespace PermissionString {
     const std::string USE_USER_ACCESS_MANAGER = "ohos.permission.USE_USER_ACCESS_MANAGER";
     const std::string USER_AUTH_FROM_BACKGROUND = "ohos.permission.USER_AUTH_FROM_BACKGROUND";
     const std::string ENTERPRISE_DEVICE_MGR = "ohos.permission.MANAGE_EDM_POLICY";
+    const std::string ENTERPRISE_MANAGE_SECURITY = "ohos.permission.ENTERPRISE_MANAGE_SECURITY";
 }
 
 namespace {
@@ -219,6 +220,8 @@ bool IpcCommon::CheckPermission(IPCObjectStub &stub, Permission permission)
             return CheckDirectCallerAndFirstCallerIfSet(stub, PermissionString::USER_AUTH_FROM_BACKGROUND);
         case ENTERPRISE_DEVICE_MGR:
             return CheckDirectCaller(stub, PermissionString::ENTERPRISE_DEVICE_MGR);
+        case ENTERPRISE_MANAGE_SECURITY:
+            return CheckDirectCaller(stub, PermissionString::ENTERPRISE_MANAGE_SECURITY);
         default:
             IAM_LOGE("failed to check permission");
             return false;
