@@ -1845,8 +1845,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessAuthParamForRemoteAuth_Inval
     para.authType = AuthType::FACE;
     EXPECT_FALSE(service.ProcessAuthParamForRemoteAuth(authParam, para, remoteAuthParam, localNetworkId));
     para.authType = AuthType::PIN;
-    authParam.userId = -1;
-    EXPECT_FALSE(service.ProcessAuthParamForRemoteAuth(authParam, para, remoteAuthParam, localNetworkId));
     authParam.userId = 100;
     EXPECT_FALSE(service.ProcessAuthParamForRemoteAuth(authParam, para, remoteAuthParam, localNetworkId));
     localNetworkId = "1234567891123456789212345678931234567894123456789512345678961234";

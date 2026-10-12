@@ -866,11 +866,6 @@ bool UserAuthService::ProcessAuthParamForRemoteAuth(AuthParamInner &authParam, A
         return false;
     }
 
-    if (authParam.userId == INVALID_USER_ID) {
-        IAM_LOGE("userid must be set for remote auth");
-        return false;
-    }
-
     bool completeRet = CompleteRemoteAuthParam(remoteAuthParam, localNetworkId);
     if (!completeRet) {
         IAM_LOGE("failed to complete remote auth param");
