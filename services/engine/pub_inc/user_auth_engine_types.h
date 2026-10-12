@@ -40,6 +40,7 @@ enum EngUserType : int32_t {
 enum class EngGlobalConfigType : int32_t {
     PIN_EXPIRED_PERIOD = 1,
     ENABLE_STATUS = 2,
+    PIN_ALGO_TYPE = 3,
 };
 
 enum EngCredentialOperateType : int32_t {
@@ -207,6 +208,7 @@ struct EngReuseUnlockInfo {
 union EngGlobalConfigValue {
     int64_t pinExpiredPeriod {};
     bool enableStatus;
+    uint32_t pinAlgoType;
 } __attribute__((aligned(8)));
 
 struct EngGlobalConfigParam {
