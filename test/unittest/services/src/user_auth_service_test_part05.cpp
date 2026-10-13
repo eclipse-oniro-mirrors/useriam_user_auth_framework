@@ -46,11 +46,8 @@ using namespace testing::ext;
 namespace {
 constexpr uint32_t INVALID_PIN_ALGO_TYPE = 100;
 constexpr int32_t INVALID_GLOBAL_CONFIG_TYPE = 100;
-constexpr int32_t PIN_ALGO_AES_HDI_TYPE = 3;
-constexpr int32_t PIN_ALGO_SM4_HDI_TYPE = 4;
 constexpr int32_t TEST_USER_ID_1 = 100;
 constexpr int32_t TEST_USER_ID_2 = 101;
-constexpr size_t TEST_USER_IDS_SIZE = 2;
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam004, TestSize.Level0)
@@ -80,19 +77,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam004, TestSize.L
     EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::INVALID_PARAMETERS);
 
     param.value.pinAlgoType = PinEncrypAlgoType::AES_GCM;
-    EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::SUCCESS);
-
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, SetGlobalConfigParam(_)).Times(1);
-    ON_CALL(*mockHdi, SetGlobalConfigParam)
-        .WillByDefault(
-            [](const HdiGlobalConfigParam &param) {
-                EXPECT_EQ(param.type, PIN_ALGO_AES_HDI_TYPE);
-                return HDF_SUCCESS;
-            }
-        );
-    EXPECT_EQ(service.SetGlobalConfigParam(param), SUCCESS);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::INVALID_PARAMETERS);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -108,20 +93,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam005, TestSize.L
     param.value.pinAlgoType = PinEncrypAlgoType::SM4;
     param.userIds.push_back(TEST_USER_ID_1);
     param.userIds.push_back(TEST_USER_ID_2);
-    EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::SUCCESS);
-
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, SetGlobalConfigParam(_)).Times(1);
-    ON_CALL(*mockHdi, SetGlobalConfigParam)
-        .WillByDefault(
-            [](const HdiGlobalConfigParam &param) {
-                EXPECT_EQ(param.type, PIN_ALGO_SM4_HDI_TYPE);
-                EXPECT_EQ(param.userIds.size(), TEST_USER_IDS_SIZE);
-                return HDF_SUCCESS;
-            }
-        );
-    EXPECT_EQ(service.SetGlobalConfigParam(param), SUCCESS);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::INVALID_PARAMETERS);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -136,16 +108,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam006, TestSize.L
     param.authTypes.push_back(PIN);
     param.value.pinAlgoType = PinEncrypAlgoType::AES_GCM;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, SetGlobalConfigParam(_)).Times(1);
-    ON_CALL(*mockHdi, SetGlobalConfigParam)
-        .WillByDefault(
-            [](const HdiGlobalConfigParam &param) {
-                return HDF_FAILURE;
-            }
-        );
-    EXPECT_EQ(service.SetGlobalConfigParam(param), GENERAL_ERROR);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), INVALID_PARAMETERS);
     IpcCommon::DeleteAllPermission();
 }
 

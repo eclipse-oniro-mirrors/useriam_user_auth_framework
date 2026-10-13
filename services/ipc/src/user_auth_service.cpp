@@ -1833,19 +1833,15 @@ int32_t UserAuthService::UnregisterUserRecognitionEventListener(const sptr<IUser
 int32_t SetPinAlgorithmsProperty(const IpcGlobalConfigParam &ipcGlobalConfigParam, EngGlobalConfigParam &paramConfig)
 {
     if (ipcGlobalConfigParam.authTypes.size() != 1 || ipcGlobalConfigParam.authTypes[0] != PIN) {
-        IAM_LOGE("bad authTypes for PIN_EXPIRED_PERIOD");
+        IAM_LOGE("bad authTypes for PIN_ALGO_TYPE");
         return INVALID_PARAMETERS;
     }
-    if (ipcGlobalConfigParam.value.pinAlgoType == PinEncrypAlgoType::AES_GCM) {
-        const int32_t pinAlgoAes = 3;
-        paramConfig.type = pinAlgoAes;
-    } else if (ipcGlobalConfigParam.value.pinAlgoType == PinEncrypAlgoType::SM4) {
-        const int32_t pinAlgoSM4 = 4;
-        paramConfig.type = pinAlgoSM4;
-    } else {
+    if (ipcGlobalConfigParam.value.pinAlgoType != PinEncrypAlgoType::AES_GCM &&
+        ipcGlobalConfigParam.value.pinAlgoType != PinEncrypAlgoType::SM4) {
         IAM_LOGE("bad pinAlgoType value:%{public}d", ipcGlobalConfigParam.value.pinAlgoType);
         return INVALID_PARAMETERS;
     }
+    paramConfig.value.pinAlgoType = ipcGlobalConfigParam.value.pinAlgoType;
     return SUCCESS;
 }
 
@@ -1886,9 +1882,7 @@ int32_t UserAuthService::SetGlobalConfigParam(const IpcGlobalConfigParam &ipcGlo
             IAM_LOGE("bad global config type");
             return INVALID_PARAMETERS;
     }
-    if (static_cast<GlobalConfigType>(ipcGlobalConfigParam.type) != GlobalConfigType::PIN_ALGO_TYPE) {
-        paramConfig.type = static_cast<int32_t>(ipcGlobalConfigParam.type);
-    }
+    paramConfig.type = static_cast<int32_t>(ipcGlobalConfigParam.type);
     paramConfig.userIds = ipcGlobalConfigParam.userIds;
     for (const auto authType : ipcGlobalConfigParam.authTypes) {
         paramConfig.authTypes.push_back(static_cast<AuthType>(authType));

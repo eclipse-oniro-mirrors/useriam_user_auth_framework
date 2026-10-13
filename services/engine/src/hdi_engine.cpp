@@ -448,6 +448,11 @@ int32_t HdiEngineImpl::GetEnrolledState(int32_t userId, int32_t authType, EngEnr
 
 int32_t HdiEngineImpl::SetGlobalConfigParam(const EngGlobalConfigParam &param)
 {
+    if (param.type != static_cast<int32_t>(EngGlobalConfigType::PIN_EXPIRED_PERIOD) &&
+        param.type != static_cast<int32_t>(EngGlobalConfigType::ENABLE_STATUS)) {
+        IAM_LOGE("unsupported global config type: %{public}d", param.type);
+        return INVALID_PARAMETERS;
+    }
     auto hdi = HdiWrapper::GetHdiInstance();
     IF_FALSE_LOGE_AND_RETURN_VAL(hdi != nullptr, ENGINE_UNAVAILABLE);
     return HdfCodeToResult(hdi->SetGlobalConfigParam(EngToHdi(param)));
