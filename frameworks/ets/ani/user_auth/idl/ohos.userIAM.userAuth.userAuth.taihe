@@ -199,4 +199,9 @@ interface UserRecognitionMgr {
     offUserRecognitionChange(callback: Optional<(result: UserRecognitionResult) => void>): void;
 }
 
-function getUserRecognitionMgr(): Optional<UserRecognitionMgr>;
+union UserRecognitionMgrOrNull {
+    mgr: UserRecognitionMgr;
+    nValue: @null unit;
+}
+
+function getUserRecognitionMgr(): UserRecognitionMgrOrNull;
