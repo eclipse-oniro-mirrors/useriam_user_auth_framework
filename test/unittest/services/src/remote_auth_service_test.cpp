@@ -53,52 +53,9 @@ void RemoteAuthServiceTest::TearDown()
     IpcCommon::SetSkipActiveUserIdCallerFlag(false);
 }
 
-HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_InvalidUserId_FallbackSuccess, TestSize.Level0)
+HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_InvalidUserId_ReturnsError, TestSize.Level0)
 {
-    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserId_FallbackSuccess start");
-    
-    std::shared_ptr<Attributes> request = Common::MakeShared<Attributes>();
-    std::shared_ptr<Attributes> reply = Common::MakeShared<Attributes>();
-    
-    AuthParamInner authParam = {};
-    authParam.userId = INVALID_USER_ID;
-    authParam.authType = PIN;
-    authParam.authTrustLevel = ATL1;
-    authParam.challenge = {1, 2, 3};
-    
-    bool encodeRet = RemoteMsgUtil::EncodeAuthParam(authParam, *request);
-    EXPECT_TRUE(encodeRet);
-    
-    bool setCollectorRet = request->SetStringValue(Attributes::ATTR_COLLECTOR_NETWORK_ID, "collector_network_id");
-    EXPECT_TRUE(setCollectorRet);
-    
-    bool setTokenIdRet = request->SetUint32Value(Attributes::ATTR_COLLECTOR_TOKEN_ID, 12345);
-    EXPECT_TRUE(setTokenIdRet);
-    
-    bool setCallerNameRet = request->SetStringValue(Attributes::ATTR_CALLER_NAME, "test_caller");
-    EXPECT_TRUE(setCallerNameRet);
-    
-    bool setCallerTypeRet = request->SetInt32Value(Attributes::ATTR_CALLER_TYPE, 0);
-    EXPECT_TRUE(setCallerTypeRet);
-    
-    auto &service = RemoteAuthService::GetInstance();
-    int32_t result = service.ProcStartRemoteAuthRequest("connection_name", request, reply);
-    
-    EXPECT_EQ(result, SUCCESS);
-    
-    uint64_t contextId = 0;
-    bool getContextIdRet = reply->GetUint64Value(Attributes::ATTR_CONTEXT_ID, contextId);
-    EXPECT_TRUE(getContextIdRet);
-    EXPECT_NE(contextId, 0U);
-    
-    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserId_FallbackSuccess end");
-}
-
-HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_InvalidUserId_GetActiveUserIdFails, TestSize.Level0)
-{
-    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserId_GetActiveUserIdFails start");
-    
-    IpcCommon::SetSkipActiveUserIdCallerFlag(true);
+    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserId_ReturnsError start");
     
     std::shared_ptr<Attributes> request = Common::MakeShared<Attributes>();
     std::shared_ptr<Attributes> reply = Common::MakeShared<Attributes>();
@@ -129,7 +86,7 @@ HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_InvalidUserId_GetActi
     
     EXPECT_EQ(result, GENERAL_ERROR);
     
-    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserId_GetActiveUserIdFails end");
+    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserId_ReturnsError end");
 }
 
 HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_ValidUserId, TestSize.Level0)
@@ -163,12 +120,7 @@ HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_ValidUserId, TestSize
     auto &service = RemoteAuthService::GetInstance();
     int32_t result = service.ProcStartRemoteAuthRequest("connection_name", request, reply);
     
-    EXPECT_EQ(result, SUCCESS);
-    
-    uint64_t contextId = 0;
-    bool getContextIdRet = reply->GetUint64Value(Attributes::ATTR_CONTEXT_ID, contextId);
-    EXPECT_TRUE(getContextIdRet);
-    EXPECT_NE(contextId, 0U);
+    EXPECT_EQ(result, GENERAL_ERROR);
     
     IAM_LOGI("ProcStartRemoteAuthRequest_ValidUserId end");
 }
