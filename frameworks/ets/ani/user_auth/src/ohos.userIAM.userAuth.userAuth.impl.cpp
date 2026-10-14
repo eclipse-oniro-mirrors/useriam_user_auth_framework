@@ -617,27 +617,26 @@ private:
     std::mutex listenersMutex_;
 };
 
-optional<UserRecognitionMgr> getUserRecognitionMgr()
+UserRecognitionMgrOrNull getUserRecognitionMgr()
 {
     IAM_LOGI("getUserRecognitionMgr begin");
     UserAuth::UserAuthApiEventReporter reporter("GetUserRecognitionMgr");
     int32_t ret = UserAuth::UserAuthClient::GetInstance().CheckUserRecognitionCapability();
     if (ret == UserAuth::SUCCESS) {
         reporter.ReportSuccess();
-        return optional<UserRecognitionMgr>(std::in_place,
-            make_holder<UserRecognitionManagerImpl, UserRecognitionMgr>());
+        return UserRecognitionMgrOrNull::make_mgr(make_holder<UserRecognitionManagerImpl, UserRecognitionMgr>());
     }
     if (ret == UserAuth::DEVICE_CAPABILITY_NOT_SUPPORT) {
         IAM_LOGI("user recognition not supported, return null");
         reporter.ReportSuccess();
-        return {};
+        return UserRecognitionMgrOrNull::make_nValue();
     }
     UserAuth::UserAuthResultCode resultCode =
         UserAuth::UserAuthResultCode(UserAuth::UserAuthHelper::GetResultCodeV10(ret));
     IAM_LOGE("check capability fail, ret:%{public}d", ret);
     reporter.ReportFailed(resultCode);
     UserAuth::UserAuthAniHelper::ThrowBusinessError(resultCode);
-    return {};
+    return UserRecognitionMgrOrNull::make_nValue();
 }
 }  // namespace
 
