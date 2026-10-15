@@ -894,6 +894,24 @@ int32_t UserIdmService::GetCredentialInfoSync(int32_t userId, int32_t authType,
     return ret;
 }
 
+int32_t UserIdmService::GetLatestEnrollmentTime(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime)
+{
+    IAM_LOGI("start, userId:%{public}d, authType:%{public}d", userId, authType);
+    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
+    if (!IpcCommon::CheckPermission(*this, USE_USER_IDM_PERMISSION)) {
+        IAM_LOGE("failed to check permission");
+        return CHECK_PERMISSION_FAILED;
+    }
+    int32_t ret = UserIdmDatabase::Instance().GetLatestEnrollmentTime(
+        userId, static_cast<AuthType>(authType), latestEnrollmentTime);
+    if (ret != SUCCESS) {
+        IAM_LOGE("GetLatestEnrollmentTime failed, ret:%{public}d, userId:%{public}d, authType:%{public}d", ret,
+            userId, authType);
+        return ret;
+    }
+    return SUCCESS;
+}
+
 int32_t UserIdmService::RegistCredChangeEventListener(const sptr<IEventListenerCallback> &listener)
 {
     IAM_LOGI("start");

@@ -46,6 +46,7 @@ public:
     MOCK_METHOD1(UnRegistCredChangeEventListener, int32_t(const sptr<IEventListenerCallback> &callback));
     MOCK_METHOD3(GetCredentialInfoSync, int32_t(int32_t userId, int32_t authType,
         std::vector<IpcCredentialInfo> &ipcCredentialInfoList));
+    MOCK_METHOD3(GetLatestEnrollmentTime, int32_t(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime));
     MOCK_METHOD3(DeleteSubProfile, int32_t(int32_t userId,
         int32_t subProfileId, const sptr<IIamCallback> &idmCallback));
     MOCK_METHOD1(CallbackEnter, int32_t(uint32_t code));

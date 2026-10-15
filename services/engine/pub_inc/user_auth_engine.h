@@ -101,6 +101,7 @@ public:
         EngScheduleInfo &scheduleInfo) = 0;
     virtual int32_t GetAuthResultFromMessage(const std::string &remoteUdid, const std::vector<uint8_t> &message,
         EngAuthResultInfo &authResultInfo) = 0;
+    virtual int32_t GetLatestEnrollmentTime(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime) = 0;
 
     using StateCallback = std::function<void(bool running)>;
     virtual bool SetStatusCallback(const StateCallback &callback) = 0;

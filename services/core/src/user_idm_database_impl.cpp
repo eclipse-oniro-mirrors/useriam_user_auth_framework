@@ -200,6 +200,19 @@ int32_t UserIdmDatabaseImpl::ClearUnavailableCredential(int32_t userId,
     return SUCCESS;
 }
 
+int32_t UserIdmDatabaseImpl::GetLatestEnrollmentTime(int32_t userId, AuthType authType, uint64_t &latestEnrollmentTime)
+{
+    IAM_LOGI("start, userId:%{public}d, authType:%{public}d", userId, authType);
+    int32_t ret = GetUserAuthEngine().GetLatestEnrollmentTime(userId, static_cast<int32_t>(authType),
+        latestEnrollmentTime);
+    if (ret != SUCCESS) {
+        IAM_LOGE("GetLatestEnrollmentTime failed, userId:%{public}d, authType:%{public}d, ret:%{public}d", userId,
+            authType, ret);
+        return ret;
+    }
+    return SUCCESS;
+}
+
 #ifdef IAM_TEST_ENABLE
 namespace {
 // Test-only override for UserIdmDatabase::Instance(); nullptr means use the real singleton.

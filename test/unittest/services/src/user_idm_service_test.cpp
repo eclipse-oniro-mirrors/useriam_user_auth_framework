@@ -27,6 +27,7 @@
 #include "mock_ipc_common.h"
 #include "mock_iuser_auth_interface.h"
 #include "hdi_type_aliases.h"
+#include "user_auth_engine.h"
 #include "mock_resource_node.h"
 #include "mock_user_idm_callback.h"
 #include "resource_node_pool.h"
@@ -1388,6 +1389,29 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceCloseSession_TokenIdMatch, TestSize.L
 
     EXPECT_EQ(service.CloseSession(testUserId), GENERAL_ERROR);
     EXPECT_EQ(service.CloseSession(testUserId), SUCCESS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserIdmServiceTest, UserIdmServiceGetLatestEnrollmentTime001, TestSize.Level0)
+{
+    UserIdmService service(123123, true);
+    int32_t testUserId = 100;
+    int32_t testAuthType = static_cast<int32_t>(PIN);
+    uint64_t latestEnrollmentTime = 0;
+    int32_t ret = service.GetLatestEnrollmentTime(testUserId, testAuthType, latestEnrollmentTime);
+    EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserIdmServiceTest, UserIdmServiceGetLatestEnrollmentTime002, TestSize.Level0)
+{
+    UserIdmService service(123123, true);
+    int32_t testUserId = 100;
+    int32_t testAuthType = static_cast<int32_t>(PIN);
+    uint64_t latestEnrollmentTime = 0;
+    IpcCommon::AddPermission(USE_USER_IDM_PERMISSION);
+    int32_t ret = service.GetLatestEnrollmentTime(testUserId, testAuthType, latestEnrollmentTime);
+    EXPECT_EQ(ret, CAPABILITY_NOT_SUPPORTED);
     IpcCommon::DeleteAllPermission();
 }
 } // namespace UserAuth

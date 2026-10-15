@@ -373,6 +373,16 @@ void FuzzGetCredentialInfoSync(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzGetLatestEnrollmentTime(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t userId = parcel.ReadInt32();
+    auto authType = static_cast<AuthType>(parcel.ReadInt32());
+    uint64_t latestEnrollmentTime = 0;
+    g_userIdmService.GetLatestEnrollmentTime(userId, authType, latestEnrollmentTime);
+    IAM_LOGI("end");
+}
+
 void FuzzClearUnavailableCredential(Parcel &parcel)
 {
     IAM_LOGI("begin");
@@ -410,6 +420,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzStartEnroll,
     FuzzRegistCredChangeEventListener,
     FuzzGetCredentialInfoSync,
+    FuzzGetLatestEnrollmentTime,
     FuzzClearUnavailableCredential,
     FuzzGetSessionInfoMasked,
     FuzzGetCredentialInfoInner

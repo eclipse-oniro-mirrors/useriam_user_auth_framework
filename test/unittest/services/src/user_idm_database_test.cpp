@@ -16,6 +16,7 @@
 
 #include "mock_iuser_auth_interface.h"
 #include "hdi_type_aliases.h"
+#include "user_auth_engine.h"
 #include "user_idm_database_impl.h"
 namespace OHOS {
 namespace UserIam {
@@ -297,6 +298,15 @@ HWTEST_F(UserIdmDatabaseTest, DeleteUserEnforce002, TestSize.Level0)
     EXPECT_EQ(testCredInfos[0]->GetExecutorSensorHint(), 40);
     EXPECT_EQ(testCredInfos[0]->GetTemplateId(), 50);
     EXPECT_EQ(testCredInfos[0]->GetUserId(), testUserId);
+}
+HWTEST_F(UserIdmDatabaseTest, GetLatestEnrollmentTime001, TestSize.Level0)
+{
+    constexpr int32_t testUserId = 100;
+    AuthType testAuthType = PIN;
+    uint64_t latestEnrollmentTime = 0;
+    int32_t ret = UserIdmDatabase::Instance().GetLatestEnrollmentTime(
+        testUserId, testAuthType, latestEnrollmentTime);
+    EXPECT_EQ(ret, CAPABILITY_NOT_SUPPORTED);
 }
 } // namespace UserAuth
 } // namespace UserIam

@@ -446,6 +446,12 @@ int32_t HdiEngineImpl::GetEnrolledState(int32_t userId, int32_t authType, EngEnr
     return SUCCESS;
 }
 
+int32_t HdiEngineImpl::GetLatestEnrollmentTime(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime)
+{
+    IAM_LOGI("start, userId:%{public}d, authType:%{public}d", userId, authType);
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
 int32_t HdiEngineImpl::SetGlobalConfigParam(const EngGlobalConfigParam &param)
 {
     auto hdi = HdiWrapper::GetHdiInstance();

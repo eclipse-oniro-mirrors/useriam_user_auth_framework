@@ -295,6 +295,16 @@ void FuzzClientGetCredentialInfoSync(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzClientGetLatestEnrollmentTime(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    int32_t userId = parcel.ReadInt32();
+    auto authType = static_cast<AuthType>(parcel.ReadInt32());
+    uint64_t latestEnrollmentTime = 0;
+    UserIdmClient::GetInstance().GetLatestEnrollmentTime(userId, authType, latestEnrollmentTime);
+    IAM_LOGI("end");
+}
+
 
 using FuzzFunc = decltype(FuzzClientOpenSession);
 FuzzFunc *g_fuzzFuncs[] = {
@@ -316,6 +326,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzClientRegistCredChangeEventListener,
     FuzzClientUnRegistCredChangeEventListener,
     FuzzClientGetCredentialInfoSync,
+    FuzzClientGetLatestEnrollmentTime,
 };
 
 void UserIdmClientFuzzTest(const uint8_t *data, size_t size)
