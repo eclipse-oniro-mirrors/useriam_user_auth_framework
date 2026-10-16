@@ -470,6 +470,24 @@ int32_t UserIdmClientImpl::GetCredentialInfoSync(int32_t userId, AuthType authTy
     return SUCCESS;
 }
 
+int32_t UserIdmClientImpl::GetLatestEnrollmentTime(int32_t userId, AuthType authType, uint64_t &latestEnrollmentTime)
+{
+    IAM_LOGI("start, userId:%{public}d authType:%{public}d", userId, authType);
+    auto proxy = GetProxy();
+    if (!proxy) {
+        IAM_LOGE("proxy is nullptr");
+        return GENERAL_ERROR;
+    }
+
+    auto ret = proxy->GetLatestEnrollmentTime(userId, static_cast<int32_t>(authType), latestEnrollmentTime);
+    if (ret != SUCCESS) {
+        IAM_LOGE("GetLatestEnrollmentTime failed, ret:%{public}d", ret);
+        return ret;
+    }
+    IAM_LOGI("GetLatestEnrollmentTime success, userId:%{public}d authType:%{public}d", userId, authType);
+    return SUCCESS;
+}
+
 void UserIdmClientImpl::UserIdmImplDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remote)
 {
     IAM_LOGI("start");

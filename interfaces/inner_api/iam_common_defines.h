@@ -237,6 +237,8 @@ enum ResultCode : int32_t {
     REUSE_AUTH_RESULT_FAILED = 17,
     /** The result is fail, because the credentials used by current operation are invalid. */
     NO_VALID_CREDENTIAL = 18,
+    /** The result is fail, because the capability is not supported. */
+    CAPABILITY_NOT_SUPPORTED = 19,
     /** The result is fail, because something wrong from system. */
     SYSTEM_ERROR_CODE_BEGIN = 1000,
     /** The result is fail, because something wrong from ipc. */

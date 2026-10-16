@@ -41,6 +41,7 @@ public:
         std::shared_ptr<CredentialInfoInterface> &credInfo));
     MOCK_METHOD2(ClearUnavailableCredential, int32_t(int32_t userId,
         std::vector<std::shared_ptr<CredentialInfoInterface>> &credInfos));
+    MOCK_METHOD3(GetLatestEnrollmentTime, int32_t(int32_t userId, AuthType authType, uint64_t &latestEnrollmentTime));
 };
 } // namespace UserAuth
 } // namespace UserIam

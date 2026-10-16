@@ -652,6 +652,54 @@ HWTEST_F(UserIdmClientTest, UserIdmClientGetCredentialInfoSync002, TestSize.Leve
     IpcClientUtils::ResetObj();
 }
 
+HWTEST_F(UserIdmClientTest, UserIdmClientGetLatestEnrollmentTime001, TestSize.Level0)
+{
+    int32_t testUserId = 200;
+    AuthType testAuthType = PIN;
+    uint64_t latestEnrollmentTime = 0;
+    int32_t ret = UserIdmClient::GetInstance().GetLatestEnrollmentTime(testUserId, testAuthType,
+        latestEnrollmentTime);
+    EXPECT_EQ(ret, GENERAL_ERROR);
+
+    IpcClientUtils::ResetObj();
+    ret = UserIdmClient::GetInstance().GetLatestEnrollmentTime(testUserId, testAuthType, latestEnrollmentTime);
+    EXPECT_EQ(ret, GENERAL_ERROR);
+}
+
+HWTEST_F(UserIdmClientTest, UserIdmClientGetLatestEnrollmentTime002, TestSize.Level0)
+{
+    int32_t testUserId = 200;
+    AuthType testAuthType = PIN;
+    uint64_t expectTime = 1700000000000;
+
+    auto service = Common::MakeShared<MockUserIdmService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, GetLatestEnrollmentTime(_, _, _)).Times(1);
+    ON_CALL(*service, GetLatestEnrollmentTime)
+        .WillByDefault(
+            [&testUserId, &testAuthType, &expectTime](int32_t userId, int32_t authType,
+                uint64_t &latestEnrollmentTime) {
+                EXPECT_EQ(userId, testUserId);
+                EXPECT_EQ(authType, static_cast<int32_t>(testAuthType));
+                latestEnrollmentTime = expectTime;
+                return SUCCESS;
+            }
+        );
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+
+    uint64_t latestEnrollmentTime = 0;
+    int32_t ret = UserIdmClient::GetInstance().GetLatestEnrollmentTime(testUserId, testAuthType,
+        latestEnrollmentTime);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_EQ(latestEnrollmentTime, expectTime);
+
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
 HWTEST_F(UserIdmClientTest, UserIdmStubRegistCredChangeEventListenerDispatch, TestSize.Level0)
 {
     auto service = Common::MakeShared<MockUserIdmService>();

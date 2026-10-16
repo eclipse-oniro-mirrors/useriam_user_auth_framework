@@ -52,6 +52,7 @@ public:
     int32_t UnRegistCredChangeEventListener(const std::shared_ptr<CredChangeEventListener> &listener) override;
     int32_t GetCredentialInfoSync(int32_t userId, AuthType authType,
         std::vector<CredentialInfo> &credentialInfoList) override;
+    int32_t GetLatestEnrollmentTime(int32_t userId, AuthType authType, uint64_t &latestEnrollmentTime) override;
 
 private:
     friend class UserIdmClient;

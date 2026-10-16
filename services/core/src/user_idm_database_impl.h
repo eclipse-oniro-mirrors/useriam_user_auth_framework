@@ -40,6 +40,7 @@ public:
     int32_t GetCredentialInfoById(uint64_t credentialId, std::shared_ptr<CredentialInfoInterface> &credInfo) override;
     int32_t ClearUnavailableCredential(int32_t userId,
         std::vector<std::shared_ptr<CredentialInfoInterface>> &credInfos) override;
+    int32_t GetLatestEnrollmentTime(int32_t userId, AuthType authType, uint64_t &latestEnrollmentTime) override;
 };
 } // namespace UserAuth
 } // namespace UserIam

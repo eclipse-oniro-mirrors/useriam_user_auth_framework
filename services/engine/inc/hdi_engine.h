@@ -104,6 +104,7 @@ public:
         EngScheduleInfo &scheduleInfo) override;
     int32_t GetAuthResultFromMessage(const std::string &remoteUdid, const std::vector<uint8_t> &message,
         EngAuthResultInfo &authResultInfo) override;
+    int32_t GetLatestEnrollmentTime(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime) override;
     bool SetStatusCallback(const StateCallback &callback) override;
     int32_t Load() override;
     int32_t Unload() override;

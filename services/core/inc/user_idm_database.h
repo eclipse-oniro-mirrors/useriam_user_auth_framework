@@ -46,6 +46,7 @@ public:
         std::shared_ptr<CredentialInfoInterface> &credInfo) = 0;
     virtual int32_t ClearUnavailableCredential(int32_t userId,
         std::vector<std::shared_ptr<CredentialInfoInterface>> &credInfos) = 0;
+    virtual int32_t GetLatestEnrollmentTime(int32_t userId, AuthType authType, uint64_t &latestEnrollmentTime) = 0;
 };
 } // namespace UserAuth
 } // namespace UserIam
