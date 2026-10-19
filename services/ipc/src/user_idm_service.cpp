@@ -489,6 +489,7 @@ int32_t UserIdmService::DeleteSubProfile(int32_t userId,
         auto infoRet = Common::MakeShared<CredentialInfoImpl>(userId, hdiInfo);
         if (infoRet == nullptr) {
             IAM_LOGE("bad alloc");
+            idmCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
             return GENERAL_ERROR;
         }
         credInfos.emplace_back(infoRet);
