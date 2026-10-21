@@ -141,8 +141,10 @@ enum UserAuthTipCode {
 const std::map<UserAuthResultCode, std::string> g_resultV92Str = {
     {UserAuthResultCode::OHOS_INVALID_PARAM, "Parameter error."},
     {UserAuthResultCode::OHOS_CAPABILITY_NOT_SUPPORTED, "Capability not supported."},
-    {UserAuthResultCode::OHOS_CHECK_PERMISSION_FAILED, "Permission denied."},
-    {UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED, "Permission denied. Called by non-system application."},
+    {UserAuthResultCode::OHOS_CHECK_PERMISSION_FAILED,
+     "Permission verification failed. The application does not have the permission required to call the API."},
+    {UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED,
+     "Permission verification failed. A non-system application calls a system API."},
     {UserAuthResultCode::SUCCESS, "Authentication succeeded."},
     {UserAuthResultCode::FAIL, "Authentication failed."},
     {UserAuthResultCode::GENERAL_ERROR, "Unknown errors."},
@@ -162,7 +164,8 @@ const std::map<UserAuthResultCode, std::string> g_resultV92Str = {
 };
 
 const std::map<UserAuthResultCode, std::string> g_resultV212Str = {
-    {UserAuthResultCode::OHOS_CHECK_PERMISSION_FAILED, "Permission denied."},
+    {UserAuthResultCode::OHOS_CHECK_PERMISSION_FAILED,
+     "Permission verification failed. The application does not have the permission required to call the API."},
     {UserAuthResultCode::GENERAL_ERROR, "General operation error."},
     {UserAuthResultCode::TYPE_NOT_SUPPORT, "The authentication type is not suppported."},
     {UserAuthResultCode::PARAM_VERIFIED_FAILED, "The parameter is out of range."},
