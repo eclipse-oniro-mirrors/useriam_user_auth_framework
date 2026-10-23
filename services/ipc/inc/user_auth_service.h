@@ -72,6 +72,8 @@ public:
     int32_t UnregisterUserRecognitionEventListener(const sptr<IUserRecognitionCallback> &listener) override;
     int32_t CheckUserRecognitionCapability(int32_t &checkResult) override;
     int32_t SetGlobalConfigParam(const IpcGlobalConfigParam &ipcGlobalConfigParam) override;
+    int32_t GetGlobalConfigParam(int32_t userId, int32_t authType, int32_t type,
+        IpcGlobalConfigValue &ipcGlobalConfigValue, int32_t &funcResult) override;
     int32_t PrepareRemoteAuth(const std::string &networkId,
         const sptr<IIamCallback> &userAuthCallback) override;
     int32_t VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
@@ -146,6 +148,9 @@ private:
     int32_t DoPrepareRemoteAuth(const std::string &networkId);
     int32_t GetAvailableStatusInner(int32_t apiVersion, int32_t userId, AuthType authType,
         AuthTrustLevel authTrustLevel);
+    int32_t GetGlobalConfigParamInner(int32_t userId, int32_t authType, int32_t type,
+        IpcGlobalConfigValue &ipcGlobalConfigValue);
+    bool CheckSetGlobalConfigPermission();
     bool GetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain, const std::vector<uint8_t> &rootSecret,
         Attributes &extraInfo);
     std::shared_ptr<ResourceNode> GetResourseNode(AuthType authType);

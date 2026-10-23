@@ -464,6 +464,13 @@ int32_t HdiEngineImpl::SetGlobalConfigParam(const EngGlobalConfigParam &param)
     return HdfCodeToResult(hdi->SetGlobalConfigParam(EngToHdi(param)));
 }
 
+int32_t HdiEngineImpl::GetGlobalConfigParam(int32_t userId, int32_t authType, int32_t type,
+    EngGlobalConfigValue &value)
+{
+    IAM_LOGI("start, userId:%{public}d, authType:%{public}d", userId, authType);
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
 int32_t HdiEngineImpl::VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
     EngUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret)
 {
