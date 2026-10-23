@@ -2158,9 +2158,10 @@ void UserAuthService::InitWidgetParam(const IpcWidgetParamInner &ipcWidgetParam,
     widgetParam.hasContext = ipcWidgetParam.hasContext;
 }
 
-int32_t UserAuthService::CallbackEnter([[maybe_unused]] uint32_t code)
+int32_t UserAuthService::CallbackEnter(uint32_t code)
 {
     IAM_LOGI("start, code:%{public}u", code);
+    IpcCommon::ReportInterfaceCall(*this, code, "UserAuthService");
     return SUCCESS;
 }
 

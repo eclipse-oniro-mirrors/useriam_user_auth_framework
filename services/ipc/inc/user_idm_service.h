@@ -64,7 +64,7 @@ public:
     int32_t GetCredentialInfoSync(int32_t userId, int32_t authType,
         std::vector<IpcCredentialInfo> &ipcCredentialInfoList) override;
     int32_t GetLatestEnrollmentTime(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime) override;
-    int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;
+    int32_t CallbackEnter(uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
 
 protected:

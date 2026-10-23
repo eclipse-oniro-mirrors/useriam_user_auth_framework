@@ -28,6 +28,7 @@ inline const char *TRUE_STR = "true";
 inline const char *FALSE_STR = "false";
 
 inline const char *FWK_READY_KEY = "bootevent.useriam.fwkready";
+inline const char *BOOT_COMPLETED_KEY = "bootevent.boot.completed";
 inline const char *IS_PIN_ENROLLED_KEY = "persist.useriam.isPinEnrolled";
 inline const char *IS_CREDENTIAL_CHECKED_KEY = "useriam.isCredentialChecked";
 inline const char *IS_PIN_FUNCTION_READY_KEY = "useriam.isPinFunctionReady";

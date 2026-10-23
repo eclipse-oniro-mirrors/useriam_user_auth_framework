@@ -14,7 +14,12 @@
  */
 
 #include "ipc_common.h"
+#include <atomic>
+#include <sstream>
+#include "hisysevent_adapter.h"
+#include "iam_time.h"
 #include "ipc_skeleton.h"
+#include "system_param_manager.h"
 #include "accesstoken_kit.h"
 #include "app_mgr_interface.h"
 #include "bundle_mgr_interface.h"
@@ -371,6 +376,27 @@ std::optional<EngCallerType> IpcCommon::GetEngCallerType(int32_t callerType)
         return ENG_CALLER_TYPE_NATIVE;
     }
     return std::nullopt;
+}
+
+void IpcCommon::ReportInterfaceCall(IPCObjectStub &stub, uint32_t code, const std::string &serviceName)
+{
+    static std::atomic<bool> bootCompleted(false);
+    bool completed = bootCompleted.load(std::memory_order_acquire);
+    if (completed) {
+        return;
+    }
+    bool nowCompleted = (SystemParamManager::GetInstance().GetParam(BOOT_COMPLETED_KEY, FALSE_STR) == TRUE_STR);
+    if (nowCompleted) {
+        bootCompleted.store(true, std::memory_order_release);
+        return;
+    }
+    std::string callerName;
+    int32_t callerType;
+    GetCallerName(stub, callerName, callerType);
+    std::ostringstream ss;
+    ss << "InterfaceCall, serviceName: " << serviceName << ", code: " << code << ", callerType: " << callerType
+       << ", callerName: " << callerName;
+    ReportSystemFault(Common::GetNowTimeString(), ss.str());
 }
 
 namespace {
