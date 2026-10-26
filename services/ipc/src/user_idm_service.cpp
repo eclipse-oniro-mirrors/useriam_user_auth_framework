@@ -976,9 +976,10 @@ void UserIdmService::ClearUnavailableCredential(int32_t userId)
     return;
 }
 
-int32_t UserIdmService::CallbackEnter([[maybe_unused]] uint32_t code)
+int32_t UserIdmService::CallbackEnter(uint32_t code)
 {
     IAM_LOGI("start, code:%{public}u", code);
+    IpcCommon::ReportInterfaceCall(*this, code, "UserIdmService");
     return SUCCESS;
 }
 

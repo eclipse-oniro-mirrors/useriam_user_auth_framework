@@ -62,6 +62,7 @@ public:
     static bool CheckForegroundApplication(const std::string &bundleName);
     static bool IsOsAccountVerified(int32_t userId);
     static int32_t GetDirectCallerType(IPCObjectStub &stub);
+    static void ReportInterfaceCall(IPCObjectStub &stub, uint32_t code, const std::string &serviceName);
     class PeerDeathRecipient final : public IPCObjectProxy::DeathRecipient {
     public:
         explicit PeerDeathRecipient(Recipient &&recipient) : recipient_(std::forward<Recipient>(recipient))

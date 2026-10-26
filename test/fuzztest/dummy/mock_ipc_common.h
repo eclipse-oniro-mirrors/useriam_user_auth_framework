@@ -66,6 +66,7 @@ public:
     static bool CheckForegroundApplication(const std::string &bundleName);
     static bool IsOsAccountVerified(int32_t userId);
     static int32_t GetDirectCallerType(IPCObjectStub &stub);
+    static void ReportInterfaceCall(IPCObjectStub &stub, uint32_t code, const std::string &serviceName);
     static std::optional<EngCallerType> GetEngCallerType(int32_t callerType);
 
 private:
