@@ -173,6 +173,8 @@ enum GlobalConfigType : int32_t {
     ENABLE_STATUS = 2,
     /** Cryptographic algorithm used for PIN processing. */
     PIN_ALGO_TYPE = 3,
+    /** Disable pin deletion. */
+    DISABLE_PIN_DELETION = 4,
 };
 
 /**
@@ -199,6 +201,8 @@ union GlobalConfigValue {
      * 1: replace AES with SM4, compared to 0;
      * Others: not support yet. */
     uint32_t pinAlgoType;
+    /** Disable pin deletion. true: disable deletion; false: enable deletion. */
+    bool disablePinDeletion;
 };
 
 /**

@@ -71,6 +71,8 @@ public:
     MOCK_METHOD1(UnregisterUserRecognitionEventListener, int32_t(const sptr<IUserRecognitionCallback> &listener));
     MOCK_METHOD1(CheckUserRecognitionCapability, int32_t(int32_t &checkResult));
     MOCK_METHOD1(SetGlobalConfigParam, int32_t(const IpcGlobalConfigParam &ipcGlobalConfigParam));
+    MOCK_METHOD5(GetGlobalConfigParam, int32_t(int32_t userID, int32_t authType, int32_t type,
+        IpcGlobalConfigValue &ipcGlobalConfigValue, int32_t &funcResult));
     MOCK_METHOD2(PrepareRemoteAuth, int32_t(const std::string &networkId,
         const sptr<IIamCallback> &userAuthCallback));
     MOCK_METHOD3(VerifyAuthToken, int32_t(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,

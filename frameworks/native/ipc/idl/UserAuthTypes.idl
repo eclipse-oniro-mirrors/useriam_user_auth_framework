@@ -58,6 +58,8 @@ struct IpcGlobalConfigValue {
     boolean enableStatus;
     /** Pin encryption algorithm type. */
     unsigned int pinAlgoType;
+    /** Disable pin deletion. */
+    boolean disablePinDeletion;
 };
 
 /**

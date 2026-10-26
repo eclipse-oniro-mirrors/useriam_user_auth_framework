@@ -1830,69 +1830,6 @@ int32_t UserAuthService::UnregisterUserRecognitionEventListener(const sptr<IUser
     return SUCCESS;
 }
 
-int32_t SetPinAlgorithmsProperty(const IpcGlobalConfigParam &ipcGlobalConfigParam, EngGlobalConfigParam &paramConfig)
-{
-    if (ipcGlobalConfigParam.authTypes.size() != 1 || ipcGlobalConfigParam.authTypes[0] != PIN) {
-        IAM_LOGE("bad authTypes for PIN_ALGO_TYPE");
-        return INVALID_PARAMETERS;
-    }
-    if (ipcGlobalConfigParam.value.pinAlgoType != PinEncrypAlgoType::AES_GCM &&
-        ipcGlobalConfigParam.value.pinAlgoType != PinEncrypAlgoType::SM4) {
-        IAM_LOGE("bad pinAlgoType value:%{public}d", ipcGlobalConfigParam.value.pinAlgoType);
-        return INVALID_PARAMETERS;
-    }
-    paramConfig.value.pinAlgoType = ipcGlobalConfigParam.value.pinAlgoType;
-    return SUCCESS;
-}
-
-int32_t UserAuthService::SetGlobalConfigParam(const IpcGlobalConfigParam &ipcGlobalConfigParam)
-{
-    IAM_LOGI("start, GlobalConfigType is %{public}d, userIds size %{public}zu, authTypes size %{public}zu",
-        ipcGlobalConfigParam.type, ipcGlobalConfigParam.userIds.size(), ipcGlobalConfigParam.authTypes.size());
-    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
-    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION) ||
-        !IpcCommon::CheckPermission(*this, ENTERPRISE_DEVICE_MGR)) {
-        IAM_LOGE("failed to check permission");
-        return CHECK_PERMISSION_FAILED;
-    }
-    if (ipcGlobalConfigParam.userIds.size() > MAX_USER || ipcGlobalConfigParam.authTypes.size() > MAX_AUTH_TYPE_SIZE ||
-        ipcGlobalConfigParam.authTypes.size() == 0) {
-        IAM_LOGE("bad global config param");
-        return INVALID_PARAMETERS;
-    }
-
-    EngGlobalConfigParam paramConfig = {};
-    switch (static_cast<GlobalConfigType>(ipcGlobalConfigParam.type)) {
-        case GlobalConfigType::PIN_EXPIRED_PERIOD:
-            if (ipcGlobalConfigParam.authTypes.size() != 1 || ipcGlobalConfigParam.authTypes[0] != PIN) {
-                IAM_LOGE("bad authTypes for PIN_EXPIRED_PERIOD");
-                return INVALID_PARAMETERS;
-            }
-            paramConfig.value.pinExpiredPeriod = ipcGlobalConfigParam.value.pinExpiredPeriod;
-            break;
-        case GlobalConfigType::ENABLE_STATUS:
-            paramConfig.value.enableStatus = ipcGlobalConfigParam.value.enableStatus;
-            break;
-        case GlobalConfigType::PIN_ALGO_TYPE:
-            if (SetPinAlgorithmsProperty(ipcGlobalConfigParam, paramConfig) != SUCCESS) {
-                return INVALID_PARAMETERS;
-            }
-            break;
-        default:
-            IAM_LOGE("bad global config type");
-            return INVALID_PARAMETERS;
-    }
-    paramConfig.type = static_cast<int32_t>(ipcGlobalConfigParam.type);
-    paramConfig.userIds = ipcGlobalConfigParam.userIds;
-    for (const auto authType : ipcGlobalConfigParam.authTypes) {
-        paramConfig.authTypes.push_back(static_cast<AuthType>(authType));
-    }
-    int32_t result = GetUserAuthEngine().SetGlobalConfigParam(paramConfig);
-    IF_FALSE_LOGE_AND_RETURN_VAL(result == SUCCESS, result);
-
-    return SUCCESS;
-}
-
 bool UserAuthService::CompleteRemoteAuthParam(RemoteAuthParam &remoteAuthParam, const std::string &localNetworkId)
 {
     IAM_LOGI("start");

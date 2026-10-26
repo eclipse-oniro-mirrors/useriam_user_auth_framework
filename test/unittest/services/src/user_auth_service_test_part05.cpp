@@ -112,6 +112,34 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam006, TestSize.L
     IpcCommon::DeleteAllPermission();
 }
 
+HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam007, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcGlobalConfigParam param = {};
+    IpcCommon::AddPermission(ENTERPRISE_DEVICE_MGR);
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+
+    param.type = DISABLE_PIN_DELETION;
+    param.value.disablePinDeletion = true;
+    param.authTypes.push_back(FACE);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), INVALID_PARAMETERS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam008, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcGlobalConfigParam param = {};
+    IpcCommon::AddPermission(ENTERPRISE_DEVICE_MGR);
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+
+    param.type = DISABLE_PIN_DELETION;
+    param.value.disablePinDeletion = true;
+    param.authTypes.push_back(PIN);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), INVALID_PARAMETERS);
+    IpcCommon::DeleteAllPermission();
+}
+
 HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback001, TestSize.Level0)
 {
     UserAuthService service;

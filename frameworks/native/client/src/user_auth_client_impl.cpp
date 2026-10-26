@@ -111,6 +111,43 @@ void NorthAuthenticationCallback::OnResult(int32_t result, const Attributes &ext
 
     innerCallback_->OnResult(result, extraInfo);
 }
+
+bool IpcToGlobalConfigValue(GlobalConfigType type, const IpcGlobalConfigValue &ipcValue, GlobalConfigValue &value)
+{
+    switch (type) {
+        case GlobalConfigType::PIN_EXPIRED_PERIOD:
+            value.pinExpiredPeriod = ipcValue.pinExpiredPeriod;
+            break;
+        case GlobalConfigType::DISABLE_PIN_DELETION:
+            value.disablePinDeletion = ipcValue.disablePinDeletion;
+            break;
+        default:
+            IAM_LOGE("bad global config type, type:%{public}d", static_cast<int32_t>(type));
+            return false;
+    }
+    return true;
+}
+
+void GlobalConfigValueToIpc(GlobalConfigType type, const GlobalConfigValue &value, IpcGlobalConfigValue &ipcValue)
+{
+    switch (type) {
+        case GlobalConfigType::PIN_EXPIRED_PERIOD:
+            ipcValue.pinExpiredPeriod = value.pinExpiredPeriod;
+            break;
+        case GlobalConfigType::ENABLE_STATUS:
+            ipcValue.enableStatus = value.enableStatus;
+            break;
+        case GlobalConfigType::PIN_ALGO_TYPE:
+            ipcValue.pinAlgoType = value.pinAlgoType;
+            break;
+        case GlobalConfigType::DISABLE_PIN_DELETION:
+            ipcValue.disablePinDeletion = value.disablePinDeletion;
+            break;
+        default:
+            IAM_LOGE("bad global config type, type:%{public}d", static_cast<int32_t>(type));
+            break;
+    }
+}
 } // namespace
 
 int32_t UserAuthClientImpl::GetAvailableStatus(AuthType authType, AuthTrustLevel authTrustLevel)
@@ -536,6 +573,31 @@ int32_t UserAuthClientImpl::SetGlobalConfigParam(const GlobalConfigParam &param)
     IpcGlobalConfigParam ipcGlobalConfigParam = {};
     InitIpcGlobalConfigParam(param, ipcGlobalConfigParam);
     return proxy->SetGlobalConfigParam(ipcGlobalConfigParam);
+}
+
+int32_t UserAuthClientImpl::GetGlobalConfigParam(int32_t userId, AuthType authType, GlobalConfigType type,
+    GlobalConfigValue &value)
+{
+    IAM_LOGI("start, userId=%{public}d, authType=%{public}d, type=%{public}d", userId,
+        static_cast<int32_t>(authType), static_cast<int32_t>(type));
+    auto proxy = GetProxy();
+    IF_FALSE_LOGE_AND_RETURN_VAL(proxy, GENERAL_ERROR);
+
+    IpcGlobalConfigValue ipcGlobalConfigValue = {};
+    int32_t funcResult = SUCCESS;
+    int32_t result = proxy->GetGlobalConfigParam(userId, static_cast<int32_t>(authType),
+        static_cast<int32_t>(type), ipcGlobalConfigValue, funcResult);
+    if (result != SUCCESS) {
+        IAM_LOGE("GetGlobalConfigParam ipc call return fail, result:%{public}d", result);
+        return result;
+    }
+    if (funcResult != SUCCESS) {
+        IAM_LOGI("GetGlobalConfigParam service call return fail, ret:%{public}d", funcResult);
+        return funcResult;
+    }
+
+    IF_FALSE_LOGE_AND_RETURN_VAL(IpcToGlobalConfigValue(type, ipcGlobalConfigValue, value), INVALID_PARAMETERS);
+    return SUCCESS;
 }
 
 sptr<IUserAuth> UserAuthClientImpl::GetProxy()
@@ -1085,13 +1147,7 @@ void UserAuthClientImpl::InitIpcGlobalConfigParam(const GlobalConfigParam &globa
     IpcGlobalConfigParam &ipcGlobalConfigParam)
 {
     ipcGlobalConfigParam.type = static_cast<int32_t>(globalConfigParam.type);
-    if (globalConfigParam.type == PIN_EXPIRED_PERIOD) {
-        ipcGlobalConfigParam.value.pinExpiredPeriod = globalConfigParam.value.pinExpiredPeriod;
-    } else if (globalConfigParam.type == ENABLE_STATUS) {
-        ipcGlobalConfigParam.value.enableStatus = globalConfigParam.value.enableStatus;
-    } else if (globalConfigParam.type == PIN_ALGO_TYPE) {
-        ipcGlobalConfigParam.value.pinAlgoType = globalConfigParam.value.pinAlgoType;
-    }
+    GlobalConfigValueToIpc(globalConfigParam.type, globalConfigParam.value, ipcGlobalConfigParam.value);
     ipcGlobalConfigParam.userIds = globalConfigParam.userIds;
     ipcGlobalConfigParam.authTypes.resize(globalConfigParam.authTypes.size());
     std::transform(globalConfigParam.authTypes.begin(), globalConfigParam.authTypes.end(),

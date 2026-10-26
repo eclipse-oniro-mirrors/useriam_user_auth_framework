@@ -91,6 +91,8 @@ public:
     virtual int32_t PrepareRemoteAuth(const std::string &remoteUdid) = 0;
     virtual int32_t GetEnrolledState(int32_t userId, int32_t authType, EngEnrolledState &enrolledState) = 0;
     virtual int32_t SetGlobalConfigParam(const EngGlobalConfigParam &param) = 0;
+    virtual int32_t GetGlobalConfigParam(int32_t userId, int32_t authType, int32_t type,
+        EngGlobalConfigValue &value) = 0;
     virtual int32_t VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
         EngUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) = 0;
     virtual int32_t RegisterMessageCallback(const sptr<IMessageCallback> &messageCallback) = 0;
