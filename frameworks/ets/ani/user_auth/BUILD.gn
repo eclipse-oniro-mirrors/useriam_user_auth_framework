@@ -41,6 +41,7 @@ taihe_shared_library("userauth_ani") {
     "inc",
     "../../../common/inc",
   ]
+  branch_protector_ret = "pac_ret"
   sources = get_target_outputs(":user_auth_taihe")
   sources += [
     "src/ani_constructor.cpp",
