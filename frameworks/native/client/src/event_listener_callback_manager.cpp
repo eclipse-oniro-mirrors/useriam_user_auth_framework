@@ -57,6 +57,7 @@ int32_t EventListenerCallbackManager<T>::RegisterListener(const std::vector<Auth
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
 
+    std::lock_guard<std::recursive_mutex> lock(eventListenerMutex_);
     if (!IsExistEventListener()) {
         auto proxy = IpcClientUtils::GetRemoteObject(SystemAbilityId<T>::id);
         IF_FALSE_LOGE_AND_RETURN_VAL(proxy != nullptr, GENERAL_ERROR);
@@ -70,13 +71,10 @@ int32_t EventListenerCallbackManager<T>::RegisterListener(const std::vector<Auth
         }
     }
 
-    {
-        std::lock_guard<std::recursive_mutex> lock(eventListenerMutex_);
-        for (auto authType : authTypes) {
-            auto addCount = eventListenerMap_[authType].insert(listener);
-            IAM_LOGI("AddEventListener addCount:%{public}d, authType:%{public}d, listenerSize:%{public}zu",
-                addCount.second, static_cast<int32_t>(authType), eventListenerMap_[authType].size());
-        }
+    for (auto authType : authTypes) {
+        auto addCount = eventListenerMap_[authType].insert(listener);
+        IAM_LOGI("AddEventListener addCount:%{public}d, authType:%{public}d, listenerSize:%{public}zu",
+            addCount.second, static_cast<int32_t>(authType), eventListenerMap_[authType].size());
     }
     return SUCCESS;
 }
@@ -86,18 +84,16 @@ int32_t EventListenerCallbackManager<T>::UnRegisterListener(const std::shared_pt
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(listener != nullptr, INVALID_PARAMETERS);
 
-    {
-        std::lock_guard<std::recursive_mutex> lock(eventListenerMutex_);
-        auto mapIter = eventListenerMap_.begin();
-        while (mapIter != eventListenerMap_.end()) {
-            size_t eraseCount = mapIter->second.erase(listener);
-            IAM_LOGI("RemoveEventListener eraseCount:%{public}zu, authType:%{public}d, listenerSize:%{public}zu",
-                eraseCount, mapIter->first, mapIter->second.size());
-            if (mapIter->second.size() == 0) {
-                mapIter = eventListenerMap_.erase(mapIter);
-            } else {
-                mapIter++;
-            }
+    std::lock_guard<std::recursive_mutex> lock(eventListenerMutex_);
+    auto mapIter = eventListenerMap_.begin();
+    while (mapIter != eventListenerMap_.end()) {
+        size_t eraseCount = mapIter->second.erase(listener);
+        IAM_LOGI("RemoveEventListener eraseCount:%{public}zu, authType:%{public}d, listenerSize:%{public}zu",
+            eraseCount, mapIter->first, mapIter->second.size());
+        if (mapIter->second.size() == 0) {
+            mapIter = eventListenerMap_.erase(mapIter);
+        } else {
+            mapIter++;
         }
     }
 

@@ -195,17 +195,18 @@ export struct UserAuthIcon {
       this.onIconClick();
     }
     if (this.authFlag === ICON_AVAILABLE) {
+      let timer: number | undefined;
       try {
         let userAuthInstance: userAuth.UserAuthInstance =
           userAuth.getUserAuthInstance(this.authParam, this.widgetParam);
-        let timer: number = setTimeout(() => {
+        timer = setTimeout(() => {
           this.error('auth timeout.');
           userAuthInstance.cancel();
           this.onAuthResult({ result: userAuth.UserAuthResultCode.GENERAL_ERROR });
         }, TIMEOUT_MILLISECONDS)
         this.info('get userAuth instance success.');
         userAuthInstance.on('result', {
-          onResult: (result) => {
+          onResult: (result: userAuth.UserAuthResult) => {
             this.info(`userAuthInstance callback result = ${result.result}.`);
             this.onAuthResult(result);
             userAuthInstance.off('result');
@@ -214,7 +215,6 @@ export struct UserAuthIcon {
         this.info('auth before start.');
         userAuthInstance.start();
         this.info('auth start success.');
-        clearTimeout(timer);
       } catch (error) {
         if (error) {
           this.error(`auth catch error, code: ${error.code}, message: ${error.message}`);
@@ -223,6 +223,10 @@ export struct UserAuthIcon {
         }
         this.error('auth error.');
         this.onAuthResult({ result: userAuth.UserAuthResultCode.GENERAL_ERROR });
+      } finally {
+        if (timer !== undefined) {
+          clearTimeout(timer);
+        }
       }
     }
     this.info('end handle click event.');

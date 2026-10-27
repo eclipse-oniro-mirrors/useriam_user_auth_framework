@@ -16,6 +16,7 @@
 #ifndef IAM_FINITE_STATE_MACHINE_IMPL_H
 #define IAM_FINITE_STATE_MACHINE_IMPL_H
 
+#include <atomic>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -63,7 +64,7 @@ private:
     void DealWithStateLeaveAndEnter(FiniteStateMachine &machine, uint32_t oldState, uint32_t newState);
 
     const std::string name_;
-    uint32_t currentState_;
+    std::atomic<uint32_t> currentState_;
     std::shared_ptr<ThreadHandler> threadHandler_;
     TransitionMap transitionMap_;
     FiniteStateMachineImpl::EnterMap enterMap_;

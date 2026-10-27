@@ -142,10 +142,10 @@ void OsAccountsManagerImpl::OnOsAccountSaAdd()
 void OsAccountsManagerImpl::OnOsAccountSaRemove()
 {
     IAM_LOGI("start");
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (subscriber_ == nullptr) {
         return;
     }
-
     ErrCode errCode = AccountSA::OsAccountManager::UnsubscribeOsAccount(subscriber_);
     if (errCode != ERR_OK) {
         IAM_LOGE("unsubscribe fail, errCode = %{public}d", errCode);

@@ -80,6 +80,7 @@ private:
     void BuildParamWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
     void BuildAuthFinishedStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
     bool TryKickMachine(Event event);
+    std::shared_ptr<WidgetScheduleNodeCallback> GetCallback();
 
 private:
     std::shared_ptr<ThreadHandler> threadHandler_ {nullptr};
