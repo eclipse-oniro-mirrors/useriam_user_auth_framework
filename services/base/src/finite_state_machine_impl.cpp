@@ -70,20 +70,22 @@ void FiniteStateMachineImpl::ScheduleInner(FiniteStateMachine &machine)
             break;
         }
 
-        uint32_t oldState = currentState_;
-        auto iter = transitionMap_.find(GetTransitionIndex(currentState_, event));
+        uint32_t oldState = currentState_.load();
+        uint32_t newState = oldState;
+        auto iter = transitionMap_.find(GetTransitionIndex(oldState, event));
         if (iter != transitionMap_.end()) {
             auto invoker = iter->second.second;
             if (invoker) {
                 invoker(machine, event);
             }
-            currentState_ = iter->second.first;
+            newState = iter->second.first;
+            currentState_.store(newState);
         }
 
-        DealWithStateLeaveAndEnter(machine, oldState, currentState_);
+        DealWithStateLeaveAndEnter(machine, oldState, newState);
 
         IAM_LOGI("fsm %{public}s schedule [state:%{public}u] + [event:%{public}u] -> [nextState:%{public}u]",
-            name_.c_str(), oldState, event, currentState_);
+            name_.c_str(), oldState, event, newState);
         if (runTimes >= FiniteStateMachineImpl::MAX_SCHEDULE_TIMES) {
             IAM_LOGE("fsm %{public}s schedule too many times", name_.c_str());
             break;
@@ -103,16 +105,16 @@ void FiniteStateMachineImpl::DealWithStateLeaveAndEnter(FiniteStateMachine &mach
         }
     }
 
-    if (auto iter = enterMap_.find(currentState_); iter != enterMap_.end()) {
+    if (auto iter = enterMap_.find(newState); iter != enterMap_.end()) {
         if (auto invoker = iter->second; invoker) {
-            invoker(machine, currentState_);
+            invoker(machine, newState);
         }
     }
 }
 
 uint32_t FiniteStateMachineImpl::GetCurrentState() const
 {
-    return currentState_;
+    return currentState_.load();
 }
 
 uint32_t FiniteStateMachineImpl::EnsureCurrentState()
@@ -121,7 +123,7 @@ uint32_t FiniteStateMachineImpl::EnsureCurrentState()
         threadHandler_->EnsureTask([]() {});
     }
 
-    return currentState_;
+    return currentState_.load();
 }
 
 const std::string &FiniteStateMachineImpl::GetMachineName() const

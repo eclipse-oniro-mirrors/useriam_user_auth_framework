@@ -207,10 +207,11 @@ export struct UserAuthIcon {
       this.onIconClick();
     }
     if (this.authFlag === ICON_AVAILABLE) {
+      let timer: int | undefined;
       try {
         let userAuthInstance: userAuth.UserAuthInstance =
           userAuth.getUserAuthInstance(this.authParam, this.widgetParam);
-        let timer: int = setTimeout(() => {
+        timer = setTimeout(() => {
           this.error('auth timeout.');
           userAuthInstance.cancel();
           this.onAuthResult({ result: userAuth.UserAuthResultCode.GENERAL_ERROR });
@@ -226,7 +227,6 @@ export struct UserAuthIcon {
         this.info('auth before start.');
         userAuthInstance.start();
         this.info('auth start success.');
-        clearTimeout(timer);
       } catch (error) {
         if (error) {
           let code: int = (error as BusinessError).code;
@@ -237,6 +237,10 @@ export struct UserAuthIcon {
         }
         this.error('auth error.');
         this.onAuthResult({ result: userAuth.UserAuthResultCode.GENERAL_ERROR });
+      } finally {
+        if (timer !== undefined) {
+          clearTimeout(timer);
+        }
       }
     }
     this.info('end handle click event.');

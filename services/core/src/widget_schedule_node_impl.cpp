@@ -261,9 +261,15 @@ void WidgetScheduleNodeImpl::SetCallback(std::shared_ptr<WidgetScheduleNodeCallb
     callback_ = callback;
 }
 
+std::shared_ptr<WidgetScheduleNodeCallback> WidgetScheduleNodeImpl::GetCallback()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return callback_.lock();
+}
+
 void WidgetScheduleNodeImpl::OnGetRemoteAuthParam(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     if (!callback->GetRemoteAuthParam()) {
         IAM_LOGE("Failed to get remote auth param");
@@ -272,7 +278,7 @@ void WidgetScheduleNodeImpl::OnGetRemoteAuthParam(FiniteStateMachine &machine, u
 
 void WidgetScheduleNodeImpl::OnStartSchedule(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     if (!callback->LaunchWidget()) {
         IAM_LOGE("Failed to launch widget, cancel Auth");
@@ -282,7 +288,7 @@ void WidgetScheduleNodeImpl::OnStartSchedule(FiniteStateMachine &machine, uint32
 
 void WidgetScheduleNodeImpl::OnStopSchedule(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     callback->EndAuthAsCancel();
     iamHitraceHelper_ = nullptr;
@@ -291,38 +297,56 @@ void WidgetScheduleNodeImpl::OnStopSchedule(FiniteStateMachine &machine, uint32_
 void WidgetScheduleNodeImpl::OnStartDirectAuth(FiniteStateMachine &machine, uint32_t event)
 {
     IAM_LOGI("start direct auth (skip widget UI)");
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
+    std::vector<AuthType> startAuthTypeList;
+    bool endAfterFirstFail;
+    AuthIntent authIntent;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        startAuthTypeList = startAuthTypeList_;
+        endAfterFirstFail = endAfterFirstFail_;
+        authIntent = authIntent_;
+    }
     std::set<AuthType> startAuthTypeSet;
-    for (auto authType : startAuthTypeList_) {
+    for (auto authType : startAuthTypeList) {
         if (runningAuthTypeSet_.find(authType) == runningAuthTypeSet_.end()) {
             runningAuthTypeSet_.emplace(authType);
             startAuthTypeSet.emplace(authType);
             IAM_LOGI("direct auth type: %{public}d, added to runningAuthTypeSet_", static_cast<int32_t>(authType));
         }
     }
-    callback->ExecuteAuthList(startAuthTypeSet, endAfterFirstFail_, authIntent_);
+    callback->ExecuteAuthList(startAuthTypeSet, endAfterFirstFail, authIntent);
 }
 
 void WidgetScheduleNodeImpl::OnStartAuth(FiniteStateMachine &machine, uint32_t event)
 {
     IAM_LOGI("OnStartAuth start");
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
+    std::vector<AuthType> startAuthTypeList;
+    bool endAfterFirstFail;
+    AuthIntent authIntent;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        startAuthTypeList = startAuthTypeList_;
+        endAfterFirstFail = endAfterFirstFail_;
+        authIntent = authIntent_;
+    }
     std::set<AuthType> startAuthTypeSet;
-    for (auto authType : startAuthTypeList_) {
+    for (auto authType : startAuthTypeList) {
         if (runningAuthTypeSet_.find(authType) == runningAuthTypeSet_.end()) {
             startAuthTypeSet.emplace(authType);
             runningAuthTypeSet_.emplace(authType);
             IAM_LOGI("emplace authType %{public}d to runningAuthTypeSet_", static_cast<int32_t>(authType));
         }
     }
-    callback->ExecuteAuthList(startAuthTypeSet, endAfterFirstFail_, authIntent_);
+    callback->ExecuteAuthList(startAuthTypeSet, endAfterFirstFail, authIntent);
 }
 
 void WidgetScheduleNodeImpl::OnStopAuthList(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     for (auto authType : stopAuthTypeList_) {
         runningAuthTypeSet_.erase(authType);
@@ -332,7 +356,7 @@ void WidgetScheduleNodeImpl::OnStopAuthList(FiniteStateMachine &machine, uint32_
 
 void WidgetScheduleNodeImpl::OnSuccessAuth(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     runningAuthTypeSet_.erase(successAuthType_);
     callback->SuccessAuth(successAuthType_);
@@ -341,7 +365,7 @@ void WidgetScheduleNodeImpl::OnSuccessAuth(FiniteStateMachine &machine, uint32_t
 void WidgetScheduleNodeImpl::OnFailAuth(FiniteStateMachine &machine, uint32_t event)
 {
     IAM_LOGI("OnFailAuth start");
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     runningAuthTypeSet_.erase(failAuthType_);
     callback->FailAuth(failAuthType_);
@@ -349,21 +373,21 @@ void WidgetScheduleNodeImpl::OnFailAuth(FiniteStateMachine &machine, uint32_t ev
 
 void WidgetScheduleNodeImpl::OnNaviPinAuth(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     callback->EndAuthAsNaviPin();
 }
 
 void WidgetScheduleNodeImpl::OnWidgetParaInvalid(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     callback->EndAuthAsWidgetParaInvalid();
 }
 
 void WidgetScheduleNodeImpl::OnWidgetReloadInit(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("Widget need reload, init");
     callback->AuthWidgetReloadInit();
@@ -371,7 +395,7 @@ void WidgetScheduleNodeImpl::OnWidgetReloadInit(FiniteStateMachine &machine, uin
 
 void WidgetScheduleNodeImpl::OnWidgetReload(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("Widget need reload");
     const uint32_t reloadInitMs = 100;
@@ -385,7 +409,7 @@ void WidgetScheduleNodeImpl::OnWidgetReload(FiniteStateMachine &machine, uint32_
 
 void WidgetScheduleNodeImpl::OnWidgetRelease(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("clear schedule");
     callback->ClearSchedule();
@@ -393,18 +417,29 @@ void WidgetScheduleNodeImpl::OnWidgetRelease(FiniteStateMachine &machine, uint32
 
 void WidgetScheduleNodeImpl::OnSendAuthResult(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
-    if (resultCode_ == SUCCESS) {
-        callback->SendAuthResultInfo(resultCode_, successAuthType_, authToken_);
+    int32_t resultCode;
+    AuthType successAuthType;
+    AuthType failAuthType;
+    std::vector<uint8_t> authToken;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        resultCode = resultCode_;
+        successAuthType = successAuthType_;
+        failAuthType = failAuthType_;
+        authToken = authToken_;
+    }
+    if (resultCode == SUCCESS) {
+        callback->SendAuthResultInfo(resultCode, successAuthType, authToken);
     } else {
-        callback->SendAuthResultInfo(resultCode_, failAuthType_, authToken_);
+        callback->SendAuthResultInfo(resultCode, failAuthType, authToken);
     }
 }
 
 void WidgetScheduleNodeImpl::SendAuthTipInfo(const std::vector<AuthType> &authTypeList, int32_t tipCode)
 {
-    auto callback = callback_.lock();
+    auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("send mid auth result");
     for (auto &authType : authTypeList) {
