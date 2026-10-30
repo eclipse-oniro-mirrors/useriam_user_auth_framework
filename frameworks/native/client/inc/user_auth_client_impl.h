@@ -18,6 +18,8 @@
 
 #include <mutex>
 #include <optional>
+#include <string>
+#include <vector>
 
 #include "nocopyable.h"
 
@@ -32,6 +34,15 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+struct AvailableStatusParam {
+    const char *funcName {nullptr};
+    int32_t apiVersion {0};
+    std::optional<int32_t> userId;
+    AuthType authType;
+    AuthTrustLevel authTrustLevel;
+    std::vector<std::string> permissions;
+};
+
 class UserAuthClientImpl final : public UserAuthClient, NoCopyable {
 public:
     static UserAuthClientImpl &Instance();
@@ -100,6 +111,7 @@ private:
     void EnsureUserRecognitionServiceStatusSubscription();
     void ReregisterUserRecognitionListeners();
     void NotifyUserRecognitionServiceUnavailable();
+    int32_t GetAvailableStatusCommon(const AvailableStatusParam &param);
 
     friend class UserAuthClient;
     friend class UserRecognitionServiceListener;

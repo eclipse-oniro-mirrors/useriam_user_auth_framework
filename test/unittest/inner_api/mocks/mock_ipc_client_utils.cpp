@@ -36,8 +36,10 @@ void IpcClientUtils::ResetObj()
 
 int32_t IpcClientUtils::RunOnResidentSync(std::function<int32_t()> func, uint32_t timeoutSec)
 {
-    static_cast<void>(func);
     static_cast<void>(timeoutSec);
+    if (func) {
+        return func();
+    }
     return 0;
 }
 } // namespace UserAuth
