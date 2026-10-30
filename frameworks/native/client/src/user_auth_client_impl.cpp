@@ -15,6 +15,8 @@
 
 #include "user_auth_client_impl.h"
 
+#include <memory>
+
 #include "remote_auth_callback_service.h"
 #include "system_ability_definition.h"
 
@@ -150,29 +152,47 @@ void GlobalConfigValueToIpc(GlobalConfigType type, const GlobalConfigValue &valu
 }
 } // namespace
 
-int32_t UserAuthClientImpl::GetAvailableStatus(AuthType authType, AuthTrustLevel authTrustLevel)
+int32_t UserAuthClientImpl::GetAvailableStatusCommon(const AvailableStatusParam &param)
 {
-    IAM_LOGI("start, authType:%{public}d authTrustLevel:%{public}u", authType, authTrustLevel);
     auto proxy = GetProxy();
     if (!proxy) {
-        return LoadModeUtil::GetProxyNullResultCode(__func__, std::vector<std::string>({
-            ACCESS_USER_AUTH_INTERNAL_PERMISSION,
-            ACCESS_BIOMETRIC_PERMISSION
-        }));
+        return LoadModeUtil::GetProxyNullResultCode(param.funcName, param.permissions);
     }
-
-    int32_t funcResult = SUCCESS;
-    int32_t ret = proxy->GetAvailableStatus(INNER_API_VERSION_10000, static_cast<int32_t>(authType),
-        static_cast<uint32_t>(authTrustLevel), funcResult);
+    auto serviceRemote = proxy->AsObject();
+    IF_FALSE_LOGE_AND_RETURN_VAL(serviceRemote != nullptr, GENERAL_ERROR);
+    auto funcResult = std::make_shared<int32_t>(SUCCESS);
+    auto callProxy = [proxy, apiVersion = param.apiVersion, userId = param.userId,
+        authType = param.authType, authTrustLevel = param.authTrustLevel, funcResult]() {
+        if (userId.has_value()) {
+            return proxy->GetAvailableStatus(apiVersion, *userId, static_cast<int32_t>(authType),
+                static_cast<uint32_t>(authTrustLevel), *funcResult);
+        }
+        return proxy->GetAvailableStatus(apiVersion, static_cast<int32_t>(authType),
+            static_cast<uint32_t>(authTrustLevel), *funcResult);
+    };
+    int32_t ret;
+    if (!serviceRemote->IsProxyObject()) {
+        ret = callProxy();
+    } else {
+        ret = IpcClientUtils::RunOnResidentSync(callProxy, MAX_SYNC_WAIT_TIME_SEC);
+    }
     if (ret != SUCCESS) {
         IAM_LOGE("ipc call return fail, ret:%{public}d", ret);
         return GENERAL_ERROR;
     }
-    if (funcResult != SUCCESS) {
-        IAM_LOGI("service call return fail, ret:%{public}d", funcResult);
-        return funcResult;
+    if (*funcResult != SUCCESS) {
+        IAM_LOGI("service call return fail, ret:%{public}d", *funcResult);
+        return *funcResult;
     }
     return SUCCESS;
+}
+
+int32_t UserAuthClientImpl::GetAvailableStatus(AuthType authType, AuthTrustLevel authTrustLevel)
+{
+    IAM_LOGI("start, authType:%{public}d authTrustLevel:%{public}u", authType, authTrustLevel);
+    AvailableStatusParam param = { __func__, INNER_API_VERSION_10000, std::nullopt, authType, authTrustLevel,
+        { ACCESS_USER_AUTH_INTERNAL_PERMISSION, ACCESS_BIOMETRIC_PERMISSION } };
+    return GetAvailableStatusCommon(param);
 }
 
 int32_t UserAuthClientImpl::GetNorthAvailableStatus(int32_t apiVersion, AuthType authType,
@@ -180,49 +200,18 @@ int32_t UserAuthClientImpl::GetNorthAvailableStatus(int32_t apiVersion, AuthType
 {
     IAM_LOGI("start, apiVersion:%{public}d authType:%{public}d authTrustLevel:%{public}u",
         apiVersion, authType, authTrustLevel);
-    auto proxy = GetProxy();
-    if (!proxy) {
-        return LoadModeUtil::GetProxyNullResultCode(__func__, std::vector<std::string>({
-            ACCESS_USER_AUTH_INTERNAL_PERMISSION,
-            ACCESS_BIOMETRIC_PERMISSION
-        }));
-    }
-    int32_t funcResult = SUCCESS;
-    int32_t ret = proxy->GetAvailableStatus(apiVersion, static_cast<int32_t>(authType),
-        static_cast<uint32_t>(authTrustLevel), funcResult);
-    if (ret != SUCCESS) {
-        IAM_LOGE("ipc call return fail, ret:%{public}d", ret);
-        return GENERAL_ERROR;
-    }
-    if (funcResult != SUCCESS) {
-        IAM_LOGI("service call return fail, ret:%{public}d", funcResult);
-        return funcResult;
-    }
-    return SUCCESS;
+    AvailableStatusParam param = { __func__, apiVersion, std::nullopt, authType, authTrustLevel,
+        { ACCESS_USER_AUTH_INTERNAL_PERMISSION, ACCESS_BIOMETRIC_PERMISSION } };
+    return GetAvailableStatusCommon(param);
 }
 
 int32_t UserAuthClientImpl::GetAvailableStatus(int32_t userId, AuthType authType, AuthTrustLevel authTrustLevel)
 {
     IAM_LOGI("start, userId:%{public}d authType:%{public}d authTrustLevel:%{public}u",
         userId, authType, authTrustLevel);
-    auto proxy = GetProxy();
-    if (!proxy) {
-        return LoadModeUtil::GetProxyNullResultCode(__func__, std::vector<std::string>({
-            ACCESS_USER_AUTH_INTERNAL_PERMISSION
-        }));
-    }
-    int32_t funcResult = SUCCESS;
-    int32_t ret = proxy->GetAvailableStatus(INNER_API_VERSION_10000, userId, static_cast<int32_t>(authType),
-        static_cast<uint32_t>(authTrustLevel), funcResult);
-    if (ret != SUCCESS) {
-        IAM_LOGE("ipc call return fail, ret:%{public}d", ret);
-        return GENERAL_ERROR;
-    }
-    if (funcResult != SUCCESS) {
-        IAM_LOGI("service call return fail, ret:%{public}d", funcResult);
-        return funcResult;
-    }
-    return SUCCESS;
+    AvailableStatusParam param = { __func__, INNER_API_VERSION_10000, userId, authType, authTrustLevel,
+        { ACCESS_USER_AUTH_INTERNAL_PERMISSION } };
+    return GetAvailableStatusCommon(param);
 }
 
 void UserAuthClientImpl::GetProperty(int32_t userId, const GetPropertyRequest &request,
@@ -559,7 +548,20 @@ int32_t UserAuthClientImpl::GetVersion(int32_t &version)
         return GENERAL_ERROR;
     }
 
-    return proxy->GetVersion(version);
+    auto serviceRemote = proxy->AsObject();
+    IF_FALSE_LOGE_AND_RETURN_VAL(serviceRemote != nullptr, GENERAL_ERROR);
+    if (!serviceRemote->IsProxyObject()) {
+        return proxy->GetVersion(version);
+    }
+    auto versionPtr = std::make_shared<int32_t>();
+    int32_t ret = IpcClientUtils::RunOnResidentSync(
+        [proxy, versionPtr]() {
+            return proxy->GetVersion(*versionPtr);
+        }, MAX_SYNC_WAIT_TIME_SEC);
+    if (ret == SUCCESS) {
+        version = *versionPtr;
+    }
+    return ret;
 }
 
 int32_t UserAuthClientImpl::SetGlobalConfigParam(const GlobalConfigParam &param)
@@ -802,7 +804,15 @@ int32_t UserAuthClientImpl::Notice(NoticeType noticeType, const std::string &eve
         IAM_LOGE("proxy is nullptr");
         return GENERAL_ERROR;
     }
-    return proxy->Notice(static_cast<int32_t>(noticeType), eventData);
+    auto serviceRemote = proxy->AsObject();
+    IF_FALSE_LOGE_AND_RETURN_VAL(serviceRemote != nullptr, GENERAL_ERROR);
+    if (!serviceRemote->IsProxyObject()) {
+        return proxy->Notice(static_cast<int32_t>(noticeType), eventData);
+    }
+    return IpcClientUtils::RunOnResidentSync(
+        [proxy, noticeType, eventData]() {
+            return proxy->Notice(static_cast<int32_t>(noticeType), eventData);
+        }, MAX_SYNC_WAIT_TIME_SEC);
 }
 
 int32_t UserAuthClientImpl::GetEnrolledState(int32_t apiVersion, AuthType authType, EnrolledState &enrolledState)
@@ -814,19 +824,30 @@ int32_t UserAuthClientImpl::GetEnrolledState(int32_t apiVersion, AuthType authTy
             ACCESS_BIOMETRIC_PERMISSION
         }));
     }
-    IpcEnrolledState ipcEnrolledState = {};
-    int32_t funcResult = SUCCESS;
-    int32_t ret = proxy->GetEnrolledState(apiVersion, static_cast<int32_t>(authType), ipcEnrolledState, funcResult);
+    auto serviceRemote = proxy->AsObject();
+    IF_FALSE_LOGE_AND_RETURN_VAL(serviceRemote != nullptr, GENERAL_ERROR);
+    auto ipcEnrolledState = std::make_shared<IpcEnrolledState>();
+    auto funcResult = std::make_shared<int32_t>(SUCCESS);
+    int32_t ret;
+    if (!serviceRemote->IsProxyObject()) {
+        ret = proxy->GetEnrolledState(apiVersion, static_cast<int32_t>(authType), *ipcEnrolledState, *funcResult);
+    } else {
+        ret = IpcClientUtils::RunOnResidentSync(
+            [proxy, apiVersion, authType, ipcEnrolledState, funcResult]() {
+                return proxy->GetEnrolledState(apiVersion, static_cast<int32_t>(authType),
+                    *ipcEnrolledState, *funcResult);
+            }, MAX_SYNC_WAIT_TIME_SEC);
+    }
     if (ret != SUCCESS) {
         IAM_LOGE("ipc call return fail, ret:%{public}d", ret);
         return GENERAL_ERROR;
     }
-    if (funcResult != SUCCESS) {
-        IAM_LOGI("service call return fail, ret:%{public}d", funcResult);
-        return funcResult;
+    if (*funcResult != SUCCESS) {
+        IAM_LOGI("service call return fail, ret:%{public}d", *funcResult);
+        return *funcResult;
     }
-    enrolledState.credentialCount = ipcEnrolledState.credentialCount;
-    enrolledState.credentialDigest = ipcEnrolledState.credentialDigest;
+    enrolledState.credentialCount = ipcEnrolledState->credentialCount;
+    enrolledState.credentialDigest = ipcEnrolledState->credentialDigest;
     return SUCCESS;
 }
 
@@ -1078,13 +1099,24 @@ int32_t UserAuthClientImpl::QueryReusableAuthResult(const WidgetAuthParam &authP
     ipcAuthParamInner.reuseUnlockResult.reuseMode = authParam.reuseUnlockResult.reuseMode;
     ipcAuthParamInner.reuseUnlockResult.reuseDuration = authParam.reuseUnlockResult.reuseDuration;
 
-    auto ret = proxy->QueryReusableAuthResult(ipcAuthParamInner, token);
-    if (ret != SUCCESS) {
+    auto serviceRemote = proxy->AsObject();
+    IF_FALSE_LOGE_AND_RETURN_VAL(serviceRemote != nullptr, GENERAL_ERROR);
+    if (!serviceRemote->IsProxyObject()) {
+        return proxy->QueryReusableAuthResult(ipcAuthParamInner, token);
+    }
+    auto ipcAuthParamInnerPtr = std::make_shared<IpcAuthParamInner>(std::move(ipcAuthParamInner));
+    auto tokenPtr = std::make_shared<std::vector<uint8_t>>();
+    auto ret = IpcClientUtils::RunOnResidentSync(
+        [proxy, ipcAuthParamInnerPtr, tokenPtr]() {
+            return proxy->QueryReusableAuthResult(*ipcAuthParamInnerPtr, *tokenPtr);
+        }, MAX_SYNC_WAIT_TIME_SEC);
+    if (ret == SUCCESS) {
+        token = std::move(*tokenPtr);
+    } else {
         HILOG_COMM_ERROR("query reuseable auth result: %{public}d, atl: %{public}d, isReuse: %{public}d,"
             " reuseMode: %{public}d", ret, authParam.authTrustLevel, authParam.reuseUnlockResult.isReuse,
             authParam.reuseUnlockResult.reuseMode);
     }
-
     return ret;
 }
 
