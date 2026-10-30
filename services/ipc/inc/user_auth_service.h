@@ -154,7 +154,7 @@ private:
     bool GetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain, const std::vector<uint8_t> &rootSecret,
         Attributes &extraInfo);
     std::shared_ptr<ResourceNode> GetResourseNode(AuthType authType);
-    void ProcessPinExpired(int32_t ret, const AuthParamInner &authParam, std::vector<AuthType> &validType,
+    int32_t ProcessPinExpired(int32_t ret, const AuthParamInner &authParam, std::vector<AuthType> &validType,
         ContextFactory::AuthWidgetContextPara &para);
     void ProcessWidgetSessionExclusive();
     int32_t GetPropertyHelper(int32_t userId, int32_t authType,

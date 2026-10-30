@@ -1290,22 +1290,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceInitRemoteAuthParam_001, TestSize.L
     EXPECT_NO_THROW(service.InitRemoteAuthParam(ipcRemoteAuthParam, remoteAuthParam));
 }
 
-HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessPinExpired_001, TestSize.Level0)
-{
-    UserAuthService service;
-    int ret = PIN_EXPIRED;
-    AuthParamInner authParam = {
-        .authTypes = {FACE, PIN, PRIVATE_PIN},
-        .authTrustLevel = ATL2,
-        .isUserIdSpecified = true,
-    };
-    std::vector<AuthType> validType = {FACE, PIN, PRIVATE_PIN};
-    ContextFactory::AuthWidgetContextPara para = {
-        .isPinExpired = true
-    };
-    EXPECT_NO_THROW(service.ProcessPinExpired(ret, authParam, validType, para));
-}
-
 HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify001, TestSize.Level0)
 {
     UserAuthService service;

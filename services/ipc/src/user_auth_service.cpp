@@ -1428,11 +1428,11 @@ int32_t UserAuthService::GetCallerInfo(bool isUserIdSpecified, int32_t userId,
     return SUCCESS;
 }
 
-void UserAuthService::ProcessPinExpired(int32_t ret, const AuthParamInner &authParam,
+int32_t UserAuthService::ProcessPinExpired(int32_t ret, const AuthParamInner &authParam,
     std::vector<AuthType> &validType, ContextFactory::AuthWidgetContextPara &para)
 {
     if (ret != PIN_EXPIRED) {
-        return;
+        return SUCCESS;
     }
     para.isPinExpired = true;
     bool hasPrivatePin = false;
@@ -1442,12 +1442,25 @@ void UserAuthService::ProcessPinExpired(int32_t ret, const AuthParamInner &authP
             break;
         }
     }
+    AuthType pinType = AuthType::PIN;
     if (hasPrivatePin) {
         validType.clear();
         validType.emplace_back(AuthType::PRIVATE_PIN);
+        pinType = AuthType::PRIVATE_PIN;
     } else {
         validType.emplace_back(AuthType::PIN);
     }
+    if (para.authProfileMap.find(pinType) != para.authProfileMap.end()) {
+        return SUCCESS;
+    }
+    ContextFactory::AuthProfile profile = {};
+    if (!AuthWidgetHelper::GetUserAuthProfile(para.userId, pinType, profile, authParam.credentialIdList)) {
+        IAM_LOGE("ProcessPinExpired get user auth profile failed, pinType:%{public}d",
+            static_cast<int32_t>(pinType));
+        return GENERAL_ERROR;
+    }
+    para.authProfileMap[pinType] = profile;
+    return SUCCESS;
 }
 
 int32_t UserAuthService::StartAuthWidget(AuthParamInner &authParam, WidgetParamInner &widgetParam,
@@ -1464,7 +1477,13 @@ int32_t UserAuthService::StartAuthWidget(AuthParamInner &authParam, WidgetParamI
         contextCallback->OnResult(checkRet, extraInfo);
         return checkRet;
     }
-    ProcessPinExpired(checkRet, authParam, validType, para);
+    int32_t pinExpiredRet = ProcessPinExpired(checkRet, authParam, validType, para);
+    if (pinExpiredRet != SUCCESS) {
+        IAM_LOGE("process pin expired failed");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget ProcessPinExpired fail");
+        contextCallback->OnResult(pinExpiredRet, extraInfo);
+        return pinExpiredRet;
+    }
     FilterFaceNotAvailable(para, validType);
     ProcessWidgetSessionExclusive();
 
