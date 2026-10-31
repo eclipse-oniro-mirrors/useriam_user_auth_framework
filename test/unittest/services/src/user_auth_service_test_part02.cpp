@@ -1563,6 +1563,97 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_FaceA
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
 }
+
+static void MockForPinExpiredProfile(uint64_t executorIndex)
+{
+    constexpr int32_t testRemainTimes = 5;
+    constexpr int32_t testFreezingTime = 0;
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(
+        [executorIndex](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
+            HdiCredentialInfo temp = {
+                .credentialId = 1,
+                .executorIndex = executorIndex,
+                .templateId = 3,
+                .authType = static_cast<HdiAuthType>(AuthType::PRIVATE_PIN),
+                .executorMatcher = 2,
+                .executorSensorHint = 3,
+            };
+            infos.push_back(temp);
+            return SUCCESS;
+        }
+    );
+    auto resourceNode = Common::MakeShared<MockResourceNode>();
+    EXPECT_NE(resourceNode, nullptr);
+    EXPECT_CALL(*resourceNode, GetExecutorIndex()).WillRepeatedly(Return(executorIndex));
+    ON_CALL(*resourceNode, GetProperty).WillByDefault(
+        [](const Attributes &condition, Attributes &values) {
+            values.SetInt32Value(Attributes::ATTR_PIN_SUB_TYPE, PinSubType::PIN_NUMBER);
+            values.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, testRemainTimes);
+            values.SetInt32Value(Attributes::ATTR_FREEZING_TIME, testFreezingTime);
+            return SUCCESS;
+        }
+    );
+    EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessPinExpired_001, TestSize.Level0)
+{
+    UserAuthService service;
+    int ret = PIN_EXPIRED;
+    AuthParamInner authParam = {
+        .authTypes = {FACE, PIN, PRIVATE_PIN},
+        .authTrustLevel = ATL2,
+        .isUserIdSpecified = true,
+    };
+    std::vector<AuthType> validType = {FACE, PIN, PRIVATE_PIN};
+    ContextFactory::AuthWidgetContextPara para = {
+        .userId = 100,
+        .isPinExpired = true
+    };
+    constexpr uint64_t executorIndex = 61;
+    MockForPinExpiredProfile(executorIndex);
+
+    int32_t result = service.ProcessPinExpired(ret, authParam, validType, para);
+    EXPECT_EQ(result, SUCCESS);
+    EXPECT_TRUE(para.isPinExpired);
+    ASSERT_EQ(validType.size(), 1);
+    EXPECT_EQ(validType[0], AuthType::PRIVATE_PIN);
+    auto iter = para.authProfileMap.find(AuthType::PRIVATE_PIN);
+    EXPECT_NE(iter, para.authProfileMap.end());
+    EXPECT_EQ(iter->second.pinSubType, PinSubType::PIN_NUMBER);
+    EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessPinExpired_002, TestSize.Level0)
+{
+    UserAuthService service;
+    int ret = PIN_EXPIRED;
+    AuthParamInner authParam = {
+        .authTypes = {FACE, PIN, PRIVATE_PIN},
+        .authTrustLevel = ATL2,
+        .isUserIdSpecified = true,
+    };
+    std::vector<AuthType> validType = {FACE, PIN, PRIVATE_PIN};
+    ContextFactory::AuthWidgetContextPara para = {
+        .userId = 100,
+        .isPinExpired = true
+    };
+
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_FAILURE));
+
+    int32_t result = service.ProcessPinExpired(ret, authParam, validType, para);
+    EXPECT_EQ(result, GENERAL_ERROR);
+    EXPECT_TRUE(para.isPinExpired);
+    ASSERT_EQ(validType.size(), 1);
+    EXPECT_EQ(validType[0], AuthType::PRIVATE_PIN);
+    EXPECT_EQ(para.authProfileMap.find(AuthType::PRIVATE_PIN), para.authProfileMap.end());
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
