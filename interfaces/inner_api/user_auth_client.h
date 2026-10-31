@@ -143,7 +143,15 @@ public:
     virtual int32_t SetGlobalConfigParam(const GlobalConfigParam &param) = 0;
 
     /**
-     * @brief Get global config param.
+     * @brief Set user config param.
+     *
+     * @param param The value of user config parameter.
+     * @return Return set result(0:success; other:failed).
+     */
+    virtual int32_t SetUserConfigParam(const GlobalConfigParam &param) { return SUCCESS; }
+
+    /**
+     * @brief Get user config param.
      *
      * @param userId User ID.
      * @param authType Auth type to query.
@@ -151,8 +159,8 @@ public:
      * @param value Output contains the queried GlobalConfigValue. The valid field depends on the value of type.
      * @return Return get result(0:success; other:failed).
      */
-    virtual int32_t GetGlobalConfigParam(int32_t userId, AuthType authType, GlobalConfigType type,
-        GlobalConfigValue &value) = 0;
+    virtual int32_t GetUserConfigParam(int32_t userId, AuthType authType, GlobalConfigType type,
+        GlobalConfigValue &value) { return SUCCESS; }
 
     /**
      * @brief Prepare remote authentication.

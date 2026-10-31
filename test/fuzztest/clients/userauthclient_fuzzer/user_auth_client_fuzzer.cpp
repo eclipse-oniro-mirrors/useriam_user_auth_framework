@@ -502,6 +502,16 @@ void FuzzSetGlobalConfigParam(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzSetUserConfigParam(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    GlobalConfigParam param = {};
+    param.value.pinExpiredPeriod = parcel.ReadUint64();
+    param.type = static_cast<GlobalConfigType>(parcel.ReadInt32());
+    UserAuthClientImpl::Instance().SetUserConfigParam(param);
+    IAM_LOGI("end");
+}
+
 void FuzzQueryReusableAuthResult(Parcel &parcel)
 {
     IAM_LOGI("start");
@@ -547,6 +557,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzGetPropCallbackServiceOnPropResult,
     FuzzSetPropCallbackServiceOnPropResult,
     FuzzSetGlobalConfigParam,
+    FuzzSetUserConfigParam,
     FuzzNapiBeginWidgetAuth,
     FuzzQueryReusableAuthResult,
 };
