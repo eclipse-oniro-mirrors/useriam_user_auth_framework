@@ -140,6 +140,138 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam008, TestSize.L
     IpcCommon::DeleteAllPermission();
 }
 
+HWTEST_F(UserAuthServiceTest, UserAuthServiceSetGlobalConfigParam009, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcGlobalConfigParam param = {};
+    // the global config can only be set with both the internal and the enterprise device manager permission
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::CHECK_PERMISSION_FAILED);
+    IpcCommon::DeleteAllPermission();
+
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::CHECK_PERMISSION_FAILED);
+    IpcCommon::DeleteAllPermission();
+
+    IpcCommon::AddPermission(ENTERPRISE_DEVICE_MGR);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::CHECK_PERMISSION_FAILED);
+    IpcCommon::DeleteAllPermission();
+
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    IpcCommon::AddPermission(ENTERPRISE_DEVICE_MGR);
+    param.type = PIN_EXPIRED_PERIOD;
+    param.authTypes.push_back(PIN);
+    EXPECT_EQ(service.SetGlobalConfigParam(param), ResultCode::SUCCESS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceSetUserConfigParam001, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcGlobalConfigParam param = {};
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::CHECK_SYSTEM_APP_FAILED);
+
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+
+    param.type = PIN_EXPIRED_PERIOD;
+    param.authTypes.push_back(PIN);
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+
+    param.userIds.push_back(TEST_USER_ID_1);
+    param.userIds.push_back(TEST_USER_ID_2);
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+
+    param.userIds.clear();
+    param.userIds.push_back(TEST_USER_ID_1);
+    param.type = ENABLE_STATUS;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+
+    param.type = PIN_ALGO_TYPE;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+
+    param.type = INVALID_GLOBAL_CONFIG_TYPE;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceSetUserConfigParam002, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcGlobalConfigParam param = {};
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+
+    param.userIds.push_back(TEST_USER_ID_1);
+
+    param.type = PIN_EXPIRED_PERIOD;
+    param.authTypes.push_back(FACE);
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+
+    param.authTypes.clear();
+    param.authTypes.push_back(PIN);
+    param.authTypes.push_back(FACE);
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+
+    param.authTypes.clear();
+    param.type = DISABLE_PIN_DELETION;
+    param.authTypes.push_back(FACE);
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceSetUserConfigParam003, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcGlobalConfigParam param = {};
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+
+    param.userIds.push_back(TEST_USER_ID_1);
+    param.authTypes.push_back(PIN);
+
+    param.type = PIN_EXPIRED_PERIOD;
+    param.value.pinExpiredPeriod = 1000;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+
+    param.type = DISABLE_PIN_DELETION;
+    param.value.disablePinDeletion = true;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceSetUserConfigParam004, TestSize.Level0)
+{
+    UserAuthService service;
+    IpcGlobalConfigParam param = {};
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+
+    param.userIds.push_back(0);
+    param.authTypes.push_back(PIN);
+
+    // the configType whitelist is removed, all the config types are handed over to the engine layer
+    param.type = PIN_EXPIRED_PERIOD;
+    param.value.pinExpiredPeriod = 1000;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::CAPABILITY_NOT_SUPPORTED);
+
+    param.type = ENABLE_STATUS;
+    param.value.enableStatus = true;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::CAPABILITY_NOT_SUPPORTED);
+
+    param.type = PIN_ALGO_TYPE;
+    param.value.pinAlgoType = PinEncrypAlgoType::AES_GCM;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::CAPABILITY_NOT_SUPPORTED);
+
+    param.type = DISABLE_PIN_DELETION;
+    param.value.disablePinDeletion = true;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::CAPABILITY_NOT_SUPPORTED);
+
+    param.type = INVALID_GLOBAL_CONFIG_TYPE;
+    EXPECT_EQ(service.SetUserConfigParam(param), ResultCode::INVALID_PARAMETERS);
+    IpcCommon::DeleteAllPermission();
+}
+
 HWTEST_F(UserAuthServiceTest, UserAuthServiceRegisterRemoteAuthCallback001, TestSize.Level0)
 {
     UserAuthService service;

@@ -83,7 +83,8 @@ public:
     int32_t UnregisterUserRecognitionEventListener(
         const std::shared_ptr<UserRecognitionEventListener> &listener) override;
     int32_t SetGlobalConfigParam(const GlobalConfigParam &param) override;
-    int32_t GetGlobalConfigParam(int32_t userId, AuthType authType, GlobalConfigType type,
+    int32_t SetUserConfigParam(const GlobalConfigParam &param) override;
+    int32_t GetUserConfigParam(int32_t userId, AuthType authType, GlobalConfigType type,
         GlobalConfigValue &value) override;
     int32_t PrepareRemoteAuth(const std::string &networkId,
         const std::shared_ptr<PrepareRemoteAuthCallback> &callback) override;

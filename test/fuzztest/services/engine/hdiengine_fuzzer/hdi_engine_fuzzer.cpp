@@ -453,6 +453,15 @@ void FuzzSetGlobalConfigParam(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzSetUserConfigParam(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    EngGlobalConfigParam param;
+    FillEngGlobalConfigParam(parcel, param);
+    (void)GetUserAuthEngine().SetUserConfigParam(param);
+    IAM_LOGI("end");
+}
+
 void FuzzVerifyAuthToken(Parcel &parcel)
 {
     IAM_LOGI("start");
@@ -571,6 +580,7 @@ FuzzFunc g_FuzzFuncs[] = {
     FuzzPrepareRemoteAuth,
     FuzzGetEnrolledState,
     FuzzSetGlobalConfigParam,
+    FuzzSetUserConfigParam,
     FuzzVerifyAuthToken,
     FuzzGetValidSolution,
     FuzzCheckReuseUnlockResult,

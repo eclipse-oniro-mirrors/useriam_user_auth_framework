@@ -577,7 +577,17 @@ int32_t UserAuthClientImpl::SetGlobalConfigParam(const GlobalConfigParam &param)
     return proxy->SetGlobalConfigParam(ipcGlobalConfigParam);
 }
 
-int32_t UserAuthClientImpl::GetGlobalConfigParam(int32_t userId, AuthType authType, GlobalConfigType type,
+int32_t UserAuthClientImpl::SetUserConfigParam(const GlobalConfigParam &param)
+{
+    IAM_LOGI("start");
+    auto proxy = GetProxy();
+    IF_FALSE_LOGE_AND_RETURN_VAL(proxy, GENERAL_ERROR);
+    IpcGlobalConfigParam ipcUserConfigParam = {};
+    InitIpcGlobalConfigParam(param, ipcUserConfigParam);
+    return proxy->SetUserConfigParam(ipcUserConfigParam);
+}
+
+int32_t UserAuthClientImpl::GetUserConfigParam(int32_t userId, AuthType authType, GlobalConfigType type,
     GlobalConfigValue &value)
 {
     IAM_LOGI("start, userId=%{public}d, authType=%{public}d, type=%{public}d", userId,
@@ -587,14 +597,14 @@ int32_t UserAuthClientImpl::GetGlobalConfigParam(int32_t userId, AuthType authTy
 
     IpcGlobalConfigValue ipcGlobalConfigValue = {};
     int32_t funcResult = SUCCESS;
-    int32_t result = proxy->GetGlobalConfigParam(userId, static_cast<int32_t>(authType),
+    int32_t result = proxy->GetUserConfigParam(userId, static_cast<int32_t>(authType),
         static_cast<int32_t>(type), ipcGlobalConfigValue, funcResult);
     if (result != SUCCESS) {
-        IAM_LOGE("GetGlobalConfigParam ipc call return fail, result:%{public}d", result);
+        IAM_LOGE("GetUserConfigParam ipc call return fail, result:%{public}d", result);
         return result;
     }
     if (funcResult != SUCCESS) {
-        IAM_LOGI("GetGlobalConfigParam service call return fail, ret:%{public}d", funcResult);
+        IAM_LOGI("GetUserConfigParam service call return fail, ret:%{public}d", funcResult);
         return funcResult;
     }
 

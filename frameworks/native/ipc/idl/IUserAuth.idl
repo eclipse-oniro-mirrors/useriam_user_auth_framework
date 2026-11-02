@@ -70,7 +70,9 @@ interface OHOS.UserIam.UserAuth.IUserAuth {
 
     void SetGlobalConfigParam([in] IpcGlobalConfigParam ipcGlobalConfigParam);
 
-    int GetGlobalConfigParam([in] int userId, [in] int authType, [in] int type,
+    void SetUserConfigParam([in] IpcGlobalConfigParam ipcUserConfigParam);
+
+    int GetUserConfigParam([in] int userId, [in] int authType, [in] int type,
         [out] IpcGlobalConfigValue ipcGlobalConfigValue);
 
     void PrepareRemoteAuth([in] String networkId, [in] IIamCallback userAuthCallback);

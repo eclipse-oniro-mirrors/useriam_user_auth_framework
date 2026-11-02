@@ -464,7 +464,14 @@ int32_t HdiEngineImpl::SetGlobalConfigParam(const EngGlobalConfigParam &param)
     return HdfCodeToResult(hdi->SetGlobalConfigParam(EngToHdi(param)));
 }
 
-int32_t HdiEngineImpl::GetGlobalConfigParam(int32_t userId, int32_t authType, int32_t type,
+int32_t HdiEngineImpl::SetUserConfigParam(const EngGlobalConfigParam &param)
+{
+    IAM_LOGI("start");
+    static_cast<void>(param);
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
+int32_t HdiEngineImpl::GetUserConfigParam(int32_t userId, int32_t authType, int32_t type,
     EngGlobalConfigValue &value)
 {
     IAM_LOGI("start, userId:%{public}d, authType:%{public}d", userId, authType);
