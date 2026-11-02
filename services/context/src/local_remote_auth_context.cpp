@@ -35,8 +35,8 @@ constexpr uint32_t AUTH_TIME_OUT_MS = 3 * 60 * 1000; // 3min
 }
 
 LocalRemoteAuthContext::LocalRemoteAuthContext(uint64_t contextId, std::shared_ptr<Authentication> auth,
-    LocalRemoteAuthContextParam &param, std::shared_ptr<ContextCallback> callback)
-    : SimpleAuthContext("LocalRemoteAuthContext", contextId, auth, callback),
+    LocalRemoteAuthContextParam &param, bool isPrimaryContext, std::shared_ptr<ContextCallback> callback)
+    : SimpleAuthContext("LocalRemoteAuthContext", contextId, auth, isPrimaryContext, callback),
       collectorNetworkId_(param.collectorNetworkId)
 {
 }

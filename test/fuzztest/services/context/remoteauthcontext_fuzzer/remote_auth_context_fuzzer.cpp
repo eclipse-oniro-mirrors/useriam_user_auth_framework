@@ -86,15 +86,15 @@ void ContextAppStateObserverFuzzTest(Parcel &parcel)
         static_cast<OperationType>(OPERATION_TYPE));
     uint64_t contextId = parcel.ReadUint64();
 
-    contextAppStateObserver->SubscribeAppState(contextCallback, contextId);
+    contextAppStateObserver->SubscribeAppState(contextId, contextCallback);
     std::string callerName = parcel.ReadString();
     if (callerName.empty()) {
         return;
     }
     contextCallback->SetTraceCallerName(callerName);
-    contextAppStateObserver->SubscribeAppState(contextCallback, contextId);
+    contextAppStateObserver->SubscribeAppState(contextId, contextCallback);
 
-    contextAppStateObserver->UnSubscribeAppState();
+    contextAppStateObserver->UnSubscribeAppState(contextId);
 
     std::string bundleName = parcel.ReadString();
     if (bundleName.empty()) {
@@ -134,7 +134,7 @@ void RemoteAuthContextFuzzTest(Parcel &parcel)
     param.collectorNetworkId = parcel.ReadString();
     param.executorInfoMsg = {};
     auto remoteAuthContext = MakeShared<RemoteAuthContext>(
-        newContextId, auth, param, contextCallback
+        newContextId, auth, param, false, contextCallback
     );
 
     remoteAuthContext->GetContextType();

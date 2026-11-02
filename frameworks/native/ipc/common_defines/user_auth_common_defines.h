@@ -77,6 +77,8 @@ struct AuthParamInner {
     std::vector<uint64_t> credentialIdList;
     /** Remote token id */
     std::optional<uint32_t> remoteTokenId;
+    /** Additional info */
+    std::string additionalInfo;
 };
 
 /**

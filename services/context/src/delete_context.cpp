@@ -30,7 +30,8 @@ namespace UserIam {
 namespace UserAuth {
 DeleteContext::DeleteContext(uint64_t contextId, std::shared_ptr<Deletion> deletion,
     std::shared_ptr<ContextCallback> callback)
-    : BaseContext("Delete", contextId, callback, false), deletion_(deletion)
+    : BaseContext("Delete", contextId, false, true, callback),
+      deletion_(deletion)
 {
 }
 

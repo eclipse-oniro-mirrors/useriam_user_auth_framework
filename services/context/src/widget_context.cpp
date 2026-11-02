@@ -25,7 +25,7 @@
 #include "ability_connect_callback.h"
 #include "accesstoken_kit.h"
 #include "auth_widget_helper.h"
-#include "context_helper.h"
+#include "context_arbitration_policy.h"
 #include "context_pool.h"
 #include "context_death_recipient.h"
 #include "hisysevent_adapter.h"
@@ -35,6 +35,7 @@
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
+#include "iam_scope_guard.h"
 #include "iam_time.h"
 #include "parameters.h"
 #include "relative_timer.h"
@@ -84,16 +85,17 @@ static constexpr uint32_t TERMINATE_TIMER_LEN_MS = 1000;
 std::atomic_uint32_t WidgetContext::faceAlgoCallerSeq_ = 0;
 
 WidgetContext::WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
-    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
+    bool isPrimaryContext, std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
     const sptr<IRemoteAuthCallback> &remoteAuthCallback)
-    : contextId_(contextId), description_("UserAuthWidget"), callerCallback_(callback), hasStarted_(false),
-    latestError_(ResultCode::GENERAL_ERROR), para_(para), schedule_(nullptr), modalCallback_(modalCallback),
-    remoteAuthCallback_(remoteAuthCallback), connection_(nullptr)
+    : contextId_(contextId), description_("UserAuthWidget"), callerCallback_(callback),
+    isPrimaryContext_(isPrimaryContext), latestError_(ResultCode::GENERAL_ERROR), para_(para),
+    schedule_(nullptr), modalCallback_(modalCallback), remoteAuthCallback_(remoteAuthCallback),
+    connection_(nullptr)
 {
     callback->SetTraceIsWidgetAuth(true);
     AddDeathRecipient(callerCallback_, contextId_);
     if (!para.isBackgroundApplication) {
-        SubscribeAppState(callerCallback_, contextId_);
+        SubscribeAppState(contextId_, callerCallback_);
     }
     LoadConfigJsonBuffer(jsonBuf_);
 }
@@ -103,27 +105,96 @@ WidgetContext::~WidgetContext()
     IAM_LOGD("release WidgetContext");
     StopOnTerminateTimer();
     RemoveDeathRecipient(callerCallback_);
-    UnSubscribeAppState();
+    UnSubscribeAppState(contextId_);
     UninitFaceAlgo();
+}
+
+bool WidgetContext::AdvancePhaseLocked(Phase next)
+{
+    if (next <= phase_) {
+        IAM_LOGD("%{public}s keep phase %{public}d, ignore %{public}d", description_.c_str(),
+            static_cast<int32_t>(phase_), static_cast<int32_t>(next));
+        return false;
+    }
+    IAM_LOGI("widget context: ****%{public}hx phase %{public}d -> %{public}d",
+        static_cast<uint16_t>(contextId_), static_cast<int32_t>(phase_), static_cast<int32_t>(next));
+    phase_ = next;
+    return true;
 }
 
 bool WidgetContext::Start()
 {
     IAM_LOGD("%{public}s start", description_.c_str());
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (hasStarted_) {
-        IAM_LOGI("%{public}s context has started, cannot start again", description_.c_str());
-        return false;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        if (phase_ != Phase::NOT_STARTED) {
+            if (phase_ >= Phase::STOPPING) {
+                // stop already took the seat: absorb the stale start instead of reporting a start failure
+                IAM_LOGI("%{public}s start absorbed, phase: %{public}d", description_.c_str(),
+                    static_cast<int32_t>(phase_));
+                return true;
+            }
+            SetLatestError(ResultCode::GENERAL_ERROR);
+            IAM_LOGI("%{public}s cannot start again, phase: %{public}d", description_.c_str(),
+                static_cast<int32_t>(phase_));
+            return false;
+        }
+        Mark(StageId::S_CONTEXT_START);
+        if (!AdvancePhaseLocked(Phase::RUNNING)) {
+            return false;
+        }
     }
-    Mark(StageId::S_CONTEXT_START);
-    hasStarted_ = true;
     return OnStart();
+}
+
+void WidgetContext::OnStartFailed(int32_t errorCode)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    IAM_LOGE("%{public}s start fail, errorCode:%{public}d", description_.c_str(), errorCode);
+    if (!AdvancePhaseLocked(Phase::RESULT_DELIVERED)) {
+        return;
+    }
+    DeliverResultLocked("WidgetContext start context fail", errorCode, Attributes {});
+    EndLocked();
 }
 
 bool WidgetContext::Stop()
 {
     IAM_LOGI("%{public}s start", description_.c_str());
+    Mark(StageId::S_CANCEL);
+    bool stoppedBeforeStart = false;
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        if (phase_ == Phase::NOT_STARTED) {
+            stoppedBeforeStart = AdvancePhaseLocked(Phase::STOPPING);
+        }
+    }
+    if (stoppedBeforeStart) {
+        OnStartFailed(ResultCode::CANCELED);
+        return true;
+    }
     return OnStop();
+}
+
+bool WidgetContext::CanStart(const std::vector<std::weak_ptr<Context>> &predecessors) const
+{
+    return ContextAdmissionPolicy::CanStart(*this, predecessors);
+}
+
+bool WidgetContext::IsPrimaryContext() const
+{
+    return isPrimaryContext_;
+}
+
+PreemptDecision WidgetContext::GetPreemptDecision(const Context &newRequest) const
+{
+    if (newRequest.GetContextType() != WIDGET_AUTH_CONTEXT) {
+        return PreemptDecision::KEEP_RUNNING;
+    }
+    IAM_LOGI("widget session ****%{public}hx superseded by newer widget session ****%{public}hx",
+        static_cast<uint16_t>(GetContextId()),
+        static_cast<uint16_t>(newRequest.GetContextId()));
+    return PreemptDecision::STOP_NOW;
 }
 
 uint64_t WidgetContext::GetContextId() const
@@ -154,6 +225,11 @@ int32_t WidgetContext::GetUserId() const
 int32_t WidgetContext::GetAuthType() const
 {
     return INVALID_AUTH_TYPE;
+}
+
+std::vector<int32_t> WidgetContext::GetAuthTypeList() const
+{
+    return std::vector<int32_t>(para_.authTypeList.begin(), para_.authTypeList.end());
 }
 
 std::string WidgetContext::GetCallerName() const
@@ -187,8 +263,6 @@ std::shared_ptr<ContextCallback> WidgetContext::GetAuthContextCallback(AuthType 
     auto widgetCallback = ContextCallback::NewInstance(iamCallback, TRACE_AUTH_USER_SECURITY);
     if (widgetCallback == nullptr) {
         IAM_LOGE("failed to construct context callback");
-        Attributes extraInfo;
-        iamCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo.Serialize());
         return nullptr;
     }
     widgetCallback->SetTraceCallerName(para_.callerName);
@@ -199,22 +273,12 @@ std::shared_ptr<ContextCallback> WidgetContext::GetAuthContextCallback(AuthType 
     return widgetCallback;
 }
 
-std::shared_ptr<Context> WidgetContext::BuildTask(const std::vector<uint8_t> &challenge,
-    AuthType authType, AuthTrustLevel authTrustLevel, bool endAfterFirstFail, AuthIntent authIntent)
+Authentication::AuthenticationPara WidgetContext::BuildAuthenticationPara(const std::vector<uint8_t> &challenge,
+    AuthType authType, AuthTrustLevel authTrustLevel, bool endAfterFirstFail, AuthIntent authIntent) const
 {
-    IF_FALSE_LOGE_AND_RETURN_VAL(callerCallback_ != nullptr, nullptr);
-    auto userId = para_.userId;
-    auto tokenId = WidgetClient::Instance().GetAuthTokenId();
-    IAM_LOGI("Real userId: %{public}d, Real tokenId: %{public}s", userId, GET_MASKED_STRING(tokenId).c_str());
-    sptr<IIamCallback> iamCallback(new (std::nothrow) WidgetContextCallbackImpl(weak_from_this(),
-        static_cast<int32_t>(authType)));
-    IF_FALSE_LOGE_AND_RETURN_VAL(iamCallback != nullptr, nullptr);
-    auto widgetCallback = GetAuthContextCallback(authType, authTrustLevel, iamCallback);
-    IF_FALSE_LOGE_AND_RETURN_VAL(widgetCallback != nullptr, nullptr);
-
     Authentication::AuthenticationPara para = {};
-    para.tokenId = tokenId;
-    para.userId = userId;
+    para.tokenId = WidgetClient::Instance().GetAuthTokenId();
+    para.userId = para_.userId;
     para.authType = authType;
     para.atl = authTrustLevel;
     para.challenge = challenge;
@@ -229,22 +293,71 @@ std::shared_ptr<Context> WidgetContext::BuildTask(const std::vector<uint8_t> &ch
     para.title = para_.widgetParam.title;
     para.authScene = AuthScene::AUTH_SCENE_WIDGET_AUTH_NO_DISTURB;
     para.callerPermissions = para_.callerPermissions;
-    auto context = ContextFactory::CreateSimpleAuthContext(para, widgetCallback, true);
-    if (context == nullptr || !ContextPool::Instance().Insert(context)) {
-        IAM_LOGE("failed to insert context");
-        Attributes extraInfo;
-        widgetCallback->SetTraceAuthFinishReason("WidgetContext BuildTask insert context fail");
+    return para;
+}
+
+void WidgetContext::ReportChildError(const std::shared_ptr<ContextCallback> &widgetCallback,
+    const sptr<IIamCallback> &iamCallback, const std::string &reason)
+{
+    Attributes extraInfo;
+    if (widgetCallback != nullptr) {
+        widgetCallback->SetTraceAuthFinishReason(reason);
         widgetCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo);
+    } else if (iamCallback != nullptr) {
+        iamCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo.Serialize());
+    } else {
+        OnChildTerminated();
+    }
+}
+
+std::shared_ptr<Context> WidgetContext::BuildTask(const std::vector<uint8_t> &challenge,
+    AuthType authType, AuthTrustLevel authTrustLevel, bool endAfterFirstFail, AuthIntent authIntent)
+{
+    sptr<IIamCallback> iamCallback = nullptr;
+    std::shared_ptr<ContextCallback> widgetCallback = nullptr;
+    std::string reason;
+    Common::IamScopeGuard failGuard([&]() {
+        ReportChildError(widgetCallback, iamCallback, reason);
+    });
+    IF_FALSE_LOGE_AND_RETURN_VAL(callerCallback_ != nullptr, nullptr);
+    IAM_LOGI("Real userId: %{public}d, Real tokenId: %{public}s", para_.userId,
+        GET_MASKED_STRING(WidgetClient::Instance().GetAuthTokenId()).c_str());
+    iamCallback = new (std::nothrow) WidgetContextCallbackImpl(weak_from_this(), static_cast<int32_t>(authType));
+    IF_FALSE_LOGE_AND_RETURN_VAL(iamCallback != nullptr, nullptr);
+    widgetCallback = GetAuthContextCallback(authType, authTrustLevel, iamCallback);
+    if (widgetCallback == nullptr) {
+        IAM_LOGE("widgetCallback is null");
+        reason = "WidgetContext BuildTask create callback fail";
+        return nullptr;
+    }
+
+    auto para = BuildAuthenticationPara(challenge, authType, authTrustLevel, endAfterFirstFail, authIntent);
+    auto context = ContextFactory::CreateSimpleAuthContext(para, !para_.isBackgroundApplication, false,
+        widgetCallback);
+    if (context == nullptr) {
+        IAM_LOGE("create simple auth context fail");
+        reason = "WidgetContext BuildTask create context fail";
         return nullptr;
     }
     widgetCallback->SetTraceAuthContextId(context->GetContextId());
-    widgetCallback->SetCleaner(ContextHelper::Cleaner(context));
+    widgetCallback->SetCleaner(ContextPool::Cleaner(context));
+    if (!ContextPool::Instance().Schedule(context)) {
+        IAM_LOGE("failed to schedule context");
+        reason = "WidgetContext BuildTask schedule context fail";
+        return nullptr;
+    }
+    failGuard.Cancel();
     return context;
 }
 
 bool WidgetContext::OnStart()
 {
     IAM_LOGI("%{public}s start", description_.c_str());
+    if (!RefreshAuthProfiles()) {
+        IAM_LOGE("refresh auth profiles fail");
+        SetLatestError(ResultCode::GENERAL_ERROR);
+        return false;
+    }
     if (!BuildSchedule()) {
         IAM_LOGE("failed to create widget schedule");
         return false;
@@ -256,6 +369,7 @@ bool WidgetContext::OnStart()
     WidgetClient::Instance().SetWidgetSchedule(GetContextId(), schedule_);
     WidgetClient::Instance().SetChallenge(para_.challenge);
     WidgetClient::Instance().SetCallingBundleName(GetCallingBundleName());
+    InitSessionProfiles();
     if (isDirectAuth_) {
         IAM_LOGI("direct auth mode, skip widget UI, authTypeList size: %{public}zu",
             para_.authTypeList.size());
@@ -290,18 +404,21 @@ void WidgetContext::OnResult(int32_t resultCode, const std::shared_ptr<Attribute
 
 bool WidgetContext::OnStop()
 {
-    // response app.cancel()
     IAM_LOGI("%{public}s start", description_.c_str());
     End(ResultCode::CANCELED);
     WidgetClient::Instance().ClearSchedule(contextId_);
     return true;
 }
 
-void WidgetContext::AuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult)
+void WidgetContext::OnChildAuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult)
 {
     HILOG_COMM_INFO("widget context: ****%{public}hx recv task result: %{public}d, authType: %{public}d",
         static_cast<uint16_t>(contextId_), resultCode, authType);
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    Common::IamScopeGuard childDoneGuard([this]() { OnChildTerminated(); });
+    if (phase_ == Phase::RELEASED) {
+        return;
+    }
     int32_t remainTimes = -1;
     int32_t freezingTime = -1;
     if (!finalResult.GetInt32Value(Attributes::ATTR_REMAIN_TIMES, remainTimes)) {
@@ -312,14 +429,14 @@ void WidgetContext::AuthResult(int32_t resultCode, int32_t authType, const Attri
     }
     AuthType authTypeTmp = static_cast<AuthType>(authType);
     WidgetClient::Instance().ReportWidgetResult(resultCode, authTypeTmp, freezingTime, remainTimes,
-        para_.skipLockedBiometricAuth);
+        para_.skipLockedBiometricAuth, contextId_, para_.challenge);
     IF_FALSE_LOGE_AND_RETURN(callerCallback_ != nullptr);
     callerCallback_->SetTraceAuthType(authTypeTmp);
     IAM_LOGD("call schedule:");
     ProcAuthResult(resultCode, authTypeTmp, freezingTime, finalResult);
 }
 
-void WidgetContext::AuthTipInfo(int32_t tipType, int32_t authType, const Attributes &extraInfo)
+void WidgetContext::OnChildAuthTip(int32_t tipType, int32_t authType, const Attributes &extraInfo)
 {
     HILOG_COMM_INFO("widget context: ****%{public}hx recv tip: %{public}d, authType: %{public}d",
         static_cast<uint16_t>(contextId_), tipType, authType);
@@ -328,7 +445,7 @@ void WidgetContext::AuthTipInfo(int32_t tipType, int32_t authType, const Attribu
     bool getTipInfoRet = extraInfo.GetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, tipInfo);
     IF_FALSE_LOGE_AND_RETURN(getTipInfoRet);
     WidgetClient::Instance().ReportWidgetTip(tipType, static_cast<AuthType>(authType), tipInfo,
-        para_.skipLockedBiometricAuth);
+        para_.skipLockedBiometricAuth, contextId_);
     ProcAuthTipInfo(tipType, static_cast<AuthType>(authType), tipInfo);
 }
 
@@ -336,6 +453,14 @@ void WidgetContext::AuthTipInfo(int32_t tipType, int32_t authType, const Attribu
 bool WidgetContext::LaunchWidget()
 {
     IAM_LOGI("launch widget");
+    {
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
+        if (phase_ >= Phase::STOPPING) {
+            IAM_LOGE("widget context: ****%{public}hx stopping, skip launch",
+                static_cast<uint16_t>(contextId_));
+            return false;
+        }
+    }
     WidgetRotatePara widgetRotatePara;
     widgetRotatePara.isReload = false;
     widgetRotatePara.needRotate = 0;
@@ -391,20 +516,17 @@ void WidgetContext::ExecuteAuthList(const std::set<AuthType> &authTypeList, bool
 {
     IAM_LOGI("execute auth list, size: %{public}zu", authTypeList.size());
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (phase_ >= Phase::STOPPING) {
+        IAM_LOGI("widget context: ****%{public}hx already stopping, skip execute auth list, phase: %{public}d",
+            static_cast<uint16_t>(contextId_), static_cast<int32_t>(phase_));
+        return;
+    }
     for (auto &authType : authTypeList) {
+        activeChildCount_++;
         auto task = BuildTask(para_.challenge, authType, para_.atl, endAfterFirstFail, authIntent);
         if (task == nullptr) {
             IAM_LOGE("failed to create task, authType: %{public}s", AuthType2Str(authType).c_str());
             continue;
-        }
-        if (!task->Start()) {
-            HILOG_COMM_ERROR("widget context: ****%{public}hx execute auth list failed, authType: %{public}d,"
-                " atl: %{public}d, endAfterFirstFail: %{public}d, authIntent: %{public}d",
-                static_cast<uint16_t>(contextId_), authType, para_.atl, endAfterFirstFail, authIntent);
-            static const int32_t INVALID_VAL = -1;
-            WidgetClient::Instance().ReportWidgetResult(task->GetLatestError(), authType, INVALID_VAL, INVALID_VAL,
-                para_.skipLockedBiometricAuth);
-            return;
         }
         if (authType == FACE) {
             faceReload_ = 1;
@@ -412,7 +534,7 @@ void WidgetContext::ExecuteAuthList(const std::set<AuthType> &authTypeList, bool
         }
         TaskInfo taskInfo {
             .authType = authType,
-            .task = task
+            .taskId = task->GetContextId()
         };
         runTaskInfoList_.push_back(taskInfo);
     }
@@ -508,20 +630,17 @@ void WidgetContext::StopAuthList(const std::vector<AuthType> &authTypeList)
             runTaskInfoList_.end(), [authType] (const TaskInfo &taskInfo) {
             return (taskInfo.authType == authType);
         });
-        if (it != runTaskInfoList_.end()) {
-            if (it->task == nullptr) {
-                IAM_LOGE("task is nullptr, authType: %{public}d", static_cast<int32_t>(authType));
-                runTaskInfoList_.erase(it);
-                continue;
-            }
-            it->task->Stop();
-            IAM_LOGI("stop task, authType: %{public}d", static_cast<int32_t>(authType));
-            runTaskInfoList_.erase(it);
+        if (it == runTaskInfoList_.end()) {
+            continue;
         }
+        uint64_t taskId = it->taskId;
+        runTaskInfoList_.erase(it);
+        IAM_LOGI("stop task, authType: %{public}d", static_cast<int32_t>(authType));
+        ContextPool::Instance().Cancel(taskId);
     }
 }
 
-void WidgetContext::SuccessAuth(AuthType authType)
+void WidgetContext::OnAuthSuccess(AuthType authType)
 {
     IAM_LOGI("success auth. authType:%{public}d", static_cast<int32_t>(authType));
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -534,7 +653,7 @@ void WidgetContext::SuccessAuth(AuthType authType)
     End(ResultCode::SUCCESS);
 }
 
-void WidgetContext::FailAuth(AuthType authType)
+void WidgetContext::OnAuthFail(AuthType authType)
 {
     IAM_LOGI("fail auth. authType:%{public}d", static_cast<int32_t>(authType));
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -549,7 +668,8 @@ int32_t WidgetContext::ConnectExtensionAbility(const AAFwk::Want &want, const st
         IAM_LOGE("invalid connection_");
         return ERR_INVALID_OPERATION;
     }
-    connection_ = sptr<UIExtensionAbilityConnection>(new (std::nothrow) UIExtensionAbilityConnection(commandStr));
+    connection_ = sptr<UIExtensionAbilityConnection>(new (std::nothrow)
+        UIExtensionAbilityConnection(commandStr, GetContextId()));
     if (connection_ == nullptr) {
         IAM_LOGE("new connection error.");
         return ERR_NO_MEMORY;
@@ -646,22 +766,15 @@ bool WidgetContext::IsWidgetLaunchAllowed() const
     return allow;
 }
 
-void WidgetContext::ReportResult(ResultCode resultCode)
-{
-    Attributes attr;
-    callerCallback_->OnResult(resultCode, attr);
-    if (remoteAuthCallback_ != nullptr) {
-        remoteAuthCallback_->OnRemoteAuthResult(para_.challenge, resultCode, attr.Serialize());
-    }
-    UnSubscribeAppState();
-}
-
 bool WidgetContext::RefreshAuthProfiles()
 {
     for (auto &authType : para_.authTypeList) {
         ContextFactory::AuthProfile profile;
-        if (!AuthWidgetHelper::GetUserAuthProfile(para_.userId, authType, profile, para_.credentialIdList)) {
-            IAM_LOGE("get user authType:%{public}d profile failed", static_cast<int32_t>(authType));
+        int32_t ret = AuthWidgetHelper::GetUserAuthProfile(para_.userId, authType, profile,
+            para_.credentialIdList);
+        if (ret != SUCCESS && ret != ResultCode::NOT_ENROLLED) {
+            IAM_LOGE("get user authType:%{public}d profile failed, ret: %{public}d",
+                static_cast<int32_t>(authType), ret);
             return false;
         }
         para_.authProfileMap[authType] = profile;
@@ -679,13 +792,13 @@ bool WidgetContext::ConnectExtension(const WidgetRotatePara &widgetRotatePara)
 
     if (IsSingleFaceOrFingerPrintAuth() && para_.skipLockedBiometricAuth &&
         para_.authProfileMap[para_.authTypeList[0]].remainTimes == 0) {
-        ReportResult(ResultCode::LOCKED);
+        End(ResultCode::LOCKED);
         return true;
     }
 
     if (!IsWidgetLaunchAllowed()) {
         IAM_LOGI("widget launch canceled: caller not allowed on lock screen");
-        ReportResult(ResultCode::CANCELED);
+        End(ResultCode::CANCELED);
         return true;
     }
 
@@ -747,12 +860,12 @@ bool WidgetContext::DisconnectExtension()
         return true;
     }
     // Default as modal system release.
+    if (schedule_ != nullptr) {
+        schedule_->StopSchedule();
+    }
     if (connection_ == nullptr) {
         IAM_LOGE("invalid connection handle");
         return false;
-    }
-    if (schedule_ != nullptr) {
-        schedule_->StopSchedule();
     }
     connection_->ReleaseUIExtensionComponent();
     ErrCode ret = AAFwk::ExtensionManagerClient::GetInstance().DisconnectAbility(connection_);
@@ -798,10 +911,8 @@ bool WidgetContext::HandleAuthSuccessResult(Attributes &attr)
     return true;
 
 EXIT:
-    callerCallback_->OnResult(ResultCode::GENERAL_ERROR, attr);
-    if (remoteAuthCallback_ != nullptr) {
-        remoteAuthCallback_->OnRemoteAuthResult(para_.challenge, ResultCode::GENERAL_ERROR, attr.Serialize());
-    }
+    (void)AdvancePhaseLocked(Phase::RESULT_DELIVERED);
+    DeliverResultLocked("", ResultCode::GENERAL_ERROR, attr);
     return false;
 }
 
@@ -809,48 +920,112 @@ void WidgetContext::End(const ResultCode &resultCode)
 {
     HILOG_COMM_INFO("widget context: ****%{public}hx in End, resultCode: %{public}d",
         static_cast<uint16_t>(contextId_), static_cast<int32_t>(resultCode));
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (!AdvancePhaseLocked(Phase::STOPPING)) {
+        IAM_LOGI("widget context: ****%{public}hx already ended, phase: %{public}d, ignore resultCode %{public}d",
+            static_cast<uint16_t>(contextId_), static_cast<int32_t>(phase_), static_cast<int32_t>(resultCode));
+        return;
+    }
     if (resultCode == ResultCode::CANCELED) {
         Mark(StageId::S_CANCEL);
     }
     StopAllRunTask(resultCode);
+    DeliverEndLocked(resultCode);
+    TryEndLocked();
+}
+
+void WidgetContext::DeliverEndLocked(const ResultCode &resultCode)
+{
     IF_FALSE_LOGE_AND_RETURN(callerCallback_ != nullptr);
+    if (!AdvancePhaseLocked(Phase::RESULT_DELIVERED)) {
+        return;
+    }
     Attributes attr;
     if (resultCode == ResultCode::SUCCESS || authResultInfo_.token.size() != 0) {
         if (!HandleAuthSuccessResult(attr)) {
-            goto EXIT;
+            StartOnTerminateTimer();
+            UnSubscribeAppState(contextId_);
+            return;
         }
     }
-    callerCallback_->OnResult(resultCode, attr);
+    DeliverResultLocked("", resultCode, attr);
+    if (connection_ != nullptr) {
+        connection_->setIsNormalEnd(true);
+    } else {
+        IAM_LOGE("invalid connection handle");
+    }
+    StartOnTerminateTimer();
+    UnSubscribeAppState(contextId_);
+}
+
+void WidgetContext::DeliverResultLocked(const std::string &reason, int32_t resultCode, const Attributes &attr)
+{
+    if (callerCallback_ != nullptr) {
+        if (!reason.empty()) {
+            callerCallback_->SetTraceAuthFinishReason(reason);
+        }
+        callerCallback_->OnResult(resultCode, attr);
+    }
     if (remoteAuthCallback_ != nullptr) {
         remoteAuthCallback_->OnRemoteAuthResult(para_.challenge, resultCode, attr.Serialize());
     }
-    if (connection_ == nullptr) {
-        IAM_LOGE("invalid connection handle");
-        goto EXIT;
+}
+
+void WidgetContext::OnChildTerminated()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (activeChildCount_ > 0) {
+        activeChildCount_--;
     }
-    connection_->setIsNormalEnd(true);
-EXIT:
-    StartOnTerminateTimer();
-    UnSubscribeAppState();
+    if (activeChildCount_ != 0) {
+        return;
+    }
+    TryEndLocked();
+}
+
+void WidgetContext::TryEndLocked()
+{
+    if (phase_ == Phase::RELEASED || !scheduleReleased_) {
+        return;
+    }
+    if (activeChildCount_ > 0 && phase_ < Phase::RESULT_DELIVERED) {
+        IAM_LOGI("widget context: ****%{public}hx defers release, active children: %{public}u",
+            static_cast<uint16_t>(contextId_), activeChildCount_);
+        StartOnTerminateTimer();
+        return;
+    }
+    IAM_LOGI("widget context: ****%{public}hx settled, delete", static_cast<uint16_t>(contextId_));
+    EndLocked();
 }
 
 void WidgetContext::StopAllRunTask(const ResultCode &resultCode)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    for (auto &taskInfo : runTaskInfoList_) {
+    auto taskInfoList = std::move(runTaskInfoList_);
+    for (auto &taskInfo : taskInfoList) {
         IAM_LOGD("stop task");
-        if (taskInfo.task == nullptr) {
-            IAM_LOGE("task is null");
-            continue;
-        }
-        taskInfo.task->Stop();
+        ContextPool::Instance().Cancel(taskInfo.taskId);
     }
-    runTaskInfoList_.clear();
     if (resultCode != ResultCode::SUCCESS) {
         IAM_LOGI("Try to disconnect extension");
         if (!DisconnectExtension()) {
             IAM_LOGE("failed to release launch widget.");
         }
+    }
+}
+
+void WidgetContext::InitSessionProfiles()
+{
+    auto pinIt = para_.authProfileMap.find(AuthType::PIN);
+    if (pinIt == para_.authProfileMap.end()) {
+        pinIt = para_.authProfileMap.find(AuthType::PRIVATE_PIN);
+    }
+    if (pinIt != para_.authProfileMap.end()) {
+        WidgetClient::Instance().SetPinSubType(static_cast<PinSubType>(pinIt->second.pinSubType));
+    }
+    auto fingerIt = para_.authProfileMap.find(AuthType::FINGERPRINT);
+    if (fingerIt != para_.authProfileMap.end()) {
+        WidgetClient::Instance().SetSensorInfo(fingerIt->second.sensorInfo);
     }
 }
 
@@ -988,7 +1163,7 @@ bool WidgetContext::IsSingleCompanionDeviceAuth() const
     return para_.authTypeList[0] == AuthType::COMPANION_DEVICE;
 }
 
-void WidgetContext::SendAuthTipInfo(int32_t authType, int32_t tipCode)
+void WidgetContext::OnScheduleAuthTip(int32_t authType, int32_t tipCode)
 {
     HILOG_COMM_INFO("widget context: ****%{public}hx authType:%{public}d, tipCode:%{public}d",
         static_cast<uint16_t>(contextId_), authType, tipCode);
@@ -1007,7 +1182,7 @@ void WidgetContext::SendAuthTipInfo(int32_t authType, int32_t tipCode)
     callerCallback_->OnAcquireInfo(ALL_IN_ONE, authType, attr.Serialize());
 }
 
-void WidgetContext::SendAuthResultInfo(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token)
+void WidgetContext::OnScheduleAuthResult(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token)
 {
     if (resultCode != ResultCode::SUCCESS) {
         return End(static_cast<ResultCode>(resultCode));
@@ -1064,24 +1239,24 @@ void WidgetContext::ProcAuthResult(int32_t resultCode, AuthType authType, int32_
         if (resultCode != ResultCode::SUCCESS) {
             SetLatestError(resultCode);
         }
-        schedule_->SuccessAuth(authType);
+        schedule_->NotifyAuthSuccess(authType);
         if (isDirectAuth_) {
             schedule_->ClearSchedule();
         }
     } else {
         SetLatestError(resultCode);
         if (isDirectAuth_) {
-            schedule_->FailAuth(authType);
+            schedule_->NotifyAuthFail(authType);
             schedule_->ClearSchedule();
             return;
         }
         if (resultCode != ResultCode::CANCELED) {
-            SendAuthTipInfo(authType, GetAuthTipCode(resultCode, freezingTime));
+            OnScheduleAuthTip(authType, GetAuthTipCode(resultCode, freezingTime));
         }
         if (para_.skipLockedBiometricAuth && freezingTime > 0) {
             if (IsSingleFaceOrFingerPrintAuth()) {
                 SetLatestError(ResultCode::LOCKED);
-                schedule_->FailAuth(authType);
+                schedule_->NotifyAuthFail(authType);
             } else if (IsNavigationAuth()) {
                 schedule_->NaviPinAuth();
             } else {
@@ -1109,12 +1284,12 @@ void WidgetContext::ProcAuthTipInfo(int32_t tip, AuthType authType, const std::v
         return;
     }
     if (resultCode != ResultCode::CANCELED) {
-        SendAuthTipInfo(authType, GetAuthTipCode(resultCode, freezingTime));
+        OnScheduleAuthTip(authType, GetAuthTipCode(resultCode, freezingTime));
     }
     if (para_.skipLockedBiometricAuth && freezingTime > 0) {
         if (IsSingleFaceOrFingerPrintAuth()) {
             SetLatestError(ResultCode::LOCKED);
-            schedule_->FailAuth(authType);
+            schedule_->NotifyAuthFail(authType);
         } else if (IsNavigationAuth()) {
             schedule_->NaviPinAuth();
         }
@@ -1158,17 +1333,44 @@ void WidgetContext::StopOnTerminateTimer()
 
 void WidgetContext::OnTerminateTimerTimeOut(uint64_t contextId)
 {
-    IAM_LOGE("start");
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (phase_ == Phase::RELEASED) {
+        return;
+    }
+    onTerminateTimerId_ = 0;
+    IAM_LOGE("widget cleanup timed out, context ****%{public}hx", static_cast<uint16_t>(contextId));
     UserIam::UserAuth::ReportSystemFault(Common::GetNowTimeString(), "AuthWidget");
-    WidgetClient::Instance().ClearSchedule(contextId);
+    activeChildCount_ = 0;
+    EndLocked();
+}
+
+void WidgetContext::EndLocked()
+{
+    bool reportWithoutResult = phase_ < Phase::RESULT_DELIVERED && callerCallback_ != nullptr;
+    if (!AdvancePhaseLocked(Phase::RELEASED)) {
+        return;
+    }
+    IAM_LOGI("widget context: ****%{public}hx released", static_cast<uint16_t>(GetContextId()));
+    StopOnTerminateTimer();
+    WidgetClient::Instance().ClearSchedule(GetContextId());
+    if (reportWithoutResult) {
+        IAM_LOGE("widget context: ****%{public}hx released without result, report CANCELED",
+            static_cast<uint16_t>(contextId_));
+        ReportSystemFault(Common::GetNowTimeString(), "AuthWidget");
+        DeliverResultLocked("WidgetContext release without result", ResultCode::CANCELED, Attributes {});
+    }
+    ContextPool::Instance().Delete(GetContextId());
 }
 
 void WidgetContext::ClearSchedule()
 {
-    IAM_LOGI("start");
-    auto result = ContextPool::Instance().Delete(GetContextId());
-    HILOG_COMM_INFO("widget context ****%{public}hx deleted %{public}s",
-        static_cast<uint16_t>(contextId_), result ? "succ" : "fail");
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    IAM_LOGI("widget context: ****%{public}hx clear schedule", static_cast<uint16_t>(contextId_));
+    if (phase_ == Phase::RELEASED) {
+        return;
+    }
+    scheduleReleased_ = true;
+    TryEndLocked();
 }
 
 bool WidgetContext::GetRemoteAuthParam()
@@ -1194,6 +1396,7 @@ void WidgetContext::SetRemoteAuthParam(const WidgetParamInner &widgetParam, cons
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     para_.widgetParam = widgetParam;
     modalCallback_ = modalCallback;
+    IF_FALSE_LOGE_AND_RETURN(schedule_ != nullptr);
     if (!schedule_->StartSchedule()) {
         IAM_LOGE("StartSchedule failed");
         return;

@@ -16,6 +16,7 @@
 #ifndef IAM_CONTEXT_H
 #define IAM_CONTEXT_H
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -32,12 +33,6 @@ namespace UserIam {
 namespace UserAuth {
 constexpr uint64_t REUSE_AUTH_RESULT_CONTEXT_ID = 1;
 
-enum ContextState {
-    STATE_INIT,
-    STATE_RUNNING,
-    STATE_END,
-};
-
 enum ContextType {
     CONTEXT_SIMPLE_AUTH,
     CONTEXT_ENROLL,
@@ -48,6 +43,12 @@ enum ContextType {
     SCHEDULE_HOLDER_CONTEXT,
     CONTEXT_DELETE,
     LOCAL_REMOTE_AUTH_CONTEXT,
+    SUDO_AUTH_CONTEXT,
+};
+
+enum class PreemptDecision {
+    KEEP_RUNNING,
+    STOP_NOW,
 };
 
 class Context {
@@ -56,18 +57,44 @@ public:
     virtual ~Context() = default;
     virtual bool Start() = 0;
     virtual bool Stop() = 0;
+    virtual void OnStartFailed(int32_t errorCode) = 0;
     virtual uint64_t GetContextId() const = 0;
+    std::chrono::steady_clock::time_point GetCreateTime() const
+    {
+        return createTime_;
+    }
     virtual ContextType GetContextType() const = 0;
     virtual std::shared_ptr<ScheduleNode> GetScheduleNode(uint64_t scheduleId) const = 0;
     virtual uint32_t GetTokenId() const = 0;
     virtual int32_t GetLatestError() const = 0;
+    virtual void SetLatestError(int32_t error) = 0;
     virtual int32_t GetUserId() const = 0;
     virtual int32_t GetAuthType() const = 0;
     virtual std::string GetCallerName() const = 0;
     virtual void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) = 0;
+    virtual AuthIntent GetAuthIntent() const
+    {
+        return AuthIntent::DEFAULT;
+    }
+    virtual std::vector<int32_t> GetAuthTypeList() const
+    {
+        return {GetAuthType()};
+    }
+    virtual bool CanStart(const std::vector<std::weak_ptr<Context>> &predecessors) const
+    {
+        return true;
+    }
+    virtual PreemptDecision GetPreemptDecision(const Context &newRequest) const
+    {
+        return PreemptDecision::KEEP_RUNNING;
+    }
+    virtual bool IsPrimaryContext() const
+    {
+        return false;
+    }
 
-protected:
-    virtual void SetLatestError(int32_t error) = 0;
+private:
+    std::chrono::steady_clock::time_point createTime_ {std::chrono::steady_clock::now()};
 };
 } // namespace UserAuth
 } // namespace UserIam

@@ -40,7 +40,7 @@ int32_t WidgetContextCallbackImpl::OnResult(int32_t resultCode, const std::vecto
     auto widgetContext = widgetContext_.lock();
     if (widgetContext != nullptr) {
         Attributes attributes(extraInfo);
-        widgetContext->AuthResult(resultCode, authType_, attributes);
+        widgetContext->OnChildAuthResult(resultCode, authType_, attributes);
         return SUCCESS;
     }
 
@@ -54,7 +54,7 @@ int32_t WidgetContextCallbackImpl::OnAcquireInfo(int32_t module, int32_t acquire
     auto widgetContext = widgetContext_.lock();
     if (widgetContext != nullptr) {
         Attributes attributes(extraInfo);
-        widgetContext->AuthTipInfo(acquireInfo, authType_, attributes);
+        widgetContext->OnChildAuthTip(acquireInfo, authType_, attributes);
         return SUCCESS;
     }
     return GENERAL_ERROR;

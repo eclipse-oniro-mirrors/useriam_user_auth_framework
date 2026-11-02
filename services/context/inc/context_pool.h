@@ -25,22 +25,30 @@ namespace UserIam {
 namespace UserAuth {
 class ContextPool {
 public:
-    class ContextPoolListener {
+    class Cleaner final {
     public:
-        virtual void OnContextPoolInsert(const std::shared_ptr<Context> &context) = 0;
-        virtual void OnContextPoolDelete(const std::shared_ptr<Context> &context) = 0;
+        explicit Cleaner(const std::shared_ptr<Context> &context);
+        ~Cleaner() = default;
+        void operator()();
+
+    private:
+        uint64_t contextId_ = INVALID_CONTEXT_ID;
     };
+
     static uint64_t GetNewContextId();
     static ContextPool &Instance();
-    virtual bool Insert(const std::shared_ptr<Context> &context) = 0;
+    virtual bool Schedule(const std::shared_ptr<Context> &context) = 0;
+    virtual void Cancel(uint64_t contextId) = 0;
     virtual bool Delete(uint64_t contextId) = 0;
-    virtual void CancelAll() const = 0;
+    virtual void CancelAll() = 0;
+    virtual void NotifyPreemptStateChanged() = 0;
     virtual std::weak_ptr<Context> Select(uint64_t contextId) const = 0;
     virtual std::vector<std::weak_ptr<Context>> Select(ContextType contextType) const = 0;
     virtual std::shared_ptr<ScheduleNode> SelectScheduleNodeByScheduleId(uint64_t scheduleId) = 0;
-    virtual bool RegisterContextPoolListener(const std::shared_ptr<ContextPoolListener> &listener) = 0;
-    virtual bool DeregisterContextPoolListener(const std::shared_ptr<ContextPoolListener> &listener) = 0;
     virtual void StartSubscribeOsAccountSaStatus() = 0;
+#ifdef IAM_TEST_ENABLE
+    virtual std::vector<std::weak_ptr<Context>> SelectAll() const = 0;
+#endif
 };
 } // namespace UserAuth
 } // namespace UserIam

@@ -24,6 +24,7 @@
 #include "identify_context.h"
 #include "simple_auth_context.h"
 #include "schedule_holder_context.h"
+#include "sudo_auth_context.h"
 #include "widget_context.h"
 #include "remote_msg_util.h"
 
@@ -34,7 +35,7 @@ namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 std::shared_ptr<Context> ContextFactory::CreateSimpleAuthContext(const Authentication::AuthenticationPara &para,
-    const std::shared_ptr<ContextCallback> &callback, bool needSubscribeAppState)
+    bool needSubscribeAppState, bool isPrimaryContext, const std::shared_ptr<ContextCallback> &callback)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, nullptr);
     uint64_t newContextId = ContextPool::GetNewContextId();
@@ -43,7 +44,8 @@ std::shared_ptr<Context> ContextFactory::CreateSimpleAuthContext(const Authentic
     auth->SetChallenge(para.challenge);
     auth->SetAccessTokenId(para.tokenId);
     auth->SetEndAfterFirstFail(para.endAfterFirstFail);
-    return Common::MakeShared<SimpleAuthContext>(newContextId, auth, callback, needSubscribeAppState);
+    return Common::MakeShared<SimpleAuthContext>(newContextId, auth, needSubscribeAppState, isPrimaryContext,
+        callback);
 }
 
 std::shared_ptr<Context> ContextFactory::CreateIdentifyContext(const Identification::IdentificationPara &para,
@@ -59,7 +61,7 @@ std::shared_ptr<Context> ContextFactory::CreateIdentifyContext(const Identificat
 }
 
 std::shared_ptr<Context> ContextFactory::CreateEnrollContext(const Enrollment::EnrollmentPara &para,
-    const std::shared_ptr<ContextCallback> &callback, bool needSubscribeAppState)
+    bool needSubscribeAppState, const std::shared_ptr<ContextCallback> &callback)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, nullptr);
     uint64_t newContextId = ContextPool::GetNewContextId();
@@ -69,7 +71,7 @@ std::shared_ptr<Context> ContextFactory::CreateEnrollContext(const Enrollment::E
     enroll->SetAccessTokenId(para.tokenId);
     enroll->SetPinSubType(para.pinType);
     enroll->SetIsUpdate(para.isUpdate);
-    return Common::MakeShared<EnrollContext>(newContextId, enroll, callback, needSubscribeAppState);
+    return Common::MakeShared<EnrollContext>(newContextId, enroll, needSubscribeAppState, callback);
 }
 
 std::shared_ptr<Context> ContextFactory::CreateWidgetAuthContext(std::shared_ptr<ContextCallback> callback)
@@ -78,16 +80,18 @@ std::shared_ptr<Context> ContextFactory::CreateWidgetAuthContext(std::shared_ptr
 }
 
 std::shared_ptr<Context> ContextFactory::CreateWidgetContext(const AuthWidgetContextPara &para,
-    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
+    bool isPrimaryContext, std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
     const sptr<IRemoteAuthCallback> &remoteAuthCallback)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, nullptr);
     uint64_t newContextId = ContextPool::GetNewContextId();
-    return Common::MakeShared<WidgetContext>(newContextId, para, callback, modalCallback, remoteAuthCallback);
+    return Common::MakeShared<WidgetContext>(newContextId, para, isPrimaryContext, callback, modalCallback,
+        remoteAuthCallback);
 }
 
 std::shared_ptr<Context> ContextFactory::CreateRemoteAuthContext(const Authentication::AuthenticationPara &para,
-    RemoteAuthContextParam &remoteAuthContextParam, const std::shared_ptr<ContextCallback> &callback)
+    RemoteAuthContextParam &remoteAuthContextParam, bool isPrimaryContext,
+    const std::shared_ptr<ContextCallback> &callback)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, nullptr);
 
@@ -103,7 +107,8 @@ std::shared_ptr<Context> ContextFactory::CreateRemoteAuthContext(const Authentic
         IF_FALSE_LOGE_AND_RETURN_VAL(getConnectionNameRet, nullptr);
     }
 
-    return Common::MakeShared<RemoteAuthContext>(newContextId, auth, remoteAuthContextParam, callback);
+    return Common::MakeShared<RemoteAuthContext>(newContextId, auth, remoteAuthContextParam, isPrimaryContext,
+        callback);
 }
 
 std::shared_ptr<Context> ContextFactory::CreateRemoteAuthInvokerContext(AuthParamInner authParam,
@@ -119,7 +124,8 @@ std::shared_ptr<Context> ContextFactory::CreateRemoteAuthInvokerContext(AuthPara
 }
 
 std::shared_ptr<Context> ContextFactory::CreateLocalRemoteAuthContext(const Authentication::AuthenticationPara &para,
-    LocalRemoteAuthContextParam &localRemoteAuthContextParam, const std::shared_ptr<ContextCallback> &callback)
+    LocalRemoteAuthContextParam &localRemoteAuthContextParam, bool isPrimaryContext,
+    const std::shared_ptr<ContextCallback> &callback)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, nullptr);
 
@@ -128,7 +134,8 @@ std::shared_ptr<Context> ContextFactory::CreateLocalRemoteAuthContext(const Auth
     IF_FALSE_LOGE_AND_RETURN_VAL(auth != nullptr, nullptr);
     auth->SetChallenge(para.challenge);
     auth->SetAccessTokenId(para.tokenId);
-    return Common::MakeShared<LocalRemoteAuthContext>(newContextId, auth, localRemoteAuthContextParam, callback);
+    return Common::MakeShared<LocalRemoteAuthContext>(newContextId, auth, localRemoteAuthContextParam,
+        isPrimaryContext, callback);
 }
 
 std::shared_ptr<Context> ContextFactory::CreateScheduleHolderContext(std::shared_ptr<ScheduleNode> scheduleNode)
@@ -146,6 +153,14 @@ std::shared_ptr<Context> ContextFactory::CreateDeleteContext(const Deletion::Del
     IF_FALSE_LOGE_AND_RETURN_VAL(deleteImpl != nullptr, nullptr);
     deleteImpl->SetAccessTokenId(para.tokenId);
     return Common::MakeShared<DeleteContext>(newContextId, deleteImpl, callback);
+}
+
+std::shared_ptr<Context> ContextFactory::CreateSudoAuthContext(const SudoAuthContextPara &para,
+    const std::shared_ptr<ContextCallback> &callback)
+{
+    IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, nullptr);
+    uint64_t newContextId = ContextPool::GetNewContextId();
+    return Common::MakeShared<SudoAuthContext>(newContextId, para, callback);
 }
 } // namespace UserAuth
 } // namespace UserIam

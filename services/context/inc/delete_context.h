@@ -27,7 +27,8 @@ namespace UserIam {
 namespace UserAuth {
 class DeleteContext : public BaseContext {
 public:
-    DeleteContext(uint64_t contextId, std::shared_ptr<Deletion> deletion, std::shared_ptr<ContextCallback> callback);
+    DeleteContext(uint64_t contextId, std::shared_ptr<Deletion> deletion,
+        std::shared_ptr<ContextCallback> callback);
     ~DeleteContext() override = default;
     ContextType GetContextType() const override;
     uint32_t GetTokenId() const override;

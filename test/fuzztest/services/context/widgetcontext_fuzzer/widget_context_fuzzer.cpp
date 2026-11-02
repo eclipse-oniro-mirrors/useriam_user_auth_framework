@@ -85,7 +85,7 @@ std::shared_ptr<WidgetContext> CreateWidgetContext(Parcel &parcel)
     para.isBackgroundApplication = parcel.ReadBool();
     auto contextCallback = MakeShared<ContextCallbackImpl>(new (std::nothrow) DummyIamCallbackInterface(),
         static_cast<OperationType>(TRACE_AUTH_USER_ALL));
-    return Common::MakeShared<WidgetContext>(contextId, para, contextCallback, nullptr, nullptr);
+    return Common::MakeShared<WidgetContext>(contextId, para, false, contextCallback, nullptr, nullptr);
 }
 
 void FillAttributes(Parcel &parcel, Attributes &attributes)
@@ -263,7 +263,7 @@ void FuzzAuthResult(Parcel &parcel)
     Attributes attribute;
     FillAttributes(parcel, attribute);
     widgetContext->OnStart();
-    widgetContext->AuthResult(resultCode, authType, attribute);
+    widgetContext->OnChildAuthResult(resultCode, authType, attribute);
     ReleaseTask(widgetContext);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -284,7 +284,7 @@ void FuzzAuthTipInfo(Parcel &parcel)
     Attributes attribute;
     FillAttributes(parcel, attribute);
     widgetContext->OnStart();
-    widgetContext->AuthTipInfo(tipType, authType, attribute);
+    widgetContext->OnChildAuthTip(tipType, authType, attribute);
     ReleaseTask(widgetContext);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -410,7 +410,7 @@ void FuzzStopAuthList(Parcel &parcel)
     IAM_LOGI("end");
 }
 
-void FuzzSuccessAuth(Parcel &parcel)
+void FuzzOnAuthSuccess(Parcel &parcel)
 {
     IAM_LOGI("begin");
     auto widgetContext = CreateWidgetContext(parcel);
@@ -421,7 +421,7 @@ void FuzzSuccessAuth(Parcel &parcel)
 
     AuthType authType = static_cast<AuthType>(parcel.ReadInt32());
     widgetContext->OnStart();
-    widgetContext->SuccessAuth(authType);
+    widgetContext->OnAuthSuccess(authType);
     ReleaseTask(widgetContext);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -576,7 +576,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzAuthWidgetReload,
     FuzzIsValidRotate,
     FuzzStopAuthList,
-    FuzzSuccessAuth,
+    FuzzOnAuthSuccess,
     FuzzConnectExtension,
     FuzzBuildStartCommand,
     FuzzEnd,

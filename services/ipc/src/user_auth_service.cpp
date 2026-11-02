@@ -24,13 +24,14 @@
 #include "event_listener_manager.h"
 #include "auth_widget_helper.h"
 #include "context_factory.h"
-#include "context_helper.h"
+#include "context_pool.h"
 #include "user_auth_engine.h"
 #include "iam_check.h"
 #include "iam_common_defines.h"
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
+#include "iam_scope_guard.h"
 #include "iam_time.h"
 #include "ipc_common.h"
 #include "ipc_skeleton.h"
@@ -53,13 +54,6 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-#ifndef IAM_TEST_ENABLE
-namespace {
-#endif
-const int32_t MINIMUM_VERSION = 0;
-const int32_t CURRENT_VERSION = 1;
-const int32_t USERIAM_IPC_THREAD_NUM = 4;
-const uint32_t NETWORK_ID_LENGTH = 64;
 int32_t GetTemplatesByAuthType(int32_t userId, AuthType authType, std::vector<uint64_t> &templateIds)
 {
     templateIds.clear();
@@ -87,6 +81,14 @@ int32_t GetTemplatesByAuthType(int32_t userId, AuthType authType, std::vector<ui
 
     return SUCCESS;
 }
+
+#ifndef IAM_TEST_ENABLE
+namespace {
+#endif
+const int32_t MINIMUM_VERSION = 0;
+const int32_t CURRENT_VERSION = 1;
+const int32_t USERIAM_IPC_THREAD_NUM = 4;
+const uint32_t NETWORK_ID_LENGTH = 64;
 
 bool IsTemplateIdListRequired(const std::vector<Attributes::AttributeKey> &keys)
 {
@@ -127,6 +129,11 @@ void GetResourceNodeByTypeAndRole(AuthType authType, ExecutorRole role,
         });
 }
 
+const bool REGISTER_RESULT = SystemAbility::MakeAndRegisterAbility(UserAuthService::GetInstance().get());
+#ifndef IAM_TEST_ENABLE
+} // namespace
+#endif
+
 std::string GetAuthParamStr(const AuthParamInner &authParam, std::optional<RemoteAuthParam> &remoteAuthParam)
 {
     std::ostringstream authParamString;
@@ -149,10 +156,6 @@ std::string GetAuthParamStr(const AuthParamInner &authParam, std::optional<Remot
     }
     return authParamString.str();
 }
-const bool REGISTER_RESULT = SystemAbility::MakeAndRegisterAbility(UserAuthService::GetInstance().get());
-#ifndef IAM_TEST_ENABLE
-} // namespace
-#endif
 std::mutex UserAuthService::mutex_;
 std::shared_ptr<UserAuthService> UserAuthService::instance_ = nullptr;
 
@@ -600,36 +603,19 @@ uint64_t UserAuthService::StartAuthContext(int32_t apiVersion, Authentication::A
         " atl: %{public}d, callerName: %{public}s, authIntent: %{public}d, isOsAccountVerified: %{public}d",
         para.userId, para.authType, para.atl, para.callerName.c_str(), para.authIntent, para.isOsAccountVerified);
     Attributes extraInfo;
-    auto context = ContextFactory::CreateSimpleAuthContext(para, contextCallback, needSubscribeAppState);
-    if (context == nullptr || !ContextPool::Instance().Insert(context)) {
-        IAM_LOGE("failed to insert context");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService Auth insert context fail");
+    Common::IamScopeGuard failGuard([&contextCallback, &extraInfo]() {
+        contextCallback->SetTraceAuthFinishReason("UserAuthService Auth schedule context fail");
         contextCallback->OnResult(GENERAL_ERROR, extraInfo);
-        return BAD_CONTEXT_ID;
-    }
+    });
+    auto context = ContextFactory::CreateSimpleAuthContext(para, needSubscribeAppState, true, contextCallback);
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, BAD_CONTEXT_ID);
     contextCallback->SetTraceRequestContextId(context->GetContextId());
     contextCallback->SetTraceAuthContextId(context->GetContextId());
-    contextCallback->SetCleaner(ContextHelper::Cleaner(context));
+    contextCallback->SetCleaner(ContextPool::Cleaner(context));
 
-    auto handler = ThreadHandler::GetSingleThreadInstance();
-    IF_FALSE_LOGE_AND_RETURN_VAL(handler != nullptr, BAD_CONTEXT_ID);
-    std::weak_ptr<Context> weakContext = context;
-    std::weak_ptr<ContextCallback> weakContextCallback = contextCallback;
-    handler->PostTask([weakContext, weakContextCallback, apiVersion]() {
-        auto sharedContext = weakContext.lock();
-        IF_FALSE_LOGE_AND_RETURN(sharedContext != nullptr);
-        auto sharedContextCallback = weakContextCallback.lock();
-        IF_FALSE_LOGE_AND_RETURN(sharedContextCallback != nullptr);
-        if (!sharedContext->Start()) {
-            int32_t errorCode = sharedContext->GetLatestError();
-            IAM_LOGE("failed to start auth apiVersion:%{public}d errorCode:%{public}d", apiVersion, errorCode);
-            sharedContextCallback->SetTraceAuthFinishReason("UserAuthService Auth start context fail");
-            Attributes tmpExtraInfo;
-            sharedContextCallback->OnResult(errorCode, tmpExtraInfo);
-            return;
-        }
-    });
-
+    bool ret = ContextPool::Instance().Schedule(context);
+    IF_FALSE_LOGE_AND_RETURN_VAL(ret, BAD_CONTEXT_ID);
+    failGuard.Cancel();
     return context->GetContextId();
 }
 
@@ -637,25 +623,19 @@ uint64_t UserAuthService::StartRemoteAuthInvokerContext(AuthParamInner authParam
     RemoteAuthInvokerContextParam &param, const std::shared_ptr<ContextCallback> &contextCallback)
 {
     Attributes extraInfo;
-    std::shared_ptr<Context> context = ContextFactory::CreateRemoteAuthInvokerContext(authParam, param,
-        contextCallback);
-    if (context == nullptr || !ContextPool::Instance().Insert(context)) {
-        IAM_LOGE("failed to insert context");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService StartRemoteAuthInvokerContext insert context fail");
+    Common::IamScopeGuard failGuard([&contextCallback, &extraInfo]() {
+        contextCallback->SetTraceAuthFinishReason(
+            "UserAuthService StartRemoteAuthInvokerContext schedule context fail");
         contextCallback->OnResult(GENERAL_ERROR, extraInfo);
-        return BAD_CONTEXT_ID;
-    }
-    contextCallback->SetCleaner(ContextHelper::Cleaner(context));
+    });
+    std::shared_ptr<Context> context =
+        ContextFactory::CreateRemoteAuthInvokerContext(authParam, param, contextCallback);
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, BAD_CONTEXT_ID);
+    contextCallback->SetCleaner(ContextPool::Cleaner(context));
     contextCallback->SetTraceRequestContextId(context->GetContextId());
     contextCallback->SetTraceAuthContextId(context->GetContextId());
-
-    if (!context->Start()) {
-        int32_t errorCode = context->GetLatestError();
-        IAM_LOGE("failed to start auth errorCode:%{public}d", errorCode);
-        contextCallback->SetTraceAuthFinishReason("UserAuthService StartRemoteAuthInvokerContext start context fail");
-        contextCallback->OnResult(errorCode, extraInfo);
-        return BAD_CONTEXT_ID;
-    }
+    IF_FALSE_LOGE_AND_RETURN_VAL(ContextPool::Instance().Schedule(context), BAD_CONTEXT_ID);
+    failGuard.Cancel();
     return context->GetContextId();
 }
 
@@ -663,25 +643,20 @@ uint64_t UserAuthService::StartLocalRemoteAuthContext(Authentication::Authentica
     LocalRemoteAuthContextParam &localRemoteAuthContextParam, const std::shared_ptr<ContextCallback> &contextCallback)
 {
     Attributes extraInfo;
-    std::shared_ptr<Context> context = ContextFactory::CreateLocalRemoteAuthContext(para, localRemoteAuthContextParam,
-        contextCallback);
-    if (context == nullptr || !ContextPool::Instance().Insert(context)) {
-        IAM_LOGE("failed to insert context");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService StartLocalRemoteAuthContext insert context fail");
+    Common::IamScopeGuard failGuard([&contextCallback, &extraInfo]() {
+        contextCallback->SetTraceAuthFinishReason("UserAuthService StartLocalRemoteAuthContext schedule context fail");
         contextCallback->OnResult(GENERAL_ERROR, extraInfo);
-        return BAD_CONTEXT_ID;
-    }
-    contextCallback->SetCleaner(ContextHelper::Cleaner(context));
+    });
+    std::shared_ptr<Context> context = ContextFactory::CreateLocalRemoteAuthContext(para, localRemoteAuthContextParam,
+        true, contextCallback);
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, BAD_CONTEXT_ID);
+    contextCallback->SetCleaner(ContextPool::Cleaner(context));
     contextCallback->SetTraceRequestContextId(context->GetContextId());
     contextCallback->SetTraceAuthContextId(context->GetContextId());
 
-    if (!context->Start()) {
-        int32_t errorCode = context->GetLatestError();
-        IAM_LOGE("failed to start auth errorCode:%{public}d", errorCode);
-        contextCallback->SetTraceAuthFinishReason("UserAuthService StartLocalRemoteAuthContext start context fail");
-        contextCallback->OnResult(errorCode, extraInfo);
-        return BAD_CONTEXT_ID;
-    }
+    bool ret = ContextPool::Instance().Schedule(context);
+    IF_FALSE_LOGE_AND_RETURN_VAL(ret, BAD_CONTEXT_ID);
+    failGuard.Cancel();
     return context->GetContextId();
 }
 
@@ -773,7 +748,88 @@ int32_t UserAuthService::AuthUser(const IpcAuthParamInner &ipcAuthParamInner,
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     para.credentialIdList = authParam.credentialIdList;
     para.isOsAccountVerified = IpcCommon::IsOsAccountVerified(authParam.userId);
+    if (authParam.authIntent == AuthIntent::SUDO_PIN_AUTH) {
+        return StartSudoAuthUser(authParam, remoteAuthParam, para, contextCallback, contextId);
+    }
     return StartAuthUser(authParam, remoteAuthParam, para, contextCallback, contextId);
+}
+
+int32_t UserAuthService::StartSudoAuthUser(const AuthParamInner &authParam,
+    const std::optional<RemoteAuthParam> &remoteAuthParam, const Authentication::AuthenticationPara &para,
+    const std::shared_ptr<ContextCallback> &contextCallback, uint64_t &contextId)
+{
+    Attributes extraInfo;
+    if (IpcCommon::GetDirectCallerType(*this) != Security::AccessToken::TOKEN_NATIVE &&
+        !IpcCommon::CheckPermission(*this, IS_SYSTEM_APP)) {
+        IAM_LOGE("sudo auth is only allowed for system app or SA caller");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser sudo caller check fail");
+        contextCallback->OnResult(CHECK_PERMISSION_FAILED, extraInfo);
+        return CHECK_PERMISSION_FAILED;
+    }
+    int32_t sudoCheckRet = CheckSudoAuthParam(authParam, remoteAuthParam);
+    if (sudoCheckRet != SUCCESS) {
+        IAM_LOGE("check sudo auth param fail");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser CheckSudoAuthParam fail");
+        contextCallback->OnResult(sudoCheckRet, extraInfo);
+        return sudoCheckRet;
+    }
+    contextId = StartSudoAuthContext(authParam, para, contextCallback);
+    return contextId == BAD_CONTEXT_ID ? GENERAL_ERROR : SUCCESS;
+}
+
+int32_t UserAuthService::CheckSudoAuthParam(const AuthParamInner &authParam,
+    const std::optional<RemoteAuthParam> &remoteAuthParam)
+{
+    if (remoteAuthParam.has_value()) {
+        IAM_LOGE("sudo auth does not accept remote param");
+        return INVALID_PARAMETERS;
+    }
+    if (authParam.authType != AuthType::PIN) {
+        IAM_LOGE("sudo auth only supports pin, authType: %{public}d", static_cast<int32_t>(authParam.authType));
+        return INVALID_PARAMETERS;
+    }
+    if (authParam.additionalInfo.empty() ||
+        UserAuthHelper::GetUtf8CharCount(authParam.additionalInfo) > static_cast<size_t>(TITLE_MAX)) {
+        IAM_LOGE("sudo additionalInfo is empty or longer than TITLE_MAX");
+        return INVALID_PARAMETERS;
+    }
+    if (authParam.reuseUnlockResult.isReuse) {
+        IAM_LOGE("sudo auth does not accept reuseUnlockResult");
+        return INVALID_PARAMETERS;
+    }
+    return SUCCESS;
+}
+
+uint64_t UserAuthService::StartSudoAuthContext(const AuthParamInner &authParam,
+    const Authentication::AuthenticationPara &para, const std::shared_ptr<ContextCallback> &contextCallback)
+{
+    IAM_LOGI("start sudo auth context, userId: %{public}d, atl: %{public}d", para.userId, para.atl);
+    ContextFactory::SudoAuthContextPara sudoPara = {};
+    sudoPara.userId = para.userId;
+    sudoPara.tokenId = para.tokenId;
+    sudoPara.sdkVersion = para.sdkVersion;
+    sudoPara.callerType = para.callerType;
+    sudoPara.callerName = para.callerName;
+    sudoPara.challenge = para.challenge;
+    sudoPara.atl = para.atl;
+    sudoPara.additionalInfo = authParam.additionalInfo;
+    sudoPara.isOsAccountVerified = para.isOsAccountVerified;
+    sudoPara.needSubscribeAppState = !IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND);
+    auto context = ContextFactory::CreateSudoAuthContext(sudoPara, contextCallback);
+    Attributes extraInfo;
+    Common::IamScopeGuard failGuard([&contextCallback, &extraInfo]() {
+        contextCallback->SetTraceAuthFinishReason("UserAuthService StartSudoAuthContext schedule context fail");
+        contextCallback->OnResult(GENERAL_ERROR, extraInfo);
+    });
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, BAD_CONTEXT_ID);
+    contextCallback->SetTraceRequestContextId(context->GetContextId());
+    contextCallback->SetTraceAuthContextId(context->GetContextId());
+    contextCallback->SetCleaner(ContextPool::Cleaner(context));
+
+    bool ret = ContextPool::Instance().Schedule(context);
+    IF_FALSE_LOGE_AND_RETURN_VAL(ret, BAD_CONTEXT_ID);
+    failGuard.Cancel();
+    return context->GetContextId();
 }
 
 int32_t UserAuthService::DoPrepareRemoteAuth(const std::string &networkId)
@@ -966,21 +1022,14 @@ int32_t UserAuthService::Identify(const std::vector<uint8_t> &challenge, int32_t
     para.authType = static_cast<AuthType>(authType);
     para.challenge = std::move(challenge);
     auto context = ContextFactory::CreateIdentifyContext(para, contextCallback);
-    if (!ContextPool::Instance().Insert(context)) {
-        IAM_LOGE("failed to insert context");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService Identify insert context fail");
+    contextCallback->SetCleaner(ContextPool::Cleaner(context));
+    if (!ContextPool::Instance().Schedule(context)) {
+        IAM_LOGE("failed to schedule context");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService Identify schedule context fail");
         contextCallback->OnResult(GENERAL_ERROR, extraInfo);
         return GENERAL_ERROR;
     }
 
-    contextCallback->SetCleaner(ContextHelper::Cleaner(context));
-
-    if (!context->Start()) {
-        IAM_LOGE("failed to start identify");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService Identify start context fail");
-        contextCallback->OnResult(context->GetLatestError(), extraInfo);
-        return GENERAL_ERROR;
-    }
     contextId = context->GetContextId();
     return SUCCESS;
 }
@@ -1011,13 +1060,7 @@ int32_t UserAuthService::CancelAuthOrIdentify(uint64_t contextId, int32_t cancel
         UserIam::UserAuth::ReportSystemFault(Common::GetNowTimeString(), "AuthWidget");
     }
 
-    auto handler = ThreadHandler::GetSingleThreadInstance();
-    IF_FALSE_LOGE_AND_RETURN_VAL(handler != nullptr, GENERAL_ERROR);
-    handler->PostTask([context]() {
-        if (!context->Stop()) {
-            IAM_LOGE("failed to cancel auth or identify, ret%{public}d", context->GetLatestError());
-        }
-    });
+    ContextPool::Instance().Cancel(contextId);
 
     return SUCCESS;
 }
@@ -1271,20 +1314,18 @@ uint64_t UserAuthService::StartWidgetContext(const std::shared_ptr<ContextCallba
             para.remoteCallerName = callerName;
         }
     }
-    auto context = ContextFactory::CreateWidgetContext(para, contextCallback, modalCallback, remoteAuthCallback);
-    if (context == nullptr || !Insert2ContextPool(context)) {
-        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget insert context fail");
+
+    Common::IamScopeGuard failGuard([&contextCallback, &extraInfo]() {
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget schedule context fail");
         contextCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo);
-        return BAD_CONTEXT_ID;
-    }
+    });
+    auto context = ContextFactory::CreateWidgetContext(para, true, contextCallback, modalCallback, remoteAuthCallback);
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, BAD_CONTEXT_ID);
     contextCallback->SetTraceRequestContextId(context->GetContextId());
-    if (!context->Start()) {
-        int32_t errorCode = context->GetLatestError();
-        IAM_LOGE("start widget context fail %{public}d", errorCode);
-        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget start context fail");
-        contextCallback->OnResult(errorCode, extraInfo);
-        return BAD_CONTEXT_ID;
-    }
+
+    bool ret = ContextPool::Instance().Schedule(context);
+    IF_FALSE_LOGE_AND_RETURN_VAL(ret, BAD_CONTEXT_ID);
+    failGuard.Cancel();
     return context->GetContextId();
 }
 
@@ -1298,17 +1339,14 @@ int32_t UserAuthService::CheckSkipLockedBiometricAuth(ContextFactory::AuthWidget
     for (auto iter = validType.begin(); iter != validType.end();) {
         AuthType type = *iter;
         ContextFactory::AuthProfile profile = {};
-        if (!AuthWidgetHelper::GetUserAuthProfile(para.userId, type, profile, authParam.credentialIdList)) {
-            IAM_LOGE("get user auth profile failed");
+        int32_t ret = AuthWidgetHelper::GetUserAuthProfile(para.userId, type, profile,
+            authParam.credentialIdList);
+        if (ret != SUCCESS && ret != NOT_ENROLLED) {
+            IAM_LOGE("get user auth profile failed, ret:%{public}d", ret);
             iter = validType.erase(iter);
             continue;
         }
         para.authProfileMap[type] = profile;
-        if (type == AuthType::PIN || type == AuthType::PRIVATE_PIN) {
-            WidgetClient::Instance().SetPinSubType(static_cast<PinSubType>(profile.pinSubType));
-        } else if (type == AuthType::FINGERPRINT) {
-            WidgetClient::Instance().SetSensorInfo(profile.sensorInfo);
-        }
         if (authParam.skipLockedBiometricAuth && profile.remainTimes == 0 && type != AuthType::PIN &&
             type != AuthType::PRIVATE_PIN) {
             iter = validType.erase(iter);
@@ -1454,9 +1492,11 @@ int32_t UserAuthService::ProcessPinExpired(int32_t ret, const AuthParamInner &au
         return SUCCESS;
     }
     ContextFactory::AuthProfile profile = {};
-    if (!AuthWidgetHelper::GetUserAuthProfile(para.userId, pinType, profile, authParam.credentialIdList)) {
-        IAM_LOGE("ProcessPinExpired get user auth profile failed, pinType:%{public}d",
-            static_cast<int32_t>(pinType));
+    int32_t queryRet = AuthWidgetHelper::GetUserAuthProfile(para.userId, pinType, profile,
+        authParam.credentialIdList);
+    if (queryRet != SUCCESS && queryRet != NOT_ENROLLED) {
+        IAM_LOGE("ProcessPinExpired get user auth profile failed, pinType:%{public}d, ret:%{public}d",
+            static_cast<int32_t>(pinType), queryRet);
         return GENERAL_ERROR;
     }
     para.authProfileMap[pinType] = profile;
@@ -1485,7 +1525,6 @@ int32_t UserAuthService::StartAuthWidget(AuthParamInner &authParam, WidgetParamI
         return pinExpiredRet;
     }
     FilterFaceNotAvailable(para, validType);
-    ProcessWidgetSessionExclusive();
 
     contextId = StartWidgetContext(contextCallback, authParam, widgetParam, validType, para, modalCallback);
     if (contextId == BAD_CONTEXT_ID) {
@@ -1539,32 +1578,6 @@ int32_t UserAuthService::AuthWidget(int32_t apiVersion, const IpcAuthParamInner 
     }
 
     return StartAuthWidget(authParam, widgetParam, para, contextCallback, modalCallback, contextId);
-}
-
-void UserAuthService::ProcessWidgetSessionExclusive()
-{
-    auto contextList = ContextPool::Instance().Select(ContextType::WIDGET_AUTH_CONTEXT);
-    for (const auto &context : contextList) {
-        if (auto ctx = context.lock(); ctx != nullptr) {
-            IAM_LOGE("widget session exclusive, force stop the old context ****%{public}hx",
-                static_cast<uint16_t>(ctx->GetContextId()));
-            ctx->Stop();
-        }
-    }
-}
-
-bool UserAuthService::Insert2ContextPool(const std::shared_ptr<Context> &context)
-{
-    bool ret = false;
-    const int32_t retryTimes = 3;
-    for (auto i = 0; i < retryTimes; i++) {
-        ret = ContextPool::Instance().Insert(context);
-        if (ret) {
-            break;
-        }
-    }
-    IAM_LOGI("insert context to pool, retry %{public}d times", retryTimes);
-    return ret;
 }
 
 std::shared_ptr<ContextCallback> UserAuthService::GetAuthContextCallback(int32_t apiVersion,
@@ -2084,6 +2097,7 @@ void UserAuthService::InitAuthParam(const IpcAuthParamInner &ipcAuthParam, AuthP
     if (ipcAuthParam.isHasRemoteTokenId) {
         authParam.remoteTokenId = ipcAuthParam.remoteTokenId;
     }
+    authParam.additionalInfo = ipcAuthParam.additionalInfo;
 }
 
 void UserAuthService::InitRemoteAuthParam(const IpcRemoteAuthParam &ipcRemoteAuthParam,

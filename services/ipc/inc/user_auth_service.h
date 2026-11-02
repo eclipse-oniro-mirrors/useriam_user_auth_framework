@@ -128,8 +128,6 @@ private:
     uint64_t StartLocalRemoteAuthContext(Authentication::AuthenticationPara para,
         LocalRemoteAuthContextParam &localRemoteAuthContextParam,
         const std::shared_ptr<ContextCallback> &contextCallback);
-    bool Insert2ContextPool(const std::shared_ptr<Context> &context);
-    bool CheckCallerIsSystemApp();
     int32_t CheckAuthPermissionAndParam(int32_t authType, const int32_t &callerType, const std::string &callerName,
         AuthTrustLevel authTrustLevel);
     bool CheckAuthPermissionAndParam(AuthType authType, AuthTrustLevel authTrustLevel,
@@ -157,7 +155,6 @@ private:
     std::shared_ptr<ResourceNode> GetResourseNode(AuthType authType);
     int32_t ProcessPinExpired(int32_t ret, const AuthParamInner &authParam, std::vector<AuthType> &validType,
         ContextFactory::AuthWidgetContextPara &para);
-    void ProcessWidgetSessionExclusive();
     int32_t GetPropertyHelper(int32_t userId, int32_t authType,
         const std::vector<Attributes::AttributeKey> &keys,
         const sptr<IGetExecutorPropertyCallback> &getExecutorPropertyCallback);
@@ -168,6 +165,13 @@ private:
     int32_t StartAuthUser(AuthParamInner &authParam, std::optional<RemoteAuthParam> &remoteAuthParam,
         Authentication::AuthenticationPara &para, std::shared_ptr<ContextCallback> &contextCallback,
         uint64_t &contextId);
+    int32_t CheckSudoAuthParam(const AuthParamInner &authParam,
+        const std::optional<RemoteAuthParam> &remoteAuthParam);
+    int32_t StartSudoAuthUser(const AuthParamInner &authParam, const std::optional<RemoteAuthParam> &remoteAuthParam,
+        const Authentication::AuthenticationPara &para, const std::shared_ptr<ContextCallback> &contextCallback,
+        uint64_t &contextId);
+    uint64_t StartSudoAuthContext(const AuthParamInner &authParam,
+        const Authentication::AuthenticationPara &para, const std::shared_ptr<ContextCallback> &contextCallback);
     int32_t StartAuthWidget(AuthParamInner &authParam, WidgetParamInner &widgetParam,
         ContextFactory::AuthWidgetContextPara &para, std::shared_ptr<ContextCallback> &contextCallback,
         const sptr<IModalCallback> &modalCallback, uint64_t &contextId);
@@ -182,6 +186,9 @@ private:
     static std::mutex mutex_;
     static std::shared_ptr<UserAuthService> instance_;
 };
+
+int32_t GetTemplatesByAuthType(int32_t userId, AuthType authType, std::vector<uint64_t> &templateIds);
+std::string GetAuthParamStr(const AuthParamInner &authParam, std::optional<RemoteAuthParam> &remoteAuthParam);
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

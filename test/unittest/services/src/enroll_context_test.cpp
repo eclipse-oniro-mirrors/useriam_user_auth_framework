@@ -65,7 +65,8 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_NullHdi, TestSize.Level0)
     // Error: enroll is null
     std::shared_ptr<Enrollment> enroll = nullptr;
 
-    auto oriContext = Common::MakeShared<EnrollContext>(testContestId, enroll, contextCallback, true);
+    auto oriContext = Common::MakeShared<EnrollContext>(testContestId, enroll, true,
+        contextCallback);
     ASSERT_NE(oriContext, nullptr);
     std::shared_ptr<Context> context = oriContext;
     std::shared_ptr<ScheduleNodeCallback> nodeCallback = oriContext;
@@ -90,7 +91,8 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_NullCallback, TestSize.Level0)
     // Error: contextCallback is null
     std::shared_ptr<ContextCallback> contextCallback = nullptr;
 
-    auto oriContext = Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+    auto oriContext = Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true,
+        contextCallback);
     ASSERT_NE(oriContext, nullptr);
     std::shared_ptr<ScheduleNodeCallback> nodeCallback = oriContext;
 
@@ -105,10 +107,11 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_BasicInfo, TestSize.Level0)
 
     std::shared_ptr<MockEnrollment> mockEnroll = Common::MakeShared<MockEnrollment>();
     ASSERT_NE(mockEnroll, nullptr);
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
 
-    auto oriContext = Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+    auto oriContext = Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true,
+        contextCallback);
     ASSERT_NE(oriContext, nullptr);
     std::shared_ptr<Context> context = oriContext;
 
@@ -130,10 +133,10 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Start_001, TestSize.Level0)
             // Error: process enrollment start fail
             return false;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
     ASSERT_EQ(context->Start(), false);
 }
@@ -151,10 +154,10 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Start_002, TestSize.Level0)
             // Error: scheduleNodeList size = 0
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
     ASSERT_EQ(context->Start(), false);
 }
@@ -174,10 +177,10 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Start_003, TestSize.Level0)
             scheduleList.push_back(Common::MakeShared<MockScheduleNode>());
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
     ASSERT_EQ(context->Start(), false);
 }
@@ -200,10 +203,10 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Start_004, TestSize.Level0)
             scheduleList.push_back(scheduleNode);
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
     ASSERT_EQ(context->Start(), false);
 }
@@ -228,10 +231,10 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Start_005, TestSize.Level0)
             scheduleList.push_back(scheduleNode);
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
     ASSERT_EQ(context->Start(), true);
     ASSERT_EQ(context->Start(), false);
@@ -247,17 +250,14 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Stop_001, TestSize.Level0)
 
     std::shared_ptr<MockEnrollment> mockEnroll = Common::MakeShared<MockEnrollment>();
     ASSERT_NE(mockEnroll, nullptr);
-    EXPECT_CALL(*mockEnroll, GetLatestError()).Times(1);
-    EXPECT_CALL(*mockEnroll, Cancel()).Times(Exactly(1)).WillOnce([]() {
-        // Error: enrollment cancel fail
-        return false;
-    });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    EXPECT_CALL(*mockEnroll, Cancel()).Times(0);
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, OnResult(ResultCode::CANCELED, _)).Times(Exactly(1));
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
-    ASSERT_EQ(context->Stop(), false);
+    ASSERT_EQ(context->Stop(), true);
 }
 
 HWTEST_F(EnrollContextTest, EnrollContextTest_Stop_002, TestSize.Level0)
@@ -265,12 +265,14 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Stop_002, TestSize.Level0)
     static const uint64_t testContestId = 2;
     std::shared_ptr<MockEnrollment> mockEnroll = Common::MakeShared<MockEnrollment>();
     ASSERT_NE(mockEnroll, nullptr);
-    EXPECT_CALL(*mockEnroll, Cancel()).Times(Exactly(1)).WillOnce([]() { return true; });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    EXPECT_CALL(*mockEnroll, Cancel()).Times(0);
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, OnResult(ResultCode::CANCELED, _)).Times(Exactly(1));
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
+    ASSERT_EQ(context->Stop(), true);
     ASSERT_EQ(context->Stop(), true);
 }
 
@@ -292,10 +294,10 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Stop_003, TestSize.Level0)
     EXPECT_CALL(*mockEnroll, Cancel()).Times(Exactly(1)).WillOnce([]() {
         return true;
     });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
     ASSERT_EQ(context->Start(), false);
     ASSERT_EQ(context->Stop(), true);
@@ -324,10 +326,10 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_Stop_004, TestSize.Level0)
     EXPECT_CALL(*mockEnroll, Cancel()).Times(Exactly(1)).WillOnce([]() {
         return false;
     });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(context, nullptr);
     ASSERT_EQ(context->Start(), false);
     ASSERT_EQ(context->Stop(), false);
@@ -339,11 +341,11 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_OnScheduleStarted, TestSize.Level0
 
     std::shared_ptr<MockEnrollment> mockEnroll = Common::MakeShared<MockEnrollment>();
     ASSERT_NE(mockEnroll, nullptr);
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(nodeCallback, nullptr);
     nodeCallback->OnScheduleStarted();
 }
@@ -367,7 +369,7 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_OnScheduleProcessed, TestSize.Leve
         );
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(nodeCallback, nullptr);
     nodeCallback->OnScheduleProcessed(testRole, testModuleType, testAcquireMsg);
 }
@@ -388,7 +390,7 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_OnScheduleStoped_001, TestSize.Lev
         });
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(nodeCallback, nullptr);
     // Error: result is null when testResultCode is not success
     std::shared_ptr<Attributes> result = nullptr;
@@ -411,7 +413,7 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_OnScheduleStoped_002, TestSize.Lev
         });
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(nodeCallback, nullptr);
     // Error: result is null when testResultCode is success
     std::shared_ptr<Attributes> result = nullptr;
@@ -434,7 +436,7 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_OnScheduleStoped_003, TestSize.Lev
         });
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(nodeCallback, nullptr);
     // Error: ATTR_RESULT_CODE is not set
     std::shared_ptr<Attributes> result = Common::MakeShared<Attributes>();
@@ -476,7 +478,7 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_OnScheduleStoped_004, TestSize.Lev
         });
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(nodeCallback, nullptr);
     // Error: enroll_->Update return false
     std::shared_ptr<Attributes> result = Common::MakeShared<Attributes>();
@@ -528,7 +530,7 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_OnScheduleStoped_005, TestSize.Lev
         });
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(nodeCallback, nullptr);
     // Success
     std::shared_ptr<Attributes> result = Common::MakeShared<Attributes>();
@@ -575,7 +577,7 @@ HWTEST_F(EnrollContextTest, EnrollContextTest_OnScheduleStoped_006, TestSize.Lev
     EXPECT_CALL(*contextCallback, OnResult(_, _)).Times(1);
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =
-        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, contextCallback, true);
+        Common::MakeShared<EnrollContext>(testContestId, mockEnroll, true, contextCallback);
     ASSERT_NE(nodeCallback, nullptr);
     // Success
     std::shared_ptr<Attributes> result = Common::MakeShared<Attributes>();

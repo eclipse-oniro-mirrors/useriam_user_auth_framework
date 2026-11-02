@@ -40,7 +40,7 @@ void UIExtensionAbilityConnection::OnAbilityConnectDone(const AppExecFwk::Elemen
     }
     if (remoteObject == nullptr) {
         IAM_LOGE("remoteObject is nullptr");
-        WidgetClient::Instance().ForceStopAuth();
+        WidgetClient::Instance().ForceStopAuth(widgetContextId_);
         return;
     }
     connectAbilityHitrace_ = nullptr;
@@ -62,7 +62,7 @@ void UIExtensionAbilityConnection::OnAbilityConnectDone(const AppExecFwk::Elemen
         IAM_LOGE("widget schedule error, stop auth");
         connectAbilityHitrace_ = nullptr;
         ReleaseUIExtensionComponentInner();
-        WidgetClient::Instance().ForceStopAuth();
+        WidgetClient::Instance().ForceStopAuth(widgetContextId_);
     }
 }
 
@@ -81,7 +81,7 @@ void UIExtensionAbilityConnection::OnAbilityDisconnectDone(const AppExecFwk::Ele
         return;
     }
 
-    WidgetClient::Instance().ForceStopAuth();
+    WidgetClient::Instance().ForceStopAuth(widgetContextId_);
 }
 
 void UIExtensionAbilityConnection::ReleaseUIExtensionComponentInner()

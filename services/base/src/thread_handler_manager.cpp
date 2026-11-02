@@ -29,12 +29,6 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-ThreadHandlerManager &ThreadHandlerManager::GetInstance()
-{
-    static ThreadHandlerManager manager;
-    return manager;
-}
-
 ThreadHandlerManager::ThreadHandlerManager()
 {
     threadHandlerMap_.emplace(SINGLETON_THREAD_NAME,

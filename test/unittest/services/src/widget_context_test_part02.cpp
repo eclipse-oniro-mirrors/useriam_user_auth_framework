@@ -65,14 +65,14 @@ std::shared_ptr<WidgetContext> CreateWidgetContextPart02(uint64_t contextId,
     ContextFactory::AuthWidgetContextPara para, const sptr<IRemoteAuthCallback> remoteAuthCallback = nullptr)
 {
     std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
-    return Common::MakeShared<WidgetContext>(contextId, para, contextCallback, nullptr, remoteAuthCallback);
+    return Common::MakeShared<WidgetContext>(contextId, para, false, contextCallback, nullptr, remoteAuthCallback);
 }
 
 class TestableWidgetContext : public WidgetContext {
 public:
     TestableWidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
         std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback)
-        : WidgetContext(contextId, para, callback, modalCallback, nullptr) {}
+        : WidgetContext(contextId, para, false, callback, modalCallback, nullptr) {}
 
     void SetSchedule(std::shared_ptr<WidgetScheduleNode> schedule)
     {
@@ -175,7 +175,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestAttributesGetFail_001, TestSi
     auto widgetContext = CreateWidgetContextPart02(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
     Attributes finalResult;
-    widgetContext->AuthResult(ResultCode::FAIL, PIN, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::FAIL, PIN, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -189,7 +189,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestAttributesGetFail_002, TestSi
     Attributes finalResult;
     finalResult.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, -1);
     finalResult.SetInt32Value(Attributes::ATTR_FREEZING_TIME, -1);
-    widgetContext->AuthResult(ResultCode::LOCKED, PIN, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::LOCKED, PIN, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -203,7 +203,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestAttributesGetFail_003, TestSi
     Attributes extraInfo;
     std::vector<uint8_t> invalidTipInfo;
     extraInfo.SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, invalidTipInfo);
-    EXPECT_NO_THROW(widgetContext->AuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, PIN, extraInfo));
+    EXPECT_NO_THROW(widgetContext->OnChildAuthTip(USER_AUTH_TIP_SINGLE_AUTH_RESULT, PIN, extraInfo));
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -433,7 +433,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_SingleCompanio
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = true;
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
 
     Attributes finalResult;
     testableContext->ProcAuthResult(ResultCode::FAIL, AuthType::COMPANION_DEVICE, 0, finalResult);
@@ -456,7 +456,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_SingleCompanio
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = true;
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
 
     Attributes finalResult;
     testableContext->ProcAuthResult(ResultCode::LOCKED, AuthType::COMPANION_DEVICE, 60, finalResult);
@@ -479,7 +479,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_SingleCompanio
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = true;
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
 
     Attributes finalResult;
     testableContext->ProcAuthResult(ResultCode::TIMEOUT, AuthType::COMPANION_DEVICE, 0, finalResult);
@@ -496,7 +496,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestFailAuth_UseLatestError_001, 
     auto widgetContext = CreateWidgetContextPart02(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
     widgetContext->SetLatestError(ResultCode::LOCKED);
-    widgetContext->FailAuth(AuthType::FACE);
+    widgetContext->OnAuthFail(AuthType::FACE);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -509,7 +509,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestFailAuth_UseLatestError_002, 
     auto widgetContext = CreateWidgetContextPart02(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
     widgetContext->SetLatestError(ResultCode::FAIL);
-    widgetContext->FailAuth(AuthType::FINGERPRINT);
+    widgetContext->OnAuthFail(AuthType::FINGERPRINT);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -532,7 +532,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_DirectAuthSucc
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = true;
 
-    EXPECT_CALL(*mockSchedule, SuccessAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthSuccess(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
     EXPECT_CALL(*mockSchedule, ClearSchedule()).WillOnce(Return(true));
 
     Attributes finalResult;
@@ -560,7 +560,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_DirectAuthFail
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = true;
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
     EXPECT_CALL(*mockSchedule, ClearSchedule()).WillOnce(Return(true));
 
     Attributes finalResult;
@@ -588,7 +588,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_DirectAuthFail
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = true;
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::COMPANION_DEVICE)).WillOnce(Return(true));
     EXPECT_CALL(*mockSchedule, ClearSchedule()).WillOnce(Return(true));
 
     Attributes finalResult;
@@ -611,7 +611,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_SingleFaceAuth
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = false;
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FACE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::FACE)).WillOnce(Return(true));
 
     Attributes finalResult;
     testableContext->ProcAuthResult(ResultCode::FAIL, AuthType::FACE, 30, finalResult);
@@ -636,7 +636,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_SingleFingerpr
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = false;
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FINGERPRINT)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::FINGERPRINT)).WillOnce(Return(true));
 
     Attributes finalResult;
     testableContext->ProcAuthResult(ResultCode::FAIL, AuthType::FINGERPRINT, 30, finalResult);
@@ -668,7 +668,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthTipInfo_SingleFaceAut
             return ResultCode::SUCCESS;
         }));
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FACE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::FACE)).WillOnce(Return(true));
 
     testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::FACE, extraInfo);
 
@@ -700,7 +700,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthTipInfo_SingleFingerp
             return ResultCode::SUCCESS;
         }));
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FINGERPRINT)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::FINGERPRINT)).WillOnce(Return(true));
 
     testableContext->ProcAuthTipInfo(USER_AUTH_TIP_SINGLE_AUTH_RESULT, AuthType::FINGERPRINT, extraInfo);
 
@@ -722,7 +722,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_NonDirectAuthS
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = false;
 
-    EXPECT_CALL(*mockSchedule, SuccessAuth(AuthType::FACE)).WillOnce(Return(true));
+    EXPECT_CALL(*mockSchedule, NotifyAuthSuccess(AuthType::FACE)).WillOnce(Return(true));
     EXPECT_CALL(*mockSchedule, ClearSchedule()).Times(0);
 
     Attributes finalResult;
@@ -744,7 +744,7 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthResult_NonDirectAuthF
     testableContext->SetSchedule(mockSchedule);
     testableContext->isDirectAuth_ = false;
 
-    EXPECT_CALL(*mockSchedule, FailAuth(AuthType::FACE)).Times(0);
+    EXPECT_CALL(*mockSchedule, NotifyAuthFail(AuthType::FACE)).Times(0);
     EXPECT_CALL(*mockSchedule, ClearSchedule()).Times(0);
 
     Attributes finalResult;
@@ -807,8 +807,8 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestProcAuthTipInfo_NavigationAut
     handler->EnsureTask([]() {});
 
     std::vector<uint8_t> token = {};
-    testableContext->SendAuthResultInfo(ResultCode::GENERAL_ERROR, PIN, token);
-    testableContext->SendAuthResultInfo(ResultCode::SUCCESS, PIN, token);
+    testableContext->OnScheduleAuthResult(ResultCode::GENERAL_ERROR, PIN, token);
+    testableContext->OnScheduleAuthResult(ResultCode::SUCCESS, PIN, token);
 }
 
 HWTEST_F(WidgetContextTestPart02, WidgetContextCreateWithRemoteAuthCallback_001, TestSize.Level0)

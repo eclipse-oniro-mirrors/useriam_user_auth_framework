@@ -84,7 +84,7 @@ HWTEST_F(ExecutorMessengerServiceTest, ExecutorMessengerServiceTest002, TestSize
 
     auto context = MockContext::CreateContextWithScheduleNode(testContextId, scheduleNodeSet);
     EXPECT_NE(context, nullptr);
-    EXPECT_TRUE(ContextPool::Instance().Insert(context));
+    EXPECT_TRUE(ContextPool::Instance().Schedule(context));
 
     result1 = service->SendData(testScheduleId1, testDstRole, testMsg);
     EXPECT_EQ(result1, GENERAL_ERROR);

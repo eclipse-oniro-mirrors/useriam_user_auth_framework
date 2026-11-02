@@ -88,7 +88,8 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_NullCallback, TestSize.Level0)
     ASSERT_NE(mockDeletion, nullptr);
     std::shared_ptr<ContextCallback> contextCallback = nullptr;
 
-    auto oriContext = Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
+    auto oriContext = Common::MakeShared<DeleteContext>(testContestId, mockDeletion,
+        contextCallback);
     ASSERT_NE(oriContext, nullptr);
     std::shared_ptr<ScheduleNodeCallback> nodeCallback = oriContext;
 
@@ -103,10 +104,11 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_BasicInfo, TestSize.Level0)
 
     std::shared_ptr<MockDeletion> mockDeletion = Common::MakeShared<MockDeletion>();
     ASSERT_NE(mockDeletion, nullptr);
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
 
-    auto oriContext = Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
+    auto oriContext = Common::MakeShared<DeleteContext>(testContestId, mockDeletion,
+        contextCallback);
     ASSERT_NE(oriContext, nullptr);
     std::shared_ptr<Context> context = oriContext;
 
@@ -129,7 +131,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_001, TestSize.Level0)
             isCredentialDelete = false;
             return false;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
@@ -151,7 +153,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_002, TestSize.Level0)
             isCredentialDelete = false;
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
@@ -174,7 +176,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_003, TestSize.Level0)
             scheduleList.push_back(Common::MakeShared<MockScheduleNode>());
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
@@ -200,7 +202,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_004, TestSize.Level0)
             scheduleList.push_back(scheduleNode);
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
@@ -228,7 +230,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_005, TestSize.Level0)
             scheduleList.push_back(scheduleNode);
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
@@ -247,16 +249,14 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Stop_001, TestSize.Level0)
 
     std::shared_ptr<MockDeletion> mockDeletion = Common::MakeShared<MockDeletion>();
     ASSERT_NE(mockDeletion, nullptr);
-    EXPECT_CALL(*mockDeletion, GetLatestError()).Times(1);
-    EXPECT_CALL(*mockDeletion, Cancel()).Times(Exactly(1)).WillOnce([]() {
-        return false;
-    });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    EXPECT_CALL(*mockDeletion, Cancel()).Times(0);
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, OnResult(ResultCode::CANCELED, _)).Times(Exactly(1));
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
     ASSERT_NE(context, nullptr);
-    ASSERT_EQ(context->Stop(), false);
+    ASSERT_EQ(context->Stop(), true);
 }
 
 HWTEST_F(DeleteContextTest, DeleteContextTest_Stop_002, TestSize.Level0)
@@ -264,12 +264,14 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Stop_002, TestSize.Level0)
     static const uint64_t testContestId = 2;
     std::shared_ptr<MockDeletion> mockDeletion = Common::MakeShared<MockDeletion>();
     ASSERT_NE(mockDeletion, nullptr);
-    EXPECT_CALL(*mockDeletion, Cancel()).Times(Exactly(1)).WillOnce([]() { return true; });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    EXPECT_CALL(*mockDeletion, Cancel()).Times(0);
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, OnResult(ResultCode::CANCELED, _)).Times(Exactly(1));
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
     ASSERT_NE(context, nullptr);
+    ASSERT_EQ(context->Stop(), true);
     ASSERT_EQ(context->Stop(), true);
 }
 
@@ -292,7 +294,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Stop_003, TestSize.Level0)
     EXPECT_CALL(*mockDeletion, Cancel()).Times(Exactly(1)).WillOnce([]() {
         return true;
     });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
@@ -325,7 +327,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Stop_004, TestSize.Level0)
     EXPECT_CALL(*mockDeletion, Cancel()).Times(Exactly(1)).WillOnce([]() {
         return false;
     });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
@@ -340,7 +342,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_OnScheduleStarted, TestSize.Level0
 
     std::shared_ptr<MockDeletion> mockDeletion = Common::MakeShared<MockDeletion>();
     ASSERT_NE(mockDeletion, nullptr);
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =

@@ -19,7 +19,6 @@
 #include "accesstoken_kit.h"
 
 #include "context_appstate_observer.h"
-#include "context_helper.h"
 #include "context_pool.h"
 #include "credential_updated_manager.h"
 #include "event_listener_manager.h"
@@ -29,6 +28,7 @@
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
+#include "iam_scope_guard.h"
 #include "iam_defines.h"
 #include "iam_time.h"
 #include "ipc_common.h"
@@ -305,21 +305,19 @@ int32_t UserIdmService::GetSecInfo(int32_t userId, const sptr<IIdmGetSecureUserI
 int32_t UserIdmService::StartEnroll(Enrollment::EnrollmentPara &para,
     const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo, bool needSubscribeAppState)
 {
-    auto context = ContextFactory::CreateEnrollContext(para, contextCallback, needSubscribeAppState);
-    if (context == nullptr || !ContextPool::Instance().Insert(context)) {
-        IAM_LOGE("failed to insert context");
+    Common::IamScopeGuard failGuard([&contextCallback, &extraInfo]() {
+        IAM_LOGE("start enroll fail");
         contextCallback->OnResult(GENERAL_ERROR, extraInfo);
-        return GENERAL_ERROR;
-    }
+    });
+    auto context = ContextFactory::CreateEnrollContext(para, needSubscribeAppState, contextCallback);
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, GENERAL_ERROR);
     contextCallback->SetTraceRequestContextId(context->GetContextId());
-    auto cleaner = ContextHelper::Cleaner(context);
+    auto cleaner = ContextPool::Cleaner(context);
     contextCallback->SetCleaner(cleaner);
 
-    if (!context->Start()) {
-        IAM_LOGE("failed to start enroll");
-        contextCallback->OnResult(context->GetLatestError(), extraInfo);
-        return GENERAL_ERROR;
-    }
+    bool ret = ContextPool::Instance().Schedule(context);
+    IF_FALSE_LOGE_AND_RETURN_VAL(ret, GENERAL_ERROR);
+    failGuard.Cancel();
     return SUCCESS;
 }
 
@@ -443,10 +441,9 @@ int32_t UserIdmService::Cancel(int32_t userId)
     int32_t ret = GENERAL_ERROR;
     for (const auto &context : contextList) {
         if (auto ctx = context.lock(); ctx != nullptr && tokenId == ctx->GetTokenId()) {
-            if (!ctx->Stop()) {
-                IAM_LOGE("failed stop %{public}s", GET_MASKED_STRING(ctx->GetContextId()).c_str());
-                ret = ctx->GetLatestError();
-            }
+            IAM_LOGI("cancel enroll context %{public}s", GET_MASKED_STRING(ctx->GetContextId()).c_str());
+            ContextPool::Instance().Cancel(ctx->GetContextId());
+            ret = SUCCESS;
         }
     }
     return ret;
@@ -459,7 +456,7 @@ void UserIdmService::CancelCurrentEnrollIfExist()
     for (const auto &context : contextList) {
         if (auto ctx = context.lock(); ctx != nullptr) {
             IAM_LOGI("stop the old context %{public}s", GET_MASKED_STRING(ctx->GetContextId()).c_str());
-            ctx->Stop();
+            ContextPool::Instance().Cancel(ctx->GetContextId());
         }
     }
 }
@@ -642,20 +639,18 @@ int32_t UserIdmService::StartDelete(Deletion::DeleteParam &para,
     HILOG_COMM_INFO("user idm delete, userId: %{public}d, credentialId: %{public}s", para.userId,
         Common::GetMaskedString(para.credentialId).c_str());
     auto context = ContextFactory::CreateDeleteContext(para, contextCallback);
-    if (context == nullptr || !ContextPool::Instance().Insert(context)) {
-        IAM_LOGE("failed to insert context");
+    Common::IamScopeGuard failGuard([&contextCallback, &extraInfo]() {
+        IAM_LOGE("start delete fail");
         contextCallback->OnResult(GENERAL_ERROR, extraInfo);
-        return GENERAL_ERROR;
-    }
+    });
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, GENERAL_ERROR);
     contextCallback->SetTraceRequestContextId(context->GetContextId());
-    auto cleaner = ContextHelper::Cleaner(context);
+    auto cleaner = ContextPool::Cleaner(context);
     contextCallback->SetCleaner(cleaner);
 
-    if (!context->Start()) {
-        HILOG_COMM_ERROR("failed to start context delete");
-        contextCallback->OnResult(context->GetLatestError(), extraInfo);
-        return context->GetLatestError();
-    }
+    bool ret = ContextPool::Instance().Schedule(context);
+    IF_FALSE_LOGE_AND_RETURN_VAL(ret, GENERAL_ERROR);
+    failGuard.Cancel();
     return SUCCESS;
 }
 

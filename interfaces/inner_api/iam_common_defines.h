@@ -279,6 +279,8 @@ enum AuthIntent : int32_t {
     QUESTION_AUTH = 3,
     /**< The auth intention is abandoned pin auth. */
     ABANDONED_PIN_AUTH = 4,
+    /**< The auth intention is sudo pin auth. */
+    SUDO_PIN_AUTH = 5,
 };
 
 /**

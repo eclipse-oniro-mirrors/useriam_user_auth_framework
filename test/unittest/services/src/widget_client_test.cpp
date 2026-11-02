@@ -76,7 +76,7 @@ std::shared_ptr<WidgetScheduleNode> WidgetClientTest::BuildSchedule()
     EXPECT_CALL(*schedule, StopSchedule).WillRepeatedly(Return(true));
     EXPECT_CALL(*schedule, StartAuthList).WillRepeatedly(Return(true));
     EXPECT_CALL(*schedule, StopAuthList).WillRepeatedly(Return(true));
-    EXPECT_CALL(*schedule, SuccessAuth).WillRepeatedly(Return(true));
+    EXPECT_CALL(*schedule, NotifyAuthSuccess).WillRepeatedly(Return(true));
     EXPECT_CALL(*schedule, NaviPinAuth).WillRepeatedly(Return(true));
     EXPECT_CALL(*schedule, WidgetReload).WillRepeatedly(Return(true));
     return schedule;
@@ -371,14 +371,14 @@ HWTEST_F(WidgetClientTest, WidgetClientTestReportWidgetResult_0001, TestSize.Lev
 {
     WidgetClient::Instance().Reset();
     WidgetClient::Instance().SetSensorInfo("fake senor info");
-    WidgetClient::Instance().ReportWidgetResult(1, AuthType::FINGERPRINT, 1, 1, false);
+    WidgetClient::Instance().ReportWidgetResult(1, AuthType::FINGERPRINT, 1, 1, false, 1, {});
     EXPECT_EQ(WidgetClient::Instance().GetAuthTokenId(), 0);
 }
 
 HWTEST_F(WidgetClientTest, WidgetClientTestReportWidgetResult_0002, TestSize.Level0)
 {
     WidgetClient::Instance().Reset();
-    WidgetClient::Instance().ReportWidgetResult(1, AuthType::FINGERPRINT, 1, 1, false);
+    WidgetClient::Instance().ReportWidgetResult(1, AuthType::FINGERPRINT, 1, 1, false, 1, {});
     EXPECT_EQ(WidgetClient::Instance().GetAuthTokenId(), 0);
 }
 
@@ -386,7 +386,7 @@ HWTEST_F(WidgetClientTest, WidgetClientTestReportWidgetResult_0003, TestSize.Lev
 {
     WidgetClient::Instance().Reset();
     WidgetClient::Instance().SetSensorInfo("fake senor info");
-    WidgetClient::Instance().ReportWidgetResult(1, AuthType::PIN, 1, 1, false);
+    WidgetClient::Instance().ReportWidgetResult(1, AuthType::PIN, 1, 1, false, 1, {});
     EXPECT_EQ(WidgetClient::Instance().GetAuthTokenId(), 0);
 }
 
@@ -397,7 +397,7 @@ HWTEST_F(WidgetClientTest, WidgetClientTestReportWidgetResult_0004, TestSize.Lev
     authTypeList.emplace_back(AuthType::PIN);
     WidgetClient::Instance().SetAuthTypeList(authTypeList);
     WidgetClient::Instance().SetPinSubType(PinSubType::PIN_NUMBER);
-    WidgetClient::Instance().ReportWidgetResult(1, AuthType::PIN, 1, 1, false);
+    WidgetClient::Instance().ReportWidgetResult(1, AuthType::PIN, 1, 1, false, 1, {});
     EXPECT_EQ(WidgetClient::Instance().GetAuthTokenId(), 0);
 }
 
@@ -412,7 +412,7 @@ HWTEST_F(WidgetClientTest, WidgetClientTestReportWidgetResult_0005, TestSize.Lev
     EXPECT_NE(widgetCallback, nullptr);
     EXPECT_CALL(*widgetCallback, SendCommand);
     WidgetClient::Instance().SetWidgetCallback(widgetCallback);
-    WidgetClient::Instance().ReportWidgetResult(1, AuthType::PIN, 1, 1, false);
+    WidgetClient::Instance().ReportWidgetResult(1, AuthType::PIN, 1, 1, false, 1, {});
     EXPECT_EQ(WidgetClient::Instance().GetAuthTokenId(), 0);
 }
 
@@ -426,7 +426,7 @@ HWTEST_F(WidgetClientTest, WidgetClientTestReportWidgetTip, TestSize.Level0)
     bool skipLockedBiometricAuth = false;
 
     WidgetClient::Instance().ReportWidgetResult(result, authType,
-        lockoutDuration, remainAttempts, skipLockedBiometricAuth);
+        lockoutDuration, remainAttempts, skipLockedBiometricAuth, 1, {});
     EXPECT_EQ(WidgetClient::Instance().GetAuthTokenId(), 0);
 }
 
@@ -444,6 +444,34 @@ HWTEST_F(WidgetClientTest, WidgetClientTestForceStopAuth_0002, TestSize.Level0)
     WidgetClient::Instance().SetWidgetSchedule(contextId, BuildSchedule());
     WidgetClient::Instance().ForceStopAuth();
     EXPECT_EQ(WidgetClient::Instance().GetAuthTokenId(), 0);
+}
+
+HWTEST_F(WidgetClientTest, WidgetClientTestForceStopAuthScopedLeavesCurrentSession, TestSize.Level0)
+{
+    constexpr uint64_t staleId = 21;
+    constexpr uint64_t currentId = 22;
+    auto &client = WidgetClient::Instance();
+    client.Reset();
+
+    auto currentSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    EXPECT_CALL(*currentSchedule, StopSchedule).Times(0);
+    EXPECT_CALL(*currentSchedule, ClearSchedule).Times(0);
+    auto staleSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    EXPECT_CALL(*staleSchedule, StopSchedule).Times(1).WillOnce(Return(true));
+    EXPECT_CALL(*staleSchedule, ClearSchedule).Times(1).WillOnce(Return(true));
+
+    client.SetWidgetSchedule(currentId, currentSchedule);
+    std::shared_ptr<WidgetScheduleNode> staleNode = staleSchedule;
+    client.InsertScheduleNode(staleId, staleNode);
+
+    client.ForceStopAuth(staleId);
+    EXPECT_NE(client.GetScheduleNode(currentId), nullptr);
+    EXPECT_EQ(client.GetScheduleNode(staleId), nullptr);
+
+    ASSERT_TRUE(Mock::VerifyAndClearExpectations(currentSchedule.get()));
+    EXPECT_CALL(*currentSchedule, StopSchedule).WillOnce(Return(true));
+    EXPECT_CALL(*currentSchedule, ClearSchedule).WillOnce(Return(true));
+    client.ClearSchedule(currentId);
 }
 
 HWTEST_F(WidgetClientTest, WidgetClientTestSetPinSubType, TestSize.Level0)
@@ -646,10 +674,11 @@ HWTEST_F(WidgetClientTest, WidgetClientTestCompleteAuth_001, TestSize.Level0)
     WidgetNotice notice = {};
     notice.widgetContextId = 1;
     std::vector<AuthType> authTypeList = {AuthType::PIN, AuthType::FACE};
-    
+
     WidgetClient widgetClient = {};
     auto mockScheduleNode = Common::MakeShared<MockWidgetScheduleNode>();
-    EXPECT_CALL(*mockScheduleNode, SendAuthResultInfo(_, _, _)).Times(0);
+    // per-id routing resolves the registered id; foreign ids are rejected (_002/_003)
+    EXPECT_CALL(*mockScheduleNode, OnWidgetResult(_, _, _)).Times(1);
     uint64_t contextId = 1;
     std::shared_ptr<WidgetScheduleNode> baseNode = mockScheduleNode;
     widgetClient.InsertScheduleNode(contextId, baseNode);
@@ -665,7 +694,7 @@ HWTEST_F(WidgetClientTest, WidgetClientTestCompleteAuth_002, TestSize.Level0)
     
     WidgetClient widgetClient = {};
     auto mockScheduleNode = Common::MakeShared<MockWidgetScheduleNode>();
-    EXPECT_CALL(*mockScheduleNode, SendAuthResultInfo(_, _, _)).Times(0);
+    EXPECT_CALL(*mockScheduleNode, OnWidgetResult(_, _, _)).Times(0);
     uint64_t contextId = 1;
     std::shared_ptr<WidgetScheduleNode> baseNode = mockScheduleNode;
     widgetClient.InsertScheduleNode(contextId, baseNode);
@@ -681,7 +710,7 @@ HWTEST_F(WidgetClientTest, WidgetClientTestCompleteAuth_003, TestSize.Level0)
     
     WidgetClient widgetClient = {};
     auto mockScheduleNode = Common::MakeShared<MockWidgetScheduleNode>();
-    EXPECT_CALL(*mockScheduleNode, SendAuthResultInfo(_, _, _)).Times(0);
+    EXPECT_CALL(*mockScheduleNode, OnWidgetResult(_, _, _)).Times(0);
 
     widgetClient.WidgetCompleteAuth(notice, authTypeList);
 }

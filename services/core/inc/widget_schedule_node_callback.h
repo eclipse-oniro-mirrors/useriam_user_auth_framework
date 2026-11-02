@@ -38,13 +38,14 @@ public:
     virtual void EndAuthAsNaviPin() = 0;
     virtual void EndAuthAsWidgetParaInvalid() = 0;
     virtual void StopAuthList(const std::vector<AuthType> &authTypeList) = 0;
-    virtual void SuccessAuth(AuthType authType) = 0;
-    virtual void FailAuth(AuthType authType) = 0;
+    virtual void OnAuthSuccess(AuthType authType) = 0;
+    virtual void OnAuthFail(AuthType authType) = 0;
     virtual bool AuthWidgetReload(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType) = 0;
     virtual void AuthWidgetReloadInit() = 0;
-    virtual void SendAuthTipInfo(int32_t authType, int32_t tipInfo) = 0;
-    virtual void SendAuthResultInfo(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) = 0;
+    virtual void OnScheduleAuthTip(int32_t authType, int32_t tipInfo) = 0;
+    virtual void OnScheduleAuthResult(int32_t resultCode, int32_t authType,
+        const std::vector<uint8_t> &token) = 0;
     virtual void ClearSchedule() = 0;
     virtual bool GetRemoteAuthParam() = 0;
 };

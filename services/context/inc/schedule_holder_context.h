@@ -35,7 +35,7 @@ public:
     ~ScheduleHolderContext() override = default;
 
     bool Start() override;
-    bool Stop() override;
+    void OnStartFailed(int32_t errorCode) override;
     uint64_t GetContextId() const override;
     ContextType GetContextType() const override;
     std::shared_ptr<ScheduleNode> GetScheduleNode(uint64_t scheduleId) const override;
@@ -47,6 +47,7 @@ public:
     void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) override;
 
 protected:
+    bool Stop() override;
     void SetLatestError(int32_t error) override;
 
 private:

@@ -28,9 +28,9 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-EnrollContext::EnrollContext(uint64_t contextId, std::shared_ptr<Enrollment> enroll,
-    std::shared_ptr<ContextCallback> callback, bool needSubscribeAppState)
-    : BaseContext("Enroll", contextId, callback, needSubscribeAppState),
+EnrollContext::EnrollContext(uint64_t contextId, std::shared_ptr<Enrollment> enroll, bool needSubscribeAppState,
+    std::shared_ptr<ContextCallback> callback)
+    : BaseContext("Enroll", contextId, needSubscribeAppState, true, callback),
       enroll_(enroll)
 {
 }

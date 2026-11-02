@@ -70,13 +70,13 @@ HWTEST_F(RemoteAuthContextTest, RemoteAuthContextTest, TestSize.Level0)
     param.executorInfoMsg = {};
     std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     auto remoteAuthContext1 = Common::MakeShared<RemoteAuthContext>(
-        contextId, auth, param, contextCallback
+        contextId, auth, param, false, contextCallback
     );
     EXPECT_NE(remoteAuthContext1, nullptr);
     std::vector<uint8_t> executorInfoMsg = {7, 8, 9};
     param.executorInfoMsg = executorInfoMsg;
     auto remoteAuthContext2 = Common::MakeShared<RemoteAuthContext>(
-        contextId, auth, param, contextCallback
+        contextId, auth, param, false, contextCallback
     );
     EXPECT_NE(remoteAuthContext2, nullptr);
     bool needSetupConnection = true;
@@ -84,7 +84,7 @@ HWTEST_F(RemoteAuthContextTest, RemoteAuthContextTest, TestSize.Level0)
     remoteAuthContext2->cancelTimerId_ = cancelTimerId;
     remoteAuthContext2->needSetupConnection_ = needSetupConnection;
     auto remoteAuthContext3 = Common::MakeShared<RemoteAuthContext>(
-        contextId, auth, param, contextCallback
+        contextId, auth, param, false, contextCallback
     );
     std::vector<uint8_t> msg = {};
     remoteAuthContext3->SetExecutorInfoMsg(msg);
@@ -109,7 +109,7 @@ HWTEST_F(RemoteAuthContextTest, OnStartTest, TestSize.Level0)
     std::vector<uint8_t> executorInfoMsg = {7, 8, 9};
     param.executorInfoMsg = executorInfoMsg;
     auto remoteAuthContext = Common::MakeShared<RemoteAuthContext>(
-        contextId, auth, param, contextCallback
+        contextId, auth, param, false, contextCallback
     );
     EXPECT_NE(remoteAuthContext, nullptr);
     bool result = remoteAuthContext->OnStart();
@@ -139,7 +139,7 @@ HWTEST_F(RemoteAuthContextTest, StartAuthDelayedTest, TestSize.Level1)
     std::vector<uint8_t> executorInfoMsg = {6, 8, 9};
     param.executorInfoMsg = executorInfoMsg;
     auto remoteAuthContext = Common::MakeShared<RemoteAuthContext>(
-        contextId, auth, param, contextCallback
+        contextId, auth, param, false, contextCallback
     );
     EXPECT_NE(remoteAuthContext, nullptr);
     bool needSetupConnection = true;
@@ -165,7 +165,7 @@ HWTEST_F(RemoteAuthContextTest, SendQueryExecutorInfoMsgTest, TestSize.Level2)
     std::vector<uint8_t> executorInfoMsg = {6, 8, 7};
     param.executorInfoMsg = executorInfoMsg;
     auto remoteAuthContext = Common::MakeShared<RemoteAuthContext>(
-        contextId, auth, param, contextCallback
+        contextId, auth, param, false, contextCallback
     );
     EXPECT_NE(remoteAuthContext, nullptr);
     bool needSetupConnection = true;
@@ -191,7 +191,7 @@ HWTEST_F(RemoteAuthContextTest, OnConnectStatusTest, TestSize.Level0)
     std::vector<uint8_t> executorInfoMsg = {6, 5, 7};
     param.executorInfoMsg = executorInfoMsg;
     auto remoteAuthContext = Common::MakeShared<RemoteAuthContext>(
-        contextId, auth, param, contextCallback
+        contextId, auth, param, false, contextCallback
     );
     EXPECT_NO_THROW(remoteAuthContext->OnConnectStatus(connectionName, ConnectStatus::DISCONNECTED));
     EXPECT_NO_THROW(remoteAuthContext->OnConnectStatus(connectionName, ConnectStatus::CONNECTED));
@@ -214,7 +214,7 @@ HWTEST_F(RemoteAuthContextTest, SetupConnectionTest01, TestSize.Level0)
     std::vector<uint8_t> executorInfoMsg = {6, 7, 8};
     param.executorInfoMsg = executorInfoMsg;
     auto remoteAuthContext = Common::MakeShared<RemoteAuthContext>(
-        contextId, auth, param, contextCallback
+        contextId, auth, param, false, contextCallback
     );
     EXPECT_NO_THROW(remoteAuthContext->SetupConnection());
     EXPECT_NO_THROW(remoteAuthContext->SetupConnection());

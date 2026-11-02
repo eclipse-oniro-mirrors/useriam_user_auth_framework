@@ -33,7 +33,7 @@ struct LocalRemoteAuthContextParam {
 class LocalRemoteAuthContext : public SimpleAuthContext {
 public:
     LocalRemoteAuthContext(uint64_t contextId, std::shared_ptr<Authentication> auth, LocalRemoteAuthContextParam &param,
-        std::shared_ptr<ContextCallback> callback);
+        bool isPrimaryContext, std::shared_ptr<ContextCallback> callback);
     ~LocalRemoteAuthContext() override;
     ContextType GetContextType() const override;
 

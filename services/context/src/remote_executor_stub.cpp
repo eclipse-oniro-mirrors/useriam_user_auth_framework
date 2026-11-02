@@ -279,7 +279,7 @@ int32_t RemoteExecutorStub::ProcBeginExecuteRequest(Attributes &attr, RemoteExec
     auto context = ContextFactory::CreateScheduleHolderContext(remoteScheduleNode_);
     IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, GENERAL_ERROR);
 
-    bool addContextRet = ContextPool::Instance().Insert(context);
+    bool addContextRet = ContextPool::Instance().Schedule(context);
     IF_FALSE_LOGE_AND_RETURN_VAL(addContextRet, GENERAL_ERROR);
     contextId_ = context->GetContextId();
 

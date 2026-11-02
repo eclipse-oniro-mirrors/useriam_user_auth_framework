@@ -51,13 +51,14 @@ class WidgetContext : public WidgetScheduleNodeCallback,
                       public ContextAppStateObserverManager,
                       public NoCopyable {
 public:
-    WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
+    WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para, bool isPrimaryContext,
         std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
         const sptr<IRemoteAuthCallback> &remoteAuthCallback);
     ~WidgetContext() override;
 
     // Context API
     bool Start() override;
+    void OnStartFailed(int32_t errorCode) override;
     bool Stop() override;
     uint64_t GetContextId() const override;
     ContextType GetContextType() const override;
@@ -77,18 +78,18 @@ public:
     void EndAuthAsNaviPin() override;
     void EndAuthAsWidgetParaInvalid() override;
     void StopAuthList(const std::vector<AuthType> &authTypeList) override;
-    void SuccessAuth(AuthType authType) override;
-    void FailAuth(AuthType authType) override;
+    void OnAuthSuccess(AuthType authType) override;
+    void OnAuthFail(AuthType authType) override;
     bool AuthWidgetReload(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType) override;
     void AuthWidgetReloadInit() override;
     bool GetRemoteAuthParam() override;
 
-    void AuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult);
-    void AuthTipInfo(int32_t tipInfo, int32_t authType, const Attributes &extraInfo);
+    void OnChildAuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult);
+    void OnChildAuthTip(int32_t tipInfo, int32_t authType, const Attributes &extraInfo);
     void ClearSchedule() override;
-    void SendAuthTipInfo(int32_t authType, int32_t tipInfo) override;
-    void SendAuthResultInfo(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) override;
+    void OnScheduleAuthTip(int32_t authType, int32_t tipInfo) override;
+    void OnScheduleAuthResult(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) override;
 
 private:
     struct WidgetRotatePara {

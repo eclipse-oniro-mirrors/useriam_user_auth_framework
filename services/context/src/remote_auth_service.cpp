@@ -20,10 +20,10 @@
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
+#include "iam_scope_guard.h"
 #include "ipc_common.h"
 
 #include "context_factory.h"
-#include "context_helper.h"
 #include "context_pool.h"
 #include "device_manager_util.h"
 #include "remote_executor_stub.h"
@@ -157,22 +157,23 @@ uint64_t RemoteAuthServiceImpl::StartRemoteAuthContext(Authentication::Authentic
     IF_FALSE_LOGE_AND_RETURN_VAL(contextCallback != nullptr, BAD_CONTEXT_ID);
     Attributes extraInfo;
     std::shared_ptr<Context> context = ContextFactory::CreateRemoteAuthContext(para, remoteAuthContextParam,
-        contextCallback);
-    if (context == nullptr || !ContextPool::Instance().Insert(context)) {
-        IAM_LOGE("failed to insert context");
-        contextCallback->SetTraceAuthFinishReason("RemoteAuthServiceImpl StartRemoteAuthContext insert context fail");
+        true, contextCallback);
+    Common::IamScopeGuard failGuard([&contextCallback, &extraInfo]() {
+        contextCallback->SetTraceAuthFinishReason("RemoteAuthServiceImpl StartRemoteAuthContext schedule context fail");
         contextCallback->OnResult(GENERAL_ERROR, extraInfo);
-        return BAD_CONTEXT_ID;
-    }
-    contextCallback->SetCleaner(ContextHelper::Cleaner(context));
+    });
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, BAD_CONTEXT_ID);
+    contextCallback->SetCleaner(ContextPool::Cleaner(context));
     contextCallback->SetTraceRequestContextId(context->GetContextId());
     contextCallback->SetTraceAuthContextId(context->GetContextId());
 
-    if (!context->Start()) {
+    bool ret = ContextPool::Instance().Schedule(context);
+    if (!ret) {
+        IAM_LOGE("failed to schedule context");
         lastError = context->GetLatestError();
-        IAM_LOGE("failed to start auth errorCode:%{public}d", lastError);
         return BAD_CONTEXT_ID;
     }
+    failGuard.Cancel();
     lastError = SUCCESS;
     IAM_LOGI("success");
     return context->GetContextId();
@@ -242,7 +243,7 @@ int32_t RemoteAuthServiceImpl::ProcStartRemoteAuthRequest(const std::string &con
     auto contextCallback = GetRemoteAuthContextCallback(connectionName, para);
     IF_FALSE_LOGE_AND_RETURN_VAL(contextCallback != nullptr, GENERAL_ERROR);
 
-    int32_t lastError;
+    int32_t lastError = GENERAL_ERROR;
     auto contextId = StartRemoteAuthContext(para, remoteAuthContextParam, contextCallback, lastError);
     IF_FALSE_LOGE_AND_RETURN_VAL(contextId != BAD_CONTEXT_ID, lastError);
 

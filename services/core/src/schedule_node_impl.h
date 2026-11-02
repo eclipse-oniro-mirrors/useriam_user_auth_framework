@@ -32,7 +32,7 @@ namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 class ScheduleNodeImpl final : public ScheduleNode,
-                               public std::enable_shared_from_this<ScheduleNode>,
+                               public std::enable_shared_from_this<ScheduleNodeImpl>,
                                public NoCopyable {
 public:
     friend class ScheduleNodeBuilder;

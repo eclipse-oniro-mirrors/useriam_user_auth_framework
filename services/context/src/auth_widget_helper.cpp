@@ -73,26 +73,26 @@ bool AuthWidgetHelper::GetAuthCredentialList(int32_t userId, const AuthType &aut
     return true;
 }
 
-bool AuthWidgetHelper::GetUserAuthProfile(int32_t userId, const AuthType &authType,
+int32_t AuthWidgetHelper::GetUserAuthProfile(int32_t userId, const AuthType &authType,
     ContextFactory::AuthProfile &profile, std::vector<uint64_t> credentialIdList)
 {
     Attributes values;
     std::vector<std::shared_ptr<CredentialInfoInterface>> credentialInfos;
     if (!GetAuthCredentialList(userId, authType, credentialIdList, credentialInfos)) {
         IAM_LOGE("GetAuthCredentialList fail");
-        return false;
+        return GENERAL_ERROR;
     }
     if (credentialInfos.empty() || credentialInfos[0] == nullptr) {
         IAM_LOGE("user %{public}d has no credential type %{public}d", userId, authType);
-        return true;
+        return NOT_ENROLLED;
     }
     auto resourceNode = ResourceNodePool::Instance().Select(credentialInfos[0]->GetExecutorIndex()).lock();
     if (resourceNode == nullptr) {
         if (authType == AuthType::ENTERPRISE_ACCOUNT) {
-            return true;
+            return SUCCESS;
         }
         IAM_LOGE("resourceNode of authType:%{public}d not regist", authType);
-        return false;
+        return GENERAL_ERROR;
     }
     std::vector<uint64_t> templateIds;
     templateIds.reserve(credentialInfos.size());
@@ -101,14 +101,7 @@ bool AuthWidgetHelper::GetUserAuthProfile(int32_t userId, const AuthType &authTy
             templateIds.push_back(info->GetTemplateId());
         }
     }
-    std::vector<uint32_t> uint32Keys = {Attributes::ATTR_REMAIN_TIMES, Attributes::ATTR_FREEZING_TIME};
-    if (authType == AuthType::PIN || authType == AuthType::PRIVATE_PIN) {
-        uint32Keys.push_back(Attributes::ATTR_PIN_SUB_TYPE);
-    } else if (authType == AuthType::FINGERPRINT) {
-        uint32Keys.push_back(Attributes::ATTR_SENSOR_INFO);
-    } else if (authType == AuthType::FACE) {
-        uint32Keys.push_back(Attributes::ATTR_CAMERA_STATUS);
-    }
+    std::vector<uint32_t> uint32Keys = GetUint32PropertyKeys(authType);
     Attributes attr;
     attr.SetInt32Value(Attributes::ATTR_AUTH_TYPE, authType);
     attr.SetUint32Value(Attributes::ATTR_PROPERTY_MODE, PROPERTY_MODE_GET);
@@ -117,9 +110,27 @@ bool AuthWidgetHelper::GetUserAuthProfile(int32_t userId, const AuthType &authTy
     int32_t result = resourceNode->GetProperty(attr, values);
     if (result != SUCCESS) {
         IAM_LOGE("failed to get property, result = %{public}d", result);
-        return false;
+        return GENERAL_ERROR;
     }
-    return ParseAttributes(values, authType, profile);
+    if (!ParseAttributes(values, authType, profile)) {
+        IAM_LOGE("ParseAttributes fail, authType:%{public}d", static_cast<int32_t>(authType));
+        return GENERAL_ERROR;
+    }
+    return SUCCESS;
+}
+
+std::vector<uint32_t> AuthWidgetHelper::GetUint32PropertyKeys(const AuthType &authType)
+{
+    std::vector<uint32_t> uint32Keys = {Attributes::ATTR_REMAIN_TIMES, Attributes::ATTR_FREEZING_TIME};
+    if (authType == AuthType::PIN || authType == AuthType::PRIVATE_PIN) {
+        uint32Keys.push_back(Attributes::ATTR_PIN_SUB_TYPE);
+        uint32Keys.push_back(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION);
+    } else if (authType == AuthType::FINGERPRINT) {
+        uint32Keys.push_back(Attributes::ATTR_SENSOR_INFO);
+    } else if (authType == AuthType::FACE) {
+        uint32Keys.push_back(Attributes::ATTR_CAMERA_STATUS);
+    }
+    return uint32Keys;
 }
 
 bool AuthWidgetHelper::ParseAttributes(const Attributes &values, const AuthType &authType,
@@ -143,6 +154,10 @@ bool AuthWidgetHelper::ParseAttributes(const Attributes &values, const AuthType 
     if (!values.GetInt32Value(Attributes::ATTR_FREEZING_TIME, profile.freezingTime)) {
         IAM_LOGE("get ATTR_FREEZING_TIME failed");
         return false;
+    }
+    if ((authType == AuthType::PIN || authType == AuthType::PRIVATE_PIN) &&
+        !values.GetInt32Value(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION, profile.nextPhaseFreezingTime)) {
+        IAM_LOGI("get ATTR_NEXT_FAIL_LOCKOUT_DURATION failed, keep default");
     }
     if (authType == AuthType::FACE && !values.GetUint32Value(Attributes::ATTR_CAMERA_STATUS, profile.cameraStatus)) {
         IAM_LOGE("get ATTR_CAMERA_STATUS failed");

@@ -34,10 +34,10 @@ public:
     MOCK_METHOD0(EndAuthAsNaviPin, void());
     MOCK_METHOD0(EndAuthAsWidgetParaInvalid, void());
     MOCK_METHOD1(StopAuthList, void(const std::vector<AuthType> &authTypeList));
-    MOCK_METHOD1(SuccessAuth, void(AuthType authType));
-    MOCK_METHOD1(FailAuth, void(AuthType authType));
-    MOCK_METHOD2(SendAuthTipInfo, void(int32_t authType, int32_t tipInfo));
-    MOCK_METHOD3(SendAuthResultInfo, void(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token));
+    MOCK_METHOD1(OnAuthSuccess, void(AuthType authType));
+    MOCK_METHOD1(OnAuthFail, void(AuthType authType));
+    MOCK_METHOD2(OnScheduleAuthTip, void(int32_t authType, int32_t tipInfo));
+    MOCK_METHOD3(OnScheduleAuthResult, void(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token));
     MOCK_METHOD0(ClearSchedule, void());
     MOCK_METHOD4(AuthWidgetReload, bool(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType));

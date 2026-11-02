@@ -42,7 +42,6 @@ private:
     UserAuthImpl() = default;
     ~UserAuthImpl() = default;
 
-    static napi_status ParseExecuteInfo(napi_env env, napi_value value, AuthType &authType, ResultCode &resultCode);
     static napi_status ParseExecuteAuthType(napi_env env, napi_value value, AuthType &authType, ResultCode &resultCode);
     static napi_status ParseExecuteSecureLevel(napi_env env, napi_value value,
         AuthTrustLevel &authTrustLevel, ResultCode &resultCode);

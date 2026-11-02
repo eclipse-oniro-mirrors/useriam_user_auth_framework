@@ -22,11 +22,11 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-class RelativeTimer final : public Singleton<RelativeTimer> {
+class RelativeTimer final : public DelayedRefSingleton<RelativeTimer> {
+    DECLARE_DELAYED_REF_SINGLETON(RelativeTimer);
+
 public:
     using TimerCallback = std::function<void()>;
-    RelativeTimer();
-    ~RelativeTimer() override;
     uint32_t Register(const TimerCallback &callback, uint32_t ms, bool once = true);
     void Unregister(uint32_t timerId);
 

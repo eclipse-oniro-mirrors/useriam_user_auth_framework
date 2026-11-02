@@ -37,14 +37,12 @@ struct RemoteAuthContextParam {
 class RemoteAuthContext : public SimpleAuthContext {
 public:
     RemoteAuthContext(uint64_t contextId, std::shared_ptr<Authentication> auth, RemoteAuthContextParam &param,
-        std::shared_ptr<ContextCallback> callback);
+        bool isPrimaryContext, std::shared_ptr<ContextCallback> callback);
     ~RemoteAuthContext() override;
     ContextType GetContextType() const override;
 
     void SetExecutorInfoMsg(std::vector<uint8_t> msg);
 
-    void OnMessage(const std::string &connectionName, const std::string &srcEndPoint,
-        const std::shared_ptr<Attributes> &request, std::shared_ptr<Attributes> &reply);
     void OnConnectStatus(const std::string &connectionName, ConnectStatus connectStatus);
 
     void OnTimeOut();

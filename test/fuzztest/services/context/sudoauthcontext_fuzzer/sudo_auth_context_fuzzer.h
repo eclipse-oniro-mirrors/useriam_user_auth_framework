@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,29 +13,17 @@
  * limitations under the License.
  */
 
-#ifndef IAM_CONTEXT_HELPER_H
-#define IAM_CONTEXT_HELPER_H
+#ifndef SUDO_AUTH_CONTEXT_FUZZER_H
+#define SUDO_AUTH_CONTEXT_FUZZER_H
 
 #include <cstdint>
-
-#include "context.h"
+#include <cstddef>
 
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-class ContextHelper {
-public:
-    class Cleaner final {
-    public:
-        explicit Cleaner(const std::shared_ptr<Context> &context);
-        virtual ~Cleaner() = default;
-        void operator()();
-
-    private:
-        uint64_t contextId_ = INVALID_CONTEXT_ID;
-    };
-};
+void SudoAuthContextFuzzTest(const uint8_t *data, size_t size);
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
-#endif // IAM_CONTEXT_HELPER_H
+#endif // SUDO_AUTH_CONTEXT_FUZZER_H

@@ -31,8 +31,15 @@ ScheduleHolderContext::ScheduleHolderContext(uint64_t contextId, std::shared_ptr
 
 bool ScheduleHolderContext::Start()
 {
+    IAM_LOGI("schedule holder context ****%{public}hx needs no start",
+        static_cast<uint16_t>(contextId_));
+    return true;
+}
+
+void ScheduleHolderContext::OnStartFailed(int32_t errorCode)
+{
+    static_cast<void>(errorCode);
     IAM_LOGE("not implemented");
-    return false;
 }
 
 bool ScheduleHolderContext::Stop()

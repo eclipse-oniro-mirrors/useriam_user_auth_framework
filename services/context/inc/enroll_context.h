@@ -27,8 +27,8 @@ namespace UserIam {
 namespace UserAuth {
 class EnrollContext : public BaseContext {
 public:
-    EnrollContext(uint64_t contextId, std::shared_ptr<Enrollment> enroll, std::shared_ptr<ContextCallback> callback,
-        bool needSubscribeAppState);
+    EnrollContext(uint64_t contextId, std::shared_ptr<Enrollment> enroll, bool needSubscribeAppState,
+        std::shared_ptr<ContextCallback> callback);
     ~EnrollContext() override = default;
     ContextType GetContextType() const override;
     uint32_t GetTokenId() const override;

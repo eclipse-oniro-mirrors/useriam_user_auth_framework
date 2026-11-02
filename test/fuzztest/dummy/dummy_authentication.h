@@ -66,8 +66,6 @@ public:
     {
         return 0;
     };
-    void OnContextPoolInsert(const std::shared_ptr<Context> &context){};
-    void OnContextPoolDelete(const std::shared_ptr<Context> &context){};
 };
 }
 } // UserAuth

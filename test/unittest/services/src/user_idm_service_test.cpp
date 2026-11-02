@@ -31,6 +31,7 @@
 #include "mock_resource_node.h"
 #include "mock_user_idm_callback.h"
 #include "resource_node_pool.h"
+#include "thread_handler.h"
 #include "user_idm_service.h"
 
 namespace OHOS {
@@ -46,6 +47,15 @@ void UserIdmServiceTest::TearDownTestCase()
 {
 }
 
+namespace {
+void DrainIdmSerialThread()
+{
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    handler->EnsureTask([]() {});
+}
+} // namespace
+
 void UserIdmServiceTest::SetUp()
 {
     MockIUserAuthInterface::Holder::GetInstance().Reset();
@@ -53,6 +63,9 @@ void UserIdmServiceTest::SetUp()
 
 void UserIdmServiceTest::TearDown()
 {
+    // StartEnroll/StartDelete post to the serial thread; flush pending tasks before
+    // the mock HDI resets so no test leaks work forward
+    DrainIdmSerialThread();
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
@@ -96,7 +109,7 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceOpenSession_002, TestSize.Level0)
     EXPECT_CALL(*context, GetContextType()).WillRepeatedly(Return(CONTEXT_ENROLL));
     EXPECT_CALL(*context, GetContextId()).WillRepeatedly(Return(contextId));
     EXPECT_CALL(*context, Stop()).WillRepeatedly(Return(true));
-    EXPECT_TRUE(ContextPool::Instance().Insert(context));
+    EXPECT_TRUE(ContextPool::Instance().Schedule(context));
 
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
@@ -338,18 +351,21 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceAddCredential002, TestSize.Level0)
     
     EXPECT_EQ(service.AddCredential(testUserId, testCredPara, testCallback, false), CHECK_PERMISSION_FAILED);
     IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
-    EXPECT_EQ(service.AddCredential(testUserId, testCredPara, testCallback, false), GENERAL_ERROR);
+    // Start is posted: the call returns SUCCESS, the GENERAL_ERROR OnResult lands asynchronously
+    EXPECT_EQ(service.AddCredential(testUserId, testCredPara, testCallback, false), SUCCESS);
+    DrainIdmSerialThread();
     IpcCommon::DeleteAllPermission();
 }
 
-static void MockForAddCredentialHdi(std::shared_ptr<Context> &context, std::promise<void> &promise)
+static void MockForAddCredentialHdi(const std::shared_ptr<std::shared_ptr<Context>> &context,
+    std::promise<void> &promise)
 {
     const uint32_t testExecutorIndex = 60;
     const uint32_t testscheduleId = 20;
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, BeginEnrollmentExt(_, _, _))
-        .WillOnce([&context](const std::vector<uint8_t> &authToken, const HdiEnrollParamExt &param,
+        .WillOnce([context](const std::vector<uint8_t> &authToken, const HdiEnrollParamExt &param,
             HdiScheduleInfo &info) {
             info.executorIndexes.push_back(testExecutorIndex);
             std::vector<uint8_t> executorMessages;
@@ -359,7 +375,7 @@ static void MockForAddCredentialHdi(std::shared_ptr<Context> &context, std::prom
             info.authType = HdiAuthType::FACE;
             auto contextList = ContextPool::Instance().Select(CONTEXT_ENROLL);
             if (!contextList.empty()) {
-                context = contextList[0].lock();
+                *context = contextList[0].lock();
             }
             return HDF_SUCCESS;
         });
@@ -402,16 +418,17 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceAddCredential003, TestSize.Level0)
     testCredPara.authType = FACE;
     testCredPara.pinType = PIN_SIX;
     testCredPara.token = {1, 2, 3, 4};
-    std::shared_ptr<Context> context = nullptr;
+    // shared box: the HDI mock writes it late, the OnResult action reads it from the timer thread
+    auto context = Common::MakeShared<std::shared_ptr<Context>>();
 
     sptr<MockIdmCallback> testCallback(new (std::nothrow) MockIdmCallback());
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _))
         .WillOnce(
-            [&context](int32_t result, const std::vector<uint8_t> &extraInfo) {
+            [context](int32_t result, const std::vector<uint8_t> &extraInfo) {
                 EXPECT_EQ(result, SUCCESS);
-                if (context != nullptr) {
-                    context->Stop();
+                if (*context != nullptr) {
+                    (*context)->Stop();
                 }
                 return SUCCESS;
             }
@@ -428,6 +445,9 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceAddCredential003, TestSize.Level0)
     IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
     EXPECT_EQ(service.AddCredential(testUserId, testCredPara, testCallback, false), SUCCESS);
     promise.get_future().get();
+    // drop the last context ref: breaks the mock->action->box->context->callback
+    // cycle for gmock leak detection
+    *context = nullptr;
 
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(60));
     IpcCommon::DeleteAllPermission();
@@ -501,7 +521,9 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceUpdateCredential002, TestSize.Level0)
     EXPECT_CALL(*mockHdi, BeginEnrollmentExt(_, _, _)).WillOnce(Return(HDF_FAILURE));
 
     testCredPara.token = {1, 2, 3, 4};
-    EXPECT_EQ(service.UpdateCredential(testUserId, testCredPara, testCallback), GENERAL_ERROR);
+    // Start is posted: the call returns SUCCESS, the GENERAL_ERROR OnResult lands asynchronously
+    EXPECT_EQ(service.UpdateCredential(testUserId, testCredPara, testCallback), SUCCESS);
+    DrainIdmSerialThread();
     IpcCommon::DeleteAllPermission();
 }
 
@@ -576,13 +598,18 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceCancel003, TestSize.Level0)
         .WillRepeatedly
         (Return(false));
     IpcCommon::SetAccessTokenId(tokenId, true);
-    EXPECT_TRUE(ContextPool::Instance().Insert(context));
-    EXPECT_EQ(service.Cancel(testUserId), GENERAL_ERROR);
-    EXPECT_EQ(service.Cancel(testUserId), GENERAL_ERROR);
+    EXPECT_TRUE(ContextPool::Instance().Schedule(context));
+    // matching by caller token: the cancel is accepted (posted) though the stop lands late
+    EXPECT_EQ(service.Cancel(testUserId), SUCCESS);
+    EXPECT_EQ(service.Cancel(testUserId), SUCCESS);
     testUserId = -1;
-    EXPECT_EQ(service.Cancel(testUserId), GENERAL_ERROR);
+    EXPECT_EQ(service.Cancel(testUserId), SUCCESS);
     IpcCommon::SetAccessTokenId(123, true);
     EXPECT_EQ(service.Cancel(testUserId), GENERAL_ERROR);
+    // Drain the posted stops onto the still-pooled context before teardown.
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    handler->EnsureTask([]() {});
     EXPECT_TRUE(ContextPool::Instance().Delete(contextId));
     IpcCommon::DeleteAllPermission();
 }
@@ -831,8 +858,10 @@ HWTEST_F(UserIdmServiceTest, UserIdmServiceDelCredential001, TestSize.Level0)
     EXPECT_EQ(service.DelCredential(testUserId, testCredentialId, testAuthToken, testCallback),
         CHECK_PERMISSION_FAILED);
     IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
+    // Start is posted: the call returns SUCCESS, the NOT_ENROLLED OnResult lands asynchronously
     EXPECT_EQ(service.DelCredential(testUserId, testCredentialId, testAuthToken, testCallback),
-        NOT_ENROLLED);
+        SUCCESS);
+    DrainIdmSerialThread();
     IpcCommon::DeleteAllPermission();
 }
 

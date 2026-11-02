@@ -96,17 +96,7 @@ void ContextDeathRecipient::OnRemoteDied(const wptr<IRemoteObject> &remote)
         return;
     }
 
-    auto context = ContextPool::Instance().Select(contextId_).lock();
-    if (context == nullptr) {
-        IAM_LOGE("context is nullptr");
-        return;
-    }
-
-    if (!context->Stop()) {
-        IAM_LOGE("failed to cancel enroll or auth");
-        return;
-    }
-    return;
+    ContextPool::Instance().Cancel(contextId_);
 }
 } // namespace UserAuth
 } // namespace UserIam

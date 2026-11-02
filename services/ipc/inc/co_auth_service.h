@@ -58,7 +58,6 @@ protected:
 private:
     static void AddExecutorDeathRecipient(uint64_t executorIndex, AuthType authType, ExecutorRole role,
         std::shared_ptr<IExecutorCallback> callback);
-    void AuthServiceInit();
     void NotifyFwkReady();
     bool IsFwkReady();
     int32_t ProcExecutorRegisterSuccess(std::shared_ptr<ResourceNode> &resourceNode,

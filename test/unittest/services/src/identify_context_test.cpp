@@ -103,7 +103,7 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_BasicInfo, TestSize.Level0)
 
     std::shared_ptr<MockIdentification> mockIdentify = Common::MakeShared<MockIdentification>();
     ASSERT_NE(mockIdentify, nullptr);
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
 
     auto oriContext = Common::MakeShared<IdentifyContext>(testContestId, mockIdentify, contextCallback);
@@ -128,7 +128,7 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_Start_001, TestSize.Level0)
             // Error: process identification start fail
             return false;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context = Common::MakeShared<IdentifyContext>(testContestId,
         mockIdentify, contextCallback);
@@ -149,7 +149,7 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_Start_002, TestSize.Level0)
             // Error: scheduleNodeList size = 0
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context = Common::MakeShared<IdentifyContext>(testContestId,
         mockIdentify, contextCallback);
@@ -172,7 +172,7 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_Start_003, TestSize.Level0)
             scheduleList.push_back(Common::MakeShared<MockScheduleNode>());
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context = Common::MakeShared<IdentifyContext>(testContestId,
         mockIdentify, contextCallback);
@@ -196,7 +196,7 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_Start_004, TestSize.Level0)
             scheduleList.push_back(scheduleNode);
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context = Common::MakeShared<IdentifyContext>(testContestId,
         mockIdentify, contextCallback);
@@ -223,7 +223,7 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_Start_005, TestSize.Level0)
             scheduleList.push_back(scheduleNode);
             return true;
         });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
     std::shared_ptr<Context> context = Common::MakeShared<IdentifyContext>(testContestId,
         mockIdentify, contextCallback);
@@ -242,17 +242,14 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_Stop_001, TestSize.Level0)
 
     std::shared_ptr<MockIdentification> mockIdentify = Common::MakeShared<MockIdentification>();
     ASSERT_NE(mockIdentify, nullptr);
-    EXPECT_CALL(*mockIdentify, GetLatestError()).Times(1);
-    EXPECT_CALL(*mockIdentify, Cancel()).Times(Exactly(1)).WillOnce([]() {
-        // Error: identification cancel fail
-        return false;
-    });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    EXPECT_CALL(*mockIdentify, Cancel()).Times(0);
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, OnResult(ResultCode::CANCELED, _)).Times(Exactly(1));
     std::shared_ptr<Context> context = Common::MakeShared<IdentifyContext>(testContestId,
         mockIdentify, contextCallback);
     ASSERT_NE(context, nullptr);
-    ASSERT_EQ(context->Stop(), false);
+    ASSERT_EQ(context->Stop(), true);
 }
 
 HWTEST_F(IdentifyContextTest, IdentifyContextTest_Stop_002, TestSize.Level0)
@@ -261,12 +258,14 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_Stop_002, TestSize.Level0)
 
     std::shared_ptr<MockIdentification> mockIdentify = Common::MakeShared<MockIdentification>();
     ASSERT_NE(mockIdentify, nullptr);
-    EXPECT_CALL(*mockIdentify, Cancel()).Times(Exactly(1)).WillOnce([]() { return true; });
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    EXPECT_CALL(*mockIdentify, Cancel()).Times(0);
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
+    EXPECT_CALL(*contextCallback, OnResult(ResultCode::CANCELED, _)).Times(Exactly(1));
     std::shared_ptr<Context> context = Common::MakeShared<IdentifyContext>(testContestId,
         mockIdentify, contextCallback);
     ASSERT_NE(context, nullptr);
+    ASSERT_EQ(context->Stop(), true);
     ASSERT_EQ(context->Stop(), true);
 }
 
@@ -276,7 +275,7 @@ HWTEST_F(IdentifyContextTest, IdentifyContextTest_OnScheduleStarted, TestSize.Le
 
     std::shared_ptr<MockIdentification> mockIdentify = Common::MakeShared<MockIdentification>();
     ASSERT_NE(mockIdentify, nullptr);
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
 
     std::shared_ptr<ScheduleNodeCallback> nodeCallback =

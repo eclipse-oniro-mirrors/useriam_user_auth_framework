@@ -38,8 +38,8 @@ class BaseContext : public ScheduleNodeCallback,
                     public ContextAppStateObserverManager,
                     public NoCopyable {
 public:
-    BaseContext(const std::string &type, uint64_t contextId, std::shared_ptr<ContextCallback> callback,
-        bool needSubscribeAppState);
+    BaseContext(const std::string &type, uint64_t contextId, bool needSubscribeAppState, bool isPrimaryContext,
+        std::shared_ptr<ContextCallback> callback);
     ~BaseContext() override;
 
     uint64_t GetContextId() const override;
@@ -47,6 +47,8 @@ public:
     int32_t GetUserId() const override;
     int32_t GetAuthType() const override;
     std::string GetCallerName() const override;
+    bool IsPrimaryContext() const override;
+    void OnStartFailed(int32_t errorCode) override;
 
     void OnScheduleStarted() override;
     void OnScheduleProcessed(ExecutorRole src, int32_t moduleType, const std::vector<uint8_t> &acquireMsg) override;
@@ -66,6 +68,7 @@ protected:
     std::vector<std::shared_ptr<ScheduleNode>> GetScheduleList() const;
     void SetScheduleList(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList);
     std::shared_ptr<ContextCallback> callback_ = nullptr;
+    bool isPrimaryContext_ = false;
 
 private:
     bool Start() final;
@@ -73,6 +76,8 @@ private:
     uint64_t contextId_ = INVALID_CONTEXT_ID;
     std::string description_;
     bool hasStarted_ = false;
+    bool stopRequested_ = false;
+    bool startFailDelivered_ = false;
     mutable std::recursive_mutex mutex_;
     int32_t latestError_ = ResultCode::GENERAL_ERROR;
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList_;
