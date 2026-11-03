@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Huawei Device Co., Ltd.
+ * Copyright (c) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +13,25 @@
  * limitations under the License.
  */
 
-#include "context_helper.h"
+#ifndef IAM_CONTEXT_ARBITRATION_POLICY_H
+#define IAM_CONTEXT_ARBITRATION_POLICY_H
 
-#include "context_pool.h"
-#include "iam_logger.h"
+#include <memory>
+#include <vector>
 
-#define LOG_TAG "USER_AUTH_SA"
-#define LOG_FILE_ID LOG_FILE_CONTEXT_HELPER
+#include "context.h"
 
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-ContextHelper::Cleaner::Cleaner(const std::shared_ptr<Context> &context)
-    : contextId_(context ? context->GetContextId() : 0)
-{
-}
 
-void ContextHelper::Cleaner::operator()()
-{
-    IAM_LOGD("start");
-    if (contextId_ == 0) {
-        IAM_LOGD("invalid context Id");
-    }
-    auto result = ContextPool::Instance().Delete(contextId_);
-    IAM_LOGI("context ****%{public}hx deleted %{public}s", static_cast<uint16_t>(contextId_), result ? "succ" : "fail");
+class ContextAdmissionPolicy {
+public:
+    static bool IsAuthContext(ContextType type);
+    static bool BearsPin(const Context &ctx);
+    static bool CanStart(const Context &self, const std::vector<std::weak_ptr<Context>> &predecessors);
 };
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
+#endif // IAM_CONTEXT_ARBITRATION_POLICY_H

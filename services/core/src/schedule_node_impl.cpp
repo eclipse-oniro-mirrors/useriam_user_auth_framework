@@ -139,10 +139,11 @@ std::optional<std::vector<uint64_t>> ScheduleNodeImpl::GetTemplateIdList() const
 
 ScheduleNode::State ScheduleNodeImpl::GetCurrentScheduleState() const
 {
-    if (machine_ == nullptr) {
+    auto machine = machine_;
+    if (machine == nullptr) {
         return S_INIT;
     }
-    return static_cast<State>(machine_->GetCurrentState());
+    return static_cast<State>(machine->GetCurrentState());
 }
 
 std::shared_ptr<ScheduleNodeCallback> ScheduleNodeImpl::GetScheduleCallback()
@@ -306,10 +307,17 @@ std::string ScheduleNodeImpl::GetDescription() const
 
 bool ScheduleNodeImpl::TryKickMachine(Event event)
 {
-    if (machine_ == nullptr) {
+    auto self = weak_from_this().lock();
+    if (self == nullptr) {
+        IAM_LOGE("schedule node is dying, drop event %{public}u", event);
         return false;
     }
-    machine_->Schedule(event);
+    auto machine = machine_;
+    if (machine == nullptr) {
+        return false;
+    }
+    machine->AttachOwnerLifetime(weak_from_this());
+    machine->Schedule(event);
     return true;
 }
 
@@ -336,12 +344,14 @@ void ScheduleNodeImpl::StartTimer()
     }
 
     timerId_ = RelativeTimer::GetInstance().Register(
-        [self = weak_from_this(), this] {
-            if (self.lock()) {
-                std::lock_guard<std::mutex> lock(mutex_);
-                SetFwkResultCode(TIMEOUT);
-                TryKickMachine(E_TIME_OUT);
+        [weakSelf = weak_from_this()] {
+            auto self = weakSelf.lock();
+            if (self == nullptr) {
+                return;
             }
+            std::lock_guard<std::mutex> lock(self->mutex_);
+            self->SetFwkResultCode(TIMEOUT);
+            self->TryKickMachine(E_TIME_OUT);
         },
         info_.expiredTime);
 }

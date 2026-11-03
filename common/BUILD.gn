@@ -17,39 +17,6 @@ config("iam_log_config") {
   include_dirs = [ "logs" ]
 }
 
-config("iam_thread_pool_config") {
-  include_dirs = [ "thread_pool" ]
-}
-
-ohos_source_set("iam_thread_pool") {
-  sanitize = {
-    integer_overflow = true
-    ubsan = true
-    boundary_sanitize = true
-    cfi = true
-    cfi_cross_dso = true
-    debug = false
-    blocklist = "../cfi_blocklist.txt"
-  }
-  branch_protector_ret = "pac_ret"
-  include_dirs = [
-    "thread_pool",
-    "logs",
-  ]
-
-  sources = [ "thread_pool/thread_groups.cpp" ]
-
-  external_deps = [
-    "c_utils:utils",
-    "hilog:libhilog",
-  ]
-
-  public_configs = [ ":iam_thread_pool_config" ]
-
-  subsystem_name = "useriam"
-  part_name = "user_auth_framework"
-}
-
 config("iam_utils_config") {
   include_dirs = [ "utils" ]
 }

@@ -135,6 +135,8 @@ struct IpcAuthParamInner {
     boolean isHasRemoteTokenId;
     /** Remote token id */
     unsigned int remoteTokenId;
+    /** Additional info */
+    String additionalInfo;
 };
 
 /**

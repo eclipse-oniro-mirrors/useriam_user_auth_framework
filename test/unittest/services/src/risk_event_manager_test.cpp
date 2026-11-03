@@ -40,6 +40,9 @@ void RiskEventManagerTest::SetUp()
 
 void RiskEventManagerTest::TearDown()
 {
+    // stale EXPECT_CALL on the process-wide HDI mock would shadow later suites'
+    // ON_CALL defaults; reset first
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(RiskEventManagerTest, SetRiskEventPropertyForAuthTypeTest, TestSize.Level0)

@@ -30,9 +30,10 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-BaseContext::BaseContext(const std::string &type, uint64_t contextId, std::shared_ptr<ContextCallback> callback,
-    bool needSubscribeAppState)
+BaseContext::BaseContext(const std::string &type, uint64_t contextId, bool needSubscribeAppState,
+    bool isPrimaryContext, std::shared_ptr<ContextCallback> callback)
     : callback_(callback),
+      isPrimaryContext_(isPrimaryContext),
       contextId_(contextId)
 {
     std::ostringstream ss;
@@ -51,7 +52,7 @@ BaseContext::BaseContext(const std::string &type, uint64_t contextId, std::share
 #endif
 
     if (needSubscribeAppState) {
-        SubscribeAppState(callback_, contextId_);
+        SubscribeAppState(contextId_, callback_);
     }
 }
 
@@ -59,7 +60,7 @@ BaseContext::~BaseContext()
 {
     IAM_LOGD("%{public}s start", GetDescription());
     RemoveDeathRecipient(callback_);
-    UnSubscribeAppState();
+    UnSubscribeAppState(contextId_);
 }
 
 void BaseContext::SetLatestError(int32_t error)
@@ -94,6 +95,11 @@ std::string BaseContext::GetCallerName() const
     return "";
 }
 
+bool BaseContext::IsPrimaryContext() const
+{
+    return isPrimaryContext_;
+}
+
 bool BaseContext::Start()
 {
     {
@@ -103,16 +109,54 @@ bool BaseContext::Start()
             IAM_LOGI("%{public}s context has started, cannot start again", GetDescription());
             return false;
         }
+        if (stopRequested_) {
+            IAM_LOGI("%{public}s stop requested before start", GetDescription());
+            SetLatestError(ResultCode::CANCELED);
+            return false;
+        }
         Mark(StageId::S_CONTEXT_START);
         hasStarted_ = true;
     }
     return OnStart();
 }
 
+void BaseContext::OnStartFailed(int32_t errorCode)
+{
+    IAM_LOGE("%{public}s start fail, errorCode:%{public}d", GetDescription(), errorCode);
+    {
+        std::lock_guard<std::recursive_mutex> guard(mutex_);
+        if (startFailDelivered_) {
+            IAM_LOGI("%{public}s start fail result already delivered", GetDescription());
+            return;
+        }
+        startFailDelivered_ = true;
+    }
+    IF_FALSE_LOGE_AND_RETURN(callback_ != nullptr);
+    callback_->SetTraceAuthFinishReason("BaseContext start context fail");
+    Attributes extraInfo;
+    callback_->OnResult(errorCode, extraInfo);
+}
+
 bool BaseContext::Stop()
 {
     IAM_LOGD("%{public}s start", GetDescription());
-    callback_->Mark(StageId::S_CANCEL);
+    Mark(StageId::S_CANCEL);
+    bool stoppedBeforeStart = false;
+    {
+        std::lock_guard<std::recursive_mutex> guard(mutex_);
+        if (!hasStarted_) {
+            if (stopRequested_) {
+                IAM_LOGI("%{public}s stop already requested before start", GetDescription());
+                return true;
+            }
+            stopRequested_ = true;
+            stoppedBeforeStart = true;
+        }
+    }
+    if (stoppedBeforeStart) {
+        OnStartFailed(ResultCode::CANCELED);
+        return true;
+    }
     return OnStop();
 }
 

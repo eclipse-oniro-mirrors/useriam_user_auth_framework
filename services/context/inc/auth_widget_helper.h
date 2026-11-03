@@ -31,7 +31,7 @@ public:
         const std::vector<AuthType> &authTypeList, const AuthTrustLevel &atl, std::vector<AuthType> &validTypeList);
     static int32_t CheckReuseUnlockResult(const ContextFactory::AuthWidgetContextPara &para,
         const AuthParamInner &authParam, Attributes &extraInfo);
-    static bool GetUserAuthProfile(int32_t userId, const AuthType &authType,
+    static int32_t GetUserAuthProfile(int32_t userId, const AuthType &authType,
         ContextFactory::AuthProfile &profile, std::vector<uint64_t> credentialIdList);
     static int32_t QueryReusableAuthResult(const int32_t userId, const AuthParamInner &authParam,
         EngReuseUnlockInfo &reuseResultInfo);
@@ -46,6 +46,7 @@ private:
     static bool GetAuthCredentialList(int32_t userId, const AuthType &authType,
         const std::vector<uint64_t> &credentialIdList,
         std::vector<std::shared_ptr<CredentialInfoInterface>> &credentialInfos);
+    static std::vector<uint32_t> GetUint32PropertyKeys(const AuthType &authType);
 };
 } // namespace UserAuth
 } // namespace UserIam

@@ -32,19 +32,12 @@ namespace UserAuth {
 namespace {
 class DummyContextPool : public ContextPool {
 public:
-    class DummyContextPoolListener : public ContextPoolListener {
-    public:
-        DummyContextPoolListener() = default;
-        virtual ~DummyContextPoolListener() = default;
-        void OnContextPoolInsert(const std::shared_ptr<Context> &context) {};
-        void OnContextPoolDelete(const std::shared_ptr<Context> &context) {};
-    };
     static uint64_t GetNewContextId()
     {
         return 0;
     };
     static ContextPool &Instance();
-    bool Insert(const std::shared_ptr<Context> &context)
+    bool Schedule(const std::shared_ptr<Context> &context)
     {
         return true;
     };
@@ -52,7 +45,9 @@ public:
     {
         return true;
     };
-    void CancelAll() const {};
+    void Cancel(uint64_t contextId) {};
+    void CancelAll() {};
+    void NotifyPreemptStateChanged() {};
     std::weak_ptr<Context> Select(uint64_t contextId) const
     {
         constexpr uint32_t OPERATIONTYPE = 1;
@@ -60,27 +55,25 @@ public:
         auto dummyAuthentication = Common::MakeShared<DummyAuthentication>();
         auto contextCallback = Common::MakeShared<ContextCallbackImpl>(new (std::nothrow) DummyIamCallbackInterface(),
         static_cast<UserAuth::OperationType>(OPERATIONTYPE));
-        auto context = Common::MakeShared<SimpleAuthContext>(CONTEXT_ID, dummyAuthentication, contextCallback, true);
+        auto context = Common::MakeShared<SimpleAuthContext>(CONTEXT_ID, dummyAuthentication, true, false,
+        contextCallback);
         return context;
     };
     std::vector<std::weak_ptr<Context>> Select(ContextType contextType) const
     {
         return {};
     };
-    void InsertRemoteScheduleNode(std::shared_ptr<ScheduleNode> scheduleNode) {};
-    void RemoveRemoteScheduleNode(std::shared_ptr<ScheduleNode> scheduleNode) {};
     std::shared_ptr<ScheduleNode> SelectScheduleNodeByScheduleId(uint64_t scheduleId)
     {
         return nullptr;
     };
-    bool RegisterContextPoolListener(const std::shared_ptr<ContextPoolListener> &listener)
+    void StartSubscribeOsAccountSaStatus() {};
+#ifdef IAM_TEST_ENABLE
+    std::vector<std::weak_ptr<Context>> SelectAll() const
     {
-        return true;
+        return {};
     };
-    bool DeregisterContextPoolListener(const std::shared_ptr<ContextPoolListener> &listener)
-    {
-        return true;
-    };
+#endif
 };
 }
 } // UserAuth

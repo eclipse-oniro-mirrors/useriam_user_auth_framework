@@ -24,7 +24,6 @@
 #include "ability_connect_callback.h"
 #include "accesstoken_kit.h"
 #include "auth_widget_helper.h"
-#include "context_helper.h"
 #include "context_pool.h"
 #include "context_death_recipient.h"
 #include "hisysevent_adapter.h"
@@ -56,7 +55,7 @@ namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 WidgetContext::WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
-    std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
+    bool isPrimaryContext, std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
     const sptr<IRemoteAuthCallback> &remoteAuthCallback)
 {
     IAM_LOGD("start.");
@@ -71,6 +70,11 @@ bool WidgetContext::Start()
 {
     IAM_LOGD("start.");
     return true;
+}
+
+void WidgetContext::OnStartFailed(int32_t errorCode)
+{
+    IAM_LOGD("start. errorCode %{public}d", errorCode);
 }
 
 bool WidgetContext::Stop()
@@ -137,12 +141,12 @@ void WidgetContext::SetLatestError(int32_t error)
     IAM_LOGD("start.");
 }
 
-void WidgetContext::AuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult)
+void WidgetContext::OnChildAuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult)
 {
     IAM_LOGD("start.");
 }
 
-void WidgetContext::AuthTipInfo(int32_t tipType, int32_t authType, const Attributes &extraInfo)
+void WidgetContext::OnChildAuthTip(int32_t tipType, int32_t authType, const Attributes &extraInfo)
 {
     IAM_LOGD("start.");
 }
@@ -191,22 +195,22 @@ void WidgetContext::StopAuthList(const std::vector<AuthType> &authTypeList)
     IAM_LOGD("start.");
 }
 
-void WidgetContext::SuccessAuth(AuthType authType)
+void WidgetContext::OnAuthSuccess(AuthType authType)
 {
     IAM_LOGD("start.");
 }
 
-void WidgetContext::FailAuth(AuthType authType)
+void WidgetContext::OnAuthFail(AuthType authType)
 {
     IAM_LOGD("start.");
 }
 
-void WidgetContext::SendAuthTipInfo(int32_t authType, int32_t tipCode)
+void WidgetContext::OnScheduleAuthTip(int32_t authType, int32_t tipCode)
 {
     IAM_LOGD("start.");
 }
 
-void WidgetContext::SendAuthResultInfo(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token)
+void WidgetContext::OnScheduleAuthResult(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token)
 {
     IAM_LOGD("start.");
 }

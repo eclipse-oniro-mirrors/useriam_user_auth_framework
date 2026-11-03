@@ -416,6 +416,7 @@ uint64_t UserAuthClientImpl::BeginAuthenticationInner(const AuthParam &authParam
         .authTrustLevel = static_cast<int32_t>(authParam.authTrustLevel),
         .authIntent = static_cast<int32_t>(authParam.authIntent),
         .credentialIdList = std::vector<uint64_t>{},
+        .additionalInfo = authParam.additionalInfo,
     };
     IpcRemoteAuthParam ipcRemoteAuthParam = {};
     InitIpcRemoteAuthParam(authParam.remoteAuthParam, ipcRemoteAuthParam);
@@ -1104,7 +1105,7 @@ int32_t UserAuthClientImpl::QueryReusableAuthResult(const WidgetAuthParam &authP
     for (auto &authType : authParam.authTypes) {
         ipcAuthParamInner.authTypes.push_back(static_cast<int32_t>(authType));
     }
-    ipcAuthParamInner.authTrustLevel = authParam.authTrustLevel,
+    ipcAuthParamInner.authTrustLevel = authParam.authTrustLevel;
     ipcAuthParamInner.reuseUnlockResult.isReuse = authParam.reuseUnlockResult.isReuse;
     ipcAuthParamInner.reuseUnlockResult.reuseMode = authParam.reuseUnlockResult.reuseMode;
     ipcAuthParamInner.reuseUnlockResult.reuseDuration = authParam.reuseUnlockResult.reuseDuration;
@@ -1221,6 +1222,7 @@ void UserAuthClientImpl::InitIpcAuthParam(const AuthParamInner &authParam,
         ipcAuthParamInner.isHasRemoteTokenId = true;
         ipcAuthParamInner.remoteTokenId = authParam.remoteTokenId.value();
     }
+    ipcAuthParamInner.additionalInfo = authParam.additionalInfo;
 }
 
 void UserAuthClientImpl::InitIpcWidgetParam(const WidgetParamInner &widgetParam,

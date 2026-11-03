@@ -196,6 +196,11 @@ void UserAuthNapiClientImpl::InitIpcAuthParam(const AuthParamInner &authParam,
     ipcAuthParamInner.reuseUnlockResult.isReuse = authParam.reuseUnlockResult.isReuse;
     ipcAuthParamInner.reuseUnlockResult.reuseMode = authParam.reuseUnlockResult.reuseMode;
     ipcAuthParamInner.reuseUnlockResult.reuseDuration = authParam.reuseUnlockResult.reuseDuration;
+    if (authParam.remoteTokenId.has_value()) {
+        ipcAuthParamInner.isHasRemoteTokenId = true;
+        ipcAuthParamInner.remoteTokenId = authParam.remoteTokenId.value();
+    }
+    ipcAuthParamInner.additionalInfo = authParam.additionalInfo;
 }
 
 void UserAuthNapiClientImpl::InitIpcWidgetParam(const WidgetParamInner &widgetParam,

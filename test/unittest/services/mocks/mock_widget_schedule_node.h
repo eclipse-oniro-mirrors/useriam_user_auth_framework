@@ -30,15 +30,15 @@ public:
     MOCK_METHOD3(StartAuthList, bool(const std::vector<AuthType> &authTypeList, bool endAfterFirstFail,
         AuthIntent authIntent));
     MOCK_METHOD1(StopAuthList, bool(const std::vector<AuthType> &));
-    MOCK_METHOD1(SuccessAuth, bool(AuthType));
-    MOCK_METHOD1(FailAuth, bool(AuthType));
+    MOCK_METHOD1(NotifyAuthSuccess, bool(AuthType));
+    MOCK_METHOD1(NotifyAuthFail, bool(AuthType));
     MOCK_METHOD0(NaviPinAuth, bool());
     MOCK_METHOD0(WidgetParaInvalid, bool());
     MOCK_METHOD1(SetCallback, void(std::shared_ptr<WidgetScheduleNodeCallback>));
     MOCK_METHOD4(WidgetReload, bool(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType));
-    MOCK_METHOD2(SendAuthTipInfo, void(const std::vector<AuthType> &authTypeList, int32_t tipCode));
-    MOCK_METHOD3(SendAuthResultInfo, void(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token));
+    MOCK_METHOD2(OnWidgetTip, void(const std::vector<AuthType> &authTypeList, int32_t tipCode));
+    MOCK_METHOD3(OnWidgetResult, void(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token));
     MOCK_METHOD0(ClearSchedule, bool());
     MOCK_METHOD0(GetRemoteAuthParam, bool());
 };

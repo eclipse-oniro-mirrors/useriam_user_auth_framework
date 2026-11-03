@@ -200,7 +200,6 @@ void FuzzGetResourseNode(Parcel &parcel)
     IAM_LOGI("begin");
     AuthType authType = static_cast<AuthType>(parcel.ReadInt32());
     g_userAuthService.GetResourseNode(authType);
-    g_userAuthService.ProcessWidgetSessionExclusive();
     uint32_t code = parcel.ReadUint32();
     int32_t result = parcel.ReadInt32();
     g_userAuthService.CallbackEnter(code);
@@ -708,16 +707,6 @@ void FuzzGetAuthContextCallback(Parcel &parcel)
     IAM_LOGI("end");
 }
 
-void FuzzInsert2ContextPool(Parcel &parcel)
-{
-    IAM_LOGI("begin");
-    ContextFactory::AuthWidgetContextPara para = {};
-    auto context = ContextFactory::CreateWidgetContext(para, nullptr, nullptr, nullptr);
-    g_userAuthService.Insert2ContextPool(context);
-    EnsureTask();
-    IAM_LOGI("end");
-}
-
 void FuzzCheckAuthWidgetParam(Parcel &parcel)
 {
     IAM_LOGI("begin");
@@ -1074,7 +1063,6 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzCheckValidSolution,
     FuzzCompleteRemoteAuthParam,
     FuzzGetAuthContextCallback,
-    FuzzInsert2ContextPool,
     FuzzCheckAuthWidgetParam,
     FuzzCheckAuthWidgetType,
     FuzzCheckAuthTypeOnly,

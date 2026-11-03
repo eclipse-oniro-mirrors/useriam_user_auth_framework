@@ -16,9 +16,14 @@
 #include "accesstoken_kit.h"
 #include "widget_context.h"
 
+#include <chrono>
 #include <future>
 
+#include "context_pool.h"
+#include "iam_scope_guard.h"
 #include "mock_context.h"
+#include "mock_user_auth_callback.h"
+#include "widget_client.h"
 #include "mock_widget_schedule_node.h"
 #include "mock_remote_auth_callback.h"
 #include "mock_modal_callback.h"
@@ -68,7 +73,7 @@ std::shared_ptr<WidgetContext> CreateWidgetContext(uint64_t contextId, ContextFa
     const sptr<IRemoteAuthCallback> remoteAuthCallback = nullptr)
 {
     std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
-    return Common::MakeShared<WidgetContext>(contextId, para, contextCallback, nullptr, remoteAuthCallback);
+    return Common::MakeShared<WidgetContext>(contextId, para, false, contextCallback, nullptr, remoteAuthCallback);
 }
 
 HWTEST_F(WidgetContextTest, WidgetContextTestOnTerminateTimerTimeOut_001, TestSize.Level0)
@@ -86,7 +91,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestOnTerminateTimerTimeOut_002, TestSi
     ContextFactory::AuthWidgetContextPara para;
     auto widgetContext = CreateWidgetContext(contextId, para);
     AuthType authType = ALL;
-    widgetContext->SuccessAuth(authType);
+    widgetContext->OnAuthSuccess(authType);
     widgetContext->IsInFollowCallerList();
     EXPECT_NE(widgetContext, nullptr);
     auto handler = ThreadHandler::GetSingleThreadInstance();
@@ -110,6 +115,42 @@ HWTEST_F(WidgetContextTest, WidgetContextTestStop, TestSize.Level0)
     ContextFactory::AuthWidgetContextPara para;
     auto widgetContext = CreateWidgetContext(contextId, para);
     EXPECT_TRUE(widgetContext->Stop());
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextTestGetPreemptDecision, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    auto widgetContext = CreateWidgetContext(contextId, para);
+
+    // the SystemUI session is single-seat and replace-only: a new widget request
+    // takes over the window, any other request leaves the live session alone
+    const uint64_t widgetReqContextId = 2;
+    auto widgetReq = MockContext::CreateWithContextId(widgetReqContextId);
+    auto widgetReqMock = std::static_pointer_cast<MockContext>(widgetReq);
+    ON_CALL(*widgetReqMock, GetContextType()).WillByDefault(Return(ContextType::WIDGET_AUTH_CONTEXT));
+    EXPECT_EQ(widgetContext->GetPreemptDecision(*widgetReq), PreemptDecision::STOP_NOW);
+
+    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
+    auto primaryWidgetContext =
+        Common::MakeShared<WidgetContext>(contextId, para, true, contextCallback, nullptr, nullptr);
+    ON_CALL(*widgetReqMock, IsPrimaryContext()).WillByDefault(Return(true));
+    EXPECT_EQ(primaryWidgetContext->GetPreemptDecision(*widgetReq), PreemptDecision::STOP_NOW);
+
+    const uint64_t pinReqContextId = 3;
+    auto pinReq = MockContext::CreateWithContextId(pinReqContextId);
+    ON_CALL(*std::static_pointer_cast<MockContext>(pinReq), GetContextType())
+        .WillByDefault(Return(ContextType::CONTEXT_SIMPLE_AUTH));
+    EXPECT_EQ(widgetContext->GetPreemptDecision(*pinReq), PreemptDecision::KEEP_RUNNING);
+
+    const uint64_t sudoReqContextId = 4;
+    auto sudoReq = MockContext::CreateWithContextId(sudoReqContextId);
+    ON_CALL(*std::static_pointer_cast<MockContext>(sudoReq), GetContextType())
+        .WillByDefault(Return(ContextType::SUDO_AUTH_CONTEXT));
+    EXPECT_EQ(widgetContext->GetPreemptDecision(*sudoReq), PreemptDecision::KEEP_RUNNING);
+
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -161,7 +202,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthResult_0001, TestSize.Level0)
     auto widgetContext = CreateWidgetContext(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
     Attributes finalResult;
-    widgetContext->AuthResult(ResultCode::SUCCESS, 1, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::SUCCESS, 1, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -174,7 +215,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthResult_0002, TestSize.Level0)
     EXPECT_NE(widgetContext, nullptr);
     Attributes finalResult;
     finalResult.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 1);
-    widgetContext->AuthResult(ResultCode::SUCCESS, 1, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::SUCCESS, 1, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -188,7 +229,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthResult_0003, TestSize.Level0)
     Attributes finalResult;
     finalResult.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 1);
     finalResult.SetInt32Value(Attributes::ATTR_FREEZING_TIME, 1);
-    widgetContext->AuthResult(ResultCode::SUCCESS, 1, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::SUCCESS, 1, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -203,7 +244,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthResult_0004, TestSize.Level0)
     Attributes finalResult;
     finalResult.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 1);
     finalResult.SetInt32Value(Attributes::ATTR_FREEZING_TIME, 1);
-    widgetContext->AuthResult(ResultCode::SUCCESS, 1, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::SUCCESS, 1, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -218,7 +259,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthResult_0005, TestSize.Level0)
     Attributes finalResult;
     finalResult.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 1);
     finalResult.SetInt32Value(Attributes::ATTR_FREEZING_TIME, 1);
-    widgetContext->AuthResult(ResultCode::GENERAL_ERROR, 1, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::GENERAL_ERROR, 1, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -232,7 +273,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthResult_0006, TestSize.Level0)
     EXPECT_TRUE(widgetContext->Start());
     Attributes finalResult;
     finalResult.SetInt32Value(Attributes::ATTR_AUTH_TYPE, PIN);
-    widgetContext->AuthResult(ResultCode::COMPLEXITY_CHECK_FAILED, 1, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::COMPLEXITY_CHECK_FAILED, 1, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -248,7 +289,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthResult_0007, TestSize.Level0)
     std::vector<uint8_t> token = {1, 1};
     finalResult.SetInt32Value(Attributes::ATTR_AUTH_TYPE, PIN);
     finalResult.SetUint8ArrayValue(Attributes::ATTR_SIGNATURE, token);
-    widgetContext->AuthResult(ResultCode::COMPLEXITY_CHECK_FAILED, 1, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::COMPLEXITY_CHECK_FAILED, 1, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -265,7 +306,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthResult_0008, TestSize.Level0)
     finalResult.SetInt32Value(Attributes::ATTR_AUTH_TYPE, PIN);
     finalResult.SetUint8ArrayValue(Attributes::ATTR_SIGNATURE, token);
     finalResult.SetUint64Value(Attributes::ATTR_CREDENTIAL_DIGEST, 1);
-    widgetContext->AuthResult(ResultCode::COMPLEXITY_CHECK_FAILED, 1, finalResult);
+    widgetContext->OnChildAuthResult(ResultCode::COMPLEXITY_CHECK_FAILED, 1, finalResult);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -403,7 +444,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSuccessAuth_001, TestSize.Level0)
     ContextFactory::AuthWidgetContextPara para;
     auto widgetContext = CreateWidgetContext(contextId, para);
     AuthType authType = ALL;
-    widgetContext->SuccessAuth(authType);
+    widgetContext->OnAuthSuccess(authType);
     EXPECT_NE(widgetContext, nullptr);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -416,7 +457,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSuccessAuth_002, TestSize.Level0)
     auto widgetContext = CreateWidgetContext(contextId, para);
     AuthType authType = ALL;
     widgetContext->LaunchWidget();
-    widgetContext->SuccessAuth(authType);
+    widgetContext->OnAuthSuccess(authType);
     EXPECT_NE(widgetContext, nullptr);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -434,7 +475,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSuccessAuth_003, TestSize.Level0)
     authTypeList.insert(FACE);
     widgetContext->ExecuteAuthList(authTypeList, true, AuthIntent::DEFAULT);
     AuthType authType = ALL;
-    widgetContext->SuccessAuth(authType);
+    widgetContext->OnAuthSuccess(authType);
     EXPECT_NE(widgetContext, nullptr);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -447,7 +488,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSuccessAuth_004, TestSize.Level0)
     auto widgetContext = CreateWidgetContext(contextId, para);
     AuthType authType = ALL;
     widgetContext->SetLatestError(ResultCode::COMPLEXITY_CHECK_FAILED);
-    widgetContext->SuccessAuth(authType);
+    widgetContext->OnAuthSuccess(authType);
     EXPECT_NE(widgetContext, nullptr);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -698,7 +739,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSendAuthTipInfo, TestSize.Level0)
     EXPECT_NE(widgetContext, nullptr);
     int32_t authType = FACE;
     int32_t tipCode = TIP_CODE_FAIL;
-    EXPECT_NO_THROW(widgetContext->SendAuthTipInfo(authType, tipCode));
+    EXPECT_NO_THROW(widgetContext->OnScheduleAuthTip(authType, tipCode));
 }
 
 HWTEST_F(WidgetContextTest, WidgetContextTestGetAuthTipCode, TestSize.Level0)
@@ -772,9 +813,8 @@ HWTEST_F(WidgetContextTest, WidgetContextTestSetSysDialogZOrder, TestSize.Level0
     EXPECT_NO_THROW(widgetContext->SetSysDialogZOrder(widgetCmdParameters));
 }
 
-// When the screen is unlocked the engine hook is bypassed, so the launch is
-// allowed regardless of caller identity. A denied locked-screen launch is
-// short-circuited to CANCELED in ConnectExtension and reported via OnResult.
+// Unlocked screen bypasses the engine hook, so the launch is allowed regardless of
+// caller identity; a denied locked-screen launch short-circuits to CANCELED via OnResult.
 HWTEST_F(WidgetContextTest, WidgetContextTestIsWidgetLaunchAllowed, TestSize.Level0)
 {
     uint64_t contextId = 1;
@@ -825,6 +865,23 @@ HWTEST_F(WidgetContextTest, WidgetContextTestConnectExtension_002, TestSize.Leve
     EXPECT_EQ(widgetContext->ConnectExtension(widgetRotatePara), true);
 }
 
+HWTEST_F(WidgetContextTest, WidgetContextSkipLockedBranchTerminatesAndReleases, TestSize.Level0)
+{
+    uint64_t contextId = 1;
+    ContextFactory::AuthWidgetContextPara para;
+    ContextFactory::AuthProfile authProfile;
+    authProfile.remainTimes = 0;
+    para.authProfileMap.insert(std::make_pair(FACE, authProfile));
+    para.skipLockedBiometricAuth = true;
+    auto widgetContext = CreateWidgetContext(contextId, para);
+    ASSERT_NE(widgetContext, nullptr);
+    widgetContext->para_.authTypeList.emplace_back(AuthType::FACE);
+    EXPECT_EQ(widgetContext->ConnectExtension(WidgetContext::WidgetRotatePara {}), true);
+    EXPECT_EQ(widgetContext->phase_, WidgetContext::Phase::RESULT_DELIVERED);
+    widgetContext->OnTerminateTimerTimeOut(contextId);
+    EXPECT_EQ(widgetContext->phase_, WidgetContext::Phase::RELEASED);
+}
+
 HWTEST_F(WidgetContextTest, WidgetContextTestDisconnectExtension, TestSize.Level0)
 {
     uint64_t contextId = 1;
@@ -851,7 +908,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthTipInfo_0001, TestSize.Level0)
     extraInfo.SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, tipInfo);
     int32_t tipType = 0;
     int32_t authType = PIN;
-    EXPECT_NO_THROW(widgetContext->AuthTipInfo(tipType, authType, extraInfo));
+    EXPECT_NO_THROW(widgetContext->OnChildAuthTip(tipType, authType, extraInfo));
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -865,7 +922,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthTipInfo_0002, TestSize.Level0)
     Attributes extraInfo;
     int32_t tipType = 1;
     int32_t authType = FACE;
-    EXPECT_NO_THROW(widgetContext->AuthTipInfo(tipType, authType, extraInfo));
+    EXPECT_NO_THROW(widgetContext->OnChildAuthTip(tipType, authType, extraInfo));
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -881,7 +938,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthTipInfo_0003, TestSize.Level0)
     extraInfo.SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, tipInfo);
     int32_t tipType = USER_AUTH_TIP_SINGLE_AUTH_RESULT;
     int32_t authType = FINGERPRINT;
-    EXPECT_NO_THROW(widgetContext->AuthTipInfo(tipType, authType, extraInfo));
+    EXPECT_NO_THROW(widgetContext->OnChildAuthTip(tipType, authType, extraInfo));
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -898,7 +955,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestAuthTipInfo_0004, TestSize.Level0)
     extraInfo.SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, tipInfo);
     int32_t tipType = 2;
     int32_t authType = FACE;
-    EXPECT_NO_THROW(widgetContext->AuthTipInfo(tipType, authType, extraInfo));
+    EXPECT_NO_THROW(widgetContext->OnChildAuthTip(tipType, authType, extraInfo));
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -1057,7 +1114,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestCompanionDeviceSuccess_001, TestSiz
     auto widgetContext = CreateWidgetContext(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
     EXPECT_TRUE(widgetContext->Start());
-    widgetContext->SuccessAuth(AuthType::COMPANION_DEVICE);
+    widgetContext->OnAuthSuccess(AuthType::COMPANION_DEVICE);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -1076,7 +1133,7 @@ HWTEST_F(WidgetContextTest, WidgetContextTestCompanionDeviceFail_001, TestSize.L
     auto widgetContext = CreateWidgetContext(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
     EXPECT_TRUE(widgetContext->Start());
-    widgetContext->FailAuth(AuthType::COMPANION_DEVICE);
+    widgetContext->OnAuthFail(AuthType::COMPANION_DEVICE);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -1180,6 +1237,313 @@ HWTEST_F(WidgetContextTest, WidgetContextWidgetAuthMode_001, TestSize.Level0)
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
+
+namespace {
+std::shared_ptr<WidgetContext> MakePooledWidget(uint64_t contextId,
+    std::shared_ptr<MockContextCallback> &cbOut)
+{
+    ContextFactory::AuthWidgetContextPara para;
+    auto callback = Common::MakeShared<MockContextCallback>();
+    auto widgetContext = Common::MakeShared<WidgetContext>(contextId, para, true, callback, nullptr, nullptr);
+    cbOut = callback;
+    return widgetContext;
+}
+
+void DrainSerial()
+{
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    handler->EnsureTask([]() {});
+}
+} // namespace
+
+HWTEST_F(WidgetContextTest, WidgetContextEndDeliversWhileChildrenAlive, TestSize.Level0)
+{
+    const uint64_t contextId = 9001;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widgetContext));
+    DrainSerial();
+
+    widgetContext->activeChildCount_ = 1;
+    EXPECT_CALL(*cb, OnResult(ResultCode::CANCELED, _)).Times(1);
+    widgetContext->End(ResultCode::CANCELED);
+    EXPECT_NE(ContextPool::Instance().Select(contextId).lock(), nullptr);
+
+    widgetContext->OnChildTerminated();
+    EXPECT_NE(ContextPool::Instance().Select(contextId).lock(), nullptr);
+
+    widgetContext->ClearSchedule();
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+    widgetContext->StopOnTerminateTimer();
+    WidgetClient::Instance().ClearSchedule(contextId);
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextReleaseBeforeEndExitsOnLastChild, TestSize.Level0)
+{
+    const uint64_t contextId = 9002;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widgetContext));
+    DrainSerial();
+
+    widgetContext->activeChildCount_ = 1;
+    widgetContext->ClearSchedule();
+    EXPECT_NE(ContextPool::Instance().Select(contextId).lock(), nullptr);
+
+    // releasing without End() still owes the caller one terminal result
+    EXPECT_CALL(*cb, OnResult(ResultCode::CANCELED, _)).Times(1);
+    widgetContext->OnChildTerminated();
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+    WidgetClient::Instance().RemoveScheduleNode(contextId);
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextWatchdogReleasesUndeliveredEnd, TestSize.Level0)
+{
+    const uint64_t contextId = 9003;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widgetContext));
+    DrainSerial();
+
+    widgetContext->activeChildCount_ = 1;
+    EXPECT_CALL(*cb, OnResult(_, _)).Times(0);
+    widgetContext->ClearSchedule();
+    EXPECT_NE(ContextPool::Instance().Select(contextId).lock(), nullptr);
+
+    EXPECT_CALL(*cb, OnResult(ResultCode::CANCELED, _)).Times(1);
+    widgetContext->OnTerminateTimerTimeOut(contextId);
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+    widgetContext->OnChildTerminated();
+    widgetContext->End(ResultCode::CANCELED);
+    WidgetClient::Instance().ClearSchedule(contextId);
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextStopBeforeStartIsAbsorbing, TestSize.Level0)
+{
+    const uint64_t contextId = 9004;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+
+    // Stop lands while the Start task is still queued: CANCELED is reported exactly once
+    EXPECT_CALL(*cb, OnResult(ResultCode::CANCELED, _)).Times(1);
+    EXPECT_TRUE(widgetContext->Stop());
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+
+    // Absorbing terminal: a duplicate stop and the queued start are both no-ops.
+    EXPECT_TRUE(widgetContext->Stop());
+    EXPECT_TRUE(widgetContext->Start());
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextStopAfterScheduleBeatsQueuedStart, TestSize.Level0)
+{
+    const uint64_t contextId = 9005;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+
+    // hold the serial thread so the stop below deterministically lands before the posted Start
+    std::promise<void> entered;
+    std::promise<void> release;
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    Common::IamScopeGuard releaseGuard([&release]() { release.set_value(); });
+    handler->PostTask([&entered, &release]() {
+        entered.set_value();
+        release.get_future().wait();
+    });
+    ASSERT_EQ(entered.get_future().wait_for(std::chrono::seconds(5)), std::future_status::ready);
+
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widgetContext));
+    // the pool entry is dropped, so the queued StartIfPooled skips
+    EXPECT_CALL(*cb, OnResult(ResultCode::CANCELED, _)).Times(1);
+    EXPECT_TRUE(widgetContext->Stop());
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+
+    releaseGuard.Cancel();
+    release.set_value();
+    DrainSerial();
+    WidgetClient::Instance().ClearSchedule(contextId);
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextLateChildResultAfterEndDoesNotRedeliver, TestSize.Level0)
+{
+    const uint64_t contextId = 9006;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widgetContext));
+    DrainSerial();
+
+    auto schedule = std::make_shared<MockWidgetScheduleNode>();
+    widgetContext->schedule_ = schedule;
+    widgetContext->activeChildCount_ = 1;
+    EXPECT_CALL(*cb, OnResult(ResultCode::CANCELED, _)).Times(1);
+    widgetContext->End(ResultCode::CANCELED);
+
+    // the session is settled: a late child success is still processed by the
+    // schedule and settles the child count, but must not produce a second result
+    EXPECT_CALL(*schedule, NotifyAuthSuccess(_)).Times(1);
+    Attributes finalResult;
+    widgetContext->OnChildAuthResult(ResultCode::SUCCESS, AuthType::PIN, finalResult);
+    EXPECT_EQ(widgetContext->activeChildCount_, 0U);
+    EXPECT_NE(ContextPool::Instance().Select(contextId).lock(), nullptr);
+
+    widgetContext->ClearSchedule();
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+    widgetContext->StopOnTerminateTimer();
+    WidgetClient::Instance().ClearSchedule(contextId);
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextEndIsIdempotent, TestSize.Level0)
+{
+    const uint64_t contextId = 9007;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widgetContext));
+    DrainSerial();
+
+    widgetContext->activeChildCount_ = 1;
+    EXPECT_CALL(*cb, OnResult(ResultCode::CANCELED, _)).Times(1);
+    widgetContext->End(ResultCode::CANCELED);
+    widgetContext->End(ResultCode::SUCCESS);
+    EXPECT_EQ(widgetContext->activeChildCount_, 1U);
+
+    widgetContext->OnChildTerminated();
+    widgetContext->ClearSchedule();
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+    widgetContext->StopOnTerminateTimer();
+    WidgetClient::Instance().ClearSchedule(contextId);
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextHandleAuthSuccessResultFailDeliversOnce, TestSize.Level0)
+{
+    const uint64_t contextId = 9008;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widgetContext));
+    DrainSerial();
+
+    Attributes attr;
+    for (uint32_t k = 0; k < 520; ++k) {
+        attr.SetInt32Value(static_cast<Attributes::AttributeKey>(200000 + k), k);
+    }
+    EXPECT_CALL(*cb, OnResult(ResultCode::GENERAL_ERROR, _)).Times(1);
+    EXPECT_FALSE(widgetContext->HandleAuthSuccessResult(attr));
+
+    widgetContext->ClearSchedule();
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+    WidgetClient::Instance().ClearSchedule(contextId);
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, WidgetContextReleasedSessionStillSettlesLateChildCount, TestSize.Level0)
+{
+    const uint64_t contextId = 9009;
+    std::shared_ptr<MockContextCallback> cb;
+    auto widgetContext = MakePooledWidget(contextId, cb);
+    ASSERT_NE(widgetContext, nullptr);
+
+    EXPECT_CALL(*cb, OnResult(ResultCode::CANCELED, _)).Times(1);
+    EXPECT_TRUE(widgetContext->Stop());
+    EXPECT_EQ(widgetContext->phase_, WidgetContext::Phase::RELEASED);
+
+    // after full release a late child result is dropped, yet the child count
+    // still settles: counted-in children must always be counted out
+    widgetContext->activeChildCount_ = 1;
+    Attributes finalResult;
+    widgetContext->OnChildAuthResult(ResultCode::SUCCESS, AuthType::PIN, finalResult);
+    EXPECT_EQ(widgetContext->activeChildCount_, 0U);
+    WidgetClient::Instance().ClearSchedule(contextId);
+    DrainSerial();
+}
+namespace {
+// Keep startup deterministic while exercising the real callback and pool lifecycle.
+class LifecycleWidgetContext : public WidgetContext {
+public:
+    LifecycleWidgetContext(uint64_t id, const std::shared_ptr<ContextCallback> &callback)
+        : WidgetContext(id, ContextFactory::AuthWidgetContextPara {}, true, callback, nullptr, nullptr) {}
+    bool OnStart() override { return true; }
+};
+}
+
+HWTEST_F(WidgetContextTest, RealResultRetainsSeatUntilUiRelease, TestSize.Level0)
+{
+    const uint64_t contextId = 9101;
+    sptr<MockUserAuthCallback> ipcCallback = new MockUserAuthCallback();
+    auto callback = ContextCallback::NewInstance(ipcCallback, TRACE_AUTH_USER_SECURITY);
+    auto widget = Common::MakeShared<LifecycleWidgetContext>(contextId, callback);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widget));
+    DrainSerial();
+    EXPECT_CALL(*ipcCallback, OnResult(SUCCESS, _)).Times(1);
+    ThreadHandler::GetSingleThreadInstance()->EnsureTask([widget, contextId]() {
+        widget->activeChildCount_ = 1;
+        const std::vector<uint8_t> token = {1, 2, 3};
+        widget->authResultInfo_.token = token;
+        widget->End(SUCCESS);
+        widget->OnChildTerminated();
+        EXPECT_NE(ContextPool::Instance().Select(contextId).lock(), nullptr);
+        EXPECT_NE(widget->onTerminateTimerId_, 0U);
+        widget->ClearSchedule();
+        EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+        EXPECT_EQ(widget->onTerminateTimerId_, 0U);
+        widget->ClearSchedule();
+        widget->End(CANCELED);
+    });
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, RealResultWatchdogReleasesWithoutDuplicateResult, TestSize.Level0)
+{
+    const uint64_t contextId = 9102;
+    sptr<MockUserAuthCallback> ipcCallback = new MockUserAuthCallback();
+    auto callback = ContextCallback::NewInstance(ipcCallback, TRACE_AUTH_USER_SECURITY);
+    auto widget = Common::MakeShared<LifecycleWidgetContext>(contextId, callback);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widget));
+    DrainSerial();
+    EXPECT_CALL(*ipcCallback, OnResult(SUCCESS, _)).Times(1);
+    ThreadHandler::GetSingleThreadInstance()->EnsureTask([widget, contextId]() {
+        widget->End(SUCCESS);
+        EXPECT_NE(ContextPool::Instance().Select(contextId).lock(), nullptr);
+        widget->OnTerminateTimerTimeOut(contextId);
+        EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+        widget->OnTerminateTimerTimeOut(contextId);
+        widget->ClearSchedule();
+    });
+    DrainSerial();
+}
+
+HWTEST_F(WidgetContextTest, RealStartFailureReleasesWithoutCleaner, TestSize.Level0)
+{
+    const uint64_t contextId = 9103;
+    sptr<MockUserAuthCallback> ipcCallback = new MockUserAuthCallback();
+    auto callback = ContextCallback::NewInstance(ipcCallback, TRACE_AUTH_USER_SECURITY);
+    auto widget = Common::MakeShared<LifecycleWidgetContext>(contextId, callback);
+    ASSERT_TRUE(ContextPool::Instance().Schedule(widget));
+    DrainSerial();
+    EXPECT_CALL(*ipcCallback, OnResult(GENERAL_ERROR, _)).Times(1);
+    ThreadHandler::GetSingleThreadInstance()->EnsureTask([widget, contextId]() {
+        widget->OnStartFailed(GENERAL_ERROR);
+        EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+        widget->OnStartFailed(GENERAL_ERROR);
+        widget->Stop();
+    });
+    DrainSerial();
+}
+
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

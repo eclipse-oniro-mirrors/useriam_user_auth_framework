@@ -43,6 +43,12 @@ FiniteStateMachineImpl::~FiniteStateMachineImpl()
     IAM_LOGD("fsm %{public}s destroyed for %{public}zu transitions", name_.c_str(), transitionMap_.size());
 }
 
+void FiniteStateMachineImpl::AttachOwnerLifetime(const std::weak_ptr<void> &ownerLifetime)
+{
+    std::lock_guard<std::mutex> lock(ownerLifetimeMutex_);
+    ownerLifetime_ = ownerLifetime;
+}
+
 void FiniteStateMachineImpl::Schedule(uint32_t event)
 {
     if (threadHandler_ == nullptr) {
@@ -51,10 +57,23 @@ void FiniteStateMachineImpl::Schedule(uint32_t event)
     }
     pendingEvents_.Push(event);
     IAM_LOGD("fsm %{public}s new schedule event input:%{public}u", name_.c_str(), event);
-    threadHandler_->PostTask([self = weak_from_this(), this]() {
+    std::optional<std::weak_ptr<void>> ownerLifetime;
+    {
+        std::lock_guard<std::mutex> lock(ownerLifetimeMutex_);
+        ownerLifetime = ownerLifetime_;
+    }
+    threadHandler_->PostTask([self = weak_from_this(), ownerLifetime]() {
+        std::shared_ptr<const void> ownerGuard;
+        if (ownerLifetime.has_value()) {
+            ownerGuard = ownerLifetime->lock();
+            if (ownerGuard == nullptr) {
+                IAM_LOGE("fsm owner is released, drop stale event");
+                return;
+            }
+        }
         if (auto machine = self.lock(); machine != nullptr) {
             Inner inner(machine);
-            ScheduleInner(inner);
+            machine->ScheduleInner(inner);
         }
     });
 }
@@ -158,6 +177,11 @@ uint32_t FiniteStateMachineImpl::Inner::EnsureCurrentState()
 const std::string &FiniteStateMachineImpl::Inner::GetMachineName() const
 {
     return machine_->GetMachineName();
+}
+
+void FiniteStateMachineImpl::Inner::AttachOwnerLifetime(const std::weak_ptr<void> &ownerLifetime)
+{
+    machine_->AttachOwnerLifetime(ownerLifetime);
 }
 
 void FiniteStateMachineImpl::Inner::SetThreadHandler(const std::shared_ptr<ThreadHandler> &threadHandler)

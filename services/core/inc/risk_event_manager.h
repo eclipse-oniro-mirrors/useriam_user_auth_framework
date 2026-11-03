@@ -49,7 +49,6 @@ private:
         std::vector<uint64_t> &templateIds);
     ResultCode GetStrongAuthExtraInfo(int32_t userId, const AuthType authType,
         std::vector<uint8_t> &extraInfo);
-    bool IsScreenLockStrongAuth(int32_t userId);
     ResultCode SetAttributes(int32_t userId, const AuthType authType,
         EventType event, Attributes &attributes);
 };

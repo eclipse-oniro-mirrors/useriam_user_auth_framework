@@ -20,18 +20,15 @@
 #include <mutex>
 #include <string>
 
+#include "singleton.h"
 #include "thread_handler.h"
 
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 const std::string SINGLETON_THREAD_NAME = "ThreadHandler";
-class ThreadHandlerManager {
+class ThreadHandlerManager final : public DelayedRefSingleton<ThreadHandlerManager> {
 public:
-    static ThreadHandlerManager &GetInstance();
-    ThreadHandlerManager();
-    ~ThreadHandlerManager();
-
     bool CreateThreadHandler(const std::string &name);
     void DestroyThreadHandler(const std::string &name);
     void DeleteThreadHandler(const std::string &name);
@@ -41,6 +38,8 @@ public:
     void Stop();
 
 private:
+    DECLARE_DELAYED_REF_SINGLETON(ThreadHandlerManager);
+
     std::recursive_mutex mutex_;
     std::map<std::string, std::shared_ptr<ThreadHandler>> threadHandlerMap_;
 };

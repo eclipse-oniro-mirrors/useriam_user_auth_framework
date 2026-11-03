@@ -16,6 +16,7 @@
 #ifndef IAM_WIDGET_CONTEXT_H
 #define IAM_WIDGET_CONTEXT_H
 
+#include <atomic>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -51,14 +52,13 @@ class WidgetContext : public WidgetScheduleNodeCallback,
                       public ContextAppStateObserverManager,
                       public NoCopyable {
 public:
-    WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para,
+    WidgetContext(uint64_t contextId, const ContextFactory::AuthWidgetContextPara &para, bool isPrimaryContext,
         std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
         const sptr<IRemoteAuthCallback> &remoteAuthCallback);
     ~WidgetContext() override;
 
     // Context API
     bool Start() override;
-    bool Stop() override;
     uint64_t GetContextId() const override;
     ContextType GetContextType() const override;
     std::shared_ptr<ScheduleNode> GetScheduleNode(uint64_t scheduleId) const override;
@@ -66,7 +66,12 @@ public:
     int32_t GetLatestError() const override;
     int32_t GetUserId() const override;
     int32_t GetAuthType() const override;
+    std::vector<int32_t> GetAuthTypeList() const override;
     std::string GetCallerName() const override;
+    bool CanStart(const std::vector<std::weak_ptr<Context>> &predecessors) const override;
+    bool IsPrimaryContext() const override;
+    PreemptDecision GetPreemptDecision(const Context &newRequest) const override;
+    void OnStartFailed(int32_t errorCode) override;
     void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) override;
 
     // WidgetScheduleNodeCallback API
@@ -77,23 +82,24 @@ public:
     void EndAuthAsNaviPin() override;
     void EndAuthAsWidgetParaInvalid() override;
     void StopAuthList(const std::vector<AuthType> &authTypeList) override;
-    void SuccessAuth(AuthType authType) override;
-    void FailAuth(AuthType authType) override;
+    void OnAuthSuccess(AuthType authType) override;
+    void OnAuthFail(AuthType authType) override;
     bool AuthWidgetReload(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType) override;
     void AuthWidgetReloadInit() override;
     bool GetRemoteAuthParam() override;
 
-    void AuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult);
-    void AuthTipInfo(int32_t tipInfo, int32_t authType, const Attributes &extraInfo);
+    void OnChildAuthResult(int32_t resultCode, int32_t authType, const Attributes &finalResult);
+    void OnChildAuthTip(int32_t tipInfo, int32_t authType, const Attributes &extraInfo);
     void ClearSchedule() override;
-    void SendAuthTipInfo(int32_t authType, int32_t tipInfo) override;
-    void SendAuthResultInfo(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) override;
+    void OnScheduleAuthTip(int32_t authType, int32_t tipInfo) override;
+    void OnScheduleAuthResult(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) override;
 
 protected:
     virtual bool OnStart();
     virtual void OnResult(int32_t resultCode, const std::shared_ptr<Attributes> &scheduleResultAttr);
     virtual bool OnStop();
+    bool Stop() override;
     virtual bool BuildSchedule();
 
 private:
@@ -111,8 +117,17 @@ private:
     int32_t ConnectExtensionAbility(const AAFwk::Want &want, const std::string commandStr);
     bool DisconnectExtension();
     void End(const ResultCode &resultCode);
+    void DeliverEndLocked(const ResultCode &resultCode);
+    void DeliverResultLocked(const std::string &reason, int32_t resultCode, const Attributes &attr);
+    void OnChildTerminated();
+    void TryEndLocked();
+    void EndLocked();
     std::shared_ptr<ContextCallback> GetAuthContextCallback(AuthType authType, AuthTrustLevel authTrustLevel,
         sptr<IIamCallback> &callback);
+    void ReportChildError(const std::shared_ptr<ContextCallback> &widgetCallback,
+        const sptr<IIamCallback> &iamCallback, const std::string &reason = "");
+    Authentication::AuthenticationPara BuildAuthenticationPara(const std::vector<uint8_t> &challenge,
+        AuthType authType, AuthTrustLevel authTrustLevel, bool endAfterFirstFail, AuthIntent authIntent) const;
     void StopAllRunTask(const ResultCode &resultCode);
     std::string BuildStartCommand(const WidgetRotatePara &widgetRotatePara);
     void BuildStartPinSubType(WidgetCmdParameters &widgetCmdParameters);
@@ -123,8 +138,8 @@ private:
     bool IsInFollowCallerList();
     void SetSysDialogZOrder(WidgetCmdParameters &widgetCmdParameters);
     bool IsWidgetLaunchAllowed() const;
-    void ReportResult(ResultCode resultCode);
     bool RefreshAuthProfiles();
+    void InitSessionProfiles();
     bool IsSingleFaceOrFingerPrintAuth();
     bool IsNavigationAuth();
     bool IsSingleCompanionDeviceAuth() const;
@@ -147,7 +162,7 @@ private:
 private:
     struct TaskInfo {
         AuthType authType {0};
-        std::shared_ptr<Context> task {nullptr};
+        uint64_t taskId {0};
     };
 
     struct WidgetAuthResultInfo {
@@ -165,11 +180,24 @@ private:
         int32_t freezingTime;
     };
 
+    enum class Phase : uint8_t {
+        NOT_STARTED = 0,
+        RUNNING = 1,
+        STOPPING = 2,
+        RESULT_DELIVERED = 3,
+        RELEASED = 4,
+    };
+
+    [[nodiscard]] bool AdvancePhaseLocked(Phase next);
+
     uint64_t contextId_ {0};
     std::string description_ {""};
     std::shared_ptr<ContextCallback> callerCallback_ {nullptr};
-    bool hasStarted_ {false};
     bool useModalApplication_ {false};
+    bool isPrimaryContext_ {false};
+    Phase phase_ {Phase::NOT_STARTED};
+    uint32_t activeChildCount_ {0};
+    bool scheduleReleased_ {false};
 
     int32_t latestError_ {ResultCode::GENERAL_ERROR};
     ContextFactory::AuthWidgetContextPara para_ {};

@@ -25,6 +25,7 @@
 #include "mock_ipc_common.h"
 #include "remote_auth_service.h"
 #include "remote_msg_util.h"
+#include "thread_handler.h"
 
 #define LOG_TAG "USER_AUTH_SA"
 #define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_SERVICE
@@ -34,6 +35,20 @@ namespace UserIam {
 namespace UserAuth {
 using namespace testing;
 using namespace testing::ext;
+
+namespace {
+// drain passes: EnsureTask only waits out tasks posted before it, not their nested posts
+constexpr int32_t DRAIN_PASSES = 3;
+
+void DrainSerialThread()
+{
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    for (int pass = 0; pass < DRAIN_PASSES; ++pass) {
+        handler->EnsureTask([]() {});
+    }
+}
+} // namespace
 
 void RemoteAuthServiceTest::SetUpTestCase()
 {
@@ -53,9 +68,9 @@ void RemoteAuthServiceTest::TearDown()
     IpcCommon::SetSkipActiveUserIdCallerFlag(false);
 }
 
-HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_InvalidUserId_ReturnsError, TestSize.Level0)
+HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_InvalidUserIdFallsBackToActiveUser, TestSize.Level0)
 {
-    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserId_ReturnsError start");
+    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserIdFallsBackToActiveUser start");
     
     std::shared_ptr<Attributes> request = Common::MakeShared<Attributes>();
     std::shared_ptr<Attributes> reply = Common::MakeShared<Attributes>();
@@ -83,10 +98,19 @@ HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_InvalidUserId_Returns
     
     auto &service = RemoteAuthService::GetInstance();
     int32_t result = service.ProcStartRemoteAuthRequest("connection_name", request, reply);
-    
-    EXPECT_EQ(result, GENERAL_ERROR);
-    
-    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserId_ReturnsError end");
+
+    // Schedule posts the start: acceptance is synchronous, the invalid-user terminal
+    // lands via the callback
+    EXPECT_EQ(result, SUCCESS);
+    uint64_t contextId = 0;
+    EXPECT_TRUE(reply->GetUint64Value(Attributes::ATTR_CONTEXT_ID, contextId));
+    DrainSerialThread();
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+    // the terminal result already cleaned the pool; delete once more in case it did not
+    ContextPool::Instance().Delete(contextId);
+    DrainSerialThread();
+
+    IAM_LOGI("ProcStartRemoteAuthRequest_InvalidUserIdFallsBackToActiveUser end");
 }
 
 HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_ValidUserId, TestSize.Level0)
@@ -119,9 +143,15 @@ HWTEST_F(RemoteAuthServiceTest, ProcStartRemoteAuthRequest_ValidUserId, TestSize
     
     auto &service = RemoteAuthService::GetInstance();
     int32_t result = service.ProcStartRemoteAuthRequest("connection_name", request, reply);
-    
-    EXPECT_EQ(result, GENERAL_ERROR);
-    
+
+    // asynchronous start contract: accepted now, the connection-setup terminal via the callback
+    EXPECT_EQ(result, SUCCESS);
+    uint64_t contextId = 0;
+    EXPECT_TRUE(reply->GetUint64Value(Attributes::ATTR_CONTEXT_ID, contextId));
+    DrainSerialThread();
+    ContextPool::Instance().Delete(contextId);
+    DrainSerialThread();
+
     IAM_LOGI("ProcStartRemoteAuthRequest_ValidUserId end");
 }
 

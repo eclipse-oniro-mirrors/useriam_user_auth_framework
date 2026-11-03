@@ -137,11 +137,18 @@ void WidgetScheduleNodeImpl::BuildAuthFinishedStateTransitions(std::shared_ptr<F
 
 bool WidgetScheduleNodeImpl::TryKickMachine(Event event)
 {
-    if (machine_ == nullptr) {
+    auto self = weak_from_this().lock();
+    if (self == nullptr) {
+        IAM_LOGE("widget schedule node is dying, drop event %{public}u", event);
+        return false;
+    }
+    auto machine = machine_;
+    if (machine == nullptr) {
         IAM_LOGE("Invalid FSM of widget schedule");
         return false;
     }
-    machine_->Schedule(event);
+    machine->AttachOwnerLifetime(weak_from_this());
+    machine->Schedule(event);
     return true;
 }
 
@@ -216,7 +223,7 @@ bool WidgetScheduleNodeImpl::StopAuthList(const std::vector<AuthType> &authTypeL
     return TryKickMachine(E_UPDATE_AUTH);
 }
 
-bool WidgetScheduleNodeImpl::SuccessAuth(AuthType authType)
+bool WidgetScheduleNodeImpl::NotifyAuthSuccess(AuthType authType)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     successAuthType_ = authType;
@@ -224,7 +231,7 @@ bool WidgetScheduleNodeImpl::SuccessAuth(AuthType authType)
     return TryKickMachine(E_COMPLETE_AUTH);
 }
 
-bool WidgetScheduleNodeImpl::FailAuth(AuthType authType)
+bool WidgetScheduleNodeImpl::NotifyAuthFail(AuthType authType)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     failAuthType_ = authType;
@@ -359,7 +366,7 @@ void WidgetScheduleNodeImpl::OnSuccessAuth(FiniteStateMachine &machine, uint32_t
     auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     runningAuthTypeSet_.erase(successAuthType_);
-    callback->SuccessAuth(successAuthType_);
+    callback->OnAuthSuccess(successAuthType_);
 }
 
 void WidgetScheduleNodeImpl::OnFailAuth(FiniteStateMachine &machine, uint32_t event)
@@ -368,7 +375,7 @@ void WidgetScheduleNodeImpl::OnFailAuth(FiniteStateMachine &machine, uint32_t ev
     auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     runningAuthTypeSet_.erase(failAuthType_);
-    callback->FailAuth(failAuthType_);
+    callback->OnAuthFail(failAuthType_);
 }
 
 void WidgetScheduleNodeImpl::OnNaviPinAuth(FiniteStateMachine &machine, uint32_t event)
@@ -431,23 +438,23 @@ void WidgetScheduleNodeImpl::OnSendAuthResult(FiniteStateMachine &machine, uint3
         authToken = authToken_;
     }
     if (resultCode == SUCCESS) {
-        callback->SendAuthResultInfo(resultCode, successAuthType, authToken);
+        callback->OnScheduleAuthResult(resultCode, successAuthType, authToken);
     } else {
-        callback->SendAuthResultInfo(resultCode, failAuthType, authToken);
+        callback->OnScheduleAuthResult(resultCode, failAuthType, authToken);
     }
 }
 
-void WidgetScheduleNodeImpl::SendAuthTipInfo(const std::vector<AuthType> &authTypeList, int32_t tipCode)
+void WidgetScheduleNodeImpl::OnWidgetTip(const std::vector<AuthType> &authTypeList, int32_t tipCode)
 {
     auto callback = GetCallback();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("send mid auth result");
     for (auto &authType : authTypeList) {
-        callback->SendAuthTipInfo(authType, tipCode);
+        callback->OnScheduleAuthTip(authType, tipCode);
     }
 }
 
-void WidgetScheduleNodeImpl::SendAuthResultInfo(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token)
+void WidgetScheduleNodeImpl::OnWidgetResult(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token)
 {
     IAM_LOGI("send auth result from widget");
     std::lock_guard<std::mutex> lock(mutex_);

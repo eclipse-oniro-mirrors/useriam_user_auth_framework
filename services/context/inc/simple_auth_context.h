@@ -39,16 +39,17 @@ struct AuthEventInfo {
 
 class SimpleAuthContext : public BaseContext {
 public:
-    SimpleAuthContext(uint64_t contextId, std::shared_ptr<Authentication> auth,
-        std::shared_ptr<ContextCallback> callback, bool needSubscribeAppState);
+    SimpleAuthContext(uint64_t contextId, std::shared_ptr<Authentication> auth, bool needSubscribeAppState,
+        bool isPrimaryContext, std::shared_ptr<ContextCallback> callback);
     SimpleAuthContext(const std::string &type, uint64_t contextId, std::shared_ptr<Authentication> auth,
-        std::shared_ptr<ContextCallback> callback);
+        bool isPrimaryContext, std::shared_ptr<ContextCallback> callback);
     ~SimpleAuthContext() override = default;
     ContextType GetContextType() const override;
     uint32_t GetTokenId() const override;
     int32_t GetUserId() const override;
     int32_t GetAuthType() const override;
     std::string GetCallerName() const override;
+    bool CanStart(const std::vector<std::weak_ptr<Context>> &predecessors) const override;
     void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) override;
 
 protected:
@@ -66,7 +67,6 @@ private:
     void InvokeResultCallback(const Authentication::AuthResultInfo &resultInfo) const;
     void SetAuthResultAttributes(const Authentication::AuthResultInfo &resultInfo,
         Attributes &finalResult) const;
-    ResultCode SetFreezingTimeAndRemainTimes(int32_t &freezingTime, int32_t &remainTimes);
     ResultCode GetPropertyForAuthResult(Authentication::AuthResultInfo &resultInfo);
     bool SetCredentialDigest(const Authentication::AuthResultInfo &resultInfo,
         Attributes &finalResult) const;

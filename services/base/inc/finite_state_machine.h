@@ -37,6 +37,7 @@ public:
     virtual uint32_t EnsureCurrentState() = 0;
     virtual void SetThreadHandler(const std::shared_ptr<ThreadHandler> &threadHandler) = 0;
     virtual const std::string &GetMachineName() const = 0;
+    virtual void AttachOwnerLifetime(const std::weak_ptr<void> &ownerLifetime) = 0;
 };
 
 class FiniteStateMachine::Builder {

@@ -15,11 +15,16 @@
 
 #include "context_pool.h"
 
+#include <algorithm>
+#include <chrono>
+#include <deque>
 #include <fcntl.h>
+#include <map>
 #include <mutex>
-#include <set>
 #include <singleton.h>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
 
 #include "system_ability_definition.h"
 
@@ -27,6 +32,7 @@
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "system_ability_listener.h"
+#include "thread_handler.h"
 
 #define LOG_TAG "USER_AUTH_SA"
 #define LOG_FILE_ID LOG_FILE_CONTEXT_POOL_IMPL
@@ -51,190 +57,81 @@ bool GenerateRand(uint8_t *data, size_t len)
     }
     return true;
 }
+
+bool IsSameCallerDuplicate(const Context &incoming, const Context &existing)
+{
+    if (!incoming.IsPrimaryContext() || !existing.IsPrimaryContext() ||
+        incoming.GetCallerName() != existing.GetCallerName() ||
+        incoming.GetContextType() != existing.GetContextType() ||
+        incoming.GetAuthType() != existing.GetAuthType() ||
+        incoming.GetUserId() != existing.GetUserId()) {
+        return false;
+    }
+    IAM_LOGI("context ****%{public}hx superseded by newer request ****%{public}hx from same caller",
+        static_cast<uint16_t>(existing.GetContextId()),
+        static_cast<uint16_t>(incoming.GetContextId()));
+    return true;
 }
-class ContextPoolImpl final : public ContextPool, public Singleton<ContextPoolImpl> {
+}
+class ContextPoolImpl final : public ContextPool, public DelayedRefSingleton<ContextPoolImpl> {
 public:
-    bool Insert(const std::shared_ptr<Context> &context) override;
+    bool Schedule(const std::shared_ptr<Context> &context) override;
+    void Cancel(uint64_t contextId) override;
     bool Delete(uint64_t contextId) override;
-    void CancelAll() const override;
+    void CancelAll() override;
+    void NotifyPreemptStateChanged() override;
     std::weak_ptr<Context> Select(uint64_t contextId) const override;
     std::vector<std::weak_ptr<Context>> Select(ContextType contextType) const override;
     std::shared_ptr<ScheduleNode> SelectScheduleNodeByScheduleId(uint64_t scheduleId) override;
-    bool RegisterContextPoolListener(const std::shared_ptr<ContextPoolListener> &listener) override;
-    bool DeregisterContextPoolListener(const std::shared_ptr<ContextPoolListener> &listener) override;
     void StartSubscribeOsAccountSaStatus() override;
+#ifdef IAM_TEST_ENABLE
+    std::vector<std::weak_ptr<Context>> SelectAll() const override;
+#endif
 
 private:
-    void CheckPreemptContext(const std::shared_ptr<Context> &context);
+    DECLARE_DELAYED_REF_SINGLETON(ContextPoolImpl);
+
+    struct AdmissionPlan {
+        std::map<uint64_t, std::shared_ptr<Context>> toStop;
+        std::vector<std::shared_ptr<Context>> toStart;
+    };
+    void PromoteWaitingLocked(AdmissionPlan &plan);
+    void ExecutePlan(AdmissionPlan plan);
+    static bool StopIfPooled(uint64_t contextId);
+    static void StartIfPooled(uint64_t contextId);
+    std::weak_ptr<Context> SelectLocked(uint64_t contextId) const;
+
     mutable std::recursive_mutex poolMutex_;
-    std::unordered_map<uint64_t, std::shared_ptr<Context>> contextMap_;
-    std::set<std::shared_ptr<ContextPoolListener>> listenerSet_;
+    std::unordered_map<uint64_t, std::shared_ptr<Context>> runningContexts_;
     sptr<SystemAbilityListener> accountSaStatusListener_ {nullptr};
+    std::deque<std::shared_ptr<Context>> waitingFifo_;
+    std::unordered_set<uint64_t> cancelRequestedIds_;
 };
 
-void ContextPoolImpl::CheckPreemptContext(const std::shared_ptr<Context> &context)
-{
-    if (context->GetContextType() != ContextType::CONTEXT_SIMPLE_AUTH) {
-        return;
-    }
-    auto tempContextMap = contextMap_;
-    for (auto iter = tempContextMap.begin(); iter != tempContextMap.end(); iter++) {
-        if (iter->second == nullptr) {
-            IAM_LOGE("context is nullptr");
-            break;
-        }
-        if (iter->second->GetCallerName() == context->GetCallerName() &&
-            iter->second->GetAuthType() == context->GetAuthType() &&
-            iter->second->GetUserId() == context->GetUserId()) {
-            IAM_LOGE("contextId:%{public}hx is preempted, newContextId:%{public}hx, mapSize:%{public}zu,"
-                "callerName:%{public}s, userId:%{public}d, authType:%{public}d", static_cast<uint16_t>(iter->first),
-                static_cast<uint16_t>(context->GetContextId()), tempContextMap.size(), context->GetCallerName().c_str(),
-                context->GetUserId(), context->GetAuthType());
-            iter->second->Stop();
-            break;
-        }
-    }
-}
+ContextPoolImpl::ContextPoolImpl() = default;
 
-bool ContextPoolImpl::Insert(const std::shared_ptr<Context> &context)
-{
-    if (context == nullptr) {
-        IAM_LOGE("context is nullptr");
-        return false;
-    }
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    if (contextMap_.size() >= MAX_CONTEXT_NUM) {
-        IAM_LOGE("context pool is full");
-        return false;
-    }
-    CheckPreemptContext(context);
-    uint64_t contextId = context->GetContextId();
-    auto result = contextMap_.try_emplace(contextId, context);
-    if (!result.second) {
-        return false;
-    }
-    auto tempListenerSet = listenerSet_;
-    for (const auto &listener : tempListenerSet) {
-        if (listener != nullptr) {
-            listener->OnContextPoolInsert(context);
-        }
-    }
-    return true;
-}
-
-bool ContextPoolImpl::Delete(uint64_t contextId)
-{
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    auto iter = contextMap_.find(contextId);
-    if (iter == contextMap_.end()) {
-        IAM_LOGE("context not found");
-        return false;
-    }
-    auto tempContext = iter->second;
-    contextMap_.erase(iter);
-    auto tempListenerSet = listenerSet_;
-    for (const auto &listener : tempListenerSet) {
-        if (listener != nullptr) {
-            listener->OnContextPoolDelete(tempContext);
-        }
-    }
-    return true;
-}
-
-void ContextPoolImpl::CancelAll() const
-{
-    IAM_LOGI("start");
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    auto tempContextMap = contextMap_;
-    for (const auto &context : tempContextMap) {
-        if (context.second == nullptr) {
-            continue;
-        }
-        IAM_LOGI("cancel context %{public}s", GET_MASKED_STRING(context.second->GetContextId()).c_str());
-        if (!context.second->Stop()) {
-            IAM_LOGE("cancel context %{public}s fail", GET_MASKED_STRING(context.second->GetContextId()).c_str());
-        }
-    }
-}
-
-std::weak_ptr<Context> ContextPoolImpl::Select(uint64_t contextId) const
-{
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    std::weak_ptr<Context> result;
-    auto iter = contextMap_.find(contextId);
-    if (iter != contextMap_.end()) {
-        result = iter->second;
-    }
-    return result;
-}
-
-std::vector<std::weak_ptr<Context>> ContextPoolImpl::Select(ContextType contextType) const
-{
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    std::vector<std::weak_ptr<Context>> result;
-    for (const auto &context : contextMap_) {
-        if (context.second == nullptr) {
-            continue;
-        }
-        if (context.second->GetContextType() == contextType) {
-            result.emplace_back(context.second);
-        }
-    }
-    return result;
-}
-
-std::shared_ptr<ScheduleNode> ContextPoolImpl::SelectScheduleNodeByScheduleId(uint64_t scheduleId)
-{
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    for (const auto &context : contextMap_) {
-        if (context.second == nullptr) {
-            continue;
-        }
-        auto node = context.second->GetScheduleNode(scheduleId);
-        if (node != nullptr) {
-            return node;
-        }
-    }
-
-    IAM_LOGE("not found");
-    return nullptr;
-}
-
-bool ContextPoolImpl::RegisterContextPoolListener(const std::shared_ptr<ContextPoolListener> &listener)
-{
-    if (listener == nullptr) {
-        IAM_LOGE("listener is nullptr");
-        return false;
-    }
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    listenerSet_.insert(listener);
-    return true;
-}
-
-bool ContextPoolImpl::DeregisterContextPoolListener(const std::shared_ptr<ContextPoolListener> &listener)
-{
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    return listenerSet_.erase(listener) == 1;
-}
-
-void ContextPoolImpl::StartSubscribeOsAccountSaStatus()
-{
-    IAM_LOGI("start");
-    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-    if (accountSaStatusListener_ != nullptr) {
-        return;
-    }
-    accountSaStatusListener_ = SystemAbilityListener::Subscribe(
-        "OsAccountService", SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN,
-        []() {},
-        []() { ContextPool::Instance().CancelAll(); });
-    IF_FALSE_LOGE_AND_RETURN(accountSaStatusListener_ != nullptr);
-}
+ContextPoolImpl::~ContextPoolImpl() = default;
 
 ContextPool &ContextPool::Instance()
 {
     return ContextPoolImpl::GetInstance();
 }
+
+ContextPool::Cleaner::Cleaner(const std::shared_ptr<Context> &context)
+    : contextId_(context != nullptr ? context->GetContextId() : INVALID_CONTEXT_ID)
+{
+}
+
+void ContextPool::Cleaner::operator()()
+{
+    IAM_LOGD("start");
+    if (contextId_ == INVALID_CONTEXT_ID) {
+        IAM_LOGE("invalid context id");
+        return;
+    }
+    auto result = ContextPool::Instance().Delete(contextId_);
+    IAM_LOGI("context ****%{public}hx deleted %{public}s", static_cast<uint16_t>(contextId_), result ? "succ" : "fail");
+};
 
 uint64_t ContextPool::GetNewContextId()
 {
@@ -257,6 +154,322 @@ uint64_t ContextPool::GetNewContextId()
         break;
     }
     return contextId;
+}
+
+bool ContextPoolImpl::Schedule(const std::shared_ptr<Context> &context)
+{
+    IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, false);
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    IF_FALSE_LOGE_AND_RETURN_VAL(handler != nullptr, false);
+    AdmissionPlan plan;
+    {
+        std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+        if (runningContexts_.size() + waitingFifo_.size() >= MAX_CONTEXT_NUM) {
+            IAM_LOGE("context pool is full");
+            return false;
+        }
+        if (SelectLocked(context->GetContextId()).lock() != nullptr) {
+            IAM_LOGE("failed to insert context ****%{public}hx",
+                static_cast<uint16_t>(context->GetContextId()));
+            return false;
+        }
+        waitingFifo_.push_back(context);
+        PromoteWaitingLocked(plan);
+    }
+    ExecutePlan(std::move(plan));
+    return true;
+}
+
+void ContextPoolImpl::Cancel(uint64_t contextId)
+{
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    IF_FALSE_LOGE_AND_RETURN(handler != nullptr);
+    {
+        std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+        cancelRequestedIds_.insert(contextId);
+    }
+    handler->PostTask([contextId]() {
+        IAM_LOGI("cancel context ****%{public}hx", static_cast<uint16_t>(contextId));
+        ContextPoolImpl::StopIfPooled(contextId);
+    });
+}
+
+bool ContextPoolImpl::Delete(uint64_t contextId)
+{
+    AdmissionPlan plan;
+    std::shared_ptr<Context> detached;
+    {
+        std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+        auto waitingIter = std::find_if(waitingFifo_.begin(), waitingFifo_.end(),
+            [contextId](const std::shared_ptr<Context> &context) {
+                return context != nullptr && context->GetContextId() == contextId;
+            });
+        bool removedFromWaiting = waitingIter != waitingFifo_.end();
+        if (removedFromWaiting) {
+            detached = std::move(*waitingIter);
+            waitingFifo_.erase(waitingIter);
+            IAM_LOGI("context ****%{public}hx was still waiting, removed from queue",
+                static_cast<uint16_t>(contextId));
+        }
+        auto runningIter = runningContexts_.find(contextId);
+        bool removedFromRunning = runningIter != runningContexts_.end();
+        if (removedFromRunning) {
+            detached = std::move(runningIter->second);
+            runningContexts_.erase(runningIter);
+        }
+        if (!removedFromWaiting && !removedFromRunning) {
+            IAM_LOGE("context not found");
+            return false;
+        }
+        PromoteWaitingLocked(plan);
+    }
+    ExecutePlan(std::move(plan));
+    return true;
+}
+
+void ContextPoolImpl::CancelAll()
+{
+    IAM_LOGI("start");
+    std::vector<uint64_t> contextIds;
+    {
+        std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+        contextIds.reserve(runningContexts_.size() + waitingFifo_.size());
+        for (const auto &[contextId, context] : runningContexts_) {
+            if (context != nullptr) {
+                contextIds.push_back(contextId);
+            }
+        }
+        for (const auto &context : waitingFifo_) {
+            if (context != nullptr) {
+                contextIds.push_back(context->GetContextId());
+            }
+        }
+    }
+    for (auto contextId : contextIds) {
+        Cancel(contextId);
+    }
+}
+
+void ContextPoolImpl::NotifyPreemptStateChanged()
+{
+    IAM_LOGI("start");
+    AdmissionPlan plan;
+    {
+        std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+        PromoteWaitingLocked(plan);
+    }
+    ExecutePlan(std::move(plan));
+}
+
+std::weak_ptr<Context> ContextPoolImpl::Select(uint64_t contextId) const
+{
+    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+    return SelectLocked(contextId);
+}
+
+std::vector<std::weak_ptr<Context>> ContextPoolImpl::Select(ContextType contextType) const
+{
+    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+    std::vector<std::weak_ptr<Context>> result;
+    result.reserve(runningContexts_.size() + waitingFifo_.size());
+    for (const auto &[contextId, context] : runningContexts_) {
+        if (context == nullptr) {
+            continue;
+        }
+        if (context->GetContextType() == contextType) {
+            result.emplace_back(context);
+        }
+    }
+    for (const auto &context : waitingFifo_) {
+        if (context == nullptr) {
+            continue;
+        }
+        if (context->GetContextType() == contextType) {
+            result.emplace_back(context);
+        }
+    }
+    return result;
+}
+
+std::shared_ptr<ScheduleNode> ContextPoolImpl::SelectScheduleNodeByScheduleId(uint64_t scheduleId)
+{
+    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+    for (const auto &[contextId, context] : runningContexts_) {
+        if (context == nullptr) {
+            continue;
+        }
+        auto node = context->GetScheduleNode(scheduleId);
+        if (node != nullptr) {
+            return node;
+        }
+    }
+
+    IAM_LOGE("not found");
+    return nullptr;
+}
+
+void ContextPoolImpl::StartSubscribeOsAccountSaStatus()
+{
+    IAM_LOGI("start");
+    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+    if (accountSaStatusListener_ != nullptr) {
+        return;
+    }
+    accountSaStatusListener_ = SystemAbilityListener::Subscribe(
+        "OsAccountService", SUBSYS_ACCOUNT_SYS_ABILITY_ID_BEGIN,
+        []() {},
+        []() { ContextPool::Instance().CancelAll(); });
+    IF_FALSE_LOGE_AND_RETURN(accountSaStatusListener_ != nullptr);
+}
+
+#ifdef IAM_TEST_ENABLE
+std::vector<std::weak_ptr<Context>> ContextPoolImpl::SelectAll() const
+{
+    std::lock_guard<std::recursive_mutex> lock(poolMutex_);
+    std::vector<std::weak_ptr<Context>> result;
+    result.reserve(runningContexts_.size() + waitingFifo_.size());
+    for (const auto &[contextId, context] : runningContexts_) {
+        if (context != nullptr) {
+            result.emplace_back(context);
+        }
+    }
+    for (const auto &context : waitingFifo_) {
+        if (context != nullptr) {
+            result.emplace_back(context);
+        }
+    }
+    return result;
+}
+#endif
+
+void ContextPoolImpl::PromoteWaitingLocked(AdmissionPlan &plan)
+{
+    if (waitingFifo_.empty()) {
+        return;
+    }
+    std::vector<std::shared_ptr<Context>> predecessors;
+    predecessors.reserve(runningContexts_.size());
+    for (const auto &[contextId, context] : runningContexts_) {
+        if (context != nullptr) {
+            predecessors.push_back(context);
+        }
+    }
+    for (auto it = waitingFifo_.begin(); it != waitingFifo_.end();) {
+        auto waiter = *it;
+        if (waiter == nullptr) {
+            it = waitingFifo_.erase(it);
+            continue;
+        }
+        std::vector<std::pair<uint64_t, std::shared_ptr<Context>>> pendingVictims;
+        std::vector<std::weak_ptr<Context>> visible;
+        for (const auto &member : predecessors) {
+            if (member == nullptr) {
+                continue;
+            }
+            bool canCollect = waiter->GetCreateTime() > member->GetCreateTime();
+            if (canCollect && IsSameCallerDuplicate(*waiter, *member)) {
+                plan.toStop.emplace(member->GetContextId(), member);
+                continue;
+            }
+            if (canCollect && member->GetPreemptDecision(*waiter) == PreemptDecision::STOP_NOW) {
+                pendingVictims.emplace_back(member->GetContextId(), member);
+                continue;
+            }
+            visible.emplace_back(member);
+        }
+        predecessors.push_back(waiter);
+        for (auto &[victimId, victim] : pendingVictims) {
+            plan.toStop.emplace(victimId, victim);
+        }
+        if (!waiter->CanStart(visible)) {
+            ++it;
+            continue;
+        }
+
+        IAM_LOGI("pool admits context ****%{public}hx",
+            static_cast<uint16_t>(waiter->GetContextId()));
+        plan.toStart.push_back(waiter);
+        runningContexts_.emplace(waiter->GetContextId(), waiter);
+        it = waitingFifo_.erase(it);
+    }
+}
+
+void ContextPoolImpl::ExecutePlan(AdmissionPlan plan)
+{
+    if (plan.toStop.empty() && plan.toStart.empty()) {
+        return;
+    }
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    if (handler == nullptr) {
+        IAM_LOGE("thread handler unavailable, drop admission plan");
+        return;
+    }
+    for (const auto &iter : plan.toStop) {
+        uint64_t contextId = iter.second->GetContextId();
+        handler->PostTask([contextId]() {
+            IAM_LOGI("preempted by new request, stop context ****%{public}hx",
+                static_cast<uint16_t>(contextId));
+            if (!StopIfPooled(contextId)) {
+                IAM_LOGE("preemptive stop fail, context ****%{public}hx",
+                    static_cast<uint16_t>(contextId));
+            }
+        });
+    }
+    for (const auto &context : plan.toStart) {
+        uint64_t contextId = context->GetContextId();
+        handler->PostTask([contextId]() {
+            StartIfPooled(contextId);
+        });
+    }
+}
+
+bool ContextPoolImpl::StopIfPooled(uint64_t contextId)
+{
+    {
+        std::lock_guard<std::recursive_mutex> lock(GetInstance().poolMutex_);
+        GetInstance().cancelRequestedIds_.erase(contextId);
+    }
+    auto context = GetInstance().Select(contextId).lock();
+    if (context == nullptr) {
+        IAM_LOGI("cancel context ****%{public}hx fail or already terminated", static_cast<uint16_t>(contextId));
+        return false;
+    }
+    return context->Stop();
+}
+
+void ContextPoolImpl::StartIfPooled(uint64_t contextId)
+{
+    std::shared_ptr<Context> context;
+    {
+        auto &pool = GetInstance();
+        std::lock_guard<std::recursive_mutex> lock(pool.poolMutex_);
+        auto iter = pool.runningContexts_.find(contextId);
+        bool cancelRequested = pool.cancelRequestedIds_.find(contextId) != pool.cancelRequestedIds_.end();
+        if (iter == pool.runningContexts_.end() || iter->second == nullptr || cancelRequested) {
+            return;
+        }
+        context = iter->second;
+    }
+    if (!context->Start()) {
+        IAM_LOGE("start fail, context ****%{public}hx", static_cast<uint16_t>(contextId));
+        context->OnStartFailed(context->GetLatestError());
+    }
+}
+
+std::weak_ptr<Context> ContextPoolImpl::SelectLocked(uint64_t contextId) const
+{
+    auto iter = runningContexts_.find(contextId);
+    if (iter != runningContexts_.end()) {
+        return iter->second;
+    }
+    auto waiting = std::find_if(waitingFifo_.begin(), waitingFifo_.end(),
+        [contextId](const std::shared_ptr<Context> &context) {
+            return context != nullptr && context->GetContextId() == contextId;
+        });
+    if (waiting != waitingFifo_.end()) {
+        return *waiting;
+    }
+    return {};
 }
 } // namespace UserAuth
 } // namespace UserIam

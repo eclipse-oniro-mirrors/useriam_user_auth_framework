@@ -227,6 +227,7 @@ std::optional<EngCallerType> IpcCommon::GetEngCallerType(int32_t callerType)
     }
     return std::nullopt;
 }
+
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

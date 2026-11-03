@@ -1155,7 +1155,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_CompanionDevice_001, Tes
     InitIpcWidgetParamInner(widgetParam, "Companion Device Auth", "", WindowModeType::DIALOG_BOX);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
-    EXPECT_CALL(*testCallback, OnResult(_, _)).Times(2);
+    EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();

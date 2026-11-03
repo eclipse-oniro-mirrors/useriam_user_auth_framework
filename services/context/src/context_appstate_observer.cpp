@@ -55,8 +55,8 @@ sptr<IAppMgr> ContextAppStateObserverManager::GetAppManagerInstance()
     return iface_cast<IAppMgr>(object);
 }
 
-void ContextAppStateObserverManager::SubscribeAppState(const std::shared_ptr<ContextCallback> &callback,
-    const uint64_t contextId)
+void ContextAppStateObserverManager::SubscribeAppState(uint64_t contextId,
+    const std::shared_ptr<ContextCallback> &callback)
 {
     IAM_LOGD("start");
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -68,61 +68,59 @@ void ContextAppStateObserverManager::SubscribeAppState(const std::shared_ptr<Con
         return;
     }
 
+    if (appStateObservers_.find(contextId) != appStateObservers_.end()) {
+        IAM_LOGI("observer for context ****%{public}hx already exists, replace it",
+            static_cast<uint16_t>(contextId));
+        UnSubscribeAppState(contextId);
+    }
+
     sptr<IAppMgr> appManager = GetAppManagerInstance();
     if (appManager == nullptr) {
         IAM_LOGE("GetAppManagerInstance failed");
         return;
     }
 
-    if (appStateObserver_ != nullptr) {
-        IAM_LOGI("appStateObserver_ already exists, unsubscribe first");
-        appManager->UnregisterApplicationStateObserver(appStateObserver_);
-        appStateObserver_ = nullptr;
-    }
-
-    appStateObserver_ = new (std::nothrow) ContextAppStateObserver(contextId, bundleName);
-    if (appStateObserver_ == nullptr) {
+    sptr<ApplicationStateObserverStub> observer = new (std::nothrow) ContextAppStateObserver(contextId, bundleName);
+    if (observer == nullptr) {
         IAM_LOGE("get appStateObserver failed");
         return;
     }
 
     std::vector<std::string> bundleNameList;
     bundleNameList.emplace_back(bundleName);
-    int32_t result = appManager->RegisterApplicationStateObserver(appStateObserver_, bundleNameList);
+    int32_t result = appManager->RegisterApplicationStateObserver(observer, bundleNameList);
     if (result != SUCCESS) {
         IAM_LOGE("RegistApplicationStateObserver failed");
-        appStateObserver_ = nullptr;
         return;
     }
 
+    appStateObservers_[contextId] = observer;
     IAM_LOGI("SubscribeAppState success, contextId:****%{public}hx, bundleName:%{public}s",
         static_cast<uint16_t>(contextId), bundleName.c_str());
     return;
 }
 
-void ContextAppStateObserverManager::UnSubscribeAppState()
+void ContextAppStateObserverManager::UnSubscribeAppState(uint64_t contextId)
 {
     IAM_LOGD("start");
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (appStateObserver_ == nullptr) {
-        IAM_LOGE("appStateObserver_ is nullptr");
+    auto iter = appStateObservers_.find(contextId);
+    if (iter == appStateObservers_.end()) {
         return;
     }
 
     sptr<IAppMgr> appManager = GetAppManagerInstance();
     if (appManager == nullptr) {
         IAM_LOGE("GetAppManagerInstance failed");
-        return;
+    } else {
+        int32_t result = appManager->UnregisterApplicationStateObserver(iter->second);
+        if (result != SUCCESS) {
+            IAM_LOGE("UnregisterApplicationStateObserver failed");
+        }
     }
 
-    int32_t result = appManager->UnregisterApplicationStateObserver(appStateObserver_);
-    if (result != SUCCESS) {
-        IAM_LOGE("UnregisterApplicationStateObserver failed");
-        return;
-    }
-
-    appStateObserver_ = nullptr;
-    IAM_LOGI("UnSubscribeAppState success");
+    appStateObservers_.erase(iter);
+    IAM_LOGI("UnSubscribeAppState success, contextId:****%{public}hx", static_cast<uint16_t>(contextId));
     return;
 }
 
@@ -166,11 +164,7 @@ void ContextAppStateObserver::ProcAppStateChanged(int32_t userId)
         IAM_LOGI("context userId is %{public}d, appStateChanged userId is %{public}d", context->GetUserId(), userId);
         return;
     }
-    if (!context->Stop()) {
-        IAM_LOGE("failed to cancel enroll or auth");
-        return;
-    }
-    return;
+    ContextPool::Instance().Cancel(contextId_);
 }
 
 void ContextAppStateObserver::OnAppStateChanged(const AppStateData &appStateData)

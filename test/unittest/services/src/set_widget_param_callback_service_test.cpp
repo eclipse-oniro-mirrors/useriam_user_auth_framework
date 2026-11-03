@@ -108,7 +108,7 @@ HWTEST_F(SetWidgetParamCallbackServiceTest, SetWidgetParamCallbackServiceTest005
 
     auto mockContext = std::static_pointer_cast<MockContext>(MockContext::CreateWithContextId(testContextId));
     EXPECT_NE(mockContext, nullptr);
-    ContextPool::Instance().Insert(mockContext);
+    ContextPool::Instance().Schedule(mockContext);
 
     IpcWidgetParamInner testIpcWidgetParamInner = {};
     testIpcWidgetParamInner.title = "test title";
@@ -135,7 +135,7 @@ HWTEST_F(SetWidgetParamCallbackServiceTest, SetWidgetParamCallbackServiceTest006
 
     auto mockContext = std::static_pointer_cast<MockContext>(MockContext::CreateWithContextId(testContextId));
     EXPECT_NE(mockContext, nullptr);
-    ContextPool::Instance().Insert(mockContext);
+    ContextPool::Instance().Schedule(mockContext);
 
     IpcWidgetParamInner testIpcWidgetParamInner = {};
     testIpcWidgetParamInner.title = "test title";
@@ -162,7 +162,7 @@ HWTEST_F(SetWidgetParamCallbackServiceTest, SetWidgetParamCallbackServiceTest007
 
     auto mockContext = std::static_pointer_cast<MockContext>(MockContext::CreateWithContextId(testContextId));
     EXPECT_NE(mockContext, nullptr);
-    ContextPool::Instance().Insert(mockContext);
+    ContextPool::Instance().Schedule(mockContext);
 
     IpcWidgetParamInner testIpcWidgetParamInner = {};
     testIpcWidgetParamInner.title = "test title";

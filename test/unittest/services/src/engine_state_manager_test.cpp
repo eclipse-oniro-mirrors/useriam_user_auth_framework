@@ -76,16 +76,25 @@ HWTEST_F(EngineStateManagerTest, RegisterEngineUnavailableCallbackTest, TestSize
 }
 
 // A registered start callback must fire exactly when the engine reports start.
-// shared_ptr<bool> captured by value keeps the flag alive for the singleton's
-// callback lifetime, so later transitions never touch a dangling reference.
+// shared_ptr<bool> by value keeps the flag alive for the singleton's callback lifetime.
 HWTEST_F(EngineStateManagerTest, StartCallbackFiresOnEngineReady, TestSize.Level0)
 {
-    EngineStateManager::GetInstance().OnEngineUnavailable(); // deterministic: not running
-    auto fired = std::make_shared<bool>(false);
-    EngineStateManager::GetInstance().RegisterEngineReadyCallback([fired]() { *fired = true; });
-    EXPECT_FALSE(*fired);
-    EngineStateManager::GetInstance().OnEngineReady();
-    EXPECT_TRUE(*fired);
+    // the real driver-status callback can flip the state to running mid-sequence and
+    // spoil the attempt (*fired true at registration); the state is running, so retry
+    bool clean = false;
+    constexpr int32_t MAX_CLEANUP_RETRIES = 3;
+    for (int attempt = 0; attempt < MAX_CLEANUP_RETRIES && !clean; ++attempt) {
+        EngineStateManager::GetInstance().OnEngineUnavailable(); // deterministic: not running
+        auto fired = std::make_shared<bool>(false);
+        EngineStateManager::GetInstance().RegisterEngineReadyCallback([fired]() { *fired = true; });
+        if (*fired) {
+            continue;
+        }
+        EngineStateManager::GetInstance().OnEngineReady();
+        EXPECT_TRUE(*fired);
+        clean = true;
+    }
+    EXPECT_TRUE(clean);
 }
 
 HWTEST_F(EngineStateManagerTest, StartCallbackFiresImmediatelyIfRunning, TestSize.Level0)

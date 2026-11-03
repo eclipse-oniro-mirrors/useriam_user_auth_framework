@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
+#include <future>
 #include <memory>
+#include <thread>
 
 #include "accesstoken_kit.h"
 #include "iam_ptr.h"
@@ -273,8 +275,12 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestStart, TestSize.Level0)
 
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, CancelAuthentication(_)).Times(0)
-        .WillOnce(Return(HDF_SUCCESS)).WillOnce(Return(HDF_FAILURE));
+    // BeginAuthenticationExt succeeds, but the schedule info carries one executorIndex
+    // and no executorMessage, so ScheduleInfoToExecutors rejects it and Start fails in
+    // BuildFromHdi without ever setting running_. Cancel() is gated on running_ (the
+    // cancel-request latch lives in ContextPool, not in AuthenticationImpl), so it is a
+    // no-op and the engine is never asked to cancel
+    EXPECT_CALL(*mockHdi, CancelAuthentication(_)).Times(0);
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
         .WillRepeatedly(
             [](uint64_t contextId, const HdiAuthParamExt &param, std::vector<HdiScheduleInfo> &scheduleInfos) {
@@ -305,6 +311,139 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestStart, TestSize.Level0)
     EXPECT_FALSE(authentication->Start(scheduleList, acquireInfoCallback, callback));
     EXPECT_FALSE(authentication->Cancel());
 
+    EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
+}
+
+namespace {
+constexpr int32_t CANCEL_TEST_USER_ID = 0x11;
+constexpr int32_t CANCEL_TEST_SDK_VERSION = 11;
+constexpr uint64_t CANCEL_TEST_SCHEDULE_ID = 21;
+constexpr uint64_t CANCEL_TEST_TEMPLATE_ID = 31;
+
+// BeginAuthenticationExt blocks between the two promises so a concurrent Cancel can
+// land while Start is still inside the engine call
+void MockBlockingBeginAuthentication(const std::shared_ptr<MockIUserAuthInterface> &mockHdi,
+    uint32_t executorIndex, std::promise<void> &beginEntered, std::promise<void> &releaseBegin)
+{
+    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
+        .WillByDefault([&beginEntered, &releaseBegin, executorIndex](uint64_t contextId,
+            const HdiAuthParamExt &param, std::vector<HdiScheduleInfo> &scheduleInfos) {
+            HdiScheduleInfo scheduleInfo = {};
+            scheduleInfo.authType = HdiAuthType::FACE;
+            scheduleInfo.executorMatcher = 0;
+            scheduleInfo.executorIndexes.push_back(executorIndex);
+            scheduleInfo.scheduleId = CANCEL_TEST_SCHEDULE_ID;
+            scheduleInfo.scheduleMode = ScheduleMode::AUTH;
+            scheduleInfo.templateIds.push_back(CANCEL_TEST_TEMPLATE_ID);
+            std::vector<uint8_t> executorMessages;
+            executorMessages.resize(1);
+            scheduleInfo.executorMessages.push_back(executorMessages);
+            scheduleInfos.push_back(scheduleInfo);
+            beginEntered.set_value();
+            releaseBegin.get_future().get();
+            return HDF_SUCCESS;
+        });
+}
+} // namespace
+
+// The cancel-request latch lives in ContextPool (cancelRequestedIds_ suppresses
+// the posted start), not in AuthenticationImpl: in production Start/Cancel run
+// serially on the context handler. A Cancel that lands while Start is still
+// inside the engine call finds running_ unset, is a no-op, and Start completes
+// normally; only a Cancel after Start returned true reaches the engine.
+HWTEST_F(AuthenticationImplTest, AuthenticationImplCancelDuringStartIsNoOpUntilRunning, TestSize.Level0)
+{
+    constexpr uint64_t contextId = 0x1234568;
+    constexpr uint32_t executorIndex = 61;
+    Authentication::AuthenticationPara para = {};
+    para.userId = CANCEL_TEST_USER_ID;
+    para.callerName = "com.ohos.test";
+    para.sdkVersion = CANCEL_TEST_SDK_VERSION;
+    para.authType = FACE;
+    para.atl = ATL3;
+
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    std::promise<void> beginEntered;
+    std::promise<void> releaseBegin;
+    MockBlockingBeginAuthentication(mockHdi, executorIndex, beginEntered, releaseBegin);
+    EXPECT_CALL(*mockHdi, CancelAuthentication(contextId)).WillOnce(Return(HDF_SUCCESS));
+
+    auto resourceNode = MockResourceNode::CreateWithExecuteIndex(executorIndex, FACE, ALL_IN_ONE);
+    ASSERT_NE(resourceNode, nullptr);
+    ASSERT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
+
+    auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
+    ASSERT_NE(authentication, nullptr);
+    std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
+    auto callback = Common::MakeShared<MockScheduleNodeCallback>();
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    ASSERT_NE(callback, nullptr);
+
+    std::thread starter([&authentication, &scheduleList, &acquireInfoCallback, &callback]() {
+        EXPECT_TRUE(authentication->Start(scheduleList, acquireInfoCallback, callback));
+    });
+    beginEntered.get_future().get();
+    EXPECT_FALSE(authentication->Cancel());
+    releaseBegin.set_value();
+    starter.join();
+    EXPECT_TRUE(authentication->Cancel());
+    EXPECT_FALSE(authentication->Cancel());
+
+    ASSERT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
+}
+
+// Same contract as the engine-call case: a reentrant Cancel from inside
+// ScheduleNodeHelper::BuildFromHdi still finds running_ unset, is a no-op and
+// leaves no error trace; Start completes and a later Cancel reaches the engine.
+HWTEST_F(AuthenticationImplTest, AuthenticationImplCancelDuringScheduleBuildIsNoOp, TestSize.Level0)
+{
+    constexpr uint64_t contextId = 0x1234569;
+    constexpr uint32_t executorIndex = 62;
+    constexpr uint64_t scheduleId = 22;
+    Authentication::AuthenticationPara para = {};
+    para.userId = CANCEL_TEST_USER_ID;
+    para.callerName = "com.ohos.test";
+    para.sdkVersion = CANCEL_TEST_SDK_VERSION;
+    para.authType = FACE;
+    para.atl = ATL3;
+    auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(contextId, _, _))
+        .WillOnce([](uint64_t, const HdiAuthParamExt &, std::vector<HdiScheduleInfo> &infos) {
+            HdiScheduleInfo info = {};
+            info.authType = HdiAuthType::FACE;
+            info.executorIndexes = {executorIndex};
+            info.scheduleId = scheduleId;
+            info.scheduleMode = ScheduleMode::AUTH;
+            info.templateIds = {CANCEL_TEST_TEMPLATE_ID};
+            info.executorMessages = {{0}};
+            infos.push_back(info);
+            return HDF_SUCCESS;
+        });
+    EXPECT_CALL(*mockHdi, CancelAuthentication(contextId)).WillOnce(Return(HDF_SUCCESS));
+    auto resource = MockResourceNode::CreateWithExecuteIndex(executorIndex, FACE, ALL_IN_ONE);
+    ASSERT_NE(resource, nullptr);
+    ASSERT_TRUE(ResourceNodePool::Instance().Insert(resource));
+    bool canceled = false;
+    EXPECT_CALL(*std::static_pointer_cast<MockResourceNode>(resource), GetExecutorRole())
+        .WillRepeatedly([&]() {
+            if (!canceled) {
+                canceled = true;
+                EXPECT_FALSE(authentication->Cancel());
+            }
+            return ALL_IN_ONE;
+        });
+
+    std::vector<std::shared_ptr<ScheduleNode>> schedules;
+    auto callback = Common::MakeShared<MockScheduleNodeCallback>();
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole, int32_t, const std::vector<uint8_t> &) {};
+    EXPECT_TRUE(authentication->Start(schedules, acquireInfoCallback, callback));
+    EXPECT_TRUE(canceled);
+    EXPECT_TRUE(authentication->Cancel());
+    EXPECT_FALSE(authentication->Cancel());
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
 }
 

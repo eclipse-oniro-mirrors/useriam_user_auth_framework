@@ -44,6 +44,7 @@ public:
         std::string sensorInfo {""};
         int32_t remainTimes {0};
         int32_t freezingTime {0};
+        int32_t nextPhaseFreezingTime {-1};
         uint32_t cameraStatus {0};
     };
 
@@ -69,24 +70,41 @@ public:
         uint32_t callerPermissions {0};
     };
 
+    struct SudoAuthContextPara {
+        int32_t userId {INVALID_USER_ID};
+        uint32_t tokenId {0};
+        int32_t sdkVersion {0};
+        int32_t callerType {0};
+        std::string callerName {""};
+        std::vector<uint8_t> challenge {};
+        AuthTrustLevel atl {ATL1};
+        std::string additionalInfo {""};
+        bool isOsAccountVerified {false};
+        bool needSubscribeAppState {true};
+    };
+
     static std::shared_ptr<Context> CreateSimpleAuthContext(const Authentication::AuthenticationPara &para,
-        const std::shared_ptr<ContextCallback> &callback, bool needSubscribeAppState);
+        bool needSubscribeAppState, bool isPrimaryContext, const std::shared_ptr<ContextCallback> &callback);
     static std::shared_ptr<Context> CreateRemoteAuthContext(const Authentication::AuthenticationPara &para,
-        RemoteAuthContextParam &remoteAuthContextParam, const std::shared_ptr<ContextCallback> &callback);
+        RemoteAuthContextParam &remoteAuthContextParam, bool isPrimaryContext,
+        const std::shared_ptr<ContextCallback> &callback);
     static std::shared_ptr<Context> CreateRemoteAuthInvokerContext(AuthParamInner authParam,
         RemoteAuthInvokerContextParam param, std::shared_ptr<ContextCallback> callback);
     static std::shared_ptr<Context> CreateLocalRemoteAuthContext(const Authentication::AuthenticationPara &para,
-        LocalRemoteAuthContextParam &localRemoteAuthContextParam, const std::shared_ptr<ContextCallback> &callback);
+        LocalRemoteAuthContextParam &localRemoteAuthContextParam, bool isPrimaryContext,
+        const std::shared_ptr<ContextCallback> &callback);
     static std::shared_ptr<Context> CreateIdentifyContext(const Identification::IdentificationPara &para,
         const std::shared_ptr<ContextCallback> &callback);
     static std::shared_ptr<Context> CreateEnrollContext(const Enrollment::EnrollmentPara &para,
-        const std::shared_ptr<ContextCallback> &callback, bool needSubscribeAppState);
+        bool needSubscribeAppState, const std::shared_ptr<ContextCallback> &callback);
     static std::shared_ptr<Context> CreateWidgetAuthContext(std::shared_ptr<ContextCallback> callback);
-    static std::shared_ptr<Context> CreateWidgetContext(const AuthWidgetContextPara &para,
+    static std::shared_ptr<Context> CreateWidgetContext(const AuthWidgetContextPara &para, bool isPrimaryContext,
         std::shared_ptr<ContextCallback> callback, const sptr<IModalCallback> &modalCallback,
         const sptr<IRemoteAuthCallback> &remoteAuthCallback);
     static std::shared_ptr<Context> CreateScheduleHolderContext(std::shared_ptr<ScheduleNode> scheduleNode);
     static std::shared_ptr<Context> CreateDeleteContext(const Deletion::DeleteParam &para,
+        const std::shared_ptr<ContextCallback> &callback);
+    static std::shared_ptr<Context> CreateSudoAuthContext(const SudoAuthContextPara &para,
         const std::shared_ptr<ContextCallback> &callback);
 };
 } // namespace UserAuth

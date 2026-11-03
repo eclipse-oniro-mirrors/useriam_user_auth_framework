@@ -72,18 +72,37 @@ public:
 class MockContext final : public Context {
 public:
     MOCK_METHOD0(Start, bool());
+    MOCK_METHOD1(OnStartFailed, void(int32_t errorCode));
     MOCK_METHOD0(Stop, bool());
     MOCK_CONST_METHOD0(GetContextId, uint64_t());
     MOCK_CONST_METHOD0(GetContextType, ContextType());
     MOCK_CONST_METHOD1(GetScheduleNode, std::shared_ptr<ScheduleNode>(uint64_t scheduleId));
-    MOCK_CONST_METHOD0(GetScheduleNodes, std::vector<std::shared_ptr<ScheduleNode>> ());
     MOCK_CONST_METHOD0(GetLatestError, int32_t());
     MOCK_CONST_METHOD0(GetTokenId, uint32_t());
     MOCK_CONST_METHOD0(GetUserId, int32_t());
     MOCK_CONST_METHOD0(GetAuthType, int32_t());
     MOCK_CONST_METHOD0(GetCallerName, std::string());
+    MOCK_CONST_METHOD0(GetAuthIntent, AuthIntent());
+    MOCK_CONST_METHOD0(GetAuthTypeList, std::vector<int32_t>());
+    // false like the Context base default; set true to model a primary context
+    MOCK_CONST_METHOD0(IsPrimaryContext, bool());
+    MOCK_CONST_METHOD1(CanStart, bool(const std::vector<std::weak_ptr<Context>> &));
+    MOCK_CONST_METHOD1(GetPreemptDecision, PreemptDecision(const Context &));
     MOCK_METHOD2(SetRemoteAuthParam, void(const WidgetParamInner &widgetParam,
 	    const sptr<IModalCallback> &modalCallback));
+
+    // arbitration knobs default to the Context base behavior; restub to model other roles
+    static void SetArbitrationDefaults(const std::shared_ptr<MockContext> &context)
+    {
+        using namespace testing;
+        MockContext *raw = context.get();
+        ON_CALL(*context, CanStart(_)).WillByDefault(Return(true));
+        ON_CALL(*context, GetPreemptDecision(_)).WillByDefault(Return(PreemptDecision::KEEP_RUNNING));
+        ON_CALL(*context, GetAuthIntent()).WillByDefault(Return(AuthIntent::DEFAULT));
+        // the base default derives the list from GetAuthType; keep that coupling here
+        ON_CALL(*context, GetAuthTypeList())
+            .WillByDefault([raw]() { return std::vector<int32_t>{raw->GetAuthType()}; });
+    }
 
     static std::shared_ptr<Context> CreateWithContextId(uint64_t contextId)
     {
@@ -94,6 +113,7 @@ public:
             return nullptr;
         };
         EXPECT_CALL(*context, GetContextId()).WillRepeatedly(Return(contextId));
+        SetArbitrationDefaults(context);
         return context;
     }
 
@@ -106,6 +126,7 @@ public:
             return nullptr;
         };
         EXPECT_CALL(*context, GetContextId()).WillRepeatedly(Return(contextId));
+        SetArbitrationDefaults(context);
         EXPECT_CALL(*context, GetScheduleNode(_)).Times(AnyNumber());
 
         ON_CALL(*context, GetScheduleNode)
@@ -129,6 +150,7 @@ public:
             return nullptr;
         };
         EXPECT_CALL(*context, GetContextId()).WillRepeatedly(Return(contextId));
+        SetArbitrationDefaults(context);
         EXPECT_CALL(*context, GetScheduleNode(_)).Times(AnyNumber());
 
         ON_CALL(*context, GetScheduleNode)

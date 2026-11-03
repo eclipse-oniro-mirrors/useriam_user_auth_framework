@@ -25,6 +25,7 @@
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
+#include "context_arbitration_policy.h"
 #include "publish_event_adapter.h"
 #include "resource_node.h"
 #include "resource_node_utils.h"
@@ -158,15 +159,15 @@ ResultCode SimpleAuthContext::GetPropertyForAuthResult(Authentication::AuthResul
 }
 
 SimpleAuthContext::SimpleAuthContext(uint64_t contextId, std::shared_ptr<Authentication> auth,
-    std::shared_ptr<ContextCallback> callback, bool needSubscribeAppState)
-    : BaseContext("SimpleAuth", contextId, callback, needSubscribeAppState),
+    bool needSubscribeAppState, bool isPrimaryContext, std::shared_ptr<ContextCallback> callback)
+    : BaseContext("SimpleAuth", contextId, needSubscribeAppState, isPrimaryContext, callback),
       auth_(auth)
 {
 }
 
 SimpleAuthContext::SimpleAuthContext(const std::string &type, uint64_t contextId, std::shared_ptr<Authentication> auth,
-    std::shared_ptr<ContextCallback> callback)
-    : BaseContext(type, contextId, callback, true),
+    bool isPrimaryContext, std::shared_ptr<ContextCallback> callback)
+    : BaseContext(type, contextId, true, isPrimaryContext, callback),
       auth_(auth)
 {
 }
@@ -192,6 +193,11 @@ int32_t SimpleAuthContext::GetAuthType() const
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(auth_ != nullptr, INVALID_AUTH_TYPE);
     return auth_->GetAuthType();
+}
+
+bool SimpleAuthContext::CanStart(const std::vector<std::weak_ptr<Context>> &predecessors) const
+{
+    return ContextAdmissionPolicy::CanStart(*this, predecessors);
 }
 
 std::string SimpleAuthContext::GetCallerName() const

@@ -32,7 +32,8 @@ namespace UserIam {
 namespace UserAuth {
 class UIExtensionAbilityConnection : public AAFwk::AbilityConnectionStub {
 public:
-    UIExtensionAbilityConnection(const std::string commandStr)
+    UIExtensionAbilityConnection(const std::string commandStr, uint64_t widgetContextId = 0)
+        : widgetContextId_(widgetContextId)
     {
         commandStr_ = commandStr;
         connectAbilityHitrace_ = Common::MakeShared<IamHitraceHelper>("ConnectAbilityStart");
@@ -51,6 +52,7 @@ private:
     void ReleaseUIExtensionComponentInner();
 
     std::string commandStr_;
+    uint64_t widgetContextId_ {0};
     std::shared_ptr<IamHitraceHelper> connectAbilityHitrace_ {nullptr};
     sptr<IRemoteObject> extRemoteObject_ {nullptr};
     std::recursive_mutex mutex_;

@@ -128,7 +128,7 @@ prebuilts/build-tools/linux-x86/bin/ninja -C out/rk3568 iam_dynamic_test
 ### 编码约定
 
 - C++ 改动优先复用附近的 `IAM_LOGD`/`IAM_LOGE`/`IAM_LOGW`/`IAM_LOGI`/`IAM_LOGF`（定义于 `common/logs/iam_logger.h`）、`IF_FALSE_LOGE_AND_RETURN`/`IF_FALSE_LOGE_AND_RETURN_VAL`（定义于 `common/utils/iam_check.h`）、`ResultCode` 枚举（`SUCCESS`/`FAIL`/`GENERAL_ERROR`/`CANCELED`/`TIMEOUT`/`INVALID_PARAMETERS`/`NOT_ENROLLED`/`IPC_ERROR`/`CHECK_PERMISSION_FAILED` 等，定义于 `interfaces/inner_api/iam_common_defines.h`）。
-- 新增改动进行指针判空时，使用普通 `if` + `IAM_LOGE` + `return`，不要使用 `CHKPV`/`CHKPR`/`CHKPC` 等改变代码逻辑的宏，也不要引入新的控制流宏；`IF_FALSE_LOGE_AND_RETURN*` 是已有的不变式前置校验助手，可在周围代码已采用该写法处复用，但不用于新增指针判空。
+- 新增改动进行指针判空时，不要使用 `CHKPV`/`CHKPR`/`CHKPC` 等改变代码逻辑的宏，也不要引入新的控制流宏。`IF_FALSE_LOGE_AND_RETURN*` 是已有的不变式前置校验助手，可在周围代码已采用该写法处复用；指针判空在 return 前无额外副作用时也可用（含清理已由 `IamScopeGuard` 收口、判空退化为纯校验的场景），需穿插清理、赋值等副作用的用普通 `if` + `IAM_LOGE` + `return`。
 - 日志需在 `common/logs/iam_logger.h` 的 `LogTraceFileId` 枚举中登记新的 `LOG_FILE_*` 文件 ID，便于按文件过滤。
 - 新增 `ResultCode` 枚举值需评估对应用层错误码兼容性的影响（见下文）。
 

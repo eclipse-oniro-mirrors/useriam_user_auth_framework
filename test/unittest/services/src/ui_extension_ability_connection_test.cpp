@@ -24,6 +24,8 @@
 #include "mock_remote_object.h"
 #include "mock_resource_node.h"
 #include "mock_schedule_node.h"
+#include "mock_widget_schedule_node.h"
+#include "widget_client.h"
 
 using namespace testing;
 using namespace testing::ext;
@@ -111,6 +113,38 @@ HWTEST_F(UIExtensionAbilityConnectionTest, UIExtensionAbilityConnectionTestOnAbi
     int32_t resultCode = 0;
     connection->OnAbilityConnectDone(element, obj, resultCode);
     EXPECT_NE(connection, nullptr);
+}
+
+HWTEST_F(UIExtensionAbilityConnectionTest, UIExtensionAbilityConnectionTestDisconnectIsScopedToOwnContext,
+    TestSize.Level0)
+{
+    constexpr uint64_t staleId = 31;
+    constexpr uint64_t currentId = 32;
+    auto &client = WidgetClient::Instance();
+    client.Reset();
+
+    auto currentSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    EXPECT_CALL(*currentSchedule, StopSchedule).Times(0);
+    EXPECT_CALL(*currentSchedule, ClearSchedule).Times(0);
+    auto staleSchedule = Common::MakeShared<MockWidgetScheduleNode>();
+    EXPECT_CALL(*staleSchedule, StopSchedule).Times(1).WillOnce(Return(true));
+    EXPECT_CALL(*staleSchedule, ClearSchedule).Times(1).WillOnce(Return(true));
+
+    client.SetWidgetSchedule(currentId, currentSchedule);
+    std::shared_ptr<WidgetScheduleNode> staleNode = staleSchedule;
+    client.InsertScheduleNode(staleId, staleNode);
+
+    auto connection = new UIExtensionAbilityConnection("connection", staleId);
+    AppExecFwk::ElementName element;
+    connection->OnAbilityDisconnectDone(element, 0);
+    EXPECT_NE(client.GetScheduleNode(currentId), nullptr);
+    EXPECT_EQ(client.GetScheduleNode(staleId), nullptr);
+
+    ASSERT_TRUE(Mock::VerifyAndClearExpectations(currentSchedule.get()));
+    EXPECT_CALL(*currentSchedule, StopSchedule).WillOnce(Return(true));
+    EXPECT_CALL(*currentSchedule, ClearSchedule).WillOnce(Return(true));
+    client.ClearSchedule(currentId);
+    delete connection;
 }
 } // namespace UserAuth
 } // namespace UserIam

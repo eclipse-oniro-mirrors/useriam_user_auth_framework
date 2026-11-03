@@ -43,15 +43,15 @@ public:
     bool StartAuthList(const std::vector<AuthType> &authTypeList, bool endAfterFirstFail,
         AuthIntent authIntent) override;
     bool StopAuthList(const std::vector<AuthType> &authTypeList) override;
-    bool SuccessAuth(AuthType authType) override;
-    bool FailAuth(AuthType authType) override;
+    bool NotifyAuthSuccess(AuthType authType) override;
+    bool NotifyAuthFail(AuthType authType) override;
     bool NaviPinAuth() override;
     bool WidgetParaInvalid() override;
     bool WidgetReload(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType) override;
     void SetCallback(std::shared_ptr<WidgetScheduleNodeCallback> callback) override;
-    void SendAuthTipInfo(const std::vector<AuthType> &authTypeList, int32_t tipCode) override;
-    void SendAuthResultInfo(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) override;
+    void OnWidgetTip(const std::vector<AuthType> &authTypeList, int32_t tipCode) override;
+    void OnWidgetResult(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) override;
     bool ClearSchedule() override;
     bool GetRemoteAuthParam() override;
 

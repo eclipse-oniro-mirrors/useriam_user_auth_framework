@@ -60,7 +60,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateSimpleAuth_001, TestSize.Level0
     ASSERT_NE(callback, nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
     Authentication::AuthenticationPara para = {};
-    auto context = factory->CreateSimpleAuthContext(para, contextCallback, true);
+    auto context = factory->CreateSimpleAuthContext(para, true, false, contextCallback);
     ASSERT_NE(context, nullptr);
     EXPECT_NE(context->GetContextId(), 0U);
     ASSERT_EQ(context->GetContextType(), CONTEXT_SIMPLE_AUTH);
@@ -75,7 +75,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateSimpleAuth_002, TestSize.Level0
     sptr<IIamCallback> callback(nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
     Authentication::AuthenticationPara para = {};
-    auto context = factory->CreateSimpleAuthContext(para, contextCallback, true);
+    auto context = factory->CreateSimpleAuthContext(para, true, false, contextCallback);
     ASSERT_EQ(context, nullptr);
 }
 
@@ -116,7 +116,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateEnrollContext_001, TestSize.Lev
     ASSERT_NE(callback, nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_ADD_CREDENTIAL);
     Enrollment::EnrollmentPara para = {};
-    auto context = factory->CreateEnrollContext(para, contextCallback, true);
+    auto context = factory->CreateEnrollContext(para, true, contextCallback);
     ASSERT_NE(context, nullptr);
     EXPECT_NE(context->GetContextId(), 0U);
     ASSERT_EQ(context->GetContextType(), CONTEXT_ENROLL);
@@ -131,7 +131,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateEnrollContext_002, TestSize.Lev
     sptr<IIamCallback> callback(nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_ADD_CREDENTIAL);
     Enrollment::EnrollmentPara para = {};
-    auto context = factory->CreateEnrollContext(para, contextCallback, true);
+    auto context = factory->CreateEnrollContext(para, true, contextCallback);
     ASSERT_EQ(context, nullptr);
 }
 
@@ -154,7 +154,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateWidgetContext_001, TestSize.Lev
     ASSERT_NE(callback, nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_ADD_CREDENTIAL);
     ContextFactory::AuthWidgetContextPara para = {};
-    auto context = factory->CreateWidgetContext(para, contextCallback, nullptr, nullptr);
+    auto context = factory->CreateWidgetContext(para, false, contextCallback, nullptr, nullptr);
     ASSERT_NE(context, nullptr);
 }
 
@@ -166,7 +166,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateWidgetContext_002, TestSize.Lev
     sptr<IIamCallback> callback(nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_ADD_CREDENTIAL);
     ContextFactory::AuthWidgetContextPara para = {};
-    auto context = factory->CreateWidgetContext(para, contextCallback, nullptr, nullptr);
+    auto context = factory->CreateWidgetContext(para, false, contextCallback, nullptr, nullptr);
     ASSERT_EQ(context, nullptr);
 }
 
@@ -207,7 +207,7 @@ HWTEST_F(ContextFactoryTest, CreateRemoteAuthContext_001, TestSize.Level0)
     sptr<IIamCallback> callback(new (std::nothrow) MockUserAuthCallback());
     ASSERT_NE(callback, nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
-    factory->CreateRemoteAuthContext(para, remoteAuthContextParam, contextCallback);
+    factory->CreateRemoteAuthContext(para, remoteAuthContextParam, false, contextCallback);
 }
 
 HWTEST_F(ContextFactoryTest, CreateRemoteAuthContext_002, TestSize.Level0)
@@ -220,7 +220,7 @@ HWTEST_F(ContextFactoryTest, CreateRemoteAuthContext_002, TestSize.Level0)
     sptr<IIamCallback> callback(new (std::nothrow) MockUserAuthCallback());
     ASSERT_NE(callback, nullptr);
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
-    factory->CreateRemoteAuthContext(para, remoteAuthContextParam, contextCallback);
+    factory->CreateRemoteAuthContext(para, remoteAuthContextParam, false, contextCallback);
 }
 } // namespace UserAuth
 } // namespace UserIam

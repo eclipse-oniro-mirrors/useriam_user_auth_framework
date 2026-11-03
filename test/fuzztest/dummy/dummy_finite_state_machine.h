@@ -37,6 +37,7 @@ public:
         return 0;
     };
     void SetThreadHandler(const std::shared_ptr<ThreadHandler> &threadHandler) {};
+    void AttachOwnerLifetime(const std::weak_ptr<void> &ownerLifetime) {};
     const std::string &GetMachineName() const
     {
         static std::string machineName = "MyMachineName";

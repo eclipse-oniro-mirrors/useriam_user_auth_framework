@@ -37,6 +37,11 @@ public:
         return true;
     }
 
+    void OnStartFailed(int32_t errorCode) override
+    {
+        IAM_LOGI("start fail, errorCode %{public}d", errorCode);
+    }
+
     bool Stop() override
     {
         IAM_LOGI("stop");
@@ -105,7 +110,7 @@ std::shared_ptr<SetWidgetParamCallbackService> CreateSetWidgetParamCallbackServi
     auto context = Common::MakeShared<DummyContext>();
     if (context != nullptr) {
         context->contextId_ = contextId;
-        ContextPool::Instance().Insert(context);
+        ContextPool::Instance().Schedule(context);
     }
     return Common::MakeShared<SetWidgetParamCallbackService>(contextId);
 }

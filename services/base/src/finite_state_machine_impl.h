@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <string>
 #include <unordered_map>
@@ -51,6 +52,7 @@ public:
     uint32_t EnsureCurrentState() override;
     void SetThreadHandler(const std::shared_ptr<ThreadHandler> &threadHandler) override;
     const std::string &GetMachineName() const override;
+    void AttachOwnerLifetime(const std::weak_ptr<void> &ownerLifetime) override;
     friend class FiniteStateMachineBuilder;
 
 private:
@@ -72,6 +74,8 @@ private:
 
     std::recursive_mutex mutex_;
     SafeQueue<uint32_t> pendingEvents_ {};
+    std::mutex ownerLifetimeMutex_;
+    std::optional<std::weak_ptr<void>> ownerLifetime_ {};
 };
 
 class FiniteStateMachineImpl::Inner final : public FiniteStateMachine, public NoCopyable {
@@ -83,6 +87,7 @@ public:
     uint32_t EnsureCurrentState() override;
     const std::string &GetMachineName() const override;
     void SetThreadHandler(const std::shared_ptr<ThreadHandler> &threadHandler) override;
+    void AttachOwnerLifetime(const std::weak_ptr<void> &ownerLifetime) override;
 
 private:
     std::shared_ptr<FiniteStateMachineImpl> &machine_;

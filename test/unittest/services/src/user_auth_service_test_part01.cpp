@@ -33,17 +33,21 @@
 #include "mock_user_auth_service.h"
 #include "mock_resource_node.h"
 #include "mock_widget_callback_interface.h"
+#include "context_pool.h"
 #include "resource_node_pool.h"
+#include "thread_handler.h"
 #include "user_auth_service.h"
 #include "template_cache_manager.h"
 
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-extern int32_t GetTemplatesByAuthType(int32_t userId, AuthType authType, std::vector<uint64_t> &templateIds);
-extern std::string GetAuthParamStr(const AuthParamInner &authParam, std::optional<RemoteAuthParam> &remoteAuthParam);
 using namespace testing;
 using namespace testing::ext;
+namespace {
+constexpr int32_t DRAIN_PASSES = 3;
+void DrainSerialThread();
+}
 void UserAuthServiceTest::SetUpTestCase()
 {
 }
@@ -59,6 +63,15 @@ void UserAuthServiceTest::SetUp()
 
 void UserAuthServiceTest::TearDown()
 {
+    DrainSerialThread();
+    for (auto &context : ContextPool::Instance().SelectAll()) {
+        auto ctx = context.lock();
+        if (ctx != nullptr) {
+            ContextPool::Instance().Delete(ctx->GetContextId());
+        }
+    }
+    // Deletes can post arbitration starts/stops; flush them before the mocks die
+    DrainSerialThread();
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
@@ -814,7 +827,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth001, TestSize.Level0)
     EXPECT_NE(contextId, 0);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     ASSERT_NE(handler, nullptr);
-    handler->EnsureTask([]() {});
+    // drain in passes: EnsureTask only waits out tasks posted before it, not their nested posts
+    for (int pass = 0; pass < DRAIN_PASSES; ++pass) {
+        handler->EnsureTask([]() {});
+    }
     IpcCommon::DeleteAllPermission();
 }
 
@@ -894,14 +910,15 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth003, TestSize.Level0)
     IpcCommon::DeleteAllPermission();
 }
 
-static void MockForUserAuthHdi(std::shared_ptr<Context> &context, std::promise<void> &promise)
+static void MockForUserAuthHdi(const std::shared_ptr<std::shared_ptr<Context>> &context,
+    std::promise<void> &promise)
 {
     const uint32_t testScheduleId = 20;
     const uint32_t testExecutorIndex = 60;
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
-        .WillRepeatedly([&context](uint64_t contextId, const HdiAuthParamExt &param,
+        .WillRepeatedly([context](uint64_t contextId, const HdiAuthParamExt &param,
             std::vector<HdiScheduleInfo> &scheduleInfos) {
             HdiScheduleInfo scheduleInfo = {};
             scheduleInfo.authType = HdiAuthType::FACE;
@@ -911,7 +928,7 @@ static void MockForUserAuthHdi(std::shared_ptr<Context> &context, std::promise<v
             executorMessages.resize(1);
             scheduleInfo.executorMessages.push_back(executorMessages);
             scheduleInfos.push_back(scheduleInfo);
-            context = ContextPool::Instance().Select(contextId).lock();
+            *context = ContextPool::Instance().Select(contextId).lock();
             return HDF_SUCCESS;
         });
     
@@ -953,16 +970,17 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth004, TestSize.Level0)
     ipcAuthParamInner.challenge = {1, 2, 3, 4};
     ipcAuthParamInner.authType = FACE;
     ipcAuthParamInner.authTrustLevel = ATL2;
-    std::shared_ptr<Context> context = nullptr;
+    // shared box: the HDI mock writes it late, the OnResult action reads it from the timer thread
+    auto context = Common::MakeShared<std::shared_ptr<Context>>();
 
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _))
         .WillOnce(
-            [&context](int32_t result, const std::vector<uint8_t>  &extraInfo) {
+            [context](int32_t result, const std::vector<uint8_t>  &extraInfo) {
                 EXPECT_EQ(result, SUCCESS);
-                if (context != nullptr) {
-                    context->Stop();
+                if (*context != nullptr) {
+                    (*context)->Stop();
                 }
                 return SUCCESS;
             }
@@ -984,6 +1002,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth004, TestSize.Level0)
     EXPECT_EQ(ret, SUCCESS);
     EXPECT_NE(contextId, 0);
     promise.get_future().get();
+    // drop the last context ref: breaks the mock->action->box->context->callback
+    // cycle for gmock leak detection
+    *context = nullptr;
 
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(60));
     auto handler = ThreadHandler::GetSingleThreadInstance();
@@ -1070,6 +1091,27 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser002, TestSize.Level0)
     IpcCommon::DeleteAllPermission();
 }
 
+namespace {
+// two terminal results in order: permission failure first, then the granted success
+void ExpectAuthUser003Results(const sptr<MockUserAuthCallback> &testCallback,
+    const std::shared_ptr<std::shared_ptr<Context>> &context)
+{
+    EXPECT_CALL(*testCallback, OnResult(_, _))
+        .Times(2)
+        .WillOnce([](int32_t result, const std::vector<uint8_t> &extraInfo) {
+            EXPECT_EQ(result, CHECK_PERMISSION_FAILED);
+            return SUCCESS;
+        })
+        .WillOnce([context](int32_t result, const std::vector<uint8_t> &extraInfo) {
+            EXPECT_EQ(result, SUCCESS);
+            if (*context != nullptr) {
+                (*context)->Stop();
+            }
+            return SUCCESS;
+        });
+}
+} // namespace
+
 HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser003, TestSize.Level0)
 {
     UserAuthService service;
@@ -1082,27 +1124,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser003, TestSize.Level0)
     IpcRemoteAuthParam remoteAuthParam = {
         .isHasRemoteAuthParam = false,
     };
-    std::shared_ptr<Context> context = nullptr;
+    // shared box: the HDI mock writes it late, the OnResult action reads it from the timer thread
+    auto context = Common::MakeShared<std::shared_ptr<Context>>();
 
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    EXPECT_CALL(*testCallback, OnResult(_, _))
-        .Times(2)
-        .WillOnce(
-            [](int32_t result, const std::vector<uint8_t> &extraInfo) {
-                EXPECT_EQ(result, CHECK_PERMISSION_FAILED);
-                return SUCCESS;
-            }
-        )
-        .WillOnce(
-            [&context](int32_t result, const std::vector<uint8_t> &extraInfo) {
-                EXPECT_EQ(result, SUCCESS);
-                if (context != nullptr) {
-                    context->Stop();
-                }
-                return SUCCESS;
-            }
-        );
+    ExpectAuthUser003Results(testCallback, context);
 
     sptr<IIamCallback> callbackInterface = testCallback;
     uint64_t contextId = 0;
@@ -1124,6 +1151,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser003, TestSize.Level0)
     EXPECT_EQ(ret, SUCCESS);
     EXPECT_NE(contextId, 0);
     promise.get_future().get();
+    // drop the last context ref: breaks the mock->action->box->context->callback
+    // cycle for gmock leak detection
+    *context = nullptr;
 
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(60));
     IpcCommon::DeleteAllPermission();
@@ -1290,6 +1320,15 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceInitRemoteAuthParam_001, TestSize.L
     EXPECT_NO_THROW(service.InitRemoteAuthParam(ipcRemoteAuthParam, remoteAuthParam));
 }
 
+namespace {
+void DrainSerialThread()
+{
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    handler->EnsureTask([]() {});
+}
+} // namespace
+
 HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify001, TestSize.Level0)
 {
     UserAuthService service;
@@ -1305,8 +1344,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify001, TestSize.Level0)
     sptr<IIamCallback> callbackInterface = testCallback;
     uint64_t contextId = 0;
     int32_t ret = service.Identify(testChallenge, testAuthType, callbackInterface, contextId);
-    EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    // Schedule posts the start: acceptance is synchronous, the terminal lands via the callback
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(contextId, 0U);
+    DrainSerialThread();
+    ContextPool::Instance().Delete(contextId);
+    DrainSerialThread();
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1334,14 +1377,15 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify002, TestSize.Level0)
     IpcCommon::DeleteAllPermission();
 }
 
-static void MockForIdentifyHdi(std::shared_ptr<Context> &context, std::promise<void> &promise)
+static void MockForIdentifyHdi(const std::shared_ptr<std::shared_ptr<Context>> &context,
+    std::promise<void> &promise)
 {
     const uint32_t testExecutorIndex = 60;
     const uint32_t testscheduleId = 20;
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, BeginIdentification(_, _, _, _, _))
-        .WillRepeatedly([&context](uint64_t contextId, int32_t authType, const std::vector<uint8_t> &challenge,
+        .WillRepeatedly([context](uint64_t contextId, int32_t authType, const std::vector<uint8_t> &challenge,
             uint32_t executorId, HdiScheduleInfo &scheduleInfo) {
             scheduleInfo.authType = HdiAuthType::FACE;
             scheduleInfo.scheduleId = testscheduleId;
@@ -1349,7 +1393,7 @@ static void MockForIdentifyHdi(std::shared_ptr<Context> &context, std::promise<v
             std::vector<uint8_t> executorMessages;
             executorMessages.resize(1);
             scheduleInfo.executorMessages.push_back(executorMessages);
-            context = ContextPool::Instance().Select(contextId).lock();
+            *context = ContextPool::Instance().Select(contextId).lock();
             return HDF_SUCCESS;
         });
     
@@ -1366,7 +1410,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify003, TestSize.Level0)
     UserAuthService service;
     std::vector<uint8_t> testChallenge = {1, 2, 3, 4};
     AuthType testAuthType = FACE;
-    std::shared_ptr<Context> context = nullptr;
+    // shared box: the HDI mock writes it late, the OnResult action reads it from the timer thread
+    auto context = Common::MakeShared<std::shared_ptr<Context>>();
 
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
@@ -1379,10 +1424,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify003, TestSize.Level0)
             }
         )
         .WillOnce(
-            [&context](int32_t result, const std::vector<uint8_t> &extraInfo) {
+            [context](int32_t result, const std::vector<uint8_t> &extraInfo) {
                 EXPECT_EQ(result, SUCCESS);
-                if (context != nullptr) {
-                    context->Stop();
+                if (*context != nullptr) {
+                    (*context)->Stop();
                 }
                 return SUCCESS;
             }
@@ -1407,8 +1452,47 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify003, TestSize.Level0)
     contextId = service.Identify(testChallenge, testAuthType, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
     promise.get_future().get();
+    // drop the last context ref: breaks the mock->action->box->context->callback
+    // cycle for gmock leak detection
+    *context = nullptr;
 
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(60));
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentifyFastFailLeavesPool, TestSize.Level0)
+{
+    UserAuthService service;
+    std::vector<uint8_t> testChallenge = {1, 2, 3, 4};
+    AuthType testAuthType = FACE;
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, BeginIdentification(_, _, _, _, _)).WillRepeatedly(Return(HDF_FAILURE));
+
+    sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
+    EXPECT_NE(testCallback, nullptr);
+    int32_t reportedResult = SUCCESS;
+    EXPECT_CALL(*testCallback, OnResult(_, _))
+        .Times(1)
+        .WillOnce([&reportedResult](int32_t result, const std::vector<uint8_t> &extraInfo) {
+            reportedResult = result;
+            return SUCCESS;
+        });
+
+    sptr<IIamCallback> callbackInterface = testCallback;
+    uint64_t contextId = 0;
+    int32_t ret = service.Identify(testChallenge, testAuthType, callbackInterface, contextId);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(contextId, 0);
+
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    handler->EnsureTask([]() {});
+    EXPECT_NE(reportedResult, SUCCESS);
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1442,12 +1526,16 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCancelAuthOrIdentify_002, TestSize.
         .WillOnce(Return(false))
         .WillRepeatedly(Return(true));
 
-    EXPECT_TRUE(ContextPool::Instance().Insert(context));
+    EXPECT_TRUE(ContextPool::Instance().Schedule(context));
 
     EXPECT_EQ(service.CancelAuthOrIdentify(testContextId, cancelReason), CHECK_PERMISSION_FAILED);
     IpcCommon::SetAccessTokenId(tokenId, true);
 
     EXPECT_EQ(service.CancelAuthOrIdentify(testContextId, cancelReason), SUCCESS);
+    // the cancel is posted to the serial thread; drain before the pool entry goes away
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    handler->EnsureTask([]() {});
     EXPECT_TRUE(ContextPool::Instance().Delete(testContextId));
     IpcCommon::DeleteAllPermission();
 }
@@ -1872,8 +1960,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceStartLocalRemoteAuthContextTest, Te
     LocalRemoteAuthContextParam contextPara = {};
     std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
     ASSERT_NE(contextCallback, nullptr);
-    EXPECT_EQ(service->StartLocalRemoteAuthContext(para, contextPara, contextCallback),
-        BAD_CONTEXT_ID);
+    // Start is posted: a valid contextId returns before it runs; also the regression
+    // guard for the once-inverted handler null-check that always returned BAD_CONTEXT_ID
+    uint64_t contextId = service->StartLocalRemoteAuthContext(para, contextPara, contextCallback);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
+    auto handler = ThreadHandler::GetSingleThreadInstance();
+    ASSERT_NE(handler, nullptr);
+    handler->EnsureTask([]() {});
+    ContextPool::Instance().Delete(contextId);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceDoPrepareRemoteAuthTest_001, TestSize.Level0)
@@ -1984,37 +2078,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetCallerInfoTest, TestSize.Level0)
     IpcCommon::SetSkipUserFlag(false);
 }
 
-HWTEST_F(UserAuthServiceTest, UserAuthServiceInsert2ContxtTest, TestSize.Level0)
-{
-    auto service = Common::MakeShared<UserAuthService>();
-    uint64_t testContextId = 123456;
-    auto context = Common::MakeShared<MockContext>();
-    EXPECT_NE(context, nullptr);
-    EXPECT_CALL(*context, GetContextId()).WillRepeatedly(Return(testContextId));
-    EXPECT_CALL(*context, GetLatestError()).WillRepeatedly(Return(GENERAL_ERROR));
-    EXPECT_EQ(service->Insert2ContextPool(context), true);
-    EXPECT_EQ(service->Insert2ContextPool(context), false);
-    EXPECT_TRUE(ContextPool::Instance().Delete(testContextId));
-}
-
-HWTEST_F(UserAuthServiceTest, UserAuthServiceGetEnrolledStateImplTest, TestSize.Level0)
-{
-    auto service = Common::MakeShared<UserAuthService>();
-    int32_t apiVersion = 10000;
-    int32_t authType = FACE;
-    IpcEnrolledState enrolledState = {};
-    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
-    IpcCommon::SetSkipUserFlag(true);
-    EXPECT_EQ(service->GetEnrolledStateImpl(apiVersion, authType, enrolledState), GENERAL_ERROR);
-    IpcCommon::SetSkipUserFlag(false);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetEnrolledState(_, _, _))
-        .WillOnce(Return(NOT_ENROLLED));
-    EXPECT_EQ(service->GetEnrolledStateImpl(apiVersion, authType, enrolledState), NOT_ENROLLED);
-    IpcCommon::DeleteAllPermission();
-}
-
 HWTEST_F(UserAuthServiceTest, UserAuthServiceUpdateTemplateCacheTest, TestSize.Level0)
 {
     AuthType testAuthType = FACE;
@@ -2043,64 +2106,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUpdateTemplateCacheTest, TestSize.L
         TemplateCacheManager::GetInstance().UpdateTemplateCache(FACE);
         TemplateCacheManager::GetInstance().UpdateTemplateCache(FACE);
     );
-}
-
-HWTEST_F(UserAuthServiceTest, UserAuthServiceGetTemplatesByAuthTypeTest, TestSize.Level0)
-{
-    int32_t userId = 110;
-    AuthType authType = FACE;
-    std::vector<uint64_t> templateId;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
-        .WillOnce([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
-            return HDF_FAILURE;
-        });
-    EXPECT_EQ(GetTemplatesByAuthType(userId, authType, templateId), GENERAL_ERROR);
-}
-
-HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAuthParamStrTest, TestSize.Level0)
-{
-    AuthParamInner authParam;
-    RemoteAuthParam tmpAuthParam;
-    std::optional<RemoteAuthParam> remoteAuthParam = RemoteAuthParam{};
-    remoteAuthParam->collectorTokenId = std::make_optional<uint32_t>(1000000);
-    EXPECT_NE(GetAuthParamStr(authParam, remoteAuthParam), "");
-}
-
-HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperTest, TestSize.Level0)
-{
-    auto service = Common::MakeShared<UserAuthService>();
-    int32_t userId = 110;
-    int32_t authType = 2;
-    std::vector<Attributes::AttributeKey> testKeys = {Attributes::ATTR_PIN_SUB_TYPE, Attributes::ATTR_SIGNATURE};
-    sptr<MockGetExecutorPropertyCallback> testCallback(new (std::nothrow) MockGetExecutorPropertyCallback());
-    EXPECT_NE(testCallback, nullptr);
-    EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _)).Times(1);
-    sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
-        .WillOnce(Return(HDF_FAILURE));
-    EXPECT_EQ(service->GetPropertyHelper(userId, authType, testKeys, callbackInterface), SUCCESS);
-}
-
-HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessWidgetSessionExTest, TestSize.Level0)
-{
-    auto service = Common::MakeShared<UserAuthService>();
-    int32_t testContextId = 11112;
-    ContextType contextType = ContextType::WIDGET_AUTH_CONTEXT;
-    auto context = Common::MakeShared<MockContext>();
-    EXPECT_NE(context, nullptr);
-    EXPECT_CALL(*context, GetContextId()).WillRepeatedly(Return(testContextId));
-    EXPECT_CALL(*context, GetLatestError()).WillRepeatedly(Return(GENERAL_ERROR));
-    EXPECT_CALL(*context, GetContextType()).WillRepeatedly(Return(contextType));
-    EXPECT_CALL(*context, Stop())
-        .WillOnce(Return(false))
-        .WillRepeatedly(Return(true));
-    EXPECT_EQ(ContextPool::Instance().Insert(context), true);
-    EXPECT_NO_THROW(service->ProcessWidgetSessionExclusive());
-    EXPECT_EQ(ContextPool::Instance().Delete(testContextId), true);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceQueryReusableAuthResultTest, TestSize.Level0)

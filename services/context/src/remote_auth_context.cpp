@@ -83,8 +83,8 @@ private:
 };
 
 RemoteAuthContext::RemoteAuthContext(uint64_t contextId, std::shared_ptr<Authentication> auth,
-    RemoteAuthContextParam &param, std::shared_ptr<ContextCallback> callback)
-    : SimpleAuthContext("RemoteAuthContext", contextId, auth, callback),
+    RemoteAuthContextParam &param, bool isPrimaryContext, std::shared_ptr<ContextCallback> callback)
+    : SimpleAuthContext("RemoteAuthContext", contextId, auth, isPrimaryContext, callback),
       authType_(param.authType),
       connectionName_(param.connectionName),
       collectorNetworkId_(param.collectorNetworkId),

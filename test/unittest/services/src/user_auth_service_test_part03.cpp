@@ -1364,6 +1364,65 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_Compa
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
+// moved from part01 to keep that file under the source-size gate
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetEnrolledStateImplTest, TestSize.Level0)
+{
+    auto service = Common::MakeShared<UserAuthService>();
+    int32_t apiVersion = 10000;
+    int32_t authType = FACE;
+    IpcEnrolledState enrolledState = {};
+    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    IpcCommon::SetSkipUserFlag(true);
+    EXPECT_EQ(service->GetEnrolledStateImpl(apiVersion, authType, enrolledState), GENERAL_ERROR);
+    IpcCommon::SetSkipUserFlag(false);
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetEnrolledState(_, _, _))
+        .WillOnce(Return(NOT_ENROLLED));
+    EXPECT_EQ(service->GetEnrolledStateImpl(apiVersion, authType, enrolledState), NOT_ENROLLED);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetTemplatesByAuthTypeTest, TestSize.Level0)
+{
+    int32_t userId = 110;
+    AuthType authType = FACE;
+    std::vector<uint64_t> templateId;
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
+        .WillOnce([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
+            return HDF_FAILURE;
+        });
+    EXPECT_EQ(GetTemplatesByAuthType(userId, authType, templateId), GENERAL_ERROR);
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAuthParamStrTest, TestSize.Level0)
+{
+    AuthParamInner authParam;
+    RemoteAuthParam tmpAuthParam;
+    std::optional<RemoteAuthParam> remoteAuthParam = RemoteAuthParam{};
+    remoteAuthParam->collectorTokenId = std::make_optional<uint32_t>(1000000);
+    EXPECT_NE(GetAuthParamStr(authParam, remoteAuthParam), "");
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperTest, TestSize.Level0)
+{
+    auto service = Common::MakeShared<UserAuthService>();
+    int32_t userId = 110;
+    int32_t authType = 2;
+    std::vector<Attributes::AttributeKey> testKeys = {Attributes::ATTR_PIN_SUB_TYPE, Attributes::ATTR_SIGNATURE};
+    sptr<MockGetExecutorPropertyCallback> testCallback(new (std::nothrow) MockGetExecutorPropertyCallback());
+    EXPECT_NE(testCallback, nullptr);
+    EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _)).Times(1);
+    sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
+        .WillOnce(Return(HDF_FAILURE));
+    EXPECT_EQ(service->GetPropertyHelper(userId, authType, testKeys, callbackInterface), SUCCESS);
+}
+
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
