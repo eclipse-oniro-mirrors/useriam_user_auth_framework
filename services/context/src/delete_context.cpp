@@ -67,7 +67,7 @@ bool DeleteContext::OnStart()
     }
     SetScheduleList(scheduleList);
 
-    if (isStartSchedule) {
+    if (!isStartSchedule) {
         uint32_t authTypeTrace = 0;
         for (const auto &credInfo : credentialInfos) {
             authTypeTrace |= static_cast<uint32_t>(credInfo.authType);
