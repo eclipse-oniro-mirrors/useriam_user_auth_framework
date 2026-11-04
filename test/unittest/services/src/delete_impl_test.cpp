@@ -70,9 +70,9 @@ HWTEST_F(DeleteImplTest, AbandonHdiError, TestSize.Level0)
 
     auto abandon = std::make_shared<DeleteImpl>(para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
-    bool isCredentialDelete = false;
+    bool isStartSchedule = false;
     std::vector<EngCredentialInfo> credentialInfos = {};
-    EXPECT_FALSE(abandon->Start(scheduleList, nullptr, isCredentialDelete, credentialInfos));
+    EXPECT_FALSE(abandon->Start(scheduleList, nullptr, isStartSchedule, credentialInfos));
 }
 
 HWTEST_F(DeleteImplTest, AbandonHdiEmpty, TestSize.Level0)
@@ -89,9 +89,9 @@ HWTEST_F(DeleteImplTest, AbandonHdiEmpty, TestSize.Level0)
 
     auto abandon = std::make_shared<DeleteImpl>(para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
-    bool isCredentialDelete = false;
+    bool isStartSchedule = false;
     std::vector<EngCredentialInfo> credentialInfos = {};
-    EXPECT_FALSE(abandon->Start(scheduleList, nullptr, isCredentialDelete, credentialInfos));
+    EXPECT_FALSE(abandon->Start(scheduleList, nullptr, isStartSchedule, credentialInfos));
 }
 
 HWTEST_F(DeleteImplTest, AbandonUpdateHdiError, TestSize.Level0)
@@ -207,9 +207,9 @@ HWTEST_F(DeleteImplTest, DeleteImplTestStart_001, TestSize.Level0)
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
     auto callback = Common::MakeShared<MockScheduleNodeCallback>();
     EXPECT_NE(callback, nullptr);
-    bool isCredentialDelete = false;
+    bool isStartSchedule = false;
     std::vector<EngCredentialInfo> credentialInfos = {};
-    EXPECT_TRUE(abandon->Start(scheduleList, callback, isCredentialDelete, credentialInfos));
+    EXPECT_TRUE(abandon->Start(scheduleList, callback, isStartSchedule, credentialInfos));
     EXPECT_TRUE(abandon->Cancel());
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
 }
@@ -227,9 +227,9 @@ HWTEST_F(DeleteImplTest, DeleteImplTestStart_002, TestSize.Level0)
     auto abandon = std::make_shared<DeleteImpl>(para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
     auto callback = Common::MakeShared<MockScheduleNodeCallback>();
-    bool isCredentialDelete = false;
+    bool isStartSchedule = false;
     std::vector<EngCredentialInfo> credentialInfos = {};
-    EXPECT_FALSE(abandon->Start(scheduleList, callback, isCredentialDelete, credentialInfos));
+    EXPECT_FALSE(abandon->Start(scheduleList, callback, isStartSchedule, credentialInfos));
 }
 
 HWTEST_F(DeleteImplTest, SetLatestError_001, TestSize.Level0)

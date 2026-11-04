@@ -56,10 +56,10 @@ bool DeleteContext::OnStart()
 {
     IAM_LOGI("%{public}s start", GetDescription());
     IF_FALSE_LOGE_AND_RETURN_VAL(deletion_ != nullptr, false);
-    bool isCredentilaDelete = false;
+    bool isStartSchedule = false;
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList = {};
     std::vector<EngCredentialInfo> credentialInfos = {};
-    bool startRet = deletion_->Start(scheduleList, shared_from_this(), isCredentilaDelete, credentialInfos);
+    bool startRet = deletion_->Start(scheduleList, shared_from_this(), isStartSchedule, credentialInfos);
     if (!startRet) {
         HILOG_COMM_ERROR("%{public}s delete start fail", GetDescription());
         SetLatestError(deletion_->GetLatestError());
@@ -67,7 +67,7 @@ bool DeleteContext::OnStart()
     }
     SetScheduleList(scheduleList);
 
-    if (isCredentilaDelete) {
+    if (!isStartSchedule) {
         uint32_t authTypeTrace = 0;
         for (const auto &credInfo : credentialInfos) {
             authTypeTrace |= static_cast<uint32_t>(credInfo.authType);

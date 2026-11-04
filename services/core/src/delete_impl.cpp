@@ -73,7 +73,7 @@ int32_t DeleteImpl::GetUserId() const
 }
 
 bool DeleteImpl::Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-    std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+    std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
     std::vector<EngCredentialInfo> &credentialInfos)
 {
     IAM_LOGE("UserId:%{public}d", deletePara_.userId);
@@ -89,22 +89,15 @@ bool DeleteImpl::Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
     }
 
     credentialInfos = hdiResult.credentialInfos;
-    if (hdiResult.operateType == EngCredentialOperateType::CREDENTIAL_DELETE) {
-        isCredentialDelete = true;
-        return DeleteCredential(deletePara_.userId, hdiResult.credentialInfos);
-    } else if (hdiResult.operateType == EngCredentialOperateType::CREDENTIAL_ABANDON) {
+    if (hdiResult.operateType == EngCredentialOperateType::CREDENTIAL_ABANDON) {
+        isStartSchedule = true;
         return StartSchedule(deletePara_.userId, hdiResult.scheduleInfo, scheduleList, callback);
-    } else if (hdiResult.operateType == EngCredentialOperateType::PIN_UPDATE) {
-        return HandlePinUpdate();
+    } else if (hdiResult.operateType == EngCredentialOperateType::CREDENTIAL_DELETE ||
+        hdiResult.operateType == EngCredentialOperateType::PIN_UPDATE) {
+        return DeleteCredential(deletePara_.userId, hdiResult.credentialInfos);
     }
 
     return false;
-}
-
-bool DeleteImpl::HandlePinUpdate()
-{
-    CredentialUpdatedManager::GetInstance().ProcessCredentialDeleted(deletePara_, deletePara_.credentialId, PIN);
-    return true;
 }
 
 bool DeleteImpl::Update(const std::vector<uint8_t> &scheduleResult, std::shared_ptr<CredentialInfoInterface> &info)
