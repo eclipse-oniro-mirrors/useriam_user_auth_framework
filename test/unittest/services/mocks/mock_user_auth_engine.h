@@ -56,6 +56,19 @@ using HdiIMessageCallback = IMessageCallback;
 class MockUserAuthEngine final : public IUserAuthEngine {
 public:
     class Holder;
+    MockUserAuthEngine()
+    {
+        ON_CALL(*this, GetLatestEnrollmentTime).WillByDefault(::testing::Return(CAPABILITY_NOT_SUPPORTED));
+        ON_CALL(*this, SetUserConfigParam).WillByDefault(::testing::Return(CAPABILITY_NOT_SUPPORTED));
+        ON_CALL(*this, GetUserConfigParam).WillByDefault(::testing::Return(CAPABILITY_NOT_SUPPORTED));
+        ON_CALL(*this, SetGlobalConfigParam).WillByDefault([](const EngGlobalConfigParam &param) {
+            if (param.type != static_cast<int32_t>(EngGlobalConfigType::PIN_EXPIRED_PERIOD) &&
+                param.type != static_cast<int32_t>(EngGlobalConfigType::ENABLE_STATUS)) {
+                return static_cast<int32_t>(INVALID_PARAMETERS);
+            }
+            return static_cast<int32_t>(SUCCESS);
+        });
+    }
     MOCK_METHOD1(Init, int32_t(const std::string &deviceUdid));
     MOCK_METHOD4(AddExecutor, int32_t(const CoAuthInterface::ExecutorRegisterInfo &info, uint64_t &index,
                                   std::vector<uint8_t> &publicKey, std::vector<uint64_t> &templateIds));
