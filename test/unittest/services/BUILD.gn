@@ -58,8 +58,6 @@ ohos_unittest("iam_services_test") {
     "../../../services/base/src/finite_state_machine_builder.cpp",
     "../../../services/base/src/finite_state_machine_impl.cpp",
     "../../../services/base/src/iam_event_dispatcher.cpp",
-    "../../../services/engine/src/hdi_engine.cpp",
-    "../../../services/engine/src/hdi_type_convert.cpp",
     "../../../services/base/src/thread_handler_impl.cpp",
     "../../../services/base/src/thread_handler_manager.cpp",
     "../../../services/base/src/thread_handler_singleton_impl.cpp",
@@ -143,7 +141,7 @@ ohos_unittest("iam_services_test") {
     "../../../services/remote_connect/default/src/soft_bus_server_socket.cpp",
     "../../../services/remote_connect/default/src/soft_bus_socket_listener.cpp",
     "mocks/mock_ipc_common.cpp",
-    "mocks/mock_iuser_auth_interface.cpp",
+    "mocks/mock_user_auth_engine.cpp",
     "mocks/mock_screenlock_manager.cpp",
     "mocks/mock_socket.cpp",
     "src/attributes_test.cpp",
@@ -160,14 +158,12 @@ ohos_unittest("iam_services_test") {
     "src/delete_context_test.cpp",
     "src/delete_impl_test.cpp",
     "src/engine_state_manager_test.cpp",
-    "src/user_auth_engine_test.cpp",
     "src/enroll_context_test.cpp",
     "src/enrolled_info_test.cpp",
     "src/enrollment_impl_test.cpp",
     "src/event_listener_manager_test.cpp",
     "src/executor_messenger_service_test.cpp",
     "src/framework_common_test.cpp",
-    "src/hdi_type_convert_test.cpp",
     "src/hisysevent_adapter_test.cpp",
     "src/iam_event_dispatcher_test.cpp",
     "src/identification_impl_test.cpp",
@@ -251,8 +247,6 @@ ohos_unittest("iam_services_test") {
     "access_token:libtokenid_sdk",
     "c_utils:utils",
     "config_policy:configpolicy_util",
-    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
-    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "googletest:gmock",
     "hdf_core:libhdf_utils",
     "hdf_core:libhdi",
@@ -291,6 +285,77 @@ ohos_unittest("iam_services_test") {
     sources +=
         [ "../../../services/core/src/strong_auth_status_manager_mock.cpp" ]
   }
+
+  configs = [
+    "../../../common:iam_log_config",
+    "../../../common:iam_utils_config",
+  ]
+
+  remove_configs = [ "//build/config/compiler:no_exceptions" ]
+
+  module_out_path = "user_auth_framework/user_auth_framework"
+
+  subsystem_name = "useriam"
+  part_name = "user_auth_framework"
+}
+
+ohos_unittest("iam_hdi_engine_test") {
+  sanitize = {
+    integer_overflow = true
+    ubsan = true
+    boundary_sanitize = true
+    cfi = true
+    cfi_cross_dso = true
+    debug = false
+    blocklist = "../../../cfi_blocklist.txt"
+  }
+  branch_protector_ret = "pac_ret"
+
+  cflags = [
+    "-DIAM_TEST_ENABLE",
+    "-Dprivate=public",
+    "-Dprotected=public",
+  ]
+  include_dirs = [
+    "mocks",
+    "../../../services/base/inc",
+    "../../../services/engine/inc",
+    "../../../services/engine/pub_inc",
+    "../../../common/test",
+    "../../../common/logs",
+    "../../../interfaces/inner_api",
+  ]
+
+  sources = [
+    "../../../services/engine/src/hdi_engine.cpp",
+    "../../../services/engine/src/hdi_type_convert.cpp",
+    "../../../services/base/src/thread_handler_impl.cpp",
+    "../../../services/base/src/thread_handler_manager.cpp",
+    "../../../services/base/src/thread_handler_singleton_impl.cpp",
+    "mocks/mock_iuser_auth_interface.cpp",
+    "src/user_auth_engine_test.cpp",
+    "src/hdi_type_convert_test.cpp",
+  ]
+
+  deps = [ "../../../common:iam_utils" ]
+
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtoken_setproc",
+    "c_utils:utils",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
+    "eventhandler:libeventhandler",
+    "googletest:gmock",
+    "hdf_core:libhdf_utils",
+    "hdf_core:libhdi",
+    "hilog:libhilog",
+    "init:libbegetutil",
+    "ipc:ipc_single",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+  ]
 
   configs = [
     "../../../common:iam_log_config",

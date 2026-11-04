@@ -20,7 +20,7 @@
 #include "resource_node.h"
 
 #include "mock_executor_callback.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "mock_resource_node.h"
 
 namespace OHOS {
@@ -39,17 +39,17 @@ void ResourceNodeTest::TearDownTestCase()
 
 void ResourceNodeTest::SetUp()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 void ResourceNodeTest::TearDown()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(ResourceNodeTest, HdiError, TestSize.Level0)
 {
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, AddExecutor(_, _, _, _)).WillRepeatedly(Return(1));
     ExecutorRegisterInfo info {};
     std::vector<uint64_t> templateIdList {};
@@ -63,7 +63,7 @@ HWTEST_F(ResourceNodeTest, InsertSuccessWithIndex, TestSize.Level0)
 {
     constexpr uint64_t DEST_EXECUTOR_INDEX = 0x12345678;
 
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, AddExecutor(_, _, _, _)).WillRepeatedly(DoAll(SetArgReferee<1>(DEST_EXECUTOR_INDEX), Return(0)));
     EXPECT_CALL(*mock, DeleteExecutor(DEST_EXECUTOR_INDEX)).Times(Exactly(1)).WillRepeatedly(Return(0));
     {
@@ -91,7 +91,7 @@ HWTEST_F(ResourceNodeTest, InsertSuccessWithTemplateIdList, TestSize.Level0)
         key.swap(FWK_PUB_KEY);
     };
 
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, AddExecutor(_, _, _, _))
         .WillRepeatedly(DoAll(SetArgReferee<1>(DEST_EXECUTOR_INDEX), WithArg<2>(fillFwkPublicKey),
             WithArg<3>(fillTemplateIdList), Return(0)));
@@ -113,7 +113,7 @@ HWTEST_F(ResourceNodeTest, InsertSuccessWithTemplateIdList, TestSize.Level0)
 
 HWTEST_F(ResourceNodeTest, ResourceNodeTest001, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, AddExecutor(_, _, _, _)).Times(1);
     EXPECT_CALL(*mockHdi, DeleteExecutor(_)).Times(1);
@@ -139,7 +139,7 @@ HWTEST_F(ResourceNodeTest, ResourceNodeTest001, TestSize.Level0)
 
 HWTEST_F(ResourceNodeTest, ResourceNodeTest002, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, AddExecutor(_, _, _, _)).Times(1);
     EXPECT_CALL(*mockHdi, DeleteExecutor(_)).Times(1);

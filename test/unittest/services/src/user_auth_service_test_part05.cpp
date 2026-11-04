@@ -21,10 +21,9 @@
 #include "iam_ptr.h"
 
 #include "executor_messenger_service.h"
-#include "hdi_type_aliases.h"
 #include "mock_event_listener.h"
 #include "mock_context.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "mock_ipc_common.h"
 #include "mock_modal_callback.h"
 #include "mock_user_access_ctrl_callback.h"
@@ -346,13 +345,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperSensorInfoEnrolled
     EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _)).Times(1);
     sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential).WillByDefault([](int32_t, int32_t authType,
         std::vector<HdiCredentialInfo> &infos) {
         infos.push_back({.credentialId = 1, .executorIndex = 2, .templateId = 3,
             .authType = static_cast<HdiAuthType>(authType), .executorMatcher = 2, .executorSensorHint = 3});
-        return HDF_SUCCESS;
+        return SUCCESS;
     });
 
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, authType, ALL_IN_ONE);
@@ -385,11 +384,11 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperSensorInfoNotEnrol
     EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _)).Times(1);
     sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential).WillByDefault([](int32_t, int32_t, std::vector<HdiCredentialInfo> &) {
         // Not enrolled: return success with an empty credential list
-        return HDF_SUCCESS;
+        return SUCCESS;
     });
 
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, authType, ALL_IN_ONE);
@@ -420,9 +419,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperSensorInfoHdiFailT
     EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _)).Times(1);
     sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(GENERAL_ERROR));
 
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, authType, ALL_IN_ONE);
     ASSERT_NE(resourceNode, nullptr);

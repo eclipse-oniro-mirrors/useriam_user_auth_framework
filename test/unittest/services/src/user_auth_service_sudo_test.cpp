@@ -19,7 +19,7 @@
 #include "attributes.h"
 #include "context_pool.h"
 #include "iam_defines.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "mock_ipc_common.h"
 #include "mock_resource_node.h"
 #include "mock_user_auth_callback.h"
@@ -73,7 +73,7 @@ public:
     {
         // earlier suites may leave armed HDI expectations on the shared mock that
         // would shadow this suite's ON_CALL defaults
-        MockIUserAuthInterface::Holder::GetInstance().Reset();
+        MockUserAuthEngine::Holder::GetInstance().Reset();
         IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
         IpcCommon::AddPermission(IS_SYSTEM_APP);
     }
@@ -90,19 +90,19 @@ public:
         // Deletes can post arbitration starts/stops; flush them before the mocks die
         DrainSerialThread();
         ResourceNodePool::Instance().Delete(PIN_EXECUTOR_INDEX);
-        MockIUserAuthInterface::Holder::GetInstance().Reset();
+        MockUserAuthEngine::Holder::GetInstance().Reset();
         IpcCommon::DeleteAllPermission();
     }
 };
 
 HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAccepted, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     // No credential -> NOT_ENROLLED terminal keeps the case self-contained.
     ON_CALL(*mockHdi, GetCredential(_, _, _))
         .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 
     UserAuthService service;
@@ -189,14 +189,14 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthParamRejected, TestSize
 // to the dialog branch
 void PrimeDialogBranchExecutor()
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential(_, _, _))
         .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
             infos.push_back({.credentialId = 1, .executorIndex = PIN_EXECUTOR_INDEX, .templateId = 9,
                 .authType = static_cast<HdiAuthType>(AuthType::PIN), .executorMatcher = 1,
                 .executorSensorHint = 1, .authSubType = static_cast<uint64_t>(PinSubType::PIN_SIX)});
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(PIN_EXECUTOR_INDEX, PIN, ALL_IN_ONE);
     ASSERT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
@@ -283,7 +283,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthPermissionDenied, TestS
 HWTEST_F(UserAuthServiceSudoTest, UserAuthServicePublicAuthNotRoutedToSudo, TestSize.Level0)
 {
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     // the plain auth context must stay pooled and running, so the face credential
     // and its executor have to exist
@@ -292,13 +292,13 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServicePublicAuthNotRoutedToSudo, Test
             infos.push_back({.credentialId = 1, .executorIndex = PIN_EXECUTOR_INDEX, .templateId = 9,
                 .authType = static_cast<HdiAuthType>(AuthType::FACE), .executorMatcher = 1,
                 .executorSensorHint = 1, .authSubType = 0});
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(PIN_EXECUTOR_INDEX, FACE, ALL_IN_ONE);
     ASSERT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
-    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
+    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _))
         .WillByDefault([](uint64_t contextId, const HdiAuthParamExt &param,
-            std::vector<HdiScheduleInfo> &scheduleInfos) {
+            std::vector<HdiScheduleInfo> &scheduleInfos, AcquireInfoCallback &) {
             HdiScheduleInfo scheduleInfo = {};
             scheduleInfo.authType = HdiAuthType::FACE;
             scheduleInfo.executorMatcher = 0;
@@ -310,7 +310,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServicePublicAuthNotRoutedToSudo, Test
             executorMessages.resize(1);
             scheduleInfo.executorMessages.push_back(executorMessages);
             scheduleInfos.push_back(scheduleInfo);
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 
     UserAuthService service;

@@ -26,8 +26,7 @@
 #include "accesstoken_kit.h"
 #include "mock_event_listener.h"
 #include "mock_context.h"
-#include "mock_iuser_auth_interface.h"
-#include "hdi_type_aliases.h"
+#include "mock_user_auth_engine.h"
 #include "mock_ipc_common.h"
 #include "mock_user_auth_callback.h"
 #include "mock_user_auth_service.h"
@@ -58,7 +57,7 @@ void UserAuthServiceTest::TearDownTestCase()
 
 void UserAuthServiceTest::SetUp()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 void UserAuthServiceTest::TearDown()
@@ -72,7 +71,7 @@ void UserAuthServiceTest::TearDown()
     }
     // Deletes can post arbitration starts/stops; flush them before the mocks die
     DrainSerialThread();
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 class SimpleSync {
@@ -164,7 +163,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetEnrolledState001, TestSize.Level
     IpcEnrolledState testEnrolledState;
     uint16_t expectCredentialDigest = 23962;
     uint16_t expectCredentialCount = 1;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetEnrolledState(_, _, _))
         .Times(1)
@@ -173,7 +172,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetEnrolledState001, TestSize.Level
                 HdiEnrolledState &hdiEnrolledState) {
                 hdiEnrolledState.credentialDigest = expectCredentialDigest;
                 hdiEnrolledState.credentialCount = expectCredentialCount;
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
@@ -194,7 +193,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetEnrolledState002, TestSize.Level
     IpcEnrolledState testEnrolledState;
     uint16_t expectCredentialDigest = 0;
     uint16_t expectCredentialCount = 0;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetEnrolledState(_, _, _)).WillOnce(Return(GENERAL_ERROR));
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
@@ -248,14 +247,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAvailableStatus001, TestSize.Lev
     AuthType testAuthType = FACE;
     AuthTrustLevel testAuthTrustLevel = ATL3;
     int32_t testUserId = 100;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetAvailableStatus(_, _, _, _))
         .Times(1)
         .WillOnce(
             [](int32_t userId, int32_t authType, uint32_t authTrustLevel, int32_t &checkRet) {
                 checkRet = SUCCESS;
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
@@ -288,7 +287,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAvailableStatus002, TestSize.Lev
     EXPECT_EQ(ret, SUCCESS);
 
     testAuthTrustLevel = ATL2;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetAvailableStatus(_, _, _, _)).Times(1);
     ON_CALL(*mockHdi, GetAvailableStatus)
@@ -313,10 +312,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAvailableStatus003, TestSize.Lev
     AuthTrustLevel testAuthTrustLevel = ATL2;
     int32_t testUserId = 100;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetAvailableStatus(_, _, _, _)).WillRepeatedly([]() {
-        return HDF_FAILURE;
+        return GENERAL_ERROR;
     });
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     int32_t funcResult = SUCCESS;
@@ -444,7 +443,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetProperty001, TestSize.Level0)
     EXPECT_CALL(*testCallback, OnGetExecutorPropertyResult(_, _))
         .WillOnce([&promise1](auto result, auto &extraInfo) { promise1.set_value(); return SUCCESS; })
         .WillOnce([&promise2](auto result, auto &extraInfo) { promise2.set_value(); return SUCCESS; });
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
     int32_t ret = service.GetProperty(testUserId, testAuthType, testKeys, callbackInterface);
@@ -468,12 +467,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetProperty002, TestSize.Level0)
     int32_t ret = service.GetProperty(testUserId, testAuthType, testKeys, callbackInterface);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential).WillByDefault([](auto userId, auto authType, auto &infos) {
         infos.push_back({.credentialId = 1, .executorIndex = 2, .templateId = 3,
             .authType = static_cast<HdiAuthType>(1), .executorMatcher = 2, .executorSensorHint = 3});
-        return HDF_SUCCESS;
+        return SUCCESS;
     });
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2);
     EXPECT_NE(resourceNode, nullptr);
@@ -561,13 +560,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetProperty004, TestSize.Level0)
     int32_t ret = service.GetProperty(testUserId, testAuthType, testKeys, callbackInterface);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential).WillByDefault([](int32_t userId, int32_t authType,
         std::vector<HdiCredentialInfo> &infos) {
         infos.push_back({.credentialId = 1, .executorIndex = 2, .templateId = 3,
             .authType = static_cast<HdiAuthType>(1), .executorMatcher = 2, .executorSensorHint = 3});
-        return HDF_SUCCESS;
+        return SUCCESS;
     });
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, FACE, ALL_IN_ONE);
     EXPECT_NE(resourceNode, nullptr);
@@ -603,7 +602,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetProperty005, TestSize.Level0)
     int32_t ret = service.GetProperty(testUserId, testAuthType, testKeys, callbackInterface);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential)
         .WillByDefault(
@@ -617,7 +616,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetProperty005, TestSize.Level0)
                     .executorSensorHint = 3,
                 };
                 infos.push_back(tempInfo);
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, PIN, ALL_IN_ONE);
@@ -657,13 +656,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetProperty006, TestSize.Level0)
     sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
     int32_t ret = service.GetProperty(testUserId, testAuthType, testKeys, callbackInterface);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 ON_CALL(*mockHdi, GetCredential).WillByDefault([](int32_t userId, int32_t authType,
         std::vector<HdiCredentialInfo> &infos) {
         infos.push_back({.credentialId = 1, .executorIndex = 2, .templateId = 3,
             .authType = static_cast<HdiAuthType>(1), .executorMatcher = 2, .executorSensorHint = 3});
-        return HDF_SUCCESS;
+        return SUCCESS;
     });
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(2, FACE, ALL_IN_ONE);
     EXPECT_NE(resourceNode, nullptr);
@@ -815,9 +814,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth001, TestSize.Level0)
             }
         );
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).WillByDefault(Return(HDF_FAILURE));
+    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _)).WillByDefault(Return(GENERAL_ERROR));
 
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -892,9 +891,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth003, TestSize.Level0)
     EXPECT_EQ(contextId, 0);
 
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).WillByDefault(Return(NOT_ENROLLED));
+    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _)).WillByDefault(Return(NOT_ENROLLED));
     ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
     EXPECT_NE(contextId, 0);
@@ -915,11 +914,11 @@ static void MockForUserAuthHdi(const std::shared_ptr<std::shared_ptr<Context>> &
 {
     const uint32_t testScheduleId = 20;
     const uint32_t testExecutorIndex = 60;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _))
         .WillRepeatedly([context](uint64_t contextId, const HdiAuthParamExt &param,
-            std::vector<HdiScheduleInfo> &scheduleInfos) {
+            std::vector<HdiScheduleInfo> &scheduleInfos, AcquireInfoCallback &) {
             HdiScheduleInfo scheduleInfo = {};
             scheduleInfo.authType = HdiAuthType::FACE;
             scheduleInfo.scheduleId = testScheduleId;
@@ -929,14 +928,14 @@ static void MockForUserAuthHdi(const std::shared_ptr<std::shared_ptr<Context>> &
             scheduleInfo.executorMessages.push_back(executorMessages);
             scheduleInfos.push_back(scheduleInfo);
             *context = ContextPool::Instance().Select(contextId).lock();
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     
-    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _)).WillOnce(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _, _)).WillOnce(Return(SUCCESS));
     EXPECT_CALL(*mockHdi, CancelAuthentication(_))
         .WillOnce([&promise](uint64_t contextId) {
             promise.set_value();
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 }
 
@@ -1050,7 +1049,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser001, TestSize.Level0)
     };
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -1175,7 +1174,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser004, TestSize.Level0)
     };
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -1202,7 +1201,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser005, TestSize.Level0)
     };
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -1229,10 +1228,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser006, TestSize.Level0)
     };
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _)).Times(0);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     sptr<IIamCallback> callbackInterface = testCallback;
     uint64_t contextId = 0;
@@ -1259,10 +1258,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser007, TestSize.Level0)
     };
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _)).Times(0);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     sptr<IIamCallback> callbackInterface = testCallback;
     uint64_t contextId = 0;
@@ -1289,7 +1288,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser008, TestSize.Level0)
     };
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -1336,7 +1335,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify001, TestSize.Level0)
     AuthType testAuthType = FACE;
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
     EXPECT_CALL(*mockHdi, BeginIdentification(_, _, _, _, _)).Times(1);
@@ -1382,7 +1381,7 @@ static void MockForIdentifyHdi(const std::shared_ptr<std::shared_ptr<Context>> &
 {
     const uint32_t testExecutorIndex = 60;
     const uint32_t testscheduleId = 20;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, BeginIdentification(_, _, _, _, _))
         .WillRepeatedly([context](uint64_t contextId, int32_t authType, const std::vector<uint8_t> &challenge,
@@ -1394,14 +1393,14 @@ static void MockForIdentifyHdi(const std::shared_ptr<std::shared_ptr<Context>> &
             executorMessages.resize(1);
             scheduleInfo.executorMessages.push_back(executorMessages);
             *context = ContextPool::Instance().Select(contextId).lock();
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     
-    EXPECT_CALL(*mockHdi, UpdateIdentificationResult(_, _, _)).WillOnce(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, UpdateIdentificationResult(_, _, _)).WillOnce(Return(SUCCESS));
     EXPECT_CALL(*mockHdi, CancelIdentification(_))
         .WillOnce([&promise](uint64_t contextId) {
             promise.set_value();
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 }
 
@@ -1467,9 +1466,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentifyFastFailLeavesPool, TestSiz
     AuthType testAuthType = FACE;
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, BeginIdentification(_, _, _, _, _)).WillRepeatedly(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, BeginIdentification(_, _, _, _, _)).WillRepeatedly(Return(GENERAL_ERROR));
 
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
@@ -1647,7 +1646,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCompleteRemoteAuthParam_003, TestSi
 
 static void MockGetCredentialById()
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredentialById(_, _))
         .WillByDefault([](uint64_t credentialId, HdiCredentialInfo &info) {
@@ -1660,7 +1659,7 @@ static void MockGetCredentialById()
                 .executorSensorHint = 3,
             };
             info = tempInfo;
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 }
 
@@ -1708,7 +1707,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyById001, TestSize.Level0
     UserAuthService service;
     uint64_t testCredentialId = 1;
     std::vector<uint32_t> testKeys = {Attributes::ATTR_PIN_SUB_TYPE, Attributes::ATTR_SIGNATURE};
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).Times(1);
     SimpleSync sync(2);
@@ -1735,7 +1734,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyById002, TestSize.Level0
     int32_t ret = service.GetPropertyById(testCredentialId, testKeys, callbackInterface);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).Times(2);
     MockGetCredentialById();
@@ -1795,7 +1794,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyById004, TestSize.Level0
     int32_t ret = service.GetPropertyById(testCredentialId, testKeys, callbackInterface);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).Times(1);
     MockGetCredentialById();
@@ -1813,7 +1812,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyById004, TestSize.Level0
 
 static void MockGetCredentialByIdForFace()
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredentialById(_, _))
         .WillByDefault([](uint64_t credentialId, HdiCredentialInfo &info) {
@@ -1826,7 +1825,7 @@ static void MockGetCredentialByIdForFace()
                 .executorSensorHint = 3,
             };
             info = tempInfo;
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 }
 
@@ -1839,7 +1838,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyById005, TestSize.Level0
     sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
     int32_t ret = service.GetPropertyById(testCredentialId, testKeys, callbackInterface);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).Times(1);
     MockGetCredentialById();
@@ -1868,7 +1867,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyById006, TestSize.Level0
     sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
     int32_t ret = service.GetPropertyById(testCredentialId, testKeys, callbackInterface);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).Times(1);
     MockGetCredentialByIdForFace();
@@ -1895,10 +1894,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyById007, TestSize.Level0
     sptr<IGetExecutorPropertyCallback> callbackInterface = testCallback;
     int32_t ret = service->GetPropertyById(testCredentialId, testKeys, callbackInterface);
     EXPECT_EQ(ret, SUCCESS);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredentialById(_, _))
-        .WillByDefault(Return(HDF_FAILURE));
+        .WillByDefault(Return(GENERAL_ERROR));
     {
         ScopedPermission permission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
         ret = service->GetPropertyById(testCredentialId, testKeys, callbackInterface);
@@ -2027,7 +2026,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolutionTest, TestSize.Le
     std::vector<AuthType> validType;
     validType.emplace_back(FACE);
     validType.emplace_back(PIN);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
@@ -2082,13 +2081,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUpdateTemplateCacheTest, TestSize.L
 {
     AuthType testAuthType = FACE;
     TemplateCacheManager::GetInstance().currUserId_ = 100;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
         .Times(2)
         .WillOnce([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
             infos.clear();
-            return HDF_SUCCESS;
+            return SUCCESS;
         })
         .WillOnce([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
             HdiCredentialInfo tempInfo = {
@@ -2100,7 +2099,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUpdateTemplateCacheTest, TestSize.L
                 .executorSensorHint = 3
             };
             infos.push_back(tempInfo);
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     EXPECT_NO_THROW(
         TemplateCacheManager::GetInstance().UpdateTemplateCache(FACE);

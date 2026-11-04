@@ -22,8 +22,7 @@
 
 #include "authentication_impl.h"
 #include "resource_node_pool.h"
-#include "hdi_type_aliases.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "mock_resource_node.h"
 #include "mock_schedule_node_callback.h"
 #include "mock_authentication.h"
@@ -57,12 +56,12 @@ void AuthenticationImplTest::TearDownTestCase()
 
 void AuthenticationImplTest::SetUp()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 void AuthenticationImplTest::TearDown()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthenticationImplTest, AuthenticationHdiError, TestSize.Level0)
@@ -74,8 +73,8 @@ HWTEST_F(AuthenticationImplTest, AuthenticationHdiError, TestSize.Level0)
     para.sdkVersion = 11;
     para.authType = FACE;
     para.atl = ATL3;
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_CALL(*mock, BeginAuthenticationExt(contextId, _, _)).WillRepeatedly(Return(1));
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_CALL(*mock, BeginAuthenticationExt(contextId, _, _, _)).WillRepeatedly(Return(1));
 
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
@@ -94,8 +93,8 @@ HWTEST_F(AuthenticationImplTest, AuthenticationHdiEmpty, TestSize.Level0)
     para.authType = FACE;
     para.atl = ATL3;
 
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_CALL(*mock, BeginAuthenticationExt(contextId, _, _)).WillRepeatedly(Return(0));
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_CALL(*mock, BeginAuthenticationExt(contextId, _, _, _)).WillRepeatedly(Return(0));
 
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
@@ -133,8 +132,8 @@ HWTEST_F(AuthenticationImplTest, AuthenticationInvalidExecutor, TestSize.Level0)
         scheduleInfos.swap(list);
     };
 
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_CALL(*mock, BeginAuthenticationExt(contextId, _, _)).WillRepeatedly(DoAll(WithArg<2>(fillInfoList),
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_CALL(*mock, BeginAuthenticationExt(contextId, _, _, _)).WillRepeatedly(DoAll(WithArg<2>(fillInfoList),
         Return(0)));
 
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
@@ -154,17 +153,17 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestUpdate001, TestSize.Level
     para.authType = FACE;
     para.atl = ATL3;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _)).Times(1);
+    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _, _)).Times(1);
     ON_CALL(*mockHdi, UpdateAuthenticationResult)
         .WillByDefault(
             [](uint64_t contextId, const std::vector<uint8_t> &scheduleResult, HdiAuthResultInfo &info,
-                HdiEnrolledState &enrolledState) {
-                info.result = HDF_SUCCESS;
+                HdiEnrolledState &enrolledState, AcquireInfoCallback &) {
+                info.result = SUCCESS;
                 info.userId = TEST_USER_ID;
                 info.credentialId = 1;
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
 
@@ -189,19 +188,19 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestUpdate002, TestSize.Level
     para.authType = FACE;
     para.atl = ATL3;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _)).Times(1);
+    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _, _)).Times(1);
     ON_CALL(*mockHdi, UpdateAuthenticationResult)
         .WillByDefault(
             [](uint64_t contextId, const std::vector<uint8_t> &scheduleResult, HdiAuthResultInfo &info,
-                HdiEnrolledState &enrolledState) {
-                info.result = HDF_FAILURE;
+                HdiEnrolledState &enrolledState, AcquireInfoCallback &) {
+                info.result = GENERAL_ERROR;
                 HdiExecutorSendMsg msg = {};
                 msg.commandId = 10;
                 msg.executorIndex = 20;
                 info.msgs.push_back(msg);
-                return HDF_FAILURE;
+                return GENERAL_ERROR;
             }
         );
 
@@ -273,7 +272,7 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestStart, TestSize.Level0)
     para.authType = FACE;
     para.atl = ATL3;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     // BeginAuthenticationExt succeeds, but the schedule info carries one executorIndex
     // and no executorMessage, so ScheduleInfoToExecutors rejects it and Start fails in
@@ -281,9 +280,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestStart, TestSize.Level0)
     // cancel-request latch lives in ContextPool, not in AuthenticationImpl), so it is a
     // no-op and the engine is never asked to cancel
     EXPECT_CALL(*mockHdi, CancelAuthentication(_)).Times(0);
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _))
         .WillRepeatedly(
-            [](uint64_t contextId, const HdiAuthParamExt &param, std::vector<HdiScheduleInfo> &scheduleInfos) {
+            [](uint64_t contextId, const HdiAuthParamExt &param, std::vector<HdiScheduleInfo> &scheduleInfos, AcquireInfoCallback &) {
                 HdiScheduleInfo scheduleInfo = {};
                 scheduleInfo.authType = HdiAuthType::FACE;
                 scheduleInfo.executorMatcher = 10;
@@ -292,7 +291,7 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestStart, TestSize.Level0)
                 scheduleInfo.scheduleMode = ScheduleMode::AUTH;
                 scheduleInfo.templateIds.push_back(30);
                 scheduleInfos.push_back(scheduleInfo);
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(executorIndex, FACE, ALL_IN_ONE);
@@ -322,12 +321,12 @@ constexpr uint64_t CANCEL_TEST_TEMPLATE_ID = 31;
 
 // BeginAuthenticationExt blocks between the two promises so a concurrent Cancel can
 // land while Start is still inside the engine call
-void MockBlockingBeginAuthentication(const std::shared_ptr<MockIUserAuthInterface> &mockHdi,
+void MockBlockingBeginAuthentication(const std::shared_ptr<MockUserAuthEngine> &mockHdi,
     uint32_t executorIndex, std::promise<void> &beginEntered, std::promise<void> &releaseBegin)
 {
-    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
+    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _))
         .WillByDefault([&beginEntered, &releaseBegin, executorIndex](uint64_t contextId,
-            const HdiAuthParamExt &param, std::vector<HdiScheduleInfo> &scheduleInfos) {
+            const HdiAuthParamExt &param, std::vector<HdiScheduleInfo> &scheduleInfos, AcquireInfoCallback &) {
             HdiScheduleInfo scheduleInfo = {};
             scheduleInfo.authType = HdiAuthType::FACE;
             scheduleInfo.executorMatcher = 0;
@@ -341,7 +340,7 @@ void MockBlockingBeginAuthentication(const std::shared_ptr<MockIUserAuthInterfac
             scheduleInfos.push_back(scheduleInfo);
             beginEntered.set_value();
             releaseBegin.get_future().get();
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 }
 } // namespace
@@ -362,12 +361,12 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplCancelDuringStartIsNoOpUntilR
     para.authType = FACE;
     para.atl = ATL3;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     std::promise<void> beginEntered;
     std::promise<void> releaseBegin;
     MockBlockingBeginAuthentication(mockHdi, executorIndex, beginEntered, releaseBegin);
-    EXPECT_CALL(*mockHdi, CancelAuthentication(contextId)).WillOnce(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, CancelAuthentication(contextId)).WillOnce(Return(SUCCESS));
 
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(executorIndex, FACE, ALL_IN_ONE);
     ASSERT_NE(resourceNode, nullptr);
@@ -409,10 +408,10 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplCancelDuringScheduleBuildIsNo
     para.authType = FACE;
     para.atl = ATL3;
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(contextId, _, _))
-        .WillOnce([](uint64_t, const HdiAuthParamExt &, std::vector<HdiScheduleInfo> &infos) {
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(contextId, _, _, _))
+        .WillOnce([](uint64_t, const HdiAuthParamExt &, std::vector<HdiScheduleInfo> &infos, AcquireInfoCallback &) {
             HdiScheduleInfo info = {};
             info.authType = HdiAuthType::FACE;
             info.executorIndexes = {executorIndex};
@@ -421,9 +420,9 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplCancelDuringScheduleBuildIsNo
             info.templateIds = {CANCEL_TEST_TEMPLATE_ID};
             info.executorMessages = {{0}};
             infos.push_back(info);
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
-    EXPECT_CALL(*mockHdi, CancelAuthentication(contextId)).WillOnce(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, CancelAuthentication(contextId)).WillOnce(Return(SUCCESS));
     auto resource = MockResourceNode::CreateWithExecuteIndex(executorIndex, FACE, ALL_IN_ONE);
     ASSERT_NE(resource, nullptr);
     ASSERT_TRUE(ResourceNodePool::Instance().Insert(resource));
@@ -476,10 +475,10 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplHdiFail_001, TestSize.Level0)
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     ASSERT_NE(authentication, nullptr);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
-        .WillRepeatedly(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _))
+        .WillRepeatedly(Return(GENERAL_ERROR));
 
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
     auto callback = Common::MakeShared<MockScheduleNodeCallback>();
@@ -525,10 +524,10 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplUpdateFail_001, TestSize.Leve
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     ASSERT_NE(authentication, nullptr);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _))
-        .WillRepeatedly(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _, _))
+        .WillRepeatedly(Return(GENERAL_ERROR));
 
     std::vector<uint8_t> scheduleResult = {1, 2, 3, 4};
     Authentication::AuthResultInfo resultInfo = {};
@@ -558,10 +557,10 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplCancel_001, TestSize.Level0)
     authentication->SetChallenge({1, 2, 3, 4});
     authentication->SetEndAfterFirstFail(true);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, CancelAuthentication(_))
-        .WillRepeatedly(Return(HDF_SUCCESS));
+        .WillRepeatedly(Return(SUCCESS));
 
     EXPECT_NO_THROW(authentication->Cancel());
 }
@@ -623,15 +622,15 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplEmptyScheduleList_001, TestSi
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     ASSERT_NE(authentication, nullptr);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     std::vector<HdiScheduleInfo> emptyInfos;
 
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _))
         .WillOnce([&emptyInfos](uint64_t contextId, const HdiAuthParamExt &param,
-            std::vector<HdiScheduleInfo> &infos) {
+            std::vector<HdiScheduleInfo> &infos, AcquireInfoCallback &) {
             infos = emptyInfos;
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
@@ -656,20 +655,20 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplSuccessWithToken_001, TestSiz
     auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
     ASSERT_NE(authentication, nullptr);
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
-    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _))
+    EXPECT_CALL(*mockHdi, UpdateAuthenticationResult(_, _, _, _, _))
         .WillOnce([](uint64_t contextId, const std::vector<uint8_t> &scheduleResult,
-            HdiAuthResultInfo &info, HdiEnrolledState &enrolledState) {
-            info.result = HDF_SUCCESS;
+            HdiAuthResultInfo &info, HdiEnrolledState &enrolledState, AcquireInfoCallback &) {
+            info.result = SUCCESS;
             info.token = {0x01, 0x02, 0x03, 0x04};
             info.userId = TEST_USER_ID;
             info.lockoutDuration = 0;
             info.remainAttempts = -1;
             enrolledState.credentialDigest = 12345;
             enrolledState.credentialCount = 2;
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
 
     std::vector<uint8_t> scheduleResult = {1, 2, 3, 4};
