@@ -82,6 +82,7 @@ ohos_unittest("iam_services_core_test") {
     project_path + "services/core/src/resource_node_pool_impl.cpp",
     project_path + "frameworks/native/common/attributes/src/attributes.cpp",
     project_path + "frameworks/native/common/dfx/src/iam_hitrace_helper.cpp",
+    project_path + "frameworks/native/common/dfx/src/hisysevent_adapter.cpp",
   ]
 
   sources += [
@@ -122,6 +123,7 @@ ohos_unittest("iam_services_core_test") {
     "hdf_core:libhdi",
     "hicollie:libhicollie",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "init:libbeget_proxy",
     "init:libbegetutil",

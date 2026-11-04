@@ -59,6 +59,7 @@ ohos_fuzztest("CoAuthClientFuzzTest") {
     "../../../../frameworks/native/client/src/user_idm_callback_service.cpp",
     "../../../../frameworks/native/client/src/user_idm_client_impl.cpp",
     "../../../../frameworks/native/client/src/user_recognition_callback_service.cpp",
+    "../../../../frameworks/native/client/src/widget_callback_service.cpp",
     "co_auth_client_fuzzer.cpp",
   ]
 
@@ -67,6 +68,7 @@ ohos_fuzztest("CoAuthClientFuzzTest") {
     "../../common_fuzzer:attributes_fuzzer",
     "../../common_fuzzer:dfx_fuzzer",
     "../../common_fuzzer:iam_test_fuzzer",
+    "../../common_fuzzer:iam_utils_fuzzer",
   ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]

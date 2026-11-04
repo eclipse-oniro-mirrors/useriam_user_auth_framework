@@ -62,6 +62,7 @@ ohos_fuzztest("HdiEngineFuzzTest") {
     "hdf_core:libhdi",
     "hicollie:libhicollie",
     "hilog:libhilog",
+    "init:libbeget_proxy",
     "init:libbegetutil",
     "ipc:ipc_core",
     "safwk:system_ability_fwk",

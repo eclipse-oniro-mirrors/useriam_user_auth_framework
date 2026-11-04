@@ -54,14 +54,15 @@ ResultCode WidgetClient::OnNotice(NoticeType type, const std::string &eventData)
     return ResultCode::SUCCESS;
 }
 
-void WidgetClient::ReportWidgetResult(int32_t result, AuthType authType,
-    int32_t lockoutDuration, int32_t remainAttempts, bool skipLockedBiometricAuth)
+void WidgetClient::ReportWidgetResult(int32_t result, AuthType authType, int32_t lockoutDuration,
+    int32_t remainAttempts, bool skipLockedBiometricAuth, uint64_t widgetContextId,
+    const std::vector<uint8_t> &challenge)
 {
     IAM_LOGD("start.");
 }
 
 void WidgetClient::ReportWidgetTip(int32_t tipType, AuthType authType, std::vector<uint8_t> tipInfo,
-    bool skipLockedBiometricAuth)
+    bool skipLockedBiometricAuth, uint64_t widgetContextId)
 {
     IAM_LOGD("start.");
 }
@@ -98,6 +99,11 @@ void WidgetClient::Reset()
 }
 
 void WidgetClient::ForceStopAuth()
+{
+    IAM_LOGD("start.");
+}
+
+void WidgetClient::ForceStopAuth(uint64_t contextId)
 {
     IAM_LOGD("start.");
 }

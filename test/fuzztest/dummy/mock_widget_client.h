@@ -41,14 +41,16 @@ public:
     void SetAuthTokenId(uint32_t tokenId);
     uint32_t GetAuthTokenId();
     ResultCode OnNotice(NoticeType type, const std::string &eventData);
-    void ReportWidgetResult(int32_t result, AuthType authType,
-        int32_t lockoutDuration, int32_t remainAttempts, bool skipLockedBiometricAuth);
+    void ReportWidgetResult(int32_t result, AuthType authType, int32_t lockoutDuration,
+        int32_t remainAttempts, bool skipLockedBiometricAuth, uint64_t widgetContextId,
+        const std::vector<uint8_t> &challenge);
     void ReportWidgetTip(int32_t tipType, AuthType authType, std::vector<uint8_t> tipInfo,
-        bool skipLockedBiometricAuth);
+        bool skipLockedBiometricAuth, uint64_t widgetContextId);
     void SetPinSubType(const PinSubType &subType);
     void SetSensorInfo(const std::string &info);
     void Reset();
     void ForceStopAuth();
+    void ForceStopAuth(uint64_t contextId);
     void ClearSchedule(uint64_t contextId);
     void SetChallenge(const std::vector<uint8_t> &challenge);
     void SetCallingBundleName(const std::string &callingBundleName);
