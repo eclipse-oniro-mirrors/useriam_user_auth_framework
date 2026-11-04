@@ -126,9 +126,9 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_001, TestSize.Level0)
     EXPECT_CALL(*mockDeletion, Start(_, _, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-            std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+            std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
             std::vector<EngCredentialInfo> &credentialInfos) {
-            isCredentialDelete = false;
+            isStartSchedule = true;
             return false;
         });
     std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
@@ -136,7 +136,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_001, TestSize.Level0)
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
     ASSERT_NE(context, nullptr);
-    ASSERT_EQ(context->Start(), false);
+    ASSERT_EQ(context->Start(), true);
 }
 
 HWTEST_F(DeleteContextTest, DeleteContextTest_Start_002, TestSize.Level0)
@@ -148,9 +148,9 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_002, TestSize.Level0)
     EXPECT_CALL(*mockDeletion, Start(_, _, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-            std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+            std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
             std::vector<EngCredentialInfo> &credentialInfos) {
-            isCredentialDelete = false;
+            isStartSchedule = true;
             return true;
         });
     std::shared_ptr<MockContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
@@ -170,8 +170,9 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_003, TestSize.Level0)
     EXPECT_CALL(*mockDeletion, Start(_, _, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-            std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+            std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
             std::vector<EngCredentialInfo> &credentialInfos) {
+            isStartSchedule = true;
             scheduleList.push_back(Common::MakeShared<MockScheduleNode>());
             scheduleList.push_back(Common::MakeShared<MockScheduleNode>());
             return true;
@@ -193,8 +194,9 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_004, TestSize.Level0)
     EXPECT_CALL(*mockDeletion, Start(_, _, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-            std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+            std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
             std::vector<EngCredentialInfo> &credentialInfos) {
+            isStartSchedule = true;
             auto scheduleNode = Common::MakeShared<MockScheduleNode>();
             EXPECT_NE(scheduleNode, nullptr);
 
@@ -220,8 +222,9 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_005, TestSize.Level0)
     EXPECT_CALL(*mockDeletion, Start(_, _, _, _))
         .Times(Exactly(1))
         .WillOnce([](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-            std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+            std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
             std::vector<EngCredentialInfo> &credentialInfos) {
+            isStartSchedule = true;
             EXPECT_EQ(scheduleList.size(), 0U);
             auto scheduleNode = Common::MakeShared<MockScheduleNode>();
             EXPECT_NE(scheduleNode, nullptr);
@@ -285,8 +288,9 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Stop_003, TestSize.Level0)
     ON_CALL(*mockDeletion, Start)
         .WillByDefault(
             [](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-                std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+                std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
                 std::vector<EngCredentialInfo> &credentialInfos) {
+                isStartSchedule = true;
                 scheduleList.push_back(nullptr);
                 return true;
             }
@@ -313,8 +317,9 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Stop_004, TestSize.Level0)
     ON_CALL(*mockDeletion, Start)
         .WillByDefault(
             [](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-                std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+                std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
                 std::vector<EngCredentialInfo> &credentialInfos) {
+                isStartSchedule = true;
                 auto scheduleNode = Common::MakeShared<MockScheduleNode>();
                 EXPECT_NE(scheduleNode, nullptr);
                 EXPECT_CALL(*scheduleNode, StartSchedule()).Times(1);

@@ -32,7 +32,7 @@ public:
     ~DeleteImpl() override;
 
     bool Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-        std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+        std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
         std::vector<EngCredentialInfo> &credentialInfos) override;
     bool Update(const std::vector<uint8_t> &scheduleResult, std::shared_ptr<CredentialInfoInterface> &info) override;
     bool Cancel() override;

@@ -42,7 +42,7 @@ public:
     virtual ~Deletion() = default;
 
     virtual bool Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
-        std::shared_ptr<ScheduleNodeCallback> callback, bool &isCredentialDelete,
+        std::shared_ptr<ScheduleNodeCallback> callback, bool &isStartSchedule,
         std::vector<EngCredentialInfo> &credentialInfos) = 0;
     virtual bool Update(const std::vector<uint8_t> &scheduleResult,
         std::shared_ptr<CredentialInfoInterface> &info) = 0;
