@@ -16,9 +16,7 @@
 #include "load_mode_handler_default_test.h"
 
 #include "load_mode_handler_default.h"
-
-#include "hdi_type_aliases.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "system_param_manager.h"
 #include "user_idm_database_impl.h"
 
@@ -38,12 +36,12 @@ void LoadModeHandlerDefaultTest::TearDownTestCase()
 
 void LoadModeHandlerDefaultTest::SetUp()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 void LoadModeHandlerDefaultTest::TearDown()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 /**
@@ -68,7 +66,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_001, TestSize.Level0)
  */
 HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_002, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return empty credentials
@@ -93,7 +91,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_002, TestSize.Level0)
  */
 HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_003, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return credentials
@@ -127,7 +125,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_003, TestSize.Level0)
  */
 HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_004, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {
@@ -152,7 +150,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_004, TestSize.Level0)
  */
 HWTEST_F(LoadModeHandlerDefaultTest, OnCredentialUpdated_005, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {
@@ -207,7 +205,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, OnFwkReady_001, TestSize.Level0)
  */
 HWTEST_F(LoadModeHandlerDefaultTest, OnFwkReady_002, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return failure
@@ -226,7 +224,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, OnFwkReady_002, TestSize.Level0)
  */
 HWTEST_F(LoadModeHandlerDefaultTest, OnFwkReady_003, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return credentials
@@ -274,7 +272,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, StartSubscribe_001, TestSize.Level0)
  */
 HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_001, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return empty credentials
@@ -301,7 +299,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_001, Te
  */
 HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_002, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return credentials
@@ -334,7 +332,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_002, Te
  */
 HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_003, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return failure
@@ -354,7 +352,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_003, Te
  */
 HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_004, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {
@@ -392,7 +390,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, AnyUserHasCompanionDeviceCredential_004, Te
  */
 HWTEST_F(LoadModeHandlerDefaultTest, CheckStartCompanionDeviceSa_001, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return empty credentials
@@ -416,7 +414,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, CheckStartCompanionDeviceSa_001, TestSize.L
  */
 HWTEST_F(LoadModeHandlerDefaultTest, CheckStartCompanionDeviceSa_002, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     // Mock GetCredential to return credentials
@@ -447,7 +445,7 @@ HWTEST_F(LoadModeHandlerDefaultTest, CheckStartCompanionDeviceSa_002, TestSize.L
  */
 HWTEST_F(LoadModeHandlerDefaultTest, CheckStartCompanionDeviceSa_003, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
 
     auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {

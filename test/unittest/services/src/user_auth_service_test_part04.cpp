@@ -21,10 +21,9 @@
 #include "iam_ptr.h"
 
 #include "executor_messenger_service.h"
-#include "hdi_type_aliases.h"
 #include "mock_event_listener.h"
 #include "mock_context.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "mock_ipc_common.h"
 #include "mock_modal_callback.h"
 #include "mock_user_access_ctrl_callback.h"
@@ -61,13 +60,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFaceFullsc
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -76,7 +75,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFaceFullsc
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprintFullscreen_001, TestSize.Level0)
@@ -98,13 +97,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprin
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -113,7 +112,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprin
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthTypeOnly_EmptyCheckedTypes_001, TestSize.Level0)
@@ -198,14 +197,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithPinAnd
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -214,7 +213,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithPinAnd
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NotFullscreenSingleFaceOrFinger_001, TestSize.Level0)
@@ -237,14 +236,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NotFullscreenSin
         .skipLockedBiometricAuth = false,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -254,7 +253,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NotFullscreenSin
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
     EXPECT_EQ(validTypeList.size(), 2);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinAndPrivatePin_001, TestSize.Level0)
@@ -292,13 +291,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprin
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -307,7 +306,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprin
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FaceCompanionFullscreen_001, TestSize.Level0)
@@ -329,14 +328,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FaceCompanionFul
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -345,7 +344,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FaceCompanionFul
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_ThreeTypesFullscreen_001, TestSize.Level0)
@@ -367,7 +366,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_ThreeTypesFullsc
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
@@ -375,7 +374,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_ThreeTypesFullsc
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -384,7 +383,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_ThreeTypesFullsc
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFaceCompanion_001, TestSize.Level0)
@@ -541,13 +540,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFinge
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -556,7 +555,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFinge
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyCompanionFullscreen_001, TestSize.Level0)
@@ -578,13 +577,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyCompa
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -593,7 +592,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyCompa
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeAllPermutations_001, TestSize.Level0)
@@ -658,13 +657,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptySingl
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -673,7 +672,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptySingl
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFaceFingerDialog_001, TestSize.Level0)
@@ -695,14 +694,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFaceF
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -711,7 +710,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFaceF
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPrivatePin_001, TestSize.Level0)
@@ -802,14 +801,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFacePi
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -818,7 +817,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFacePi
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnOnlyCompanion_001, TestSize.Level0)
@@ -840,13 +839,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnOnlyCompan
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -855,7 +854,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnOnlyCompan
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenWithPin_001, TestSize.Level0)
@@ -877,13 +876,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenWithPi
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -892,7 +891,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenWithPi
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenOnlyCompanion_001, TestSize.Level0)
@@ -914,13 +913,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenOnlyCo
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -929,7 +928,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenOnlyCo
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyCompanionDevice_001, TestSize.Level0)
@@ -994,14 +993,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFaceFi
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -1010,7 +1009,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFaceFi
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmpty_001, TestSize.Level0)
@@ -1032,7 +1031,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmpty_001,
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
@@ -1040,7 +1039,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmpty_001,
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -1049,7 +1048,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmpty_001,
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NonFullscreen_001, TestSize.Level0)
@@ -1071,7 +1070,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NonFullscreen_00
         .isUserIdSpecified = true,
     };
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
@@ -1079,7 +1078,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NonFullscreen_00
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -1088,7 +1087,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NonFullscreen_00
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth001, TestSize.Level0)
@@ -1102,9 +1101,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth001, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(SUCCESS));
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(1, PIN, COLLECTOR);
     EXPECT_NE(resourceNode, nullptr);
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
@@ -1113,7 +1112,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth001, Te
     para.widgetParam = widgetParam;
     EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth002, TestSize.Level0)
@@ -1143,9 +1142,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth003, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(SUCCESS));
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(1, PIN, COLLECTOR);
     EXPECT_NE(resourceNode, nullptr);
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
@@ -1154,7 +1153,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth003, Te
     para.widgetParam = widgetParam;
     EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth004, TestSize.Level0)
@@ -1204,14 +1203,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth006, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(GENERAL_ERROR));
     para.credentialIdList = authParam.credentialIdList;
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     para.widgetParam = widgetParam;
     EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), LOCKED);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth007, TestSize.Level0)
@@ -1225,9 +1224,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth007, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(SUCCESS));
     auto resourceNode = Common::MakeShared<MockResourceNode>();
     EXPECT_NE(resourceNode, nullptr);
     EXPECT_CALL(*resourceNode, GetExecutorIndex()).WillRepeatedly(Return(1));
@@ -1248,7 +1247,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth007, Te
     para.widgetParam = widgetParam;
     EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), LOCKED);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, TestSize.Level0)
@@ -1262,7 +1261,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
         .WillRepeatedly(
             [](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
@@ -1274,7 +1274,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
                     .executorSensorHint = 3,
                 };
                 infos.push_back(tempInfo);
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     auto resourceNode = Common::MakeShared<MockResourceNode>();
@@ -1297,7 +1297,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
     EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_EQ(validType.size(), 1);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth009, TestSize.Level0)
@@ -1312,8 +1312,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth009, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(HDF_SUCCESS));
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(SUCCESS));
     auto pinNode = Common::MakeShared<MockResourceNode>();
     EXPECT_CALL(*pinNode, GetExecutorIndex()).WillRepeatedly(Return(1));
     MockResourceNode *pinResourceNode = static_cast<MockResourceNode *>(pinNode.get());
@@ -1346,7 +1347,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth009, Te
     EXPECT_EQ(validType.size(), 1);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(2));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth010, TestSize.Level0)
@@ -1360,9 +1361,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth010, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(SUCCESS));
     auto resourceNode = Common::MakeShared<MockResourceNode>();
     EXPECT_NE(resourceNode, nullptr);
     EXPECT_CALL(*resourceNode, GetExecutorIndex()).WillRepeatedly(Return(1));
@@ -1384,7 +1385,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth010, Te
     EXPECT_EQ(validType.size(), 1);
     EXPECT_EQ(validType[0], PRIVATE_PIN);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth011, TestSize.Level0)
