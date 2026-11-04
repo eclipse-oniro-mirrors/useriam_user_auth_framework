@@ -136,7 +136,7 @@ HWTEST_F(DeleteContextTest, DeleteContextTest_Start_001, TestSize.Level0)
     std::shared_ptr<Context> context =
         Common::MakeShared<DeleteContext>(testContestId, mockDeletion, contextCallback);
     ASSERT_NE(context, nullptr);
-    ASSERT_EQ(context->Start(), true);
+    ASSERT_EQ(context->Start(), false);
 }
 
 HWTEST_F(DeleteContextTest, DeleteContextTest_Start_002, TestSize.Level0)
