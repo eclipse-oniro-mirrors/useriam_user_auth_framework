@@ -343,8 +343,6 @@ ohos_unittest("iam_hdi_engine_test") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtoken_setproc",
     "c_utils:utils",
-    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
-    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "eventhandler:libeventhandler",
     "googletest:gmock",
     "hdf_core:libhdf_utils",
@@ -356,6 +354,13 @@ ohos_unittest("iam_hdi_engine_test") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
+
+  if (!user_auth_framework_has_ext) {
+    external_deps += [
+      "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+      "drivers_interface_user_auth:libuser_auth_proxy_4.1",
+    ]
+  }
 
   configs = [
     "../../../common:iam_log_config",
