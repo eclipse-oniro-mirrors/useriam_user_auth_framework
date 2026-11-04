@@ -108,8 +108,8 @@ public:
     MOCK_METHOD3(UpdateAbandonResult, int32_t(int32_t userId, const std::vector<uint8_t> &scheduleResult,
         std::vector<EngCredentialInfo> &infos));
     MOCK_METHOD5(BeginIdentification,
-        int32_t(uint64_t contextId, int32_t authType, const std::vector<uint8_t> &challenge, uint32_t executorSensorHint,
-            EngScheduleInfo &scheduleInfo));
+        int32_t(uint64_t contextId, int32_t authType, const std::vector<uint8_t> &challenge,
+            uint32_t executorSensorHint, EngScheduleInfo &scheduleInfo));
     MOCK_METHOD3(UpdateIdentificationResult,
         int32_t(uint64_t contextId, const std::vector<uint8_t> &scheduleResult, EngIdentifyResultInfo &info));
     MOCK_METHOD1(CancelIdentification, int32_t(uint64_t contextId));
