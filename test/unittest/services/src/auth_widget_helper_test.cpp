@@ -19,8 +19,7 @@
 
 #include <gtest/gtest.h>
 #include "iam_common_defines.h"
-#include "hdi_type_aliases.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "mock_schedule_node.h"
 #include "mock_resource_node.h"
 #include "resource_node_pool.h"
@@ -180,11 +179,11 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestCheckValidSolution002, TestSi
     authTypeList.push_back(FINGERPRINT);
     AuthTrustLevel atl = ATL3;
     std::vector<AuthType> validTypeList;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _)).WillOnce(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _)).WillOnce(Return(GENERAL_ERROR));
     EXPECT_TRUE(AuthWidgetHelper::CheckValidSolution(userId, authTypeList, atl, validTypeList));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestCheckReuseUnlockResult001, TestSize.Level0)
@@ -214,35 +213,35 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestCheckReuseUnlockResult002, Te
     authParam.reuseUnlockResult.reuseDuration = 5 * 60 * 1000;
     authParam.reuseUnlockResult.reuseMode = AUTH_TYPE_RELEVANT;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, CheckReuseUnlockResult(_, _)).Times(5);
     ON_CALL(*mockHdi, CheckReuseUnlockResult)
-        .WillByDefault(Return(HDF_FAILURE));
+        .WillByDefault(Return(GENERAL_ERROR));
     EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), GENERAL_ERROR);
     ON_CALL(*mockHdi, CheckReuseUnlockResult)
         .WillByDefault(
             [](const HdiReuseUnlockParam &info, HdiReuseUnlockInfo &reuseInfo) {
                 std::vector<uint8_t> token;
                 token.push_back(1);
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), SUCCESS);
     ON_CALL(*mockHdi, CheckReuseUnlockResult)
-        .WillByDefault(Return(HDF_SUCCESS));
+        .WillByDefault(Return(SUCCESS));
     EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), SUCCESS);
 
     para.sdkVersion = 10001;
     authParam.authTypes.push_back(FINGERPRINT);
-    ON_CALL(*mockHdi, CheckReuseUnlockResult).WillByDefault(Return(HDF_SUCCESS));
+    ON_CALL(*mockHdi, CheckReuseUnlockResult).WillByDefault(Return(SUCCESS));
     EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), SUCCESS);
 
     authParam.reuseUnlockResult.isReuse = true;
     authParam.reuseUnlockResult.reuseDuration = 4 * 60 * 1000;
     authParam.reuseUnlockResult.reuseMode = CALLER_IRRELEVANT_AUTH_TYPE_IRRELEVANT;
     EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), SUCCESS);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile_CompanionDevice_001, TestSize.Level0)
@@ -252,7 +251,7 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile_CompanionD
     ContextFactory::AuthProfile profile;
     std::vector<uint64_t> credentialIdList;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     auto fillEmptyCreds = [](std::vector<HdiCredentialInfo> &list) {
         std::vector<HdiCredentialInfo> infos = {};
         list.swap(infos);
@@ -266,7 +265,7 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile_CompanionD
     EXPECT_EQ(profile.sensorInfo, "");
     EXPECT_EQ(profile.remainTimes, 0);
     EXPECT_EQ(profile.freezingTime, 0);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile_CompanionDevice_002, TestSize.Level0)
@@ -277,7 +276,7 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile_CompanionD
     std::vector<uint64_t> credentialIdList;
     credentialIdList.push_back(12345);
     
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     HdiCredentialInfo hdiInfo = {
         .credentialId = 12345,
         .executorIndex = 1,
@@ -313,7 +312,7 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile_CompanionD
     EXPECT_EQ(profile.freezingTime, 0);
 
     ResourceNodePool::Instance().Delete(1);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestParseAttributes001, TestSize.Level0)
@@ -358,40 +357,40 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestParseAttributes003, TestSize.
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetAuthCredentialList, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_FAILURE));
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(GENERAL_ERROR));
     int32_t userId = 100;
     AuthType authType = PIN;
     std::vector<uint64_t> credentialIdList = {};
     std::vector<std::shared_ptr<CredentialInfoInterface>> credentialInfos = {};
     EXPECT_EQ(AuthWidgetHelper::GetAuthCredentialList(userId, authType, credentialIdList, credentialInfos), false);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(SUCCESS));
     EXPECT_EQ(AuthWidgetHelper::GetAuthCredentialList(userId, authType, credentialIdList, credentialInfos), true);
 
     credentialIdList.push_back(1);
-    EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).WillOnce(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).WillOnce(Return(GENERAL_ERROR));
     EXPECT_EQ(AuthWidgetHelper::GetAuthCredentialList(userId, authType, credentialIdList, credentialInfos), false);
-    EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).WillOnce(Return(HDF_SUCCESS));
+    EXPECT_CALL(*mockHdi, GetCredentialById(_, _)).WillOnce(Return(SUCCESS));
     EXPECT_EQ(AuthWidgetHelper::GetAuthCredentialList(userId, authType, credentialIdList, credentialInfos), true);
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile001, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(GENERAL_ERROR));
     int32_t userId = 100;
     AuthType authType = PIN;
     ContextFactory::AuthProfile profile;
     std::vector<uint64_t> credentialIdList = {};
     EXPECT_EQ(AuthWidgetHelper::GetUserAuthProfile(userId, authType, profile, credentialIdList),
         ResultCode::GENERAL_ERROR);
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile002, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     constexpr uint64_t executorIndex = 61;
     auto fillUpInfos = [](std::vector<HdiCredentialInfo> &list) {
@@ -405,7 +404,7 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile002, TestSi
         };
         list.push_back(temp);
     };
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_FAILURE));
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(GENERAL_ERROR));
     int32_t userId = 100;
     AuthType authType = PIN;
     ContextFactory::AuthProfile profile;
@@ -429,12 +428,12 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile002, TestSi
         ResultCode::SUCCESS);
     EXPECT_EQ(profile.pinSubType, 10001);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile003, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     constexpr uint64_t executorIndex = 61;
     auto fillUpInfos = [](std::vector<HdiCredentialInfo> &list) {
@@ -469,12 +468,12 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile003, TestSi
         ResultCode::SUCCESS);
     EXPECT_EQ(profile.sensorInfo, "testSensor");
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile004, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     constexpr uint64_t executorIndex = 61;
     auto fillUpInfos = [](std::vector<HdiCredentialInfo> &list) {
@@ -510,12 +509,12 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile004, TestSi
         ResultCode::SUCCESS);
     EXPECT_EQ(profile.pinSubType, 10001);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile005, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     constexpr uint64_t executorIndex = 61;
     auto fillUpInfos = [](std::vector<HdiCredentialInfo> &list) {
@@ -550,12 +549,12 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile005, TestSi
         ResultCode::SUCCESS);
     EXPECT_EQ(profile.sensorInfo, "testSensor");
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile006, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     constexpr uint64_t executorIndex = 61;
     auto fillUpInfos = [](std::vector<HdiCredentialInfo> &list) {
@@ -591,12 +590,12 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile006, TestSi
         ResultCode::SUCCESS);
     EXPECT_EQ(profile.cameraStatus, CameraStatus::CAMERA_NOT_AVAILABLE);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile007, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     constexpr uint64_t executorIndex = 61;
     auto fillUpInfos = [](std::vector<HdiCredentialInfo> &list) {
@@ -614,17 +613,17 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile007, TestSi
     auto resourceNode = Common::MakeShared<MockResourceNode>();
     EXPECT_CALL(*resourceNode, GetExecutorIndex()).WillRepeatedly(Return(executorIndex));
     EXPECT_NE(resourceNode, nullptr);
-    ON_CALL(*resourceNode, GetProperty).WillByDefault(Return(HDF_FAILURE));
+    ON_CALL(*resourceNode, GetProperty).WillByDefault(Return(GENERAL_ERROR));
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
     int32_t userId = 100;
     AuthType authType = PIN;
     ContextFactory::AuthProfile profile;
     std::vector<uint64_t> credentialIdList = {};
-    // GetProperty reports HDF_FAILURE, so the profile fetch fails with GENERAL_ERROR
+    // GetProperty reports GENERAL_ERROR, so the profile fetch fails with GENERAL_ERROR
     EXPECT_EQ(AuthWidgetHelper::GetUserAuthProfile(userId, authType, profile, credentialIdList),
         ResultCode::GENERAL_ERROR);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(executorIndex));
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 } // namespace UserAuth
 } // namespace UserIam
