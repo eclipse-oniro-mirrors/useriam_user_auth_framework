@@ -90,11 +90,10 @@ protected:
         if (schedule_ != nullptr) {
             return true;
         }
-        schedule_ = Common::MakeShared<WidgetScheduleNodeImpl>();
+        schedule_ = WidgetScheduleNodeImpl::Create(shared_from_this());
         if (schedule_ == nullptr) {
             return false;
         }
-        schedule_->SetCallback(shared_from_this());
         return true;
     }
 };
@@ -112,7 +111,6 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextStartDirectAuthFail_001, TestSize
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     EXPECT_NE(mockSchedule, nullptr);
     EXPECT_CALL(*mockSchedule, StartDirectAuth()).WillOnce(Return(false));
-    EXPECT_CALL(*mockSchedule, SetCallback(_)).Times(AnyNumber());
 
     testableContext->SetSchedule(mockSchedule);
 
@@ -135,7 +133,6 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextStartScheduleFail_001, TestSize.L
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     EXPECT_NE(mockSchedule, nullptr);
     EXPECT_CALL(*mockSchedule, StartSchedule()).WillOnce(Return(false));
-    EXPECT_CALL(*mockSchedule, SetCallback(_)).Times(AnyNumber());
 
     testableContext->SetSchedule(mockSchedule);
 
@@ -158,7 +155,6 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextIsSingleCompanionDeviceAuthFail_0
     auto mockSchedule = Common::MakeShared<MockWidgetScheduleNode>();
     EXPECT_NE(mockSchedule, nullptr);
     EXPECT_CALL(*mockSchedule, StartSchedule()).WillOnce(Return(true));
-    EXPECT_CALL(*mockSchedule, SetCallback(_)).Times(AnyNumber());
 
     testableContext->SetSchedule(mockSchedule);
 

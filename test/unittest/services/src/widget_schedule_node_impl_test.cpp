@@ -67,9 +67,8 @@ void WidgetScheduleNodeImplTest::TearDown()
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartSchedule, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     EXPECT_TRUE(schedule->StartSchedule());
     widgetContext->LaunchWidget();
     auto handler = ThreadHandler::GetSingleThreadInstance();
@@ -78,10 +77,9 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartSchedule, TestSi
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartAuthList, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
     std::vector<AuthType> authTypeList = {AuthType::ALL, AuthType::PIN, AuthType::FACE, AuthType::FINGERPRINT};
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     EXPECT_TRUE(schedule->StartAuthList(authTypeList, true, AuthIntent::DEFAULT));
     widgetContext->LaunchWidget();
@@ -91,10 +89,9 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartAuthList, TestSi
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStopAuthList, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
     std::vector<AuthType> authTypeList = {AuthType::ALL, AuthType::PIN, AuthType::FACE, AuthType::FINGERPRINT};
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     schedule->StartAuthList(authTypeList, false, AuthIntent::DEFAULT);
     EXPECT_TRUE(schedule->StopAuthList(authTypeList));
@@ -105,10 +102,9 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStopAuthList, TestSiz
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplSuccessAuth, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
     std::vector<AuthType> authTypeList = {AuthType::ALL, AuthType::PIN, AuthType::FACE, AuthType::FINGERPRINT};
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     schedule->StartAuthList(authTypeList, true, AuthIntent::DEFAULT);
     EXPECT_TRUE(schedule->NotifyAuthSuccess(AuthType::PIN));
@@ -119,9 +115,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplSuccessAuth, TestSize
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplNaviPinAuth, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     EXPECT_TRUE(schedule->NaviPinAuth());
     widgetContext->LaunchWidget();
@@ -131,9 +126,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplNaviPinAuth, TestSize
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplWidgetParaInvalid, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     EXPECT_TRUE(schedule->WidgetParaInvalid());
     widgetContext->LaunchWidget();
@@ -143,9 +137,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplWidgetParaInvalid, Te
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStopSchedule, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     EXPECT_TRUE(schedule->StopSchedule());
     widgetContext->LaunchWidget();
@@ -155,9 +148,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStopSchedule, TestSiz
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplWidgetReload_0001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     uint32_t orientation = 1;
     uint32_t needRotate = 1;
@@ -171,9 +163,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplWidgetReload_0001, Te
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplWidgetReload_0002, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     uint32_t orientation = 2;
     uint32_t needRotate = 1;
@@ -187,9 +178,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplWidgetReload_0002, Te
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplWidgetReload_0003, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     uint32_t orientation = 3;
     uint32_t needRotate = 1;
@@ -203,9 +193,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplWidgetReload_0003, Te
 
 HWTEST_F(WidgetScheduleNodeImplTest, OnWidgetReload_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     auto machine = schedule->MakeFiniteStateMachine();
     uint32_t event = 1;
@@ -217,9 +206,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, OnWidgetReload_001, TestSize.Level0)
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartDirectAuth_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     EXPECT_TRUE(schedule->StartDirectAuth());
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
@@ -227,7 +215,7 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartDirectAuth_001, 
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartDirectAuth_002, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(nullptr);
     ASSERT_NE(schedule, nullptr);
     schedule->machine_ = nullptr;
     EXPECT_FALSE(schedule->StartDirectAuth());
@@ -235,9 +223,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartDirectAuth_002, 
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartDirectAuth_003, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE};
     schedule->StartDirectAuth();
     schedule->StartAuthList(authTypeList, false, AuthIntent::DEFAULT);
@@ -247,9 +234,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImplStartDirectAuth_003, 
 
 HWTEST_F(WidgetScheduleNodeImplTest, FailAuthClearsCorrectAuthType, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> authTypeList = {AuthType::FACE};
@@ -264,9 +250,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, FailAuthClearsCorrectAuthType, TestSize.Lev
 
 HWTEST_F(WidgetScheduleNodeImplTest, OnStartDirectAuth_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     auto machine = schedule->MakeFiniteStateMachine();
     uint32_t event = WidgetScheduleNode::E_START_DIRECT_AUTH;
     EXPECT_NO_THROW(schedule->OnStartDirectAuth(*machine, event));
@@ -276,9 +261,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, OnStartDirectAuth_001, TestSize.Level0)
 
 HWTEST_F(WidgetScheduleNodeImplTest, OnStartDirectAuth_002, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE};
     schedule->StartAuthList(authTypeList, false, AuthIntent::DEFAULT);
     auto machine = schedule->MakeFiniteStateMachine();
@@ -290,9 +274,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, OnStartDirectAuth_002, TestSize.Level0)
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_CompanionDeviceAuthSuccess_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE};
@@ -306,9 +289,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_CompanionDeviceAuthS
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_CompanionDeviceAuthFail_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE};
@@ -322,9 +304,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_CompanionDeviceAuthF
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_CompanionDeviceWithOtherAuth_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE, AuthType::PIN};
@@ -336,9 +317,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_CompanionDeviceWithO
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_CompanionDeviceCancel_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE};
@@ -351,9 +331,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_CompanionDeviceCance
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_StartDirectAuthWithRunningAuth_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE, AuthType::FACE};
     schedule->StartAuthList(authTypeList, false, AuthIntent::DEFAULT);
     EXPECT_CALL(*callback, ExecuteAuthList(_, _, _)).Times(1);
@@ -364,9 +343,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_StartDirectAuthWithR
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_StartDirectAuthEmptyList_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     std::vector<AuthType> emptyAuthTypeList;
     schedule->StartAuthList(emptyAuthTypeList, false, AuthIntent::DEFAULT);
     EXPECT_CALL(*callback, ExecuteAuthList(_, _, _)).Times(1);
@@ -377,9 +355,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_StartDirectAuthEmpty
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_OnFailAuthClearCorrectAuthType_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE};
@@ -393,9 +370,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_OnFailAuthClearCorre
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_OnFailAuthWithMultipleTypes_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> authTypeList = {AuthType::FACE, AuthType::COMPANION_DEVICE};
@@ -409,9 +385,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_OnFailAuthWithMultip
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_DuplicateAuthTypeInStartAuth_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
 
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
@@ -430,7 +405,7 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_DuplicateAuthTypeInS
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_MachineNullptrScenario_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(nullptr);
     ASSERT_NE(schedule, nullptr);
     schedule->machine_ = nullptr;
     EXPECT_FALSE(schedule->StartSchedule());
@@ -440,9 +415,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_MachineNullptrScenar
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_StartScheduleWithNullCallback_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(nullptr);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(nullptr);
     // Business logic allows starting schedule with null callback (callback check is deferred)
     EXPECT_TRUE(schedule->StartSchedule());
     auto handler = ThreadHandler::GetSingleThreadInstance();
@@ -451,9 +425,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_StartScheduleWithNul
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_OnWidgetParaInvalid_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     EXPECT_TRUE(schedule->WidgetParaInvalid());
     widgetContext->LaunchWidget();
@@ -463,9 +436,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_OnWidgetParaInvalid_
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_WidgetReloadFail_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> authTypeList = {AuthType::PIN};
@@ -489,9 +461,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_WidgetReloadFail_001
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_EmptyAuthTypeList_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     std::vector<AuthType> emptyAuthTypeList;
@@ -503,9 +474,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_EmptyAuthTypeList_00
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_FailAuthForFace_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
 
@@ -522,9 +492,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_FailAuthForFace_001,
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_FailAuthForFingerprint_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
 
@@ -541,9 +510,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_FailAuthForFingerpri
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_ClearSchedule_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     EXPECT_CALL(*callback, ClearSchedule()).Times(1);
@@ -554,9 +522,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_ClearSchedule_001, T
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_SendAuthTipInfo_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     std::vector<AuthType> authTypeList = {AuthType::PIN, AuthType::FACE};
     int32_t tipCode = TIP_CODE_FAIL;
     EXPECT_CALL(*callback, OnScheduleAuthTip(_, _)).Times(2);
@@ -567,9 +534,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_SendAuthTipInfo_001,
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_OnStartDirectAuthDuplicateCheck_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
 
     std::vector<AuthType> authTypeList = {AuthType::COMPANION_DEVICE, AuthType::FACE};
     schedule->StartAuthList(authTypeList, false, AuthIntent::DEFAULT);
@@ -583,23 +549,10 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_OnStartDirectAuthDup
     handler->EnsureTask([]() {});
 }
 
-HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_SendAuthResultInfo_001, TestSize.Level0)
-{
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
-    std::vector<uint8_t> token = {};
-    schedule->OnWidgetResult(0, PIN, token);
-
-    auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
-    schedule->OnWidgetResult(0, PIN, token);
-    EXPECT_CALL(*callback, OnScheduleAuthResult(_, _, _)).Times(0);
-}
-
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_GetRemoteAuthParam_001, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(widgetContext);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(widgetContext);
     schedule->StartSchedule();
     EXPECT_TRUE(schedule->GetRemoteAuthParam());
     widgetContext->LaunchWidget();
@@ -609,7 +562,7 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_GetRemoteAuthParam_0
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_GetRemoteAuthParam_002, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(nullptr);
     ASSERT_NE(schedule, nullptr);
     schedule->machine_ = nullptr;
     EXPECT_FALSE(schedule->GetRemoteAuthParam());
@@ -617,9 +570,8 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_GetRemoteAuthParam_0
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_GetRemoteAuthParam_003, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
     auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
-    schedule->SetCallback(callback);
+    auto schedule = WidgetScheduleNodeImpl::Create(callback);
     EXPECT_CALL(*callback, LaunchWidget()).WillOnce(Return(true));
     schedule->StartSchedule();
     EXPECT_TRUE(schedule->GetRemoteAuthParam());
@@ -629,13 +581,24 @@ HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_GetRemoteAuthParam_0
 
 HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_GetRemoteAuthParam_004, TestSize.Level0)
 {
-    auto schedule = std::make_shared<WidgetScheduleNodeImpl>();
+    auto schedule = WidgetScheduleNodeImpl::Create(nullptr);
     ASSERT_NE(schedule, nullptr);
-    schedule->SetCallback(nullptr);
     schedule->StartSchedule();
     EXPECT_TRUE(schedule->GetRemoteAuthParam());
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
+}
+
+HWTEST_F(WidgetScheduleNodeImplTest, WidgetScheduleNodeImpl_SendAuthResultInfo_001, TestSize.Level0)
+{
+    auto schedule = WidgetScheduleNodeImpl::Create(nullptr);
+    std::vector<uint8_t> token = {};
+    schedule->OnWidgetResult(0, PIN, token);
+
+    auto callback = std::make_shared<MockWidgetScheduleNodeCallback>();
+    schedule = WidgetScheduleNodeImpl::Create(callback);
+    schedule->OnWidgetResult(0, PIN, token);
+    EXPECT_CALL(*callback, OnScheduleAuthResult(_, _, _)).Times(0);
 }
 } // namespace UserAuth
 } // namespace UserIam

@@ -35,7 +35,8 @@ class WidgetScheduleNodeImpl final : public WidgetScheduleNode,
                                public std::enable_shared_from_this<WidgetScheduleNodeImpl>,
                                public NoCopyable {
 public:
-    WidgetScheduleNodeImpl();
+    static std::shared_ptr<WidgetScheduleNodeImpl> Create(std::shared_ptr<WidgetScheduleNodeCallback> callback);
+
     ~WidgetScheduleNodeImpl() override = default;
     bool StartSchedule() override;
     bool StartDirectAuth() override;
@@ -49,7 +50,6 @@ public:
     bool WidgetParaInvalid() override;
     bool WidgetReload(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType) override;
-    void SetCallback(std::shared_ptr<WidgetScheduleNodeCallback> callback) override;
     void OnWidgetTip(const std::vector<AuthType> &authTypeList, int32_t tipCode) override;
     void OnWidgetResult(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) override;
     bool ClearSchedule() override;
@@ -72,6 +72,8 @@ protected:
     void OnGetRemoteAuthParam(FiniteStateMachine &machine, uint32_t event);
 
 private:
+    WidgetScheduleNodeImpl() = default;
+    bool Init(std::shared_ptr<WidgetScheduleNodeCallback> callback);
     std::shared_ptr<FiniteStateMachine> MakeFiniteStateMachine();
     void BuildInitStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
     void BuildWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
@@ -80,7 +82,7 @@ private:
     void BuildParamWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
     void BuildAuthFinishedStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder);
     bool TryKickMachine(Event event);
-    std::shared_ptr<WidgetScheduleNodeCallback> GetCallback();
+    FiniteStateMachine::Action MakeAction(void (WidgetScheduleNodeImpl::*handler)(FiniteStateMachine &, uint32_t));
 
 private:
     std::shared_ptr<ThreadHandler> threadHandler_ {nullptr};

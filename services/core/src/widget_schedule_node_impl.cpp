@@ -33,15 +33,32 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-WidgetScheduleNodeImpl::WidgetScheduleNodeImpl()
+std::shared_ptr<WidgetScheduleNodeImpl> WidgetScheduleNodeImpl::Create(
+    std::shared_ptr<WidgetScheduleNodeCallback> callback)
 {
+    std::shared_ptr<WidgetScheduleNodeImpl> scheduleNode(new (std::nothrow) WidgetScheduleNodeImpl());
+    if (scheduleNode == nullptr) {
+        IAM_LOGE("Failed to create widget schedule node");
+        return nullptr;
+    }
+    if (!scheduleNode->Init(callback)) {
+        IAM_LOGE("Failed to init widget schedule node");
+        return nullptr;
+    }
+    return scheduleNode;
+}
+
+bool WidgetScheduleNodeImpl::Init(std::shared_ptr<WidgetScheduleNodeCallback> callback)
+{
+    callback_ = callback;
     machine_ = MakeFiniteStateMachine();
     if (machine_ == nullptr) {
-        IAM_LOGE("Failed to create make FSM of widget schedule");
-        return;
+        IAM_LOGE("Failed to make FSM of widget schedule");
+        return false;
     }
     threadHandler_ = ThreadHandler::GetSingleThreadInstance();
     machine_->SetThreadHandler(threadHandler_);
+    return true;
 }
 
 std::shared_ptr<FiniteStateMachine> WidgetScheduleNodeImpl::MakeFiniteStateMachine()
@@ -62,77 +79,87 @@ std::shared_ptr<FiniteStateMachine> WidgetScheduleNodeImpl::MakeFiniteStateMachi
 void WidgetScheduleNodeImpl::BuildInitStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder)
 {
     builder->MakeTransition(S_WIDGET_INIT, E_GET_REMOTE_AUTH_PARAM, S_WIDGET_PARAM_WAITING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnGetRemoteAuthParam(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnGetRemoteAuthParam));
     builder->MakeTransition(S_WIDGET_INIT, E_START_WIDGET, S_WIDGET_WAITING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStartSchedule(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStartSchedule));
     builder->MakeTransition(S_WIDGET_INIT, E_START_DIRECT_AUTH, S_WIDGET_AUTH_RUNNING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStartDirectAuth(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStartDirectAuth));
     builder->MakeTransition(S_WIDGET_INIT, E_WIDGET_RELEASE, S_WIDGET_RELEASED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetRelease(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetRelease));
 }
 
 void WidgetScheduleNodeImpl::BuildWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder)
 {
     builder->MakeTransition(S_WIDGET_WAITING, E_START_AUTH, S_WIDGET_AUTH_RUNNING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStartAuth(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStartAuth));
     builder->MakeTransition(S_WIDGET_WAITING, E_CANCEL_AUTH, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStopSchedule(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStopSchedule));
     builder->MakeTransition(S_WIDGET_WAITING, E_NAVI_PIN_AUTH, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnNaviPinAuth(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnNaviPinAuth));
     builder->MakeTransition(S_WIDGET_WAITING, E_NOTICE_COMPLETE_AUTH, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnSendAuthResult(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnSendAuthResult));
     builder->MakeTransition(S_WIDGET_WAITING, E_WIDGET_PARA_INVALID, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetParaInvalid(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetParaInvalid));
     builder->MakeTransition(S_WIDGET_WAITING, E_WIDGET_RELOAD, S_WIDGET_RELOAD_WAITING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetReloadInit(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetReloadInit));
     builder->MakeTransition(S_WIDGET_WAITING, E_WIDGET_RELEASE, S_WIDGET_RELEASED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetRelease(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetRelease));
 }
 
 void WidgetScheduleNodeImpl::BuildAuthRunningStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder)
 {
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_COMPLETE_AUTH, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnSuccessAuth(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnSuccessAuth));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_NOTICE_COMPLETE_AUTH, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnSendAuthResult(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnSendAuthResult));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_STOP_AUTH, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnFailAuth(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnFailAuth));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_CANCEL_AUTH, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStopSchedule(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStopSchedule));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_NAVI_PIN_AUTH, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnNaviPinAuth(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnNaviPinAuth));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_START_AUTH, S_WIDGET_AUTH_RUNNING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStartAuth(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStartAuth));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_UPDATE_AUTH, S_WIDGET_AUTH_RUNNING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStopAuthList(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStopAuthList));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_WIDGET_PARA_INVALID, S_WIDGET_AUTH_FINISHED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetParaInvalid(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetParaInvalid));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_WIDGET_RELOAD, S_WIDGET_RELOAD_WAITING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetReloadInit(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetReloadInit));
     builder->MakeTransition(S_WIDGET_AUTH_RUNNING, E_WIDGET_RELEASE, S_WIDGET_RELEASED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetRelease(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetRelease));
 }
 
 void WidgetScheduleNodeImpl::BuildReloadWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder)
 {
     builder->MakeTransition(S_WIDGET_RELOAD_WAITING, E_CANCEL_AUTH, S_WIDGET_WAITING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetReload(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetReload));
     builder->MakeTransition(S_WIDGET_RELOAD_WAITING, E_WIDGET_RELEASE, S_WIDGET_RELEASED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetRelease(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetRelease));
 }
 
 void WidgetScheduleNodeImpl::BuildParamWaitingStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder)
 {
     builder->MakeTransition(S_WIDGET_PARAM_WAITING, E_START_WIDGET, S_WIDGET_WAITING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStartSchedule(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStartSchedule));
     builder->MakeTransition(S_WIDGET_PARAM_WAITING, E_CANCEL_AUTH, S_WIDGET_RELEASED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnStopSchedule(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnStopSchedule));
 }
 
 void WidgetScheduleNodeImpl::BuildAuthFinishedStateTransitions(std::shared_ptr<FiniteStateMachine::Builder> &builder)
 {
     builder->MakeTransition(S_WIDGET_AUTH_FINISHED, E_WIDGET_RELEASE, S_WIDGET_RELEASED,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnWidgetRelease(machine, event); });
+        MakeAction(&WidgetScheduleNodeImpl::OnWidgetRelease));
+}
+
+FiniteStateMachine::Action WidgetScheduleNodeImpl::MakeAction(
+    void (WidgetScheduleNodeImpl::*handler)(FiniteStateMachine &, uint32_t))
+{
+    return [weakSelf = weak_from_this(), handler](FiniteStateMachine &machine, uint32_t event) {
+        auto self = weakSelf.lock();
+        IF_FALSE_LOGE_AND_RETURN(self != nullptr);
+        (self.get()->*handler)(machine, event);
+    };
 }
 
 bool WidgetScheduleNodeImpl::TryKickMachine(Event event)
@@ -262,21 +289,9 @@ bool WidgetScheduleNodeImpl::WidgetReload(uint32_t orientation, uint32_t needRot
     return TryKickMachine(E_WIDGET_RELOAD);
 }
 
-void WidgetScheduleNodeImpl::SetCallback(std::shared_ptr<WidgetScheduleNodeCallback> callback)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    callback_ = callback;
-}
-
-std::shared_ptr<WidgetScheduleNodeCallback> WidgetScheduleNodeImpl::GetCallback()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return callback_.lock();
-}
-
 void WidgetScheduleNodeImpl::OnGetRemoteAuthParam(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     if (!callback->GetRemoteAuthParam()) {
         IAM_LOGE("Failed to get remote auth param");
@@ -285,7 +300,7 @@ void WidgetScheduleNodeImpl::OnGetRemoteAuthParam(FiniteStateMachine &machine, u
 
 void WidgetScheduleNodeImpl::OnStartSchedule(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     if (!callback->LaunchWidget()) {
         IAM_LOGE("Failed to launch widget, cancel Auth");
@@ -295,7 +310,7 @@ void WidgetScheduleNodeImpl::OnStartSchedule(FiniteStateMachine &machine, uint32
 
 void WidgetScheduleNodeImpl::OnStopSchedule(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     callback->EndAuthAsCancel();
     iamHitraceHelper_ = nullptr;
@@ -304,7 +319,7 @@ void WidgetScheduleNodeImpl::OnStopSchedule(FiniteStateMachine &machine, uint32_
 void WidgetScheduleNodeImpl::OnStartDirectAuth(FiniteStateMachine &machine, uint32_t event)
 {
     IAM_LOGI("start direct auth (skip widget UI)");
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     std::vector<AuthType> startAuthTypeList;
     bool endAfterFirstFail;
@@ -329,7 +344,7 @@ void WidgetScheduleNodeImpl::OnStartDirectAuth(FiniteStateMachine &machine, uint
 void WidgetScheduleNodeImpl::OnStartAuth(FiniteStateMachine &machine, uint32_t event)
 {
     IAM_LOGI("OnStartAuth start");
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     std::vector<AuthType> startAuthTypeList;
     bool endAfterFirstFail;
@@ -353,7 +368,7 @@ void WidgetScheduleNodeImpl::OnStartAuth(FiniteStateMachine &machine, uint32_t e
 
 void WidgetScheduleNodeImpl::OnStopAuthList(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     for (auto authType : stopAuthTypeList_) {
         runningAuthTypeSet_.erase(authType);
@@ -363,7 +378,7 @@ void WidgetScheduleNodeImpl::OnStopAuthList(FiniteStateMachine &machine, uint32_
 
 void WidgetScheduleNodeImpl::OnSuccessAuth(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     runningAuthTypeSet_.erase(successAuthType_);
     callback->OnAuthSuccess(successAuthType_);
@@ -372,7 +387,7 @@ void WidgetScheduleNodeImpl::OnSuccessAuth(FiniteStateMachine &machine, uint32_t
 void WidgetScheduleNodeImpl::OnFailAuth(FiniteStateMachine &machine, uint32_t event)
 {
     IAM_LOGI("OnFailAuth start");
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     runningAuthTypeSet_.erase(failAuthType_);
     callback->OnAuthFail(failAuthType_);
@@ -380,21 +395,21 @@ void WidgetScheduleNodeImpl::OnFailAuth(FiniteStateMachine &machine, uint32_t ev
 
 void WidgetScheduleNodeImpl::OnNaviPinAuth(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     callback->EndAuthAsNaviPin();
 }
 
 void WidgetScheduleNodeImpl::OnWidgetParaInvalid(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     callback->EndAuthAsWidgetParaInvalid();
 }
 
 void WidgetScheduleNodeImpl::OnWidgetReloadInit(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("Widget need reload, init");
     callback->AuthWidgetReloadInit();
@@ -402,7 +417,7 @@ void WidgetScheduleNodeImpl::OnWidgetReloadInit(FiniteStateMachine &machine, uin
 
 void WidgetScheduleNodeImpl::OnWidgetReload(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("Widget need reload");
     const uint32_t reloadInitMs = 100;
@@ -416,7 +431,7 @@ void WidgetScheduleNodeImpl::OnWidgetReload(FiniteStateMachine &machine, uint32_
 
 void WidgetScheduleNodeImpl::OnWidgetRelease(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("clear schedule");
     callback->ClearSchedule();
@@ -424,7 +439,7 @@ void WidgetScheduleNodeImpl::OnWidgetRelease(FiniteStateMachine &machine, uint32
 
 void WidgetScheduleNodeImpl::OnSendAuthResult(FiniteStateMachine &machine, uint32_t event)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     int32_t resultCode;
     AuthType successAuthType;
@@ -446,7 +461,7 @@ void WidgetScheduleNodeImpl::OnSendAuthResult(FiniteStateMachine &machine, uint3
 
 void WidgetScheduleNodeImpl::OnWidgetTip(const std::vector<AuthType> &authTypeList, int32_t tipCode)
 {
-    auto callback = GetCallback();
+    auto callback = callback_.lock();
     IF_FALSE_LOGE_AND_RETURN(callback != nullptr);
     IAM_LOGI("send mid auth result");
     for (auto &authType : authTypeList) {
