@@ -72,7 +72,6 @@ public:
     virtual bool WidgetParaInvalid() = 0;
     virtual bool WidgetReload(uint32_t orientation, uint32_t needRotate, uint32_t alreadyLoad,
         AuthType &rotateAuthType) = 0;
-    virtual void SetCallback(std::shared_ptr<WidgetScheduleNodeCallback> callback) = 0;
     virtual void OnWidgetTip(const std::vector<AuthType> &authTypeList, int32_t tipCode) = 0;
     virtual void OnWidgetResult(int32_t resultCode, int32_t authType, const std::vector<uint8_t> &token) = 0;
     virtual bool ClearSchedule() = 0;

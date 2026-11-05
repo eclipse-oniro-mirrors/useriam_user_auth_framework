@@ -52,7 +52,7 @@ public:
         std::weak_ptr<ResourceNode> verifier;
         std::shared_ptr<ThreadHandler> threadHandler;
         std::shared_ptr<ScheduleNodeCallback> callback;
-        bool endAfterFirstFail;
+        bool endAfterFirstFail {false};
         std::vector<uint8_t> collectorMessage;
         std::vector<uint8_t> verifierMessage;
         int32_t authIntent {0};
@@ -61,7 +61,7 @@ public:
         std::string title;
         AuthScene authScene {AUTH_SCENE_DEFAULT};
     };
-    explicit ScheduleNodeImpl(ScheduleInfo &info);
+    static std::shared_ptr<ScheduleNodeImpl> Create(ScheduleInfo &info);
     ~ScheduleNodeImpl() override;
     uint64_t GetScheduleId() const override;
     uint64_t GetContextId() const override;
@@ -82,7 +82,10 @@ public:
     bool ContinueSchedule(ResultCode resultCode, const std::shared_ptr<Attributes> &finalResult) override;
 
 private:
+    ScheduleNodeImpl() = default;
+    bool Init(ScheduleInfo &info);
     std::shared_ptr<FiniteStateMachine> MakeFiniteStateMachine();
+    FiniteStateMachine::Action MakeAction(void (ScheduleNodeImpl::*handler)(FiniteStateMachine &, uint32_t));
     std::string GetDescription() const;
     bool TryKickMachine(Event event);
     void SetFwkResultCode(int32_t resultCode);

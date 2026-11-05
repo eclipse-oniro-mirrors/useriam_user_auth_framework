@@ -164,7 +164,7 @@ std::shared_ptr<ScheduleNode> ScheduleNodeBuilder::Build()
     IAM_LOGD("scheduleNode builder start to build");
     info_.collector = collector_;
     info_.verifier = verifier_;
-    return Common::MakeShared<ScheduleNodeImpl>(info_);
+    return ScheduleNodeImpl::Create(info_);
 }
 
 bool ScheduleNodeBuilder::CheckParameters() const

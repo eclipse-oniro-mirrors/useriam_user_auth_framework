@@ -251,9 +251,8 @@ void WidgetContext::SetLatestError(int32_t error)
 
 bool WidgetContext::BuildSchedule()
 {
-    schedule_ = Common::MakeShared<WidgetScheduleNodeImpl>();
+    schedule_ = WidgetScheduleNodeImpl::Create(shared_from_this());
     IF_FALSE_LOGE_AND_RETURN_VAL(schedule_ != nullptr, false);
-    schedule_->SetCallback(shared_from_this());
     return true;
 }
 

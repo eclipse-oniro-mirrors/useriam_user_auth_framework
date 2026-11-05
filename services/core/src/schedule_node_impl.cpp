@@ -35,13 +35,33 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-ScheduleNodeImpl::ScheduleNodeImpl(ScheduleInfo &info) : info_(std::move(info))
+std::shared_ptr<ScheduleNodeImpl> ScheduleNodeImpl::Create(ScheduleInfo &info)
 {
+    std::shared_ptr<ScheduleNodeImpl> scheduleNode(new (std::nothrow) ScheduleNodeImpl());
+    if (scheduleNode == nullptr) {
+        IAM_LOGE("Failed to create schedule node");
+        return nullptr;
+    }
+    if (!scheduleNode->Init(info)) {
+        IAM_LOGE("Failed to init schedule node");
+        return nullptr;
+    }
+    return scheduleNode;
+}
+
+bool ScheduleNodeImpl::Init(ScheduleInfo &info)
+{
+    info_ = std::move(info);
     machine_ = MakeFiniteStateMachine();
-    if (machine_ && info_.threadHandler == nullptr) {
+    if (machine_ == nullptr) {
+        IAM_LOGE("Failed to make FSM of schedule node");
+        return false;
+    }
+    if (info_.threadHandler == nullptr) {
         info_.threadHandler = ThreadHandler::GetSingleThreadInstance();
         machine_->SetThreadHandler(info_.threadHandler);
     }
+    return true;
 }
 
 ScheduleNodeImpl::~ScheduleNodeImpl()
@@ -246,40 +266,40 @@ std::shared_ptr<FiniteStateMachine> ScheduleNodeImpl::MakeFiniteStateMachine()
     }
     // S_INIT
     builder->MakeTransition(S_INIT, E_START_AUTH, S_VERIFY_STARING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessBeginVerifier(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessBeginVerifier));
 
     // S_VERIFY_STARING
     builder->MakeTransition(S_VERIFY_STARING, E_VERIFY_STARTED_SUCCESS, S_COLLECT_STARING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessBeginCollector(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessBeginCollector));
     builder->MakeTransition(S_VERIFY_STARING, E_VERIFY_STARTED_FAILED, S_END,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessVerifierBeginFailed(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessVerifierBeginFailed));
     builder->MakeTransition(S_VERIFY_STARING, E_SCHEDULE_RESULT_RECEIVED, S_END);
     builder->MakeTransition(S_VERIFY_STARING, E_STOP_AUTH, S_VERIFY_STOPPING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessEndVerifier(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessEndVerifier));
     builder->MakeTransition(S_VERIFY_STARING, E_TIME_OUT, S_VERIFY_STOPPING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessEndVerifier(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessEndVerifier));
 
     // S_COLLECT_STARING
     builder->MakeTransition(S_COLLECT_STARING, E_COLLECT_STARTED_SUCCESS, S_AUTH_PROCESSING);
     builder->MakeTransition(S_COLLECT_STARING, E_SCHEDULE_RESULT_RECEIVED, S_END);
     builder->MakeTransition(S_COLLECT_STARING, E_STOP_AUTH, S_COLLECT_STOPPING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessEndCollector(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessEndCollector));
 
     // S_AUTH_PROCESSING
     builder->MakeTransition(S_AUTH_PROCESSING, E_SCHEDULE_RESULT_RECEIVED, S_END);
     builder->MakeTransition(S_AUTH_PROCESSING, E_STOP_AUTH, S_COLLECT_STOPPING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessEndCollector(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessEndCollector));
     builder->MakeTransition(S_AUTH_PROCESSING, E_TIME_OUT, S_COLLECT_STOPPING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessEndCollector(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessEndCollector));
 
     // S_COLLECT_STOPPING
     builder->MakeTransition(S_COLLECT_STOPPING, E_SCHEDULE_RESULT_RECEIVED, S_END);
     builder->MakeTransition(S_COLLECT_STOPPING, E_COLLECT_STOPPED_SUCCESS, S_VERIFY_STOPPING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessEndVerifier(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessEndVerifier));
     builder->MakeTransition(S_COLLECT_STOPPING, E_COLLECT_STOPPED_FAILED, S_VERIFY_STOPPING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessEndVerifier(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessEndVerifier));
     builder->MakeTransition(S_COLLECT_STOPPING, E_TIME_OUT, S_VERIFY_STOPPING,
-        [this](FiniteStateMachine &machine, uint32_t event) { ProcessEndVerifier(machine, event); });
+        MakeAction(&ScheduleNodeImpl::ProcessEndVerifier));
 
     // S_VERIFY_STOPPING
     builder->MakeTransition(S_VERIFY_STOPPING, E_SCHEDULE_RESULT_RECEIVED, S_END);
@@ -289,10 +309,20 @@ std::shared_ptr<FiniteStateMachine> ScheduleNodeImpl::MakeFiniteStateMachine()
 
     // ENTERS
     builder->MakeOnStateEnter(S_AUTH_PROCESSING,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnScheduleProcessing(machine, event); });
+        MakeAction(&ScheduleNodeImpl::OnScheduleProcessing));
     builder->MakeOnStateEnter(S_END,
-        [this](FiniteStateMachine &machine, uint32_t event) { OnScheduleFinished(machine, event); });
+        MakeAction(&ScheduleNodeImpl::OnScheduleFinished));
     return builder->Build();
+}
+
+FiniteStateMachine::Action ScheduleNodeImpl::MakeAction(
+    void (ScheduleNodeImpl::*handler)(FiniteStateMachine &, uint32_t))
+{
+    return [weakSelf = weak_from_this(), handler](FiniteStateMachine &machine, uint32_t event) {
+        auto self = weakSelf.lock();
+        IF_FALSE_LOGE_AND_RETURN(self != nullptr);
+        (self.get()->*handler)(machine, event);
+    };
 }
 
 std::string ScheduleNodeImpl::GetDescription() const
