@@ -563,6 +563,8 @@ HWTEST_F(UserIdmClientTest, UserIdmClientRegistCredChangeEventListenerSuccess, T
 
     std::vector<AuthType> authTypeList = {AuthType::PIN};
     auto testCallback = Common::MakeShared<MockCredChangeEventListener>();
+    EXPECT_NE(testCallback, nullptr);
+    EXPECT_CALL(*testCallback, OnNotifyCredChangeEvent(_, _, _, _)).Times(1);
     int32_t ret = UserIdmClient::GetInstance().RegistCredChangeEventListener(authTypeList, testCallback);
     EXPECT_EQ(ret, SUCCESS);
 
@@ -738,6 +740,43 @@ HWTEST_F(UserIdmClientTest, UserIdmStubUnRegistCredChangeEventListenerDispatch, 
         static_cast<uint32_t>(IUserIdmIpcCode::COMMAND_UN_REGIST_CRED_CHANGE_EVENT_LISTENER),
         data, reply, option);
     EXPECT_EQ(ret, ERR_INVALID_DATA);
+}
+
+HWTEST_F(UserIdmClientTest, UserIdmClientDeleteSubProfile001, TestSize.Level0)
+{
+    int32_t userId = 100;
+    int32_t subProfileId = 1;
+    EXPECT_NO_THROW(UserIdmClient::GetInstance().DeleteSubProfile(userId, subProfileId, nullptr));
+}
+
+HWTEST_F(UserIdmClientTest, UserIdmClientDeleteSubProfile002, TestSize.Level0)
+{
+    int32_t userId = 100;
+    int32_t subProfileId = 1;
+    auto callback = Common::MakeShared<MockUserIdmClientCallback>();
+    EXPECT_NE(callback, nullptr);
+    EXPECT_CALL(*callback, OnResult(_, _)).Times(1);
+    IpcClientUtils::ResetObj();
+    UserIdmClient::GetInstance().DeleteSubProfile(userId, subProfileId, callback);
+}
+
+HWTEST_F(UserIdmClientTest, UserIdmClientDeleteSubProfile003, TestSize.Level0)
+{
+    int32_t userId = 100;
+    int32_t subProfileId = 1;
+    auto service = Common::MakeShared<MockUserIdmService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, DeleteSubProfile(_, _, _)).Times(1);
+    ON_CALL(*service, DeleteSubProfile).WillByDefault(Return(SUCCESS));
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    auto callback = Common::MakeShared<MockUserIdmClientCallback>();
+    EXPECT_NE(callback, nullptr);
+    UserIdmClient::GetInstance().DeleteSubProfile(userId, subProfileId, callback);
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
 }
 } // namespace UserAuth
 } // namespace UserIam

@@ -50,6 +50,16 @@ public:
     MOCK_METHOD3(OnNotifyAuthSuccessEvent, void(int32_t userId, AuthType authType,
         const AuthSuccessEventInfo &eventInfo));
 };
+
+class MockPrepareRemoteAuthCallback final : public PrepareRemoteAuthCallback {
+public:
+    MOCK_METHOD1(OnResult, void(int32_t result));
+};
+
+class MockUserRecognitionEventListener final : public UserRecognitionEventListener {
+public:
+    MOCK_METHOD1(OnUserRecognitionEvent, void(const UserRecognitionResult &result));
+};
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

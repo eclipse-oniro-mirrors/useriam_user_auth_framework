@@ -53,6 +53,8 @@ public:
         const std::vector<Attributes::AttributeKey> &keys, Property &property));
     MOCK_METHOD1(SetCachedTemplates, ResultCode(const std::vector<uint64_t> &templateIdList));
     MOCK_METHOD1(NotifyCollectorReady, ResultCode(uint64_t scheduleId));
+    MOCK_METHOD3(Abandon, ResultCode(uint64_t scheduleId, const DeleteParam &param,
+        const std::shared_ptr<UserAuth::IExecuteCallback> &callbackObj));
 };
 } // namespace UserAuth
 } // namespace UserIam
