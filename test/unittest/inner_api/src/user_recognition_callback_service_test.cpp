@@ -25,16 +25,6 @@ namespace UserAuth {
 using namespace testing;
 using namespace testing::ext;
 
-// Local mock for the client-side UserRecognitionEventListener callback. The sibling
-// event_listener_callback_service_test uses MockAuthSuccessEventListener from
-// mocks/mock_user_auth_client_callback.h, but that header does not yet ship a recognition
-// variant; rather than editing shared mock headers (out of scope for this change) we
-// define the mock inline, matching the pattern of MockAuthSuccessEventListener.
-class MockUserRecognitionEventListener final : public UserRecognitionEventListener {
-public:
-    MOCK_METHOD(void, OnUserRecognitionEvent, (const UserRecognitionResult &result));
-};
-
 static constexpr int32_t TEST_USER_ID = 1234;
 
 void UserRecognitionCallbackServiceTest::SetUpTestCase()

@@ -81,6 +81,17 @@ HWTEST_F(UserAccessCtrlClientTest, UserAccessCtrlClientVerifyAuthToken002, TestS
     IpcClientUtils::ResetObj();
 }
 
+HWTEST_F(UserAccessCtrlClientTest, UserAccessCtrlClientVerifyAuthToken003, TestSize.Level0)
+{
+    std::vector<uint8_t> tokenIn;
+    uint64_t allowableDuration = 0;
+    auto testCallback = Common::MakeShared<MockVerifyTokenCallback>();
+    EXPECT_NE(testCallback, nullptr);
+    EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
+    IpcClientUtils::ResetObj();
+    UserAccessCtrlClientImpl::Instance().VerifyAuthToken(tokenIn, allowableDuration, testCallback);
+}
+
 void UserAccessCtrlClientTest::CallRemoteObject(const std::shared_ptr<MockUserAuthService> service,
     const sptr<MockRemoteObject> &obj, sptr<IRemoteObject::DeathRecipient> &dr)
 {

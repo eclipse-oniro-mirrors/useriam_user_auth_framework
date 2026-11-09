@@ -283,6 +283,21 @@ HWTEST_F(DriverUnitTest, Driver_OnFrameworkReady_CallTwice, TestSize.Level0)
     driver->OnFrameworkReady();
 }
 
+HWTEST_F(DriverUnitTest, Driver_OnFrameworkDown_001, TestSize.Level0)
+{
+    std::string serviceName = "test_service";
+    HdiConfig config = {};
+    config.id = 1;
+    auto driverHdi = MakeShared<MockIAuthDriverHdi>();
+    ASSERT_NE(driverHdi, nullptr);
+    config.driver = driverHdi;
+    EXPECT_CALL(*driverHdi, OnFrameworkDown()).Times(Exactly(1));
+    auto driver = MakeShared<Driver>(serviceName, config);
+    ASSERT_NE(driver, nullptr);
+    driver->OnFrameworkReady();
+    driver->OnFrameworkDown();
+}
+
 HWTEST_F(DriverUnitTest, Driver_OnFrameworkDown_002, TestSize.Level0)
 {
     std::string serviceName = "test_service";
@@ -291,6 +306,36 @@ HWTEST_F(DriverUnitTest, Driver_OnFrameworkDown_002, TestSize.Level0)
     config.driver = nullptr;
     auto driver = MakeShared<Driver>(serviceName, config);
     ASSERT_NE(driver, nullptr);
+    driver->OnFrameworkDown();
+}
+
+HWTEST_F(DriverUnitTest, Driver_OnFrameworkDown_003, TestSize.Level0)
+{
+    std::string serviceName = "test_service";
+    HdiConfig config = {};
+    config.id = 1;
+    auto driverHdi = MakeShared<MockIAuthDriverHdi>();
+    ASSERT_NE(driverHdi, nullptr);
+    config.driver = driverHdi;
+    EXPECT_CALL(*driverHdi, OnFrameworkDown()).Times(Exactly(0));
+    auto driver = MakeShared<Driver>(serviceName, config);
+    ASSERT_NE(driver, nullptr);
+    driver->OnFrameworkDown();
+}
+
+HWTEST_F(DriverUnitTest, Driver_OnFrameworkDown_004, TestSize.Level0)
+{
+    std::string serviceName = "test_service";
+    HdiConfig config = {};
+    config.id = 1;
+    auto driverHdi = MakeShared<MockIAuthDriverHdi>();
+    ASSERT_NE(driverHdi, nullptr);
+    config.driver = driverHdi;
+    EXPECT_CALL(*driverHdi, OnFrameworkDown()).Times(Exactly(1));
+    auto driver = MakeShared<Driver>(serviceName, config);
+    ASSERT_NE(driver, nullptr);
+    driver->OnFrameworkReady();
+    driver->OnFrameworkDown();
     driver->OnFrameworkDown();
 }
 

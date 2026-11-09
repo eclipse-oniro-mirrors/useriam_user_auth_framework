@@ -158,6 +158,45 @@ HWTEST_F(CoAuthClientTest, CoAuthClientRegister_004, TestSize.Level0)
     dr->OnRemoteDied(obj);
     IpcClientUtils::ResetObj();
 }
+
+HWTEST_F(CoAuthClientTest, CoAuthClientUnregister001, TestSize.Level0)
+{
+    uint64_t executorIndex = 73265;
+    IpcClientUtils::ResetObj();
+    EXPECT_NO_THROW(CoAuthClient::GetInstance().Unregister(executorIndex));
+}
+
+HWTEST_F(CoAuthClientTest, CoAuthClientUnregister002, TestSize.Level0)
+{
+    uint64_t executorIndex = 73265;
+    auto service = Common::MakeShared<MockCoAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, ExecutorUnregister(_)).Times(1);
+    ON_CALL(*service, ExecutorUnregister).WillByDefault(Return(SUCCESS));
+
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    EXPECT_NE(obj, nullptr);
+    IpcClientUtils::SetObj(obj);
+    EXPECT_CALL(*obj, IsProxyObject()).WillRepeatedly(Return(true));
+    EXPECT_CALL(*obj, RemoveDeathRecipient(_)).WillRepeatedly(Return(true));
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    EXPECT_CALL(*obj, AddDeathRecipient(_))
+        .WillRepeatedly([&dr](const sptr<IRemoteObject::DeathRecipient> &recipient) {
+            dr = recipient;
+            return true;
+        });
+    EXPECT_CALL(*obj, SendRequest(_, _, _, _)).Times(1);
+    ON_CALL(*obj, SendRequest)
+        .WillByDefault([service](uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) {
+            service->OnRemoteRequest(code, data, reply, option);
+            return OHOS::NO_ERROR;
+        });
+
+    EXPECT_NO_THROW(CoAuthClient::GetInstance().Unregister(executorIndex));
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

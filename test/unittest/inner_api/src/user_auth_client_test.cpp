@@ -1117,6 +1117,199 @@ HWTEST_F(UserAuthClientTest, UserAuthStubUnRegistEventListenerDispatch, TestSize
         data, reply, option);
     EXPECT_EQ(ret, ERR_INVALID_DATA);
 }
+
+HWTEST_F(UserAuthClientTest, UserAuthClientSetUserConfigParam001, TestSize.Level0)
+{
+    GlobalConfigParam param = {};
+    IpcClientUtils::ResetObj();
+    int32_t ret = UserAuthClient::GetInstance().SetUserConfigParam(param);
+    EXPECT_EQ(ret, GENERAL_ERROR);
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientSetUserConfigParam002, TestSize.Level0)
+{
+    GlobalConfigParam param = {};
+    param.type = PIN_EXPIRED_PERIOD;
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, SetUserConfigParam(_)).Times(1);
+    ON_CALL(*service, SetUserConfigParam).WillByDefault(Return(SUCCESS));
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    int32_t ret = UserAuthClient::GetInstance().SetUserConfigParam(param);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientGetUserConfigParam001, TestSize.Level0)
+{
+    int32_t userId = 100;
+    AuthType authType = PIN;
+    GlobalConfigType type = GlobalConfigType::PIN_EXPIRED_PERIOD;
+    GlobalConfigValue value = {};
+    IpcClientUtils::ResetObj();
+    int32_t ret = UserAuthClient::GetInstance().GetUserConfigParam(userId, authType, type, value);
+    EXPECT_EQ(ret, GENERAL_ERROR);
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientGetUserConfigParam002, TestSize.Level0)
+{
+    int32_t userId = 100;
+    AuthType authType = PIN;
+    GlobalConfigType type = GlobalConfigType::PIN_EXPIRED_PERIOD;
+    GlobalConfigValue value = {};
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, GetUserConfigParam(_, _, _, _, _)).Times(1);
+    ON_CALL(*service, GetUserConfigParam)
+        .WillByDefault([](int32_t userID, int32_t authType, int32_t type,
+            IpcGlobalConfigValue &ipcGlobalConfigValue, int32_t &funcResult) {
+            funcResult = SUCCESS;
+            return SUCCESS;
+        });
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    int32_t ret = UserAuthClient::GetInstance().GetUserConfigParam(userId, authType, type, value);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientGetUserRecognitionResult001, TestSize.Level0)
+{
+    UserRecognitionResult result = {};
+    IpcClientUtils::ResetObj();
+    int32_t ret = UserAuthClient::GetInstance().GetUserRecognitionResult(result);
+    EXPECT_EQ(ret, GENERAL_ERROR);
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientGetUserRecognitionResult002, TestSize.Level0)
+{
+    UserRecognitionResult result = {};
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, GetUserRecognitionResult(_, _)).Times(1);
+    ON_CALL(*service, GetUserRecognitionResult)
+        .WillByDefault([](IpcUserRecognitionResult &ipcResult, int32_t &funcResult) {
+            funcResult = SUCCESS;
+            return SUCCESS;
+        });
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    int32_t ret = UserAuthClient::GetInstance().GetUserRecognitionResult(result);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientRegisterUserRecognitionEventListener001, TestSize.Level0)
+{
+    int32_t ret = UserAuthClientImpl::Instance().RegisterUserRecognitionEventListener(nullptr);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+
+    auto listener = Common::MakeShared<MockUserRecognitionEventListener>();
+    EXPECT_NE(listener, nullptr);
+    IpcClientUtils::ResetObj();
+    ret = UserAuthClientImpl::Instance().RegisterUserRecognitionEventListener(listener);
+    EXPECT_EQ(ret, GENERAL_ERROR);
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientRegisterUserRecognitionEventListener002, TestSize.Level0)
+{
+    auto &impl = UserAuthClientImpl::Instance();
+    impl.recognitionServiceStatusSubscribed_ = true; // bypass samgr subscription in UT
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, RegisterUserRecognitionEventListener(_)).Times(1);
+    ON_CALL(*service, RegisterUserRecognitionEventListener).WillByDefault(Return(SUCCESS));
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    auto listener = Common::MakeShared<MockUserRecognitionEventListener>();
+    EXPECT_NE(listener, nullptr);
+    int32_t ret = impl.RegisterUserRecognitionEventListener(listener);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+    // reset singleton state to avoid leaking across tests
+    impl.recognitionService_ = nullptr;
+    impl.recognitionServiceStatusSubscribed_ = false;
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientUnregisterUserRecognitionEventListener001, TestSize.Level0)
+{
+    int32_t ret = UserAuthClientImpl::Instance().UnregisterUserRecognitionEventListener(nullptr);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+
+    auto listener = Common::MakeShared<MockUserRecognitionEventListener>();
+    EXPECT_NE(listener, nullptr);
+    ret = UserAuthClientImpl::Instance().UnregisterUserRecognitionEventListener(listener);
+    EXPECT_EQ(ret, SUCCESS);
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientUnregisterUserRecognitionEventListener002, TestSize.Level0)
+{
+    auto &impl = UserAuthClientImpl::Instance();
+    impl.recognitionServiceStatusSubscribed_ = true; // bypass samgr subscription in UT
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, RegisterUserRecognitionEventListener(_)).Times(1);
+    ON_CALL(*service, RegisterUserRecognitionEventListener).WillByDefault(Return(SUCCESS));
+    EXPECT_CALL(*service, UnregisterUserRecognitionEventListener(_)).Times(1);
+    ON_CALL(*service, UnregisterUserRecognitionEventListener).WillByDefault(Return(SUCCESS));
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr, 2);
+    auto listener = Common::MakeShared<MockUserRecognitionEventListener>();
+    EXPECT_NE(listener, nullptr);
+    int32_t ret = impl.RegisterUserRecognitionEventListener(listener);
+    EXPECT_EQ(ret, SUCCESS);
+    ret = impl.UnregisterUserRecognitionEventListener(listener);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+    // reset singleton state to avoid leaking across tests
+    impl.recognitionServiceStatusSubscribed_ = false;
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientPrepareRemoteAuth001, TestSize.Level0)
+{
+    const std::string networkId = "123";
+    auto callback = Common::MakeShared<MockPrepareRemoteAuthCallback>();
+    EXPECT_NE(callback, nullptr);
+    EXPECT_CALL(*callback, OnResult(_)).Times(1);
+    IpcClientUtils::ResetObj();
+    int32_t ret = UserAuthClientImpl::GetInstance().PrepareRemoteAuth(networkId, callback);
+    EXPECT_EQ(ret, GENERAL_ERROR);
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientPrepareRemoteAuth002, TestSize.Level0)
+{
+    const std::string networkId = "123";
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, PrepareRemoteAuth(_, _)).Times(1);
+    ON_CALL(*service, PrepareRemoteAuth).WillByDefault(Return(SUCCESS));
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    auto callback = Common::MakeShared<MockPrepareRemoteAuthCallback>();
+    EXPECT_NE(callback, nullptr);
+    int32_t ret = UserAuthClientImpl::GetInstance().PrepareRemoteAuth(networkId, callback);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
