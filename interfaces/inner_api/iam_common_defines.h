@@ -239,6 +239,8 @@ enum ResultCode : int32_t {
     NO_VALID_CREDENTIAL = 18,
     /** The result is fail, because the capability is not supported. */
     CAPABILITY_NOT_SUPPORTED = 19,
+    /** The result is fail, because the pin is match history pin. */
+    HISTORY_PIN_MATCH = 20,
     /** The result is fail, because something wrong from system. */
     SYSTEM_ERROR_CODE_BEGIN = 1000,
     /** The result is fail, because something wrong from ipc. */

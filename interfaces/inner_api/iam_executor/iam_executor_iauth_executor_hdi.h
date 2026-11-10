@@ -137,6 +137,16 @@ public:
     virtual ResultCode Delete(const std::vector<uint64_t> &templateIdList);
 
     /**
+     * @brief Delete with extra information.
+     *
+     * @param templateId Template ID to delete.
+     * @param extraInfo Extra information for delete, e.g. abandon flag.
+     * @return Return the result success or error code{@link ResultCode}.
+     */
+    virtual ResultCode DeleteExt(
+        const std::vector<uint64_t> &templateIdList, const std::vector<uint8_t> &extraInfo);
+
+    /**
      * @brief Send command.
      *
      * @param commandId Command ID.
