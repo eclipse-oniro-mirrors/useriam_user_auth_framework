@@ -218,6 +218,8 @@ public:
         ATTR_WIDGET_TITLE = 100096,
         /** Camera status, the value type is uint32_t. */
         ATTR_CAMERA_STATUS  = 100097,
+        /* Pin abandon flag, the value type is bool */
+        ATTR_ABANDON_FLAG = 100098,
     };
 
     /**

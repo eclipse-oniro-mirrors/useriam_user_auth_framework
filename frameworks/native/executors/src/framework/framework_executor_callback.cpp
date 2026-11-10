@@ -296,7 +296,15 @@ ResultCode FrameworkExecutorCallback::ProcessDeleteTemplateCommand(const Attribu
 
     templateIdList.push_back(templateId);
     IamHitraceHelper traceHelper("hdi Delete");
-    ResultCode ret = hdi->Delete(templateIdList);
+    bool abandonFlag = false;
+    bool hasAbandonFlag = properties.GetBoolValue(Attributes::ATTR_ABANDON_FLAG, abandonFlag);
+    ResultCode ret;
+    if (hasAbandonFlag) {
+        std::vector<uint8_t> extraInfo = { static_cast<uint8_t>(abandonFlag ? 1 : 0) };
+        ret = hdi->DeleteExt(templateIdList, extraInfo);
+    } else {
+        ret = hdi->Delete(templateIdList);
+    }
     if (ret == ResultCode::SUCCESS) {
         TemplateChangeTrace info = {};
         info.changeType = TRACE_DELETE_CREDENTIAL;

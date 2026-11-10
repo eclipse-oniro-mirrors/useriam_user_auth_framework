@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+
 #include "resource_node_utils.h"
 
 #include "iam_check.h"
@@ -35,7 +37,17 @@ int32_t ResourceNodeUtils::NotifyExecutorToDeleteTemplates(
         return INVALID_PARAMETERS;
     }
 
-    for (const auto &info : infos) {
+    std::vector<std::shared_ptr<CredentialInfoInterface>> sortedInfos = infos;
+    std::sort(sortedInfos.begin(), sortedInfos.end(),
+        [](const std::shared_ptr<CredentialInfoInterface> &a,
+            const std::shared_ptr<CredentialInfoInterface> &b) -> bool {
+            if (a == nullptr || b == nullptr) {
+                return false;
+            }
+            return a->GetAbandonFlag() > b->GetAbandonFlag();
+        });
+
+    for (const auto &info : sortedInfos) {
         if (info == nullptr) {
             IAM_LOGE("info is null");
             continue;
@@ -51,6 +63,7 @@ int32_t ResourceNodeUtils::NotifyExecutorToDeleteTemplates(
         properties.SetUint32Value(Attributes::ATTR_PROPERTY_MODE, PROPERTY_MODE_DEL);
         properties.SetUint64Value(Attributes::ATTR_TEMPLATE_ID, info->GetTemplateId());
         properties.SetStringValue(Attributes::ATTR_TEMPLATE_CHANGE_REASON, changeReasonTrace);
+        properties.SetBoolValue(Attributes::ATTR_ABANDON_FLAG, info->GetAbandonFlag());
         IamHitraceHelper traceHelper("NotifyExecutorToDeleteTemplates");
         int32_t ret = resourceNode->SetProperty(properties);
         if (ret != SUCCESS) {

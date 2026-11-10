@@ -47,6 +47,8 @@ public:
     MOCK_METHOD3(Identify, ResultCode(uint64_t scheduleId, const IdentifyParam &param,
                                const std::shared_ptr<UserAuth::IExecuteCallback> &callbackObj));
     MOCK_METHOD1(Delete, ResultCode(const std::vector<uint64_t> &templateIdList));
+    MOCK_METHOD2(DeleteExt, ResultCode(const std::vector<uint64_t> &templateIdList,
+        const std::vector<uint8_t> &extraInfo));
     MOCK_METHOD3(SendCommand, ResultCode(PropertyMode commandId, const std::vector<uint8_t> &extraInfo,
                                   const std::shared_ptr<UserAuth::IExecuteCallback> &callbackObj));
     MOCK_METHOD3(GetProperty, ResultCode (const std::vector<uint64_t> &templateIdList,

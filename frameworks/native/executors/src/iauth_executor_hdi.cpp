@@ -57,6 +57,13 @@ ResultCode IAuthExecutorHdi::Delete(const std::vector<uint64_t> &templateIdList)
     return GENERAL_ERROR;
 }
 
+ResultCode IAuthExecutorHdi::DeleteExt(const std::vector<uint64_t> &templateIdList,
+    const std::vector<uint8_t> &extraInfo)
+{
+    IAM_LOGE("method not implemented");
+    return GENERAL_ERROR;
+}
+
 ResultCode IAuthExecutorHdi::SendCommand(PropertyMode commandId, const std::vector<uint8_t> &extraInfo,
     const std::shared_ptr<UserAuth::IExecuteCallback> &callbackObj)
 {
