@@ -117,6 +117,8 @@ ohos_unittest("iam_services_core_test") {
     "ability_runtime:app_manager",
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "googletest:gmock",
     "hdf_core:libhdi",
     "hicollie:libhicollie",
@@ -127,13 +129,6 @@ ohos_unittest("iam_services_core_test") {
     "init:libbegetutil",
     "ipc:ipc_single",
   ]
-
-  if (!user_auth_framework_has_ext) {
-    external_deps += [
-      "drivers_interface_user_auth:libuser_auth_proxy_4.0",
-      "drivers_interface_user_auth:libuser_auth_proxy_4.1",
-    ]
-  }
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 

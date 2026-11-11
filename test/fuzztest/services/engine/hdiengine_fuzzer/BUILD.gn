@@ -13,7 +13,6 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
-import("../../../../../user_auth_framework.gni")
 
 ohos_fuzztest("HdiEngineFuzzTest") {
   branch_protector_ret = "pac_ret"
@@ -56,6 +55,8 @@ ohos_fuzztest("HdiEngineFuzzTest") {
   external_deps = [
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "eventhandler:libeventhandler",
     "hdf_core:libhdf_utils",
     "hdf_core:libhdi",
@@ -67,13 +68,6 @@ ohos_fuzztest("HdiEngineFuzzTest") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
-
-  if (!user_auth_framework_has_ext) {
-    external_deps += [
-      "drivers_interface_user_auth:libuser_auth_proxy_4.0",
-      "drivers_interface_user_auth:libuser_auth_proxy_4.1",
-    ]
-  }
 
   configs = [
     "../../../../../common:iam_log_config",

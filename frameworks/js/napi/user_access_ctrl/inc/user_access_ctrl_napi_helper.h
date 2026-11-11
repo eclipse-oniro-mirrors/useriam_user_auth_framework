@@ -24,7 +24,6 @@ namespace UserAccessCtrl {
 class UserAccessCtrlNapiHelper {
 public:
     static bool CheckAllowableDuration(uint64_t allowableDuration);
-    static int32_t GetResultCodeV16(int32_t result);
     static napi_status SetUint64Property(napi_env env, napi_value obj, const char *name, uint64_t value);
 
 private:

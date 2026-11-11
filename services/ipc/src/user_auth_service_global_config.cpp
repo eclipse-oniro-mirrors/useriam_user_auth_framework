@@ -150,8 +150,7 @@ int32_t UserAuthService::SetUserConfigParam(const IpcGlobalConfigParam &ipcUserC
     IAM_LOGI("start, GlobalConfigType is %{public}d, userIds size %{public}zu, authTypes size %{public}zu",
         ipcUserConfigParam.type, ipcUserConfigParam.userIds.size(), ipcUserConfigParam.authTypes.size());
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
-    IF_FALSE_LOGE_AND_RETURN_VAL(IpcCommon::GetDirectCallerType(*this) == Security::AccessToken::TOKEN_NATIVE ||
-        IpcCommon::CheckPermission(*this, IS_SYSTEM_APP), CHECK_SYSTEM_APP_FAILED);
+    IF_FALSE_LOGE_AND_RETURN_VAL(IpcCommon::IsSystemCaller(*this), CHECK_SYSTEM_APP_FAILED);
     IF_FALSE_LOGE_AND_RETURN_VAL(IpcCommon::CheckPermission(*this, USE_USER_ACCESS_MANAGER), CHECK_PERMISSION_FAILED);
     if (ipcUserConfigParam.userIds.size() != 1) {
         IAM_LOGE("userIds size should be 1, size=%{public}zu", ipcUserConfigParam.userIds.size());
@@ -195,8 +194,7 @@ int32_t UserAuthService::GetUserConfigParam(int32_t userId, int32_t authType, in
 {
     IAM_LOGI("start, userId=%{public}d, authType=%{public}d, type=%{public}d", userId, authType, type);
     Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
-    IF_FALSE_LOGE_AND_RETURN_VAL(IpcCommon::GetDirectCallerType(*this) == Security::AccessToken::TOKEN_NATIVE ||
-        IpcCommon::CheckPermission(*this, IS_SYSTEM_APP), CHECK_SYSTEM_APP_FAILED);
+    IF_FALSE_LOGE_AND_RETURN_VAL(IpcCommon::IsSystemCaller(*this), CHECK_SYSTEM_APP_FAILED);
     IF_FALSE_LOGE_AND_RETURN_VAL(IpcCommon::CheckPermission(*this, USE_USER_ACCESS_MANAGER), CHECK_PERMISSION_FAILED);
     funcResult = GetUserConfigParamInner(userId, authType, type, ipcGlobalConfigValue);
     return SUCCESS;

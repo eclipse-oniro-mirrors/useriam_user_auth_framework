@@ -117,6 +117,8 @@ bool AuthenticationImpl::GetAuthParam(EngAuthParamExt &param)
         .isOsAccountVerified = authPara_.isOsAccountVerified,
         .collectorUdid = collectorUdid_,
         .credentialIdList = authPara_.credentialIdList,
+        .additionalInfo = authPara_.additionalInfo,
+        .tokenSchedule = authPara_.tokenSchedule,
     };
     return true;
 }

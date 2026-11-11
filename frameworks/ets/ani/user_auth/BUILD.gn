@@ -62,6 +62,8 @@ taihe_shared_library("userauth_ani") {
     "ability_runtime:ani_base_context",
     "ability_runtime:app_context",
     "ability_runtime:ui_extension",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokenid_sdk",
     "ace_engine:ace_uicontent",
     "c_utils:utils",
     "hiappevent:hiappevent_innerapi",

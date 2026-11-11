@@ -93,4 +93,8 @@ interface OHOS.UserIam.UserAuth.IUserAuth {
     void UnregisterUserRecognitionEventListener([in] IUserRecognitionCallback listener);
 
     void CheckUserRecognitionCapability([out] int checkResult);
+
+    void RedeemScheduledAuthToken([in] unsigned char[] challenge,
+        [in] unsigned char[] scheduleToken,
+        [in] IVerifyTokenCallback verifyTokenCallback);
 }

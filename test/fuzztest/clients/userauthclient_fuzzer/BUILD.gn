@@ -13,19 +13,13 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
+import("../../../test_common.gni")
 
 ohos_fuzztest("UserAuthClientFuzzTest") {
   module_out_path = "user_auth_framework/user_auth/concurrent"
   fuzz_config_file = "../userauthclient_fuzzer"
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-    "-Dprivate=public",
-    "-Dprotected=public",
-  ]
+  cflags = userauth_test_fuzz_cflags
 
   include_dirs = [
     "../../../../interfaces/inner_api",
@@ -37,29 +31,14 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
     "../../../../common/logs",
   ]
 
-  sources = [
-    "../../../../frameworks/native/client/src/auth_message_impl.cpp",
-    "../../../../frameworks/native/client/src/co_auth_client_impl.cpp",
-    "../../../../frameworks/native/client/src/event_listener_callback_manager.cpp",
-    "../../../../frameworks/native/client/src/event_listener_callback_service.cpp",
-    "../../../../frameworks/native/client/src/executor_callback_service.cpp",
-    "../../../../frameworks/native/client/src/executor_messenger_client.cpp",
-    "../../../../frameworks/native/client/src/ipc_client_utils.cpp",
-    "../../../../frameworks/native/client/src/load_mode_client_util.cpp",
-    "../../../../frameworks/native/client/src/modal_callback_service.cpp",
-    "../../../../frameworks/native/client/src/remote_auth_callback_service.cpp",
-    "../../../../frameworks/native/client/src/set_widget_param_callback.cpp",
-    "../../../../frameworks/native/client/src/user_auth_callback_service.cpp",
-    "../../../../frameworks/native/client/src/user_auth_client_impl.cpp",
-    "../../../../frameworks/native/client/src/user_auth_modal_inner_callback.cpp",
-    "../../../../frameworks/native/client/src/user_auth_napi_client_impl.cpp",
-    "../../../../frameworks/native/client/src/user_idm_callback_service.cpp",
-    "../../../../frameworks/native/client/src/user_idm_client_impl.cpp",
-    "../../../../frameworks/native/client/src/user_recognition_callback_service.cpp",
-    "../../../../frameworks/native/client/src/widget_callback_service.cpp",
-    "../../dummy/mock_callback_manager_impl.cpp",
-    "user_auth_client_fuzzer.cpp",
-  ]
+  # callback_manager_impl is replaced by the dummy mock here.
+  sources = filter_exclude(userauth_test_client_sources,
+                           [ "*client/src/callback_manager_impl.cpp" ]) +
+            userauth_test_client_napi_sources +
+            [
+              "../../dummy/mock_callback_manager_impl.cpp",
+              "user_auth_client_fuzzer.cpp",
+            ]
 
   deps = [
     "../../../../frameworks/native/client:userauth_client",

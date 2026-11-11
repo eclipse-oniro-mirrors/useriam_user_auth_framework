@@ -163,6 +163,8 @@ struct EngAuthParamExt {
     bool isOsAccountVerified {};
     std::string collectorUdid;
     std::vector<uint64_t> credentialIdList;
+    std::string additionalInfo;
+    std::optional<TokenSchedule> tokenSchedule;
 };
 
 struct EngReuseUnlockParam {
@@ -235,6 +237,7 @@ struct EngUserAuthTokenPlain {
     uint64_t credentialId {};
     std::string collectorUdid;
     std::string verifierUdid;
+    std::optional<TokenSchedule> tokenSchedule;
 };
 
 struct EngCredentialOperateResult {

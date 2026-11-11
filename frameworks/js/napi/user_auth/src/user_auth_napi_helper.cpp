@@ -20,9 +20,12 @@
 
 #include "securec.h"
 
+#include "accesstoken_kit.h"
+#include "ipc_skeleton.h"
 #include "napi/native_api.h"
 #include "napi/native_common.h"
 #include "napi/native_node_api.h"
+#include "tokenid_kit.h"
 
 #include "iam_check.h"
 #include "iam_logger.h"
@@ -41,6 +44,20 @@ struct DeleteRefHolder {
     napi_env env {nullptr};
     napi_ref ref {nullptr};
 };
+} // namespace
+
+bool UserAuthNapiHelper::IsSystemApiCaller()
+{
+    uint64_t fullTokenId = IPCSkeleton::GetSelfTokenID();
+    Security::AccessToken::AccessTokenID tokenId =
+        static_cast<Security::AccessToken::AccessTokenID>(fullTokenId);
+    if (Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
+        Security::AccessToken::TOKEN_NATIVE) {
+        return true;
+    }
+    return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId) &&
+        Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
+        Security::AccessToken::TOKEN_HAP;
 }
 
 JsRefHolder::JsRefHolder(napi_env env, napi_value value)
@@ -348,6 +365,9 @@ napi_status UserAuthNapiHelper::GetUint8ArrayValue(napi_env env, napi_value valu
         return napi_generic_failure;
     }
     array.resize(length);
+    if (length == 0) {
+        return result;
+    }
     if (memcpy_s(array.data(), length, data, length) != EOK) {
         IAM_LOGE("memcpy_s fail");
         return napi_generic_failure;
@@ -515,6 +535,21 @@ napi_status UserAuthNapiHelper::SetInt32Property(napi_env env, napi_value obj, c
     return ret;
 }
 
+napi_status UserAuthNapiHelper::SetInt64Property(napi_env env, napi_value obj, const char *name, int64_t value)
+{
+    napi_value napiValue = nullptr;
+    napi_status ret = napi_create_int64(env, value, &napiValue);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_create_int64 failed %{public}d", ret);
+        return ret;
+    }
+    ret = napi_set_named_property(env, obj, name, napiValue);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_set_named_property failed %{public}d", ret);
+    }
+    return ret;
+}
+
 napi_status UserAuthNapiHelper::SetUint32Property(napi_env env, napi_value obj, const char *name, uint32_t value)
 {
     napi_value napiValue = nullptr;
@@ -667,7 +702,7 @@ bool UserAuthNapiHelper::ConvertSizeToUint32(size_t in, uint32_t &out)
     return true;
 }
 
-napi_status UserAuthNapiHelper::SetResultInfoProperty(napi_env env, napi_value obj, const ResultInfo &resultInfo)
+napi_status UserAuthNapiHelper::SetBasicResultInfo(napi_env env, napi_value obj, const ResultInfo &resultInfo)
 {
     napi_status ret = UserAuthNapiHelper::SetInt32Property(env, obj, "result", resultInfo.result);
     if (ret != napi_ok) {
@@ -697,7 +732,78 @@ napi_status UserAuthNapiHelper::SetResultInfoProperty(napi_env env, napi_value o
             return ret;
         }
     }
+    return napi_ok;
+}
+
+napi_status UserAuthNapiHelper::SetAuthStatusResultInfo(napi_env env, napi_value obj,
+    const ResultInfo &resultInfo)
+{
+    napi_status ret = napi_ok;
+    if (resultInfo.remainingAuthAttempts.has_value()) {
+        ret = UserAuthNapiHelper::SetInt32Property(env, obj, "remainingAuthAttempts",
+            resultInfo.remainingAuthAttempts.value());
+        if (ret != napi_ok) {
+            IAM_LOGE("SetInt32Property remainingAuthAttempts failed %{public}d", ret);
+            return ret;
+        }
+    }
+    if (resultInfo.lockoutDuration.has_value()) {
+        ret = UserAuthNapiHelper::SetInt32Property(env, obj, "lockoutDuration",
+            resultInfo.lockoutDuration.value());
+        if (ret != napi_ok) {
+            IAM_LOGE("SetInt32Property lockoutDuration failed %{public}d", ret);
+            return ret;
+        }
+    }
+    if (resultInfo.nextPhaseLockoutDuration.has_value()) {
+        ret = UserAuthNapiHelper::SetInt32Property(env, obj, "nextPhaseLockoutDuration",
+            resultInfo.nextPhaseLockoutDuration.value());
+        if (ret != napi_ok) {
+            IAM_LOGE("SetInt32Property nextPhaseLockoutDuration failed %{public}d", ret);
+        }
+    }
     return ret;
+}
+
+napi_status UserAuthNapiHelper::SetCredentialResultInfo(napi_env env, napi_value obj,
+    const ResultInfo &resultInfo)
+{
+    napi_status ret = napi_ok;
+    if (!resultInfo.credentialId.empty()) {
+        ret = UserAuthNapiHelper::SetUint8ArrayProperty(env, obj, "credentialId", resultInfo.credentialId);
+        if (ret != napi_ok) {
+            IAM_LOGE("SetUint8ArrayProperty credentialId failed %{public}d", ret);
+            return ret;
+        }
+    }
+    if (resultInfo.userId.has_value()) {
+        ret = UserAuthNapiHelper::SetInt32Property(env, obj, "userId", resultInfo.userId.value());
+        if (ret != napi_ok) {
+            IAM_LOGE("SetInt32Property userId failed %{public}d", ret);
+            return ret;
+        }
+    }
+    if (resultInfo.pinValidityPeriod.has_value()) {
+        ret = UserAuthNapiHelper::SetInt64Property(env, obj, "pinValidityPeriod",
+            resultInfo.pinValidityPeriod.value());
+        if (ret != napi_ok) {
+            IAM_LOGE("SetInt64Property pinValidityPeriod failed %{public}d", ret);
+        }
+    }
+    return ret;
+}
+
+napi_status UserAuthNapiHelper::SetResultInfoProperty(napi_env env, napi_value obj, const ResultInfo &resultInfo)
+{
+    napi_status ret = SetBasicResultInfo(env, obj, resultInfo);
+    if (ret != napi_ok) {
+        return ret;
+    }
+    ret = SetAuthStatusResultInfo(env, obj, resultInfo);
+    if (ret != napi_ok) {
+        return ret;
+    }
+    return SetCredentialResultInfo(env, obj, resultInfo);
 }
 } // namespace UserAuth
 } // namespace UserIam

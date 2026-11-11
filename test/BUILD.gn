@@ -13,7 +13,6 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
-import("../user_auth_framework.gni")
 
 group("iam_unittest") {
   testonly = true
@@ -22,13 +21,8 @@ group("iam_unittest") {
     "unittest/executors:iam_executors_test",
     "unittest/inner_api:iam_inner_api_test",
     "unittest/services:iam_services_test",
+    "unittest/services_core:iam_services_core_test",
   ]
-  if (!user_auth_framework_has_ext) {
-    deps += [
-      "unittest/services:iam_hdi_engine_test",
-      "unittest/services_core:iam_services_core_test",
-    ]
-  }
 }
 
 group("iam_fuzztest") {

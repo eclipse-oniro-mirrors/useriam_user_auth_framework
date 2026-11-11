@@ -44,6 +44,12 @@ public:
         userAuth::UserAuthResult &userAuthResult);
 
 private:
+    static UserAuthResultCode InitMandatoryAuthParam(userAuth::AuthParam const &authParam,
+        AuthParamInner &authParamInner);
+    static UserAuthResultCode InitOptionalAuthParam(userAuth::AuthParam const &authParam,
+        AuthParamInner &authParamInner);
+    static UserAuthResultCode FillAuthResult(int32_t result, const Attributes &extraInfo,
+        userAuth::UserAuthResult &userAuthResult);
     static UserAuthResultCode InitAuthType(userAuth::AuthParam const &authParam, AuthParamInner &authParamInner);
     static UserAuthResultCode InitAuthTrustLevel(userAuth::AuthParam const &authParam, AuthParamInner &authParamInner);
     static UserAuthResultCode InitReuseUnlockResult(userAuth::AuthParam const &authParam,
@@ -52,6 +58,13 @@ private:
     static UserAuthResultCode InitSkipLockedBiometricAuth(userAuth::AuthParam const &authParam,
         AuthParamInner &authParamInner);
     static UserAuthResultCode InitCredentialIdList(userAuth::AuthParam const &authParam,
+        AuthParamInner &authParamInner);
+    static UserAuthResultCode InitAuthIntent(userAuth::AuthParam const &authParam, AuthParamInner &authParamInner);
+    static UserAuthResultCode InitRemoteAuthOptions(userAuth::AuthParam const &authParam,
+        AuthParamInner &authParamInner);
+    static UserAuthResultCode InitAdditionalInfo(userAuth::AuthParam const &authParam,
+        AuthParamInner &authParamInner);
+    static UserAuthResultCode InitScheduledAuthTokenOptions(userAuth::AuthParam const &authParam,
         AuthParamInner &authParamInner);
     static UserAuthResultCode InitTitle(userAuth::WidgetParam const &widgetParam,
         SetWidgetParamClientCallback::WidgetParamExt &widgetParamExt);

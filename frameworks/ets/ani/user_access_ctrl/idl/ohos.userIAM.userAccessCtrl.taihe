@@ -15,7 +15,7 @@
 
 @!namespace("@ohos.userIAM.userAccessCtrl", "userAccessCtrl")
 
-from ohos.userIAM.userAuth.userAuth use AuthTrustLevel, UserAuthType;
+from ohos.userIAM.userAuth.userAuth use AuthTrustLevel, UserAuthType, TokenRedemptionSchedule;
 
 @!sts_inject("""
 static { loadLibraryWithPermissionCheck("useraccessctrl_ani.z", "@ohos.userIAM.userAccessCtrl"); }
@@ -24,7 +24,8 @@ static { loadLibraryWithPermissionCheck("useraccessctrl_ani.z", "@ohos.userIAM.u
 enum AuthTokenType : i32 {
     TOKEN_TYPE_LOCAL_AUTH = 0,
     TOKEN_TYPE_LOCAL_RESIGN = 1,
-    TOKEN_TYPE_COAUTH = 2
+    TOKEN_TYPE_COAUTH = 2,
+    TOKEN_TYPE_SCHEDULED_AUTH = 3
 }
 
 struct AuthToken {
@@ -37,9 +38,14 @@ struct AuthToken {
     secureUid: Optional<i64>;
     enrolledId: Optional<i64>;
     credentialId: Optional<i64>;
+    schedule: Optional<TokenRedemptionSchedule>;
 }
 
 function verifyAuthTokenSync(authToken: @typedarray Array<u8>, allowableDuration: i32): AuthToken;
 
 @promise
 function verifyAuthToken(authToken: @typedarray Array<u8>, allowableDuration: i32): AuthToken;
+
+@promise
+function redeemScheduledAuthToken(challenge: @typedarray Array<u8>,
+    scheduledAuthToken: @typedarray Array<u8>): @typedarray Array<u8>;

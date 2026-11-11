@@ -43,7 +43,8 @@ namespace {
     const char *PROPERTY_NAME_ON_RESULT = "onResult";
 }
 
-UserAuthInstanceV10::UserAuthInstanceV10(napi_env env) : callback_(Common::MakeShared<UserAuthCallbackV10>(env))
+UserAuthInstanceV10::UserAuthInstanceV10(napi_env env)
+    : callback_(Common::MakeShared<UserAuthCallbackV10>(env))
 {
     if (callback_ == nullptr) {
         IAM_LOGE("get null callback");
@@ -81,6 +82,12 @@ UserAuthResultCode UserAuthInstanceV10::Init(napi_env env, napi_callback_info in
     if (errCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("AuthParamInner type error, errorCode: %{public}d", errCode);
         return errCode;
+    }
+    if (authParam_.remoteAuthParam.has_value() || authParam_.tokenSchedule.has_value()) {
+        IAM_LOGE("remoteAuthOptions/scheduledAuthTokenOptions is not supported by getUserAuthInstance");
+        std::string msgStr =
+            "Parameter error. \"remoteAuthOptions\" and \"scheduledAuthTokenOptions\" are not supported.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::PARAM_VERIFIED_FAILED, msgStr);
     }
 
     errCode = UserAuthParamUtils::InitWidgetParam(env, argv[PARAM1], widgetParamExt_, context_, window_);

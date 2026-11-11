@@ -18,7 +18,8 @@
 #include "credential_info_impl.h"
 #include "delete_impl.h"
 #include "resource_node_pool.h"
-#include "mock_user_auth_engine.h"
+#include "hdi_type_aliases.h"
+#include "mock_iuser_auth_interface.h"
 #include "mock_resource_node.h"
 #include "mock_schedule_node_callback.h"
 
@@ -48,12 +49,12 @@ void DeleteImplTest::TearDownTestCase()
 
 void DeleteImplTest::SetUp()
 {
-    MockUserAuthEngine::Holder::GetInstance().Reset();
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
 void DeleteImplTest::TearDown()
 {
-    MockUserAuthEngine::Holder::GetInstance().Reset();
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(DeleteImplTest, AbandonHdiError, TestSize.Level0)
@@ -64,7 +65,7 @@ HWTEST_F(DeleteImplTest, AbandonHdiError, TestSize.Level0)
     para.credentialId = 1;
     para.tokenId = 1;
     para.token = testAuthToken;
-    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, DeleteCredential(_, _, _, _)).WillRepeatedly(Return(1));
 
     auto abandon = std::make_shared<DeleteImpl>(para);
@@ -83,7 +84,7 @@ HWTEST_F(DeleteImplTest, AbandonHdiEmpty, TestSize.Level0)
     para.tokenId = 1;
     para.token = testAuthToken;
 
-    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, DeleteCredential(_, _, _, _)).WillRepeatedly(Return(0));
 
     auto abandon = std::make_shared<DeleteImpl>(para);
@@ -102,7 +103,7 @@ HWTEST_F(DeleteImplTest, AbandonUpdateHdiError, TestSize.Level0)
     para.tokenId = 1;
     para.token = testAuthToken;
 
-    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, UpdateAbandonResult(para.userId, _, _)).WillRepeatedly(Return(1));
 
     auto abandon = std::make_shared<DeleteImpl>(para);
@@ -120,7 +121,7 @@ HWTEST_F(DeleteImplTest, AbandonUpdateHdiSuccessful_001, TestSize.Level0)
     para.tokenId = 1;
     para.token = testAuthToken;
     std::vector<uint8_t> scheduleResult = {1, 2, 3};
-    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, UpdateAbandonResult(para.userId, _, _))
         .WillRepeatedly(
             [](int32_t userId, const std::vector<uint8_t> &scheduleResult,
@@ -134,7 +135,7 @@ HWTEST_F(DeleteImplTest, AbandonUpdateHdiSuccessful_001, TestSize.Level0)
                     .executorSensorHint = 6,
                 };
                 infos.push_back(info);
-                return SUCCESS;
+                return HDF_SUCCESS;
             }
         );
 
@@ -160,7 +161,7 @@ HWTEST_F(DeleteImplTest, AbandonUpdateHdiSuccessful_002, TestSize.Level0)
     para.credentialId = 1;
     para.tokenId = 1;
     para.token = testAuthToken;
-    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, UpdateAbandonResult(_, _, _)).WillRepeatedly(Return(0));
     auto abandon = std::make_shared<DeleteImpl>(para);
 
@@ -179,7 +180,7 @@ HWTEST_F(DeleteImplTest, DeleteImplTestStart_001, TestSize.Level0)
     para.token = testAuthToken;
     constexpr uint64_t executorIndex = 60;
 
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, DeleteCredential(_, _, _, _))
         .WillRepeatedly(
@@ -195,7 +196,7 @@ HWTEST_F(DeleteImplTest, DeleteImplTestStart_001, TestSize.Level0)
                 operateResult.scheduleInfo.scheduleId = 20;
                 operateResult.scheduleInfo.scheduleMode = HdiScheduleMode::ABANDON;
                 operateResult.scheduleInfo.templateIds.push_back(30);
-                return SUCCESS;
+                return HDF_SUCCESS;
             }
         );
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(executorIndex, FACE, ALL_IN_ONE);
@@ -221,7 +222,7 @@ HWTEST_F(DeleteImplTest, DeleteImplTestStart_002, TestSize.Level0)
     para.credentialId = 1;
     para.tokenId = 1;
     para.token = testAuthToken;
-    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, DeleteCredential(_, _, _, _)).WillRepeatedly(Return(1));
     auto abandon = std::make_shared<DeleteImpl>(para);
     std::vector<std::shared_ptr<ScheduleNode>> scheduleList;

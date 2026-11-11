@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include "attributes.h"
 #include "auth_common.h"
 #include "user_auth_client_defines.h"
 
@@ -29,7 +30,14 @@ class UserAuthHelper {
 public:
     static bool CheckUserAuthType(int32_t authType);
     static bool CheckAuthTrustLevel(uint32_t authTrustLevel);
+    static bool CheckAuthTokenParam(const std::vector<uint8_t> &authToken);
+    static bool CheckChallengeParam(const std::vector<uint8_t> &challenge);
+    static int32_t CheckTokenSchedule(const std::optional<TokenSchedule> &schedule);
+    static bool SetTokenScheduleAttr(const std::optional<TokenSchedule> &schedule, Attributes &extraInfo);
+    static bool GetTokenScheduleAttr(const Attributes &extraInfo, TokenSchedule &schedule);
     static int32_t GetResultCodeV10(int32_t result);
+    static UserAuthResultCode GetResultCodeV16(int32_t result);
+    static UserAuthResultCode GetResultCodeV26(int32_t result);
     static int32_t GetResultCodeV20(int32_t result);
     static int32_t GetResultCodeV21(int32_t result);
     static bool CheckReuseUnlockResult(ReuseUnlockResult reuseUnlockResult);

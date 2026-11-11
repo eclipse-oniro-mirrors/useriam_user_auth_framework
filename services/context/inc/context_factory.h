@@ -68,6 +68,7 @@ public:
         std::vector<uint64_t> credentialIdList {};
         std::string remoteCallerName {""};
         uint32_t callerPermissions {0};
+        std::optional<TokenSchedule> tokenSchedule;
     };
 
     struct SudoAuthContextPara {
@@ -81,6 +82,7 @@ public:
         std::string additionalInfo {""};
         bool isOsAccountVerified {false};
         bool needSubscribeAppState {true};
+        std::optional<TokenSchedule> tokenSchedule;
     };
 
     static std::shared_ptr<Context> CreateSimpleAuthContext(const Authentication::AuthenticationPara &para,

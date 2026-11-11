@@ -33,19 +33,29 @@ napi_value VerifyAuthToken(napi_env env, napi_callback_info info)
     return UserAccessCtrlInstanceV16::VerifyAuthToken(env, info);
 }
 
+napi_value RedeemScheduledAuthToken(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    return UserAccessCtrlInstanceV16::RedeemScheduledAuthToken(env, info);
+}
+
 napi_value AuthTokenTypeConstructor(napi_env env)
 {
     napi_value authTokenType = nullptr;
     napi_value tokenTypeLocalAuth = nullptr;
     napi_value tokenTypeLocalResign = nullptr;
     napi_value tokenTypeLocalCoauth = nullptr;
+    napi_value tokenTypeScheduledAuth = nullptr;
     NAPI_CALL(env, napi_create_object(env, &authTokenType));
     NAPI_CALL(env, napi_create_int32(env, AuthTokenType::TOKEN_TYPE_LOCAL_AUTH, &tokenTypeLocalAuth));
     NAPI_CALL(env, napi_create_int32(env, AuthTokenType::TOKEN_TYPE_LOCAL_RESIGN, &tokenTypeLocalResign));
     NAPI_CALL(env, napi_create_int32(env, AuthTokenType::TOKEN_TYPE_LOCAL_COAUTH, &tokenTypeLocalCoauth));
+    NAPI_CALL(env, napi_create_int32(env, AuthTokenType::TOKEN_TYPE_SCHEDULED_AUTH, &tokenTypeScheduledAuth));
     NAPI_CALL(env, napi_set_named_property(env, authTokenType, "TOKEN_TYPE_LOCAL_AUTH", tokenTypeLocalAuth));
     NAPI_CALL(env, napi_set_named_property(env, authTokenType, "TOKEN_TYPE_LOCAL_RESIGN", tokenTypeLocalResign));
     NAPI_CALL(env, napi_set_named_property(env, authTokenType, "TOKEN_TYPE_LOCAL_COAUTH", tokenTypeLocalCoauth));
+    NAPI_CALL(env, napi_set_named_property(env, authTokenType,
+        "TOKEN_TYPE_SCHEDULED_AUTH", tokenTypeScheduledAuth));
     return authTokenType;
 }
 
@@ -55,6 +65,7 @@ napi_value UserAccessCtrlInit(napi_env env, napi_value exports)
     napi_status status;
     napi_property_descriptor exportFuncs[] = {
         DECLARE_NAPI_FUNCTION("verifyAuthToken", UserAccessCtrl::VerifyAuthToken),
+        DECLARE_NAPI_FUNCTION("redeemScheduledAuthToken", UserAccessCtrl::RedeemScheduledAuthToken),
     };
     status = napi_define_properties(env, exports,
         sizeof(exportFuncs) / sizeof(napi_property_descriptor), exportFuncs);
