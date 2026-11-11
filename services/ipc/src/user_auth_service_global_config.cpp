@@ -178,7 +178,8 @@ int32_t UserAuthService::GetUserConfigParamInner(int32_t userId, int32_t authTyp
 
     switch (static_cast<GlobalConfigType>(type)) {
         case GlobalConfigType::PIN_EXPIRED_PERIOD:
-            ipcGlobalConfigValue.pinExpiredPeriod = engConfigValue.pinExpiredPeriod;
+            ipcGlobalConfigValue.pinExpiredPeriod = static_cast<uint64_t>(engConfigValue.pinExpiredPeriod < 0 ?
+                0 : engConfigValue.pinExpiredPeriod);
             break;
         case GlobalConfigType::DISABLE_PIN_DELETION:
             ipcGlobalConfigValue.disablePinDeletion = engConfigValue.disablePinDeletion;
