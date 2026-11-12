@@ -81,11 +81,11 @@ std::string BuildCloneInfoJson(int32_t userId, const std::string &udid, const st
     return arr.dump();
 }
 
-// Build a udid string of DEVICE_UDID_LEN chars.
+// Build a udid string of deviceUdidLen chars.
 std::string BuildUdidString()
 {
-    constexpr uint32_t DEVICE_UDID_LEN = 64;
-    return std::string(DEVICE_UDID_LEN, 'a');
+    constexpr uint32_t deviceUdidLen = 64;
+    return std::string(deviceUdidLen, 'a');
 }
 
 // Write a vector<uint8_t> into a tmpfile and return its fd.
