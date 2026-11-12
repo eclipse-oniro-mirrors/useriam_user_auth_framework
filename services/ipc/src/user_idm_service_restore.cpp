@@ -420,11 +420,11 @@ int32_t UserIdmService::ReadCloneDataFromFile(MessageParcel &data, std::vector<u
     UniqueFd fd(data.ReadFileDescriptor());
     struct stat st = {};
     if (fstat(fd.Get(), &st) != 0 || st.st_size <= 0) {
-        IAM_LOGE("fstat failed, errno: %{public}d, st_size:%{public}ld", errno, st.st_size);
+        IAM_LOGE("fstat failed, errno: %{public}d, st_size:%{public}lld", errno, st.st_size);
         return GENERAL_ERROR;
     }
     if (st.st_size > UINT16_MAX) {
-        IAM_LOGE("clone data size exceeds UINT16_MAX, st_size:%{public}ld", st.st_size);
+        IAM_LOGE("clone data size exceeds UINT16_MAX, st_size:%{public}lld", st.st_size);
         return GENERAL_ERROR;
     }
     if (lseek(fd.Get(), 0, SEEK_SET) != 0) {
