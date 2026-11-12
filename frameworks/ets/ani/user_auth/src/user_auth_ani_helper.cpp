@@ -116,13 +116,21 @@ bool UserAuthAniHelper::IsSystemApiCaller()
 
 UserAuthResultCode UserAuthAniHelper::ThrowBusinessError(UserAuthResultCode error)
 {
-    std::string msgStr;
+    return ThrowBusinessError(error, "");
+}
+
+UserAuthResultCode UserAuthAniHelper::ThrowBusinessError(UserAuthResultCode error, const std::string &errorMsg)
+{
+    std::string msgStr = errorMsg;
     auto res = g_resultV92Str.find(error);
     if (res == g_resultV92Str.end()) {
         IAM_LOGE("result %{public}d not found", static_cast<int32_t>(error));
         error = UserAuthResultCode::GENERAL_ERROR;
+        msgStr = "";
     }
-    msgStr = g_resultV92Str.at(error);
+    if (msgStr.empty()) {
+        msgStr = g_resultV92Str.at(error);
+    }
     IAM_LOGI("ThrowBusinessError, errorCode: %{public}d, errmsg: %{public}s", error, msgStr.c_str());
     taihe::set_business_error(static_cast<int32_t>(error), msgStr);
     return error;

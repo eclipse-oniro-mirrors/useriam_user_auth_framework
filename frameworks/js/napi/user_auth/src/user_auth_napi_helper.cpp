@@ -219,7 +219,7 @@ napi_value UserAuthNapiHelper::GenerateErrorMsg(napi_env env, UserAuthResultCode
         msgStr = g_resultV92Str.at(UserAuthResultCode::GENERAL_ERROR);
         NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR), &code));
     } else {
-        msgStr = errorMsg;
+        msgStr = errorMsg.empty() ? res->second : errorMsg;
         NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(result), &code));
     }
     IAM_LOGI("error msg %{public}s", msgStr.c_str());
@@ -237,6 +237,10 @@ napi_value UserAuthNapiHelper::GenerateErrorMsg(napi_env env, UserAuthResultCode
 UserAuthResultCode UserAuthNapiHelper::ThrowErrorMsg(napi_env env, UserAuthResultCode errorCode, std::string errorMsg)
 {
     napi_throw(env, UserAuthNapiHelper::GenerateErrorMsg(env, errorCode, errorMsg));
+    if (g_resultV92Str.find(errorCode) == g_resultV92Str.end()) {
+        IAM_LOGE("result %{public}d not found, return general error", static_cast<int32_t>(errorCode));
+        return UserAuthResultCode::GENERAL_ERROR;
+    }
     return errorCode;
 }
 

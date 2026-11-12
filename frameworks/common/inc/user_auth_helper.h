@@ -32,7 +32,9 @@ public:
     static bool CheckAuthTrustLevel(uint32_t authTrustLevel);
     static bool CheckAuthTokenParam(const std::vector<uint8_t> &authToken);
     static bool CheckChallengeParam(const std::vector<uint8_t> &challenge);
+    static int32_t CheckTokenSchedule(const std::optional<TokenSchedule> &schedule, std::string &errorDesc);
     static int32_t CheckTokenSchedule(const std::optional<TokenSchedule> &schedule);
+    static std::string TokenScheduleToString(const std::optional<TokenSchedule> &schedule);
     static bool SetTokenScheduleAttr(const std::optional<TokenSchedule> &schedule, Attributes &extraInfo);
     static bool GetTokenScheduleAttr(const Attributes &extraInfo, TokenSchedule &schedule);
     static int32_t GetResultCodeV10(int32_t result);

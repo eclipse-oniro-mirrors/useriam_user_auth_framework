@@ -214,7 +214,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAcceptsTokenSchedule, T
     auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     param.tokenScheduleValidStartTime = now;
-    param.tokenScheduleValidEndTime = now + 3600 * 1000; // 1h span, within MAX_TOKEN_SCHEDULE_SPAN_MS
+    param.tokenScheduleValidEndTime = now + 60 * 1000; // 1min span, within the single-window 10min cap
 
     IpcRemoteAuthParam ipcRemoteAuthParam = {};
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -264,7 +264,9 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthDialogBranch, TestSize.
     IpcRemoteAuthParam ipcRemoteAuthParam = {};
     sptr<IIamCallback> callbackInterface = testCallback;
     uint64_t contextId = 0;
-    int32_t ret = service.AuthUser(MakeSudoIpcParam("last chance"), ipcRemoteAuthParam, callbackInterface, contextId);
+    // additionalInfo is a JSON envelope; ResolveWidgetTitle extracts its "title" field
+    int32_t ret = service.AuthUser(MakeSudoIpcParam(R"({"title":"last chance"})"), ipcRemoteAuthParam,
+        callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
     EXPECT_NE(contextId, 0);
     DrainSerialThread();
@@ -275,7 +277,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthDialogBranch, TestSize.
     EXPECT_EQ(sudoContext->GetContextType(), SUDO_AUTH_CONTEXT);
     EXPECT_EQ(sudoContext->GetAuthIntent(), AuthIntent::SUDO_PIN_AUTH);
 
-    // the caller's additionalInfo is the user-visible title of the warning dialog
+    // the dialog title comes from the "title" field of the caller's additionalInfo envelope
     auto widgetChildren = ContextPool::Instance().Select(WIDGET_AUTH_CONTEXT);
     ASSERT_EQ(widgetChildren.size(), 1UL);
     auto dialogChild = std::static_pointer_cast<WidgetContext>(widgetChildren.front().lock());

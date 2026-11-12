@@ -146,7 +146,8 @@ std::string GetAuthParamStr(const AuthParamInner &authParam, std::optional<Remot
 {
     std::ostringstream authParamString;
     authParamString << "userId:" << authParam.userId << " authType:" << authParam.authType
-                    << " authIntent:" << authParam.authIntent << " atl:" << authParam.authTrustLevel;
+                    << " authIntent:" << authParam.authIntent << " atl:" << authParam.authTrustLevel
+                    << " tokenSchedule:" << UserAuthHelper::TokenScheduleToString(authParam.tokenSchedule);
     if (remoteAuthParam.has_value()) {
         const uint32_t networkIdPrintLen = 4;
         const uint32_t tokenIdMinLen = 2;
@@ -845,7 +846,8 @@ int32_t UserAuthService::StartSudoAuthUser(const AuthParamInner &authParam,
 {
     Attributes extraInfo;
     if (!IpcCommon::IsSystemCaller(*this)) {
-        IAM_LOGE("sudo auth is only allowed for system app or SA caller");
+        IAM_LOGE("sudo auth is only allowed for system app or SA caller, callerType:%{public}d",
+            IpcCommon::GetDirectCallerType(*this));
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser sudo caller check fail");
         contextCallback->OnResult(CHECK_PERMISSION_FAILED, extraInfo);
         return CHECK_PERMISSION_FAILED;
