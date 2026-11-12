@@ -126,7 +126,7 @@ void FillFuzzExecutorRegisterInfo(Parcel &parcel, IpcExecutorRegisterInfo &execu
     IAM_LOGI("FillFuzzExecutorRegisterInfo success");
 }
 
-std::shared_ptr<CoAuthService> g_coAuthService = CoAuthService::GetInstance();
+sptr<CoAuthService> g_coAuthService = CoAuthService::GetInstance();
 sptr<ExecutorMessengerService> executorMessengerService = ExecutorMessengerService::GetInstance();
 
 void FuzzRegister(Parcel &parcel)
@@ -151,9 +151,6 @@ void FuzzOther(Parcel &parcel)
     if (g_coAuthService == nullptr) {
         return;
     }
-    g_coAuthService->SetIsReady(true);
-    g_coAuthService->SetAccessTokenReady(true);
-    g_coAuthService->OnEngineReady();
 
     auto callback = Common::MakeShared<CoAuthServiceFuzzer>(parcel.ReadInt32(), parcel.ReadInt32(),
         parcel.ReadInt32(), parcel.ReadInt32(), parcel.ReadInt32());
@@ -212,21 +209,6 @@ void FuzzDump(Parcel &parcel)
     IAM_LOGI("FuzzDump end");
 }
 
-void FuzzNotifyFwkReady(Parcel &parcel)
-{
-    IAM_LOGI("FuzzNotifyFwkReady begin");
-    g_coAuthService->NotifyFwkReady();
-    IAM_LOGI("FuzzNotifyFwkReady end");
-}
-
-void FuzzUnRegisterAccessTokenListener(Parcel &parcel)
-{
-    IAM_LOGI("FuzzNotifyFwkReady begin");
-    g_coAuthService->RegisterAccessTokenListener();
-    g_coAuthService->UnRegisterAccessTokenListener();
-    IAM_LOGI("FuzzNotifyFwkReady end");
-}
-
 void FuzzInitExecutorRegisterInfo(Parcel &parcel)
 {
     IAM_LOGI("FuzzInitExecutorRegisterInfo begin");
@@ -240,8 +222,6 @@ void FuzzInitExecutorRegisterInfo(Parcel &parcel)
 void FuzzProcExecutorRegisterSuccess(Parcel &parcel)
 {
     IAM_LOGI("FuzzProcExecutorRegisterSuccess begin");
-    g_coAuthService->SetIsReady(parcel.ReadBool());
-    g_coAuthService->SetAccessTokenReady(parcel.ReadBool());
     bool addPerm = parcel.ReadBool();
     if (addPerm) {
         IpcCommon::AddPermission(ACCESS_AUTH_RESPOOL);
@@ -288,8 +268,6 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzFinish,
     FuzzDump,
     FuzzOther,
-    FuzzNotifyFwkReady,
-    FuzzUnRegisterAccessTokenListener,
     FuzzInitExecutorRegisterInfo,
     FuzzCallbackEnter,
     FuzzCallbackExit,

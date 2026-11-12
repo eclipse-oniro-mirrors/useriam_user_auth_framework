@@ -49,8 +49,34 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-REGISTER_SYSTEM_ABILITY_BY_ID(UserIdmService, SUBSYS_USERIAM_SYS_ABILITY_USERIDM, true);
+// instance_ must be defined before REGISTER_RESULT. sptr's default constructor is
+// not constexpr, so instance_ undergoes dynamic initialization (Phase 2) at this
+// point. If REGISTER_RESULT (which calls GetInstance) were defined earlier, its
+// dynamic initialization would run first, GetInstance would assign instance_, and
+// then instance_'s constructor would overwrite refs_ back to nullptr — leaking the
+// reference and causing a second instance to be created on the next GetInstance call.
+sptr<UserIdmService> UserIdmService::instance_;
+
+namespace {
 constexpr int32_t USERIAM_IPC_THREAD_NUM = 4;
+const bool REGISTER_RESULT = SystemAbility::MakeAndRegisterAbility(UserIdmService::GetInstance().GetRefPtr());
+} // namespace
+
+sptr<UserIdmService> UserIdmService::GetInstance()
+{
+    static std::recursive_mutex mutex;
+    if (instance_ == nullptr) {
+        std::lock_guard<std::recursive_mutex> guard(mutex);
+        if (instance_ == nullptr) {
+            instance_ = sptr<UserIdmService>::MakeSptr(SUBSYS_USERIAM_SYS_ABILITY_USERIDM, true);
+            if (instance_ == nullptr) {
+                IAM_LOGE("make sptr failed");
+            }
+        }
+    }
+    return instance_;
+}
+
 UserIdmService::UserIdmService(int32_t systemAbilityId, bool runOnCreate)
     : SystemAbility(systemAbilityId, runOnCreate), UserIdmStub(true)
 {
@@ -60,9 +86,6 @@ void UserIdmService::OnStart()
 {
     IAM_LOGI("Sa start UserIdmService");
     IPCSkeleton::SetMaxWorkThreadNum(USERIAM_IPC_THREAD_NUM);
-    if (!Publish(this)) {
-        IAM_LOGE("failed to publish service");
-    }
     ServiceInitManager::GetInstance().OnIdmServiceStart();
 }
 
@@ -70,6 +93,14 @@ void UserIdmService::OnStop()
 {
     IAM_LOGI("Sa stop UserIdmService");
     ServiceInitManager::GetInstance().OnIdmServiceStop();
+}
+
+void UserIdmService::PublishSelf()
+{
+    IAM_LOGI("publish UserIdmService");
+    if (!Publish(this)) {
+        IAM_LOGE("Failed to publish service");
+    }
 }
 
 std::string UserIdmService::GetSessionInfoMasked(std::vector<uint8_t> &challenge)

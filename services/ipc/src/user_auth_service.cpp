@@ -55,6 +55,14 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+// instance_ must be defined before REGISTER_RESULT. sptr's default constructor is
+// not constexpr, so instance_ undergoes dynamic initialization (Phase 2) at this
+// point. If REGISTER_RESULT (which calls GetInstance) were defined earlier, its
+// dynamic initialization would run first, GetInstance would assign instance_, and
+// then instance_'s constructor would overwrite refs_ back to nullptr — leaking the
+// reference and causing a second instance to be created on the next GetInstance call.
+sptr<UserAuthService> UserAuthService::instance_;
+
 namespace {
 const int32_t MINIMUM_VERSION = 0;
 const int32_t CURRENT_VERSION = 1;
@@ -108,20 +116,18 @@ int32_t NotifyAuthFail(const std::shared_ptr<ContextCallback> &contextCallback, 
     return resultCode;
 }
 
-const bool REGISTER_RESULT = SystemAbility::MakeAndRegisterAbility(UserAuthService::GetInstance().get());
+const bool REGISTER_RESULT = SystemAbility::MakeAndRegisterAbility(UserAuthService::GetInstance().GetRefPtr());
 } // namespace
 
-std::mutex UserAuthService::mutex_;
-std::shared_ptr<UserAuthService> UserAuthService::instance_ = nullptr;
-
-std::shared_ptr<UserAuthService> UserAuthService::GetInstance()
+sptr<UserAuthService> UserAuthService::GetInstance()
 {
+    static std::recursive_mutex mutex;
     if (instance_ == nullptr) {
-        std::lock_guard<std::mutex> guard(mutex_);
+        std::lock_guard<std::recursive_mutex> guard(mutex);
         if (instance_ == nullptr) {
-            instance_ = Common::MakeShared<UserAuthService>();
+            instance_ = sptr<UserAuthService>::MakeSptr();
             if (instance_ == nullptr) {
-                IAM_LOGE("make share failed");
+                IAM_LOGE("make sptr failed");
             }
         }
     }
@@ -136,9 +142,6 @@ void UserAuthService::OnStart()
 {
     IAM_LOGI("Sa start UserAuthService");
     IPCSkeleton::SetMaxWorkThreadNum(USERIAM_IPC_THREAD_NUM);
-    if (!Publish(this)) {
-        IAM_LOGE("failed to publish service");
-    }
     ServiceInitManager::GetInstance().OnUserAuthServiceStart();
 }
 
@@ -146,6 +149,14 @@ void UserAuthService::OnStop()
 {
     IAM_LOGI("Sa stop UserAuthService");
     ServiceInitManager::GetInstance().OnUserAuthServiceStop();
+}
+
+void UserAuthService::PublishSelf()
+{
+    IAM_LOGI("publish UserAuthService");
+    if (!Publish(this)) {
+        IAM_LOGE("Failed to publish service");
+    }
 }
 
 bool UserAuthService::CheckAuthTrustLevel(AuthTrustLevel authTrustLevel, int32_t authType)

@@ -44,6 +44,7 @@ public:
     DECLARE_SYSTEM_ABILITY(UserIdmService);
     explicit UserIdmService(int32_t systemAbilityId, bool runOnCreate = false);
     ~UserIdmService() override = default;
+    static sptr<UserIdmService> GetInstance();
     int Dump(int fd, const std::vector<std::u16string> &args) override;
     int32_t OpenSession(int32_t userId, std::vector<uint8_t> &challenge) override;
     int32_t CloseSession(int32_t userId) override;
@@ -71,6 +72,7 @@ public:
     int32_t GetLatestEnrollmentTime(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime) override;
     int32_t CallbackEnter(uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
+    void PublishSelf();
 
 protected:
     void OnStart() override;
@@ -118,6 +120,7 @@ private:
     bool ParseByteStringToVector(const std::string &byteStr, std::vector<uint8_t> &bytes);
     std::mutex mutex_;
     std::optional<uint32_t> sessionTokenId_;
+    static sptr<UserIdmService> instance_;
 };
 } // namespace UserAuth
 } // namespace UserIam

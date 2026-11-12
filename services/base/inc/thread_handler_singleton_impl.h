@@ -29,7 +29,7 @@ class ThreadHandlerSingletonImpl : public ThreadHandler, NoCopyable {
 public:
     ThreadHandlerSingletonImpl() = default;
     ~ThreadHandlerSingletonImpl() override = default;
-    void PostTask(const Task &task) override;
+    void PostTask(const Task &task, uint32_t timeoutSec) override;
     void EnsureTask(const Task &task) override;
     void Suspend() override;
 };

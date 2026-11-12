@@ -24,8 +24,9 @@ namespace UserAuth {
 class FakeThreadHandler : public ThreadHandler {
 public:
     ~FakeThreadHandler() override = default;
-    void PostTask(const Task &task) override
+    void PostTask(const Task &task, uint32_t timeoutSec) override
     {
+        (void)timeoutSec;
         if (task != nullptr) {
             task();
         }

@@ -35,11 +35,10 @@ namespace UserIam {
 namespace UserAuth {
 using namespace OHOS;
 using namespace OHOS::UserIam::Common;
-constexpr uint32_t TASK_BLOCK_MONITOR_TIMEOUT = 20;
 
-void ThreadHandlerSingletonImpl::PostTask(const Task &task)
+void ThreadHandlerSingletonImpl::PostTask(const Task &task, uint32_t timeoutSec)
 {
-    auto taskBlockMonitor = MakeShared<XCollieHelper>("taskBlockMonitor", TASK_BLOCK_MONITOR_TIMEOUT);
+    auto taskBlockMonitor = MakeShared<XCollieHelper>("taskBlockMonitor", timeoutSec);
     if (taskBlockMonitor == nullptr) {
         IAM_LOGE("taskBlockMonitor is nullptr, post task without monitor");
     }
@@ -58,8 +57,8 @@ void ThreadHandlerSingletonImpl::EnsureTask(const Task &task)
         ensure.set_value();
         return;
     };
-    PostTask(task);
-    PostTask(callback);
+    PostTask(task, DEFAULT_TASK_TIMEOUT_SEC);
+    PostTask(callback, DEFAULT_TASK_TIMEOUT_SEC);
     ensure.get_future().get();
 }
 

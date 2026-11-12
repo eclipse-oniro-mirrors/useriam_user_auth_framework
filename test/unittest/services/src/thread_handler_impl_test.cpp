@@ -51,14 +51,14 @@ HWTEST_F(ThreadHandlerImplTest, PostTaskTest001, TestSize.Level3)
 {
     std::string name = "";
     ThreadHandlerImpl impl(name, false);
-    EXPECT_NO_THROW(impl.PostTask([]() {}));
+    EXPECT_NO_THROW(impl.PostTask([]() {}, ThreadHandler::DEFAULT_TASK_TIMEOUT_SEC));
 }
 
 HWTEST_F(ThreadHandlerImplTest, PostTaskTest002, TestSize.Level3)
 {
     std::string name = "";
     ThreadHandlerImpl impl(name, true);
-    EXPECT_NO_THROW(impl.PostTask([]() {}));
+    EXPECT_NO_THROW(impl.PostTask([]() {}, ThreadHandler::DEFAULT_TASK_TIMEOUT_SEC));
 }
 
 HWTEST_F(ThreadHandlerImplTest, EnsureTaskTest001, TestSize.Level3)

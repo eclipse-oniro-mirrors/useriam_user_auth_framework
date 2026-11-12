@@ -16,6 +16,7 @@
 #ifndef IAM_THREAD_HANDLER_H
 #define IAM_THREAD_HANDLER_H
 
+#include <cstdint>
 #include <functional>
 
 namespace OHOS {
@@ -24,8 +25,9 @@ namespace UserAuth {
 class ThreadHandler {
 public:
     using Task = std::function<void(void)>;
+    static constexpr uint32_t DEFAULT_TASK_TIMEOUT_SEC = 20;
     virtual ~ThreadHandler() = default;
-    virtual void PostTask(const Task &task) = 0;
+    virtual void PostTask(const Task &task, uint32_t timeoutSec = DEFAULT_TASK_TIMEOUT_SEC) = 0;
     virtual void EnsureTask(const Task &task) = 0;
     virtual void Suspend() = 0;
     static std::shared_ptr<ThreadHandler> GetSingleThreadInstance();
