@@ -489,9 +489,8 @@ void FuzzReadCloneDataFromFile(Parcel &parcel)
             data.WriteFileDescriptor(fd);
         }
     }
-    int32_t maxLen = parcel.ReadInt32();
     std::vector<uint8_t> cloneData;
-    g_userIdmService.ReadCloneDataFromFile(data, cloneData, maxLen);
+    g_userIdmService.ReadCloneDataFromFile(data, cloneData);
     IAM_LOGI("end");
 }
 

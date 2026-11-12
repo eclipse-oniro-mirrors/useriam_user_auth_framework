@@ -91,7 +91,7 @@ private:
     Attributes BuildBackupExtraIn(int32_t userId, const std::vector<uint8_t> &deviceUdid,
         const std::vector<uint8_t> &executorMsg);
     int32_t WriteCloneDataToFile(const std::vector<uint8_t> &backUpData, MessageParcel &reply);
-    int32_t ReadCloneDataFromFile(MessageParcel &data, std::vector<uint8_t> &cloneData, int32_t maxLen);
+    int32_t ReadCloneDataFromFile(MessageParcel &data, std::vector<uint8_t> &cloneData);
 
 private:
     void CancelCurrentEnrollIfExist();

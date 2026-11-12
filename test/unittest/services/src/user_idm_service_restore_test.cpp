@@ -81,10 +81,11 @@ std::string BuildCloneInfoJson(int32_t userId, const std::string &udid, const st
     return arr.dump();
 }
 
-// Build a 64-char udid string.
+// Build a udid string of DEVICE_UDID_LEN chars.
 std::string BuildUdidString()
 {
-    return std::string(64, 'a');
+    constexpr uint32_t DEVICE_UDID_LEN = 64;
+    return std::string(DEVICE_UDID_LEN, 'a');
 }
 
 // Write a vector<uint8_t> into a tmpfile and return its fd.
@@ -344,7 +345,7 @@ HWTEST_F(UserIdmServiceRestoreTest, ReadCloneDataFromFileInvalidFd, TestSize.Lev
     MessageParcel data;
     // no file descriptor written -> ReadFileDescriptor returns invalid fd
     std::vector<uint8_t> cloneData;
-    int32_t ret = service.ReadCloneDataFromFile(data, cloneData, 1024);
+    int32_t ret = service.ReadCloneDataFromFile(data, cloneData);
     EXPECT_EQ(ret, GENERAL_ERROR);
 }
 
@@ -358,24 +359,9 @@ HWTEST_F(UserIdmServiceRestoreTest, ReadCloneDataFromFileSuccess, TestSize.Level
     MessageParcel data;
     EXPECT_TRUE(data.WriteFileDescriptor(fd));
     std::vector<uint8_t> cloneData;
-    int32_t ret = service.ReadCloneDataFromFile(data, cloneData, 1024);
+    int32_t ret = service.ReadCloneDataFromFile(data, cloneData);
     EXPECT_EQ(ret, SUCCESS);
     EXPECT_EQ(cloneData, testData);
-    close(fd);
-}
-
-// ReadCloneDataFromFile exceeds max size.
-HWTEST_F(UserIdmServiceRestoreTest, ReadCloneDataFromFileExceedMax, TestSize.Level0)
-{
-    UserIdmService service(123123, true);
-    std::vector<uint8_t> testData(10, 0xAb);
-    int fd = WriteDataToTmpFile(testData);
-    ASSERT_GE(fd, 0);
-    MessageParcel data;
-    EXPECT_TRUE(data.WriteFileDescriptor(fd));
-    std::vector<uint8_t> cloneData;
-    int32_t ret = service.ReadCloneDataFromFile(data, cloneData, 4);
-    EXPECT_EQ(ret, GENERAL_ERROR);
     close(fd);
 }
 

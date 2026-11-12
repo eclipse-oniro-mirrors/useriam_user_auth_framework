@@ -291,7 +291,7 @@ int32_t UserIdmService::OnRestore(MessageParcel &data, MessageParcel &reply)
 {
     IAM_LOGI("idm OnRestore start");
     std::vector<uint8_t> cloneData = {};
-    int32_t ret = ReadCloneDataFromFile(data, cloneData, EXECUTOR_MSG_LEN);
+    int32_t ret = ReadCloneDataFromFile(data, cloneData);
     if (ret != SUCCESS) {
         IAM_LOGE("ReadCloneDataFromFile fail, ret:%{public}d", ret);
         return ret;
@@ -415,12 +415,16 @@ int32_t UserIdmService::WaitForRestoreEnrollResult(int32_t userId, std::future<i
     return result;
 }
 
-int32_t UserIdmService::ReadCloneDataFromFile(MessageParcel &data, std::vector<uint8_t> &cloneData, int32_t maxLen)
+int32_t UserIdmService::ReadCloneDataFromFile(MessageParcel &data, std::vector<uint8_t> &cloneData)
 {
     UniqueFd fd(data.ReadFileDescriptor());
     struct stat st = {};
-    if (fstat(fd.Get(), &st) != 0 || st.st_size == 0) {
+    if (fstat(fd.Get(), &st) != 0 || st.st_size <= 0) {
         IAM_LOGE("fstat failed, errno: %{public}d, st_size:%{public}ld", errno, st.st_size);
+        return GENERAL_ERROR;
+    }
+    if (st.st_size > UINT16_MAX) {
+        IAM_LOGE("clone data size exceeds UINT16_MAX, st_size:%{public}ld", st.st_size);
         return GENERAL_ERROR;
     }
     if (lseek(fd.Get(), 0, SEEK_SET) != 0) {
@@ -429,22 +433,14 @@ int32_t UserIdmService::ReadCloneDataFromFile(MessageParcel &data, std::vector<u
     }
     static const size_t RESTORE_BUFFER_SIZE = 1024;
     std::vector<uint8_t> buffer(RESTORE_BUFFER_SIZE);
-    int32_t totalSize = 0;
-    while (true) {
+    ssize_t totalSize = 0;
+    while (totalSize < st.st_size) {
         ssize_t bytesRead = read(fd.Get(), buffer.data(), RESTORE_BUFFER_SIZE);
-        if (bytesRead < 0) {
-            if (errno == EINTR) {
+        if (bytesRead <= 0) {
+            if (bytesRead < 0 && errno == EINTR) {
                 continue;
             }
-            IAM_LOGE("read from fd fail, errno: %{public}d", errno);
-            return GENERAL_ERROR;
-        }
-        if (bytesRead == 0) {
-            IAM_LOGE("bytesRead is empty");
-            break;
-        }
-        if (totalSize + bytesRead > maxLen) {
-            IAM_LOGE("clone data exceeds max size");
+            IAM_LOGE("read from fd fail, bytesRead:%{public}zd, errno:%{public}d", bytesRead, errno);
             return GENERAL_ERROR;
         }
         cloneData.insert(cloneData.end(), buffer.begin(), buffer.begin() + bytesRead);
