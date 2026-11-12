@@ -167,6 +167,14 @@ HWTEST_F(IAuthExecutorHdiTest, DeleteTest, TestSize.Level0)
     EXPECT_EQ(authExecutorHdi->Delete(templateIdList), GENERAL_ERROR);
 }
 
+HWTEST_F(IAuthExecutorHdiTest, DeleteExtTest, TestSize.Level0)
+{
+    auto authExecutorHdi = MakeShared<IAuthExecutorHdiMock>();
+    std::vector<uint64_t> templateIdList = {1, 2, 3};
+    std::vector<uint8_t> extraInfo = {0, 1};
+    EXPECT_EQ(authExecutorHdi->DeleteExt(templateIdList, extraInfo), GENERAL_ERROR);
+}
+
 HWTEST_F(IAuthExecutorHdiTest, SendCommandTest, TestSize.Level0)
 {
     auto authExecutorHdi = MakeShared<IAuthExecutorHdiMock>();
