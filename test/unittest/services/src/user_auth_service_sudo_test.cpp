@@ -19,7 +19,7 @@
 #include "attributes.h"
 #include "context_pool.h"
 #include "iam_defines.h"
-#include "mock_user_auth_engine.h"
+#include "mock_iuser_auth_interface.h"
 #include "mock_ipc_common.h"
 #include "mock_resource_node.h"
 #include "mock_user_auth_callback.h"
@@ -63,6 +63,7 @@ IpcAuthParamInner MakeSudoIpcParam(const std::string &additionalInfo)
     ipcAuthParamInner.authTrustLevel = static_cast<int32_t>(ATL2);
     ipcAuthParamInner.authIntent = static_cast<int32_t>(AuthIntent::SUDO_PIN_AUTH);
     ipcAuthParamInner.additionalInfo = additionalInfo;
+    ipcAuthParamInner.hasAdditionalInfo = true;
     return ipcAuthParamInner;
 }
 } // namespace
@@ -73,7 +74,7 @@ public:
     {
         // earlier suites may leave armed HDI expectations on the shared mock that
         // would shadow this suite's ON_CALL defaults
-        MockUserAuthEngine::Holder::GetInstance().Reset();
+        MockIUserAuthInterface::Holder::GetInstance().Reset();
         IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
         IpcCommon::AddPermission(IS_SYSTEM_APP);
     }
@@ -90,19 +91,19 @@ public:
         // Deletes can post arbitration starts/stops; flush them before the mocks die
         DrainSerialThread();
         ResourceNodePool::Instance().Delete(PIN_EXECUTOR_INDEX);
-        MockUserAuthEngine::Holder::GetInstance().Reset();
+        MockIUserAuthInterface::Holder::GetInstance().Reset();
         IpcCommon::DeleteAllPermission();
     }
 };
 
 HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAccepted, TestSize.Level0)
 {
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     // No credential -> NOT_ENROLLED terminal keeps the case self-contained.
     ON_CALL(*mockHdi, GetCredential(_, _, _))
         .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
-            return SUCCESS;
+            return HDF_SUCCESS;
         });
 
     UserAuthService service;
@@ -122,21 +123,21 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAccepted, TestSize.Leve
 
 HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthNonSystemCallerRejected, TestSize.Level0)
 {
-    // an internal-perm hap that is neither a native SA nor a system app passes the
-    // AuthUser permission gate but fails the sudo caller gate
+    // an internal-perm hap that is neither a native SA nor a system app is caught by
+    // the system-only param gate (sudo intent >= QUESTION_AUTH) before the sudo caller gate
     IpcCommon::DeleteAllPermission();
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
 
     UserAuthService service;
     auto testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
     ASSERT_NE(testCallback, nullptr);
-    EXPECT_CALL(*testCallback, OnResult(CHECK_PERMISSION_FAILED, _)).Times(1);
+    EXPECT_CALL(*testCallback, OnResult(CHECK_SYSTEM_APP_FAILED, _)).Times(1);
 
     IpcRemoteAuthParam ipcRemoteAuthParam = {};
     sptr<IIamCallback> callbackInterface = testCallback;
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(MakeSudoIpcParam("sudo title"), ipcRemoteAuthParam, callbackInterface, contextId);
-    EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(ret, CHECK_SYSTEM_APP_FAILED);
     EXPECT_EQ(contextId, 0);
     DrainSerialThread();
 }
@@ -168,8 +169,8 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthParamRejected, TestSize
     param = MakeSudoIpcParam("");
     expectRejected(param, ipcRemoteAuthParam);
 
-    // over TITLE_MAX characters
-    param = MakeSudoIpcParam(std::string(TITLE_MAX + 1, 'x'));
+    // over ADDITIONAL_INFO_MAX characters
+    param = MakeSudoIpcParam(std::string(ADDITIONAL_INFO_MAX + 1, 'x'));
     expectRejected(param, ipcRemoteAuthParam);
 
     // reuse unlock result not allowed
@@ -183,20 +184,59 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthParamRejected, TestSize
     IpcRemoteAuthParam remoteParam = {};
     remoteParam.isHasRemoteAuthParam = true;
     expectRejected(param, remoteParam);
+
+    // token schedule with remote param is rejected: sudo does not accept remote param,
+    // and schedule+remote is rejected at the AuthUser param gate
+    param = MakeSudoIpcParam("sudo title");
+    param.hasTokenSchedule = true;
+    expectRejected(param, remoteParam);
+}
+
+HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAcceptsTokenSchedule, TestSize.Level0)
+{
+    // sudo supports scheduled auth token: a valid schedule passes the sudo param gate and
+    // the sudo context is created (param plumbing only; no credential pinned so the child
+    // ends with NOT_ENROLLED, engine schedule binding is out of scope here)
+    // sudo auth and tokenSchedule are both system-api-only, so the caller must be a system caller
+    IpcCommon::DeleteAllPermission();
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+
+    UserAuthService service;
+    auto testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
+    ASSERT_NE(testCallback, nullptr);
+    EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
+
+    IpcAuthParamInner param = MakeSudoIpcParam("sudo title");
+    param.hasTokenSchedule = true;
+    param.hasTokenScheduleValidStartTime = true;
+    param.hasTokenScheduleValidEndTime = true;
+    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    param.tokenScheduleValidStartTime = now;
+    param.tokenScheduleValidEndTime = now + 3600 * 1000; // 1h span, within MAX_TOKEN_SCHEDULE_SPAN_MS
+
+    IpcRemoteAuthParam ipcRemoteAuthParam = {};
+    sptr<IIamCallback> callbackInterface = testCallback;
+    uint64_t contextId = 0;
+    int32_t ret = service.AuthUser(param, ipcRemoteAuthParam, callbackInterface, contextId);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(contextId, 0);
+    DrainSerialThread();
 }
 
 // pins a last-attempt pin credential behind the mock executor so the SUDO routes
 // to the dialog branch
 void PrimeDialogBranchExecutor()
 {
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential(_, _, _))
         .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
             infos.push_back({.credentialId = 1, .executorIndex = PIN_EXECUTOR_INDEX, .templateId = 9,
                 .authType = static_cast<HdiAuthType>(AuthType::PIN), .executorMatcher = 1,
                 .executorSensorHint = 1, .authSubType = static_cast<uint64_t>(PinSubType::PIN_SIX)});
-            return SUCCESS;
+            return HDF_SUCCESS;
         });
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(PIN_EXECUTOR_INDEX, PIN, ALL_IN_ONE);
     ASSERT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
@@ -267,13 +307,13 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthPermissionDenied, TestS
     UserAuthService service;
     auto testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
     ASSERT_NE(testCallback, nullptr);
-    EXPECT_CALL(*testCallback, OnResult(ResultCode::CHECK_PERMISSION_FAILED, _)).Times(1);
+    EXPECT_CALL(*testCallback, OnResult(ResultCode::CHECK_SYSTEM_APP_FAILED, _)).Times(1);
 
     IpcRemoteAuthParam ipcRemoteAuthParam = {};
     sptr<IIamCallback> callbackInterface = testCallback;
     uint64_t contextId = SEEDED_CONTEXT_ID;
     int32_t ret = service.AuthUser(MakeSudoIpcParam("sudo title"), ipcRemoteAuthParam, callbackInterface, contextId);
-    EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(ret, CHECK_SYSTEM_APP_FAILED);
     EXPECT_EQ(contextId, 0);
     DrainSerialThread();
     auto contexts = ContextPool::Instance().Select(SUDO_AUTH_CONTEXT);
@@ -283,7 +323,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthPermissionDenied, TestS
 HWTEST_F(UserAuthServiceSudoTest, UserAuthServicePublicAuthNotRoutedToSudo, TestSize.Level0)
 {
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     // the plain auth context must stay pooled and running, so the face credential
     // and its executor have to exist
@@ -292,13 +332,13 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServicePublicAuthNotRoutedToSudo, Test
             infos.push_back({.credentialId = 1, .executorIndex = PIN_EXECUTOR_INDEX, .templateId = 9,
                 .authType = static_cast<HdiAuthType>(AuthType::FACE), .executorMatcher = 1,
                 .executorSensorHint = 1, .authSubType = 0});
-            return SUCCESS;
+            return HDF_SUCCESS;
         });
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(PIN_EXECUTOR_INDEX, FACE, ALL_IN_ONE);
     ASSERT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
-    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _))
+    ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _))
         .WillByDefault([](uint64_t contextId, const HdiAuthParamExt &param,
-            std::vector<HdiScheduleInfo> &scheduleInfos, AcquireInfoCallback &) {
+            std::vector<HdiScheduleInfo> &scheduleInfos) {
             HdiScheduleInfo scheduleInfo = {};
             scheduleInfo.authType = HdiAuthType::FACE;
             scheduleInfo.executorMatcher = 0;
@@ -310,7 +350,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServicePublicAuthNotRoutedToSudo, Test
             executorMessages.resize(1);
             scheduleInfo.executorMessages.push_back(executorMessages);
             scheduleInfos.push_back(scheduleInfo);
-            return SUCCESS;
+            return HDF_SUCCESS;
         });
 
     UserAuthService service;

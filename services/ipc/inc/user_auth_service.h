@@ -79,6 +79,9 @@ public:
         const sptr<IIamCallback> &userAuthCallback) override;
     int32_t VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
         const sptr<IVerifyTokenCallback> &verifyTokenCallback) override;
+    int32_t RedeemScheduledAuthToken(const std::vector<uint8_t> &challenge,
+        const std::vector<uint8_t> &scheduleToken,
+        const sptr<IVerifyTokenCallback> &verifyTokenCallback) override;
     int32_t QueryReusableAuthResult(const IpcAuthParamInner &ipcAuthParamInner,
         std::vector<uint8_t> &token) override;
     int32_t GetAuthLockState(int32_t authType,
@@ -131,6 +134,12 @@ private:
     int32_t CheckAuthPermissionAndParam(int32_t authType, const int32_t &callerType, const std::string &callerName,
         AuthTrustLevel authTrustLevel);
     bool CheckAuthPermissionAndParam(AuthType authType, AuthTrustLevel authTrustLevel,
+        const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
+    int32_t CheckSystemOnlyAuthParam(const IpcAuthParamInner &ipcAuthParamInner, bool hasRemoteAuthParam = false);
+    int32_t CheckAuthUserParam(const IpcAuthParamInner &ipcAuthParamInner, const AuthParamInner &authParam,
+        const std::optional<RemoteAuthParam> &remoteAuthParam,
+        const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
+    int32_t FillAuthenticationPara(const AuthParamInner &authParam, Authentication::AuthenticationPara &para,
         const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
     int32_t CheckWindowMode(const WidgetParamInner &widgetParam);
     int32_t CheckAuthWidgetParam(const AuthParamInner &authParam, const WidgetParamInner &widgetParam);

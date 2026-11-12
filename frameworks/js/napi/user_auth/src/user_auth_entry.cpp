@@ -21,6 +21,7 @@
 #include "user_auth_helper.h"
 #include "user_auth_impl.h"
 #include "user_auth_instance_v10.h"
+#include "system_user_auth_instance_v10.h"
 #include "user_auth_widget_mgr_v10.h"
 #include "user_recognition_manager.h"
 #include "user_auth_client_impl.h"
@@ -385,6 +386,158 @@ napi_value UserAuthInstanceV10Class(napi_env env)
     return result;
 }
 
+napi_status UnwrapSystemUserAuthInstance(napi_env env, napi_callback_info info,
+    SystemUserAuthInstanceNapi **systemUserAuthInstance)
+{
+    napi_value thisVar = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {nullptr};
+    napi_status ret = napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_get_cb_info fail");
+        return ret;
+    }
+    ret = napi_unwrap(env, thisVar, reinterpret_cast<void **>(systemUserAuthInstance));
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_unwrap fail");
+        return ret;
+    }
+    if (*systemUserAuthInstance == nullptr) {
+        IAM_LOGE("systemUserAuthInstance is null");
+        return napi_generic_failure;
+    }
+    return ret;
+}
+
+UserAuthResultCode DispatchSystemUserAuth(napi_env env, napi_callback_info info,
+    UserAuthResultCode (SystemUserAuthInstanceNapi::*method)(napi_env, napi_callback_info))
+{
+    SystemUserAuthInstanceNapi *systemUserAuthInstance = nullptr;
+    napi_status ret = UnwrapSystemUserAuthInstance(env, info, &systemUserAuthInstance);
+    if (ret != napi_ok) {
+        IAM_LOGE("UnwrapSystemUserAuthInstance fail:%{public}d", ret);
+        return UserAuthResultCode::GENERAL_ERROR;
+    }
+    return (systemUserAuthInstance->*method)(env, info);
+}
+
+napi_value SystemUserAuthOnResult(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    UserAuthResultCode code = DispatchSystemUserAuth(env, info, &SystemUserAuthInstanceNapi::OnResult);
+    if (code != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("onResult fail:%{public}d", static_cast<int32_t>(code));
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, code));
+    }
+    return nullptr;
+}
+
+napi_value SystemUserAuthOffResult(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    UserAuthResultCode code = DispatchSystemUserAuth(env, info, &SystemUserAuthInstanceNapi::OffResult);
+    if (code != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("offResult fail:%{public}d", static_cast<int32_t>(code));
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, code));
+    }
+    return nullptr;
+}
+
+napi_value SystemUserAuthOnAcquireInfo(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    UserAuthResultCode code = DispatchSystemUserAuth(env, info, &SystemUserAuthInstanceNapi::OnAcquireInfo);
+    if (code != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("onAcquireInfo fail:%{public}d", static_cast<int32_t>(code));
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, code));
+    }
+    return nullptr;
+}
+
+napi_value SystemUserAuthOffAcquireInfo(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    UserAuthResultCode code = DispatchSystemUserAuth(env, info, &SystemUserAuthInstanceNapi::OffAcquireInfo);
+    if (code != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("offAcquireInfo fail:%{public}d", static_cast<int32_t>(code));
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, code));
+    }
+    return nullptr;
+}
+
+napi_value SystemUserAuthStart(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    UserAuthApiEventReporter reporter("SystemUserAuthInstance::start");
+    UserAuthResultCode code = DispatchSystemUserAuth(env, info, &SystemUserAuthInstanceNapi::Start);
+    if (code != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("start fail:%{public}d", static_cast<int32_t>(code));
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, code));
+        reporter.ReportFailed(code);
+        return nullptr;
+    }
+    reporter.ReportSuccess();
+    return nullptr;
+}
+
+napi_value SystemUserAuthCancel(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    UserAuthApiEventReporter reporter("SystemUserAuthInstance::cancel");
+    UserAuthResultCode code = DispatchSystemUserAuth(env, info, &SystemUserAuthInstanceNapi::Cancel);
+    if (code != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("cancel fail:%{public}d", static_cast<int32_t>(code));
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, code));
+        reporter.ReportFailed(code);
+        return nullptr;
+    }
+    reporter.ReportSuccess();
+    return nullptr;
+}
+
+napi_value SystemUserAuthInstanceV10Constructor(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    std::unique_ptr<SystemUserAuthInstanceNapi> systemUserAuthInstance {new (std::nothrow)
+        SystemUserAuthInstanceNapi(env)};
+    if (systemUserAuthInstance == nullptr) {
+        IAM_LOGE("systemUserAuthInstance is nullptr");
+        return nullptr;
+    }
+
+    napi_value thisVar = nullptr;
+    size_t argc = ARGS_ONE;
+    napi_value argv[ARGS_ONE] = {nullptr};
+    NAPI_CALL(env, napi_get_cb_info(env, info, &argc, argv, &thisVar, nullptr));
+    NAPI_CALL(env, napi_wrap(env, thisVar, systemUserAuthInstance.get(),
+        [](napi_env env, void *data, void *hint) {
+            SystemUserAuthInstanceNapi *systemUserAuthInstance = static_cast<SystemUserAuthInstanceNapi *>(data);
+            if (systemUserAuthInstance != nullptr) {
+                delete systemUserAuthInstance;
+            }
+        },
+        nullptr, nullptr));
+    systemUserAuthInstance.release();
+    return thisVar;
+}
+
+napi_value SystemUserAuthInstanceV10Class(napi_env env)
+{
+    napi_value result = nullptr;
+    napi_property_descriptor clzDes[] = {
+        DECLARE_NAPI_FUNCTION("onResult", UserAuth::SystemUserAuthOnResult),
+        DECLARE_NAPI_FUNCTION("offResult", UserAuth::SystemUserAuthOffResult),
+        DECLARE_NAPI_FUNCTION("onAcquireInfo", UserAuth::SystemUserAuthOnAcquireInfo),
+        DECLARE_NAPI_FUNCTION("offAcquireInfo", UserAuth::SystemUserAuthOffAcquireInfo),
+        DECLARE_NAPI_FUNCTION("start", UserAuth::SystemUserAuthStart),
+        DECLARE_NAPI_FUNCTION("cancel", UserAuth::SystemUserAuthCancel),
+    };
+    NAPI_CALL(env, napi_define_class(env, "SystemUserAuthInstance", NAPI_AUTO_LENGTH,
+        SystemUserAuthInstanceV10Constructor, nullptr, sizeof(clzDes) / sizeof(napi_property_descriptor), clzDes,
+        &result));
+    return result;
+}
+
 napi_status UnwrapAuthWidgetMgrV10(napi_env env, napi_callback_info info, UserAuthWidgetMgr **authWidgetMgrV10)
 {
     napi_value thisVar = nullptr;
@@ -601,6 +754,53 @@ napi_value GetUserAuthInstanceV10(napi_env env, napi_callback_info info)
     return userAuthInstanceV10;
 }
 
+napi_value GetSystemUserAuthInstanceV10(napi_env env, napi_callback_info info)
+{
+    IAM_LOGI("start");
+    UserAuthApiEventReporter reporter("getSystemUserAuthInstance");
+    if (!UserAuthNapiHelper::IsSystemApiCaller()) {
+        IAM_LOGE("getSystemUserAuthInstance is system api only");
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env,
+            UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED));
+        reporter.ReportFailed(UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED);
+        return nullptr;
+    }
+    napi_value systemUserAuthInstanceV10;
+    napi_status ret = napi_new_instance(env, SystemUserAuthInstanceV10Class(env), 0, nullptr,
+        &systemUserAuthInstanceV10);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_new_instance fail:%{public}d", ret);
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, UserAuthResultCode::GENERAL_ERROR));
+        reporter.ReportFailed(UserAuthResultCode::GENERAL_ERROR);
+        return nullptr;
+    }
+    SystemUserAuthInstanceNapi *systemUserAuthInstance = nullptr;
+    ret = napi_unwrap(env, systemUserAuthInstanceV10, reinterpret_cast<void **>(&systemUserAuthInstance));
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_unwrap fail");
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, UserAuthResultCode::GENERAL_ERROR));
+        reporter.ReportFailed(UserAuthResultCode::GENERAL_ERROR);
+        return nullptr;
+    }
+    if (systemUserAuthInstance == nullptr) {
+        IAM_LOGE("systemUserAuthInstance is null");
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, UserAuthResultCode::GENERAL_ERROR));
+        reporter.ReportFailed(UserAuthResultCode::GENERAL_ERROR);
+        return nullptr;
+    }
+    UserAuthResultCode code = systemUserAuthInstance->Init(env, info);
+    if (code != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("Init fail:%{public}d", static_cast<int32_t>(code));
+        napi_throw(env, UserAuthNapiHelper::GenerateBusinessErrorV9(env, code));
+        reporter.ReportFailed(code);
+        return nullptr;
+    }
+
+    IAM_LOGI("GetSystemUserAuthInstanceV10 SUCCESS");
+    reporter.ReportSuccess();
+    return systemUserAuthInstanceV10;
+}
+
 napi_value GetUserAuthWidgetMgrV10(napi_env env, napi_callback_info info)
 {
     IAM_LOGI("start");
@@ -743,6 +943,8 @@ napi_value UserAuthResultCodeExtConstructor(napi_env env, napi_value resultCode)
     napi_value authTokenCheckFailed = nullptr;
     napi_value authTokenExpired = nullptr;
     napi_value reuseAuthResultFailed = nullptr;
+    napi_value authTokenNotInWindow = nullptr;
+    napi_value authTokenCredentialInvalid = nullptr;
     NAPI_CALL(env, napi_create_int32(env, static_cast<int32_t>(UserAuthResultCode::PIN_EXPIRED), &pinExpired));
     NAPI_CALL(env, napi_create_int32(env,
         static_cast<int32_t>(UserAuthResultCode::AUTH_TOKEN_CHECK_FAILED), &authTokenCheckFailed));
@@ -750,10 +952,17 @@ napi_value UserAuthResultCodeExtConstructor(napi_env env, napi_value resultCode)
         static_cast<int32_t>(UserAuthResultCode::AUTH_TOKEN_EXPIRED), &authTokenExpired));
     NAPI_CALL(env, napi_create_int32(env,
         static_cast<int32_t>(UserAuthResultCode::REUSE_AUTH_RESULT_FAILED), &reuseAuthResultFailed));
+    NAPI_CALL(env, napi_create_int32(env,
+        static_cast<int32_t>(UserAuthResultCode::AUTH_TOKEN_NOT_IN_WINDOW), &authTokenNotInWindow));
+    NAPI_CALL(env, napi_create_int32(env,
+        static_cast<int32_t>(UserAuthResultCode::AUTH_TOKEN_CREDENTIAL_INVALID), &authTokenCredentialInvalid));
     NAPI_CALL(env, napi_set_named_property(env, resultCode, "PIN_EXPIRED", pinExpired));
     NAPI_CALL(env, napi_set_named_property(env, resultCode, "AUTH_TOKEN_CHECK_FAILED", authTokenCheckFailed));
     NAPI_CALL(env, napi_set_named_property(env, resultCode, "AUTH_TOKEN_EXPIRED", authTokenExpired));
     NAPI_CALL(env, napi_set_named_property(env, resultCode, "REUSE_AUTH_RESULT_FAILED", reuseAuthResultFailed));
+    NAPI_CALL(env, napi_set_named_property(env, resultCode, "AUTH_TOKEN_NOT_IN_WINDOW", authTokenNotInWindow));
+    NAPI_CALL(env, napi_set_named_property(env, resultCode,
+        "AUTH_TOKEN_CREDENTIAL_INVALID", authTokenCredentialInvalid));
     return resultCode;
 }
 
@@ -927,18 +1136,46 @@ napi_value UserAuthTypeConstructor(napi_env env)
     napi_value fingerprint = nullptr;
     napi_value privatePin = nullptr;
     napi_value companionDevice = nullptr;
+    napi_value recoveryKey = nullptr;
+    napi_value custom = nullptr;
     NAPI_CALL(env, napi_create_object(env, &userAuthType));
     NAPI_CALL(env, napi_create_int32(env, AuthType::PIN, &pin));
     NAPI_CALL(env, napi_create_int32(env, AuthType::FACE, &face));
     NAPI_CALL(env, napi_create_int32(env, AuthType::FINGERPRINT, &fingerprint));
     NAPI_CALL(env, napi_create_int32(env, AuthType::PRIVATE_PIN, &privatePin));
     NAPI_CALL(env, napi_create_int32(env, AuthType::COMPANION_DEVICE, &companionDevice));
+    NAPI_CALL(env, napi_create_int32(env, AuthType::RECOVERY_KEY, &recoveryKey));
+    NAPI_CALL(env, napi_create_int32(env, AuthType::CUSTOM_AUTH, &custom));
     NAPI_CALL(env, napi_set_named_property(env, userAuthType, "PIN", pin));
     NAPI_CALL(env, napi_set_named_property(env, userAuthType, "FACE", face));
     NAPI_CALL(env, napi_set_named_property(env, userAuthType, "FINGERPRINT", fingerprint));
     NAPI_CALL(env, napi_set_named_property(env, userAuthType, "PRIVATE_PIN", privatePin));
     NAPI_CALL(env, napi_set_named_property(env, userAuthType, "COMPANION_DEVICE", companionDevice));
+    NAPI_CALL(env, napi_set_named_property(env, userAuthType, "RECOVERY_KEY", recoveryKey));
+    NAPI_CALL(env, napi_set_named_property(env, userAuthType, "CUSTOM", custom));
     return userAuthType;
+}
+
+napi_value AuthIntentConstructor(napi_env env)
+{
+    napi_value authIntent = nullptr;
+    napi_value unlock = nullptr;
+    napi_value silentAuth = nullptr;
+    napi_value questionAuth = nullptr;
+    napi_value abandonedPinAuth = nullptr;
+    napi_value sudoPinAuth = nullptr;
+    NAPI_CALL(env, napi_create_object(env, &authIntent));
+    NAPI_CALL(env, napi_create_int32(env, AuthIntent::UNLOCK, &unlock));
+    NAPI_CALL(env, napi_create_int32(env, AuthIntent::SILENT_AUTH, &silentAuth));
+    NAPI_CALL(env, napi_create_int32(env, AuthIntent::QUESTION_AUTH, &questionAuth));
+    NAPI_CALL(env, napi_create_int32(env, AuthIntent::ABANDONED_PIN_AUTH, &abandonedPinAuth));
+    NAPI_CALL(env, napi_create_int32(env, AuthIntent::SUDO_PIN_AUTH, &sudoPinAuth));
+    NAPI_CALL(env, napi_set_named_property(env, authIntent, "UNLOCK", unlock));
+    NAPI_CALL(env, napi_set_named_property(env, authIntent, "SILENT_AUTH", silentAuth));
+    NAPI_CALL(env, napi_set_named_property(env, authIntent, "QUESTION_AUTH", questionAuth));
+    NAPI_CALL(env, napi_set_named_property(env, authIntent, "ABANDONED_PIN_AUTH", abandonedPinAuth));
+    NAPI_CALL(env, napi_set_named_property(env, authIntent, "SUDO_PIN_AUTH", sudoPinAuth));
+    return authIntent;
 }
 
 napi_value NoticeTypeConstructor(napi_env env)
@@ -1078,6 +1315,7 @@ napi_value UserAuthInit(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getAvailableStatus", UserAuth::GetAvailableStatusV9),
         DECLARE_NAPI_FUNCTION("getAuthInstance", UserAuth::GetAuthInstanceV9),
         DECLARE_NAPI_FUNCTION("getUserAuthInstance", UserAuth::GetUserAuthInstanceV10),
+        DECLARE_NAPI_FUNCTION("getSystemUserAuthInstance", UserAuth::GetSystemUserAuthInstanceV10),
         DECLARE_NAPI_FUNCTION("getUserAuthWidgetMgr", UserAuth::GetUserAuthWidgetMgrV10),
         DECLARE_NAPI_FUNCTION("getUserRecognitionMgr", UserRecognitionManagerNapi::GetInstance),
         DECLARE_NAPI_FUNCTION("getEnrolledState", UserAuth::GetEnrolledState),
@@ -1121,6 +1359,7 @@ napi_value EnumExport(napi_env env, napi_value exports)
         DECLARE_NAPI_PROPERTY("UserAuthResultCode", UserAuthResultCodeConstructor(env)),
         DECLARE_NAPI_PROPERTY("FingerprintTips", FingerprintTipsConstructorForKits(env)),
         DECLARE_NAPI_PROPERTY("UserAuthType", UserAuthTypeConstructor(env)),
+        DECLARE_NAPI_PROPERTY("AuthIntent", AuthIntentConstructor(env)),
         DECLARE_NAPI_PROPERTY("FaceTips", FaceTipsCodeConstructor(env)),
         DECLARE_NAPI_PROPERTY("AuthenticationResult", AuthenticationResultConstructor(env)),
         //add

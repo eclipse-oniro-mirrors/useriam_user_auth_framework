@@ -82,6 +82,7 @@ public:
     virtual void OnResult(int32_t resultCode, const Attributes &finalResult) = 0;
     virtual void OnAcquireInfo(ExecutorRole src, int32_t moduleType, const std::vector<uint8_t> &acquireMsg) = 0;
     virtual void SetTraceCallerName(const std::string &callerName) = 0;
+    virtual void SetSystemApiCaller(bool isSystemApiCaller) = 0;
     virtual void SetTraceRequestContextId(uint64_t requestContextId) = 0;
     virtual void SetTraceAuthContextId(uint64_t authContextId) = 0;
     virtual void SetTraceUserId(int32_t userId) = 0;

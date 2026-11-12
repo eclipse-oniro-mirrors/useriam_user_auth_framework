@@ -78,6 +78,9 @@ public:
         const sptr<IIamCallback> &userAuthCallback));
     MOCK_METHOD3(VerifyAuthToken, int32_t(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
         const sptr<IVerifyTokenCallback> &verifyTokenCallback));
+    MOCK_METHOD3(RedeemScheduledAuthToken, int32_t(const std::vector<uint8_t> &challenge,
+        const std::vector<uint8_t> &scheduleToken,
+        const sptr<IVerifyTokenCallback> &verifyTokenCallback));
     MOCK_METHOD2(QueryReusableAuthResult, int32_t(const IpcAuthParamInner &ipcAuthParamInner,
         std::vector<uint8_t> &token));
     MOCK_METHOD2(GetAuthLockState, int32_t(int32_t authType,

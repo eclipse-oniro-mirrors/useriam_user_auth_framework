@@ -37,6 +37,8 @@ public:
         const SetWidgetParamClientCallback::WidgetParamExt &widgetParamExt,
         const std::shared_ptr<AuthenticationCallback> &callback,
         const std::shared_ptr<UserAuthModalClientCallback> &modalCallback);
+    uint64_t BeginAuthentication(int32_t apiVersion, const AuthParamInner &authParam,
+        const std::shared_ptr<AuthenticationCallback> &callback);
     int32_t CancelAuthentication(uint64_t contextId, int32_t cancelReason);
 
 private:
@@ -44,6 +46,8 @@ private:
         const WidgetParamInner &widgetParam, const std::shared_ptr<AuthenticationCallback> &callback,
         const std::shared_ptr<UserAuthModalClientCallback> &modalCallback);
     void InitIpcAuthParam(const AuthParamInner &authParam, IpcAuthParamInner &ipcWidgetParamInner);
+    void InitIpcRemoteAuthParam(const std::optional<RemoteAuthParam> &remoteAuthParam,
+        IpcRemoteAuthParam &ipcRemoteAuthParam);
     void InitIpcWidgetParam(const WidgetParamInner &widgetParam, IpcWidgetParamInner &ipcWidgetParamInner);
 
     UserAuthNapiClientImpl() = default;

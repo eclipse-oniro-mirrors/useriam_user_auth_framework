@@ -42,6 +42,7 @@ public:
 
     virtual ~Impl() = default;
 
+    bool EraseValue(AttributeKey key);
     bool SetBoolValue(AttributeKey key, bool value);
     bool SetUint64Value(AttributeKey key, uint64_t value);
     bool SetUint32Value(AttributeKey key, uint32_t value);
@@ -205,6 +206,11 @@ bool Attributes::Impl::CheckAttributeLength(const uint8_t *curr, const uint8_t *
         return false;
     }
     return true;
+}
+
+bool Attributes::Impl::EraseValue(AttributeKey key)
+{
+    return map_.erase(key) > 0;
 }
 
 bool Attributes::Impl::SetBoolValue(AttributeKey key, bool value)
@@ -1396,6 +1402,14 @@ std::vector<uint8_t> Attributes::Serialize() const
         return {};
     }
     return impl_->Serialize();
+}
+
+bool Attributes::EraseValue(AttributeKey key)
+{
+    if (!impl_) {
+        return false;
+    }
+    return impl_->EraseValue(key);
 }
 
 std::vector<Attributes::AttributeKey> Attributes::GetKeys() const

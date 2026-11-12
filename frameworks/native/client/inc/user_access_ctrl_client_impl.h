@@ -31,6 +31,9 @@ public:
     static UserAccessCtrlClientImpl &Instance();
     void VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
         const std::shared_ptr<VerifyTokenCallback> &callback) override;
+    void RedeemScheduledAuthToken(const std::vector<uint8_t> &challenge,
+        const std::vector<uint8_t> &scheduleToken,
+        const std::shared_ptr<VerifyTokenCallback> &callback) override;
 private:
     friend class UserAccessCtrlClient;
     UserAccessCtrlClientImpl() = default;

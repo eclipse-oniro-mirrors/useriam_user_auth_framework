@@ -21,7 +21,8 @@
 #include "iam_ptr.h"
 #include "mock_executor_callback.h"
 #include "mock_ipc_common.h"
-#include "mock_user_auth_engine.h"
+#include "hdi_type_aliases.h"
+#include "mock_iuser_auth_interface.h"
 #include "mock_resource_node.h"
 #include "resource_node_pool.h"
 
@@ -41,12 +42,12 @@ void CoAuthServiceTest::TearDownTestCase()
 
 void CoAuthServiceTest::SetUp()
 {
-    MockUserAuthEngine::Holder::GetInstance().Reset();
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
 void CoAuthServiceTest::TearDown()
 {
-    MockUserAuthEngine::Holder::GetInstance().Reset();
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(CoAuthServiceTest, CoAuthServiceTest001, TestSize.Level0)
@@ -66,7 +67,7 @@ HWTEST_F(CoAuthServiceTest, CoAuthServiceTest001, TestSize.Level0)
     EXPECT_NE(service, nullptr);
     service->SetIsReady(true);
     service->SetAccessTokenReady(true);
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     std::promise<void> promise;
     EXPECT_CALL(*testCallback, OnMessengerReady(_, _, _)).Times(1).WillOnce(
@@ -78,12 +79,12 @@ HWTEST_F(CoAuthServiceTest, CoAuthServiceTest001, TestSize.Level0)
     );
     EXPECT_CALL(*mockHdi, AddExecutor(_, _, _, _))
         .Times(2)
-        .WillOnce(Return(GENERAL_ERROR))
+        .WillOnce(Return(HDF_FAILURE))
         .WillOnce(
             [](const HdiExecutorRegisterInfo &info, uint64_t &index, std::vector<uint8_t> &publicKey,
                 std::vector<uint64_t> &templateIds) {
                 index = 12345;
-                return SUCCESS;
+                return HDF_SUCCESS;
             }
         );
     IpcCommon::AddPermission(ACCESS_AUTH_RESPOOL);

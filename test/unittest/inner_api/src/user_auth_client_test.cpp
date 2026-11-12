@@ -38,6 +38,13 @@ void UserAuthClientTest::TearDownTestCase()
 
 void UserAuthClientTest::SetUp()
 {
+    // Bypass production samgr subscription (EnsureUserRecognitionServiceStatusSubscription).
+    // A real SubscribeSystemAbility(921) made by one test (e.g. RegisterUserRecognitionEventListener001)
+    // makes samgr asynchronously deliver OnAddSystemAbility later, and
+    // ReregisterUserRecognitionListeners then calls RegisterUserRecognitionEventListener through
+    // whatever mock proxy another test has installed at that moment, saturating its
+    // EXPECT_CALL(...).Times(1) and aborting the suite.
+    UserAuthClientImpl::Instance().recognitionServiceStatusSubscribed_ = true;
 }
 
 void UserAuthClientTest::TearDown()

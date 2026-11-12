@@ -264,6 +264,9 @@ std::shared_ptr<ContextCallback> WidgetContext::GetAuthContextCallback(AuthType 
         IAM_LOGE("failed to construct context callback");
         return nullptr;
     }
+    // Must stay true: the widget UI reads remainTimes/freezingTime from this in-process payload,
+    // so a third-party flag would break the lockout UI. App-facing strip is on callerCallback_.
+    widgetCallback->SetSystemApiCaller(true);
     widgetCallback->SetTraceCallerName(para_.callerName);
     widgetCallback->SetTraceCallerType(para_.callerType);
     widgetCallback->SetTraceRequestContextId(contextId_);
@@ -287,6 +290,7 @@ Authentication::AuthenticationPara WidgetContext::BuildAuthenticationPara(const 
     para.sdkVersion = para_.sdkVersion;
     para.authIntent = authIntent;
     para.skipLockedBiometricAuth = para_.skipLockedBiometricAuth;
+    para.tokenSchedule = para_.tokenSchedule;
     para.isOsAccountVerified = para_.isOsAccountVerified;
     para.credentialIdList = para_.credentialIdList;
     para.title = para_.widgetParam.title;

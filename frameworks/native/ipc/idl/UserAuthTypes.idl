@@ -135,8 +135,26 @@ struct IpcAuthParamInner {
     boolean isHasRemoteTokenId;
     /** Remote token id */
     unsigned int remoteTokenId;
+    /** Whether additionalInfo is specified */
+    boolean hasAdditionalInfo;
     /** Additional info */
     String additionalInfo;
+    /** Whether a schedule is declared for the scheduled auth token */
+    boolean hasTokenSchedule;
+    /** Whether validStartTime is specified; false means the schedule starts at issuance */
+    boolean hasTokenScheduleValidStartTime;
+    /** Schedule window valid start time, epoch milliseconds */
+    long tokenScheduleValidStartTime;
+    /** Whether validEndTime is specified; false means no time limit */
+    boolean hasTokenScheduleValidEndTime;
+    /** Schedule window valid end time (exclusive), epoch milliseconds */
+    long tokenScheduleValidEndTime;
+    /** Whether the schedule declares windowConfig (repeated redemption windows) */
+    boolean hasTokenScheduleWindowConfig;
+    /** Interval between start points of two adjacent windows, milliseconds */
+    long tokenScheduleRepeatInterval;
+    /** Duration of each redeemable window, milliseconds */
+    long tokenScheduleWindowDuration;
 };
 
 /**

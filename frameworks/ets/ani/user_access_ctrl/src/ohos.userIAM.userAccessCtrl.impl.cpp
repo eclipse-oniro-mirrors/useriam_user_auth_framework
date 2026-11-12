@@ -28,6 +28,7 @@
 #include "iam_logger.h"
 #include "iam_ptr.h"
 #include "user_access_ctrl_client.h"
+#include "user_auth_helper.h"
 
 #define LOG_TAG "USER_ACCESS_CTRL_ANI"
 #define LOG_FILE_ID LOG_FILE_USER_ACCESS_CTRL_ANI_IMPL
@@ -40,14 +41,6 @@ using namespace OHOS::UserIam::Common;
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-enum class JsResultCode : int32_t {
-    OHOS_CHECK_PERMISSION_FAILED = 201,
-    OHOS_CHECK_SYSTEM_APP_FAILED = 202,
-    OHOS_INVALID_PARAM = 401,
-    GENERAL_ERROR = 12500002,
-    AUTH_TOKEN_CHECK_FAILED = 12500015,
-    AUTH_TOKEN_EXPIRED = 12500016,
-};
 
 struct VerifyAuthTokenResult {
     int32_t resultCode;
@@ -98,8 +91,7 @@ bool ConvertAllowableDuration(int32_t allowableDuration, uint64_t &outAllowableD
 
 bool CheckAuthTokenLen(std::vector<uint8_t> &authToken)
 {
-    constexpr const size_t maxAuthTokenLen = 1024;
-    if (authToken.size() > maxAuthTokenLen) {
+    if (authToken.empty() || authToken.size() > MAX_AUTH_TOKEN_LEN) {
         IAM_LOGE("authToken length check fail:%{public}zu", authToken.size());
         return false;
     }
@@ -145,6 +137,12 @@ bool ConvertUserAuthType(int32_t userAuthType, userAuth::UserAuthType &userAuthT
         case AuthType::COMPANION_DEVICE:
             userAuthTypeOut = userAuth::UserAuthType::key_t::COMPANION_DEVICE;
             return true;
+        case AuthType::RECOVERY_KEY:
+            userAuthTypeOut = userAuth::UserAuthType::key_t::RECOVERY_KEY;
+            return true;
+        case AuthType::CUSTOM_AUTH:
+            userAuthTypeOut = userAuth::UserAuthType::key_t::CUSTOM;
+            return true;
         default:
             IAM_LOGE("invalid userAuthType:%{public}d", userAuthType);
             return false;
@@ -162,6 +160,9 @@ bool ConvertAuthTokenType(int32_t authTokenType, userAccessCtrl::AuthTokenType &
             return true;
         case AuthTokenType::TOKEN_TYPE_LOCAL_COAUTH:
             authTokenTypeOut = userAccessCtrl::AuthTokenType::key_t::TOKEN_TYPE_COAUTH;
+            return true;
+        case AuthTokenType::TOKEN_TYPE_SCHEDULED_AUTH:
+            authTokenTypeOut = userAccessCtrl::AuthTokenType::key_t::TOKEN_TYPE_SCHEDULED_AUTH;
             return true;
         default:
             IAM_LOGE("invalid authTokenType:%{public}d", authTokenType);
@@ -231,6 +232,26 @@ bool FillAniAuthToken(const std::vector<uint8_t> &extraInfo, userAccessCtrl::Aut
     return true;
 }
 
+bool FillAniTokenSchedule(const std::vector<uint8_t> &extraInfo, userAuth::TokenRedemptionSchedule &schedule)
+{
+    Attributes attr(extraInfo);
+    TokenSchedule tokenSchedule = {};
+    IF_FALSE_LOGE_AND_RETURN_VAL(UserAuthHelper::GetTokenScheduleAttr(attr, tokenSchedule), false);
+    if (tokenSchedule.hasValidStartTime) {
+        schedule.validStartTime = optional<int64_t>::make(tokenSchedule.validStartTime);
+    }
+    if (tokenSchedule.hasValidEndTime) {
+        schedule.validEndTime = optional<int64_t>::make(tokenSchedule.validEndTime);
+    }
+    if (tokenSchedule.windowConfig.has_value()) {
+        userAuth::RedemptionWindow window = {};
+        window.repeatInterval = tokenSchedule.windowConfig->repeatInterval;
+        window.windowDuration = tokenSchedule.windowConfig->windowDuration;
+        schedule.windowConfig = optional<userAuth::RedemptionWindow>::make(window);
+    }
+    return true;
+}
+
 ResultCode VerifyAuthTokenSyncInner(array_view<uint8_t> authToken, int32_t allowableDuration,
     userAccessCtrl::AuthToken &authTokenOut)
 {
@@ -260,38 +281,33 @@ ResultCode VerifyAuthTokenSyncInner(array_view<uint8_t> authToken, int32_t allow
     }
     bool fillAniAuthTokenRet = FillAniAuthToken(verifyAuthTokenResult.extraInfo, authTokenOut);
     IF_FALSE_LOGE_AND_RETURN_VAL(fillAniAuthTokenRet, ResultCode::GENERAL_ERROR);
+    Attributes verifyAttr(verifyAuthTokenResult.extraInfo);
+    int32_t tokenType = 0;
+    if (verifyAttr.GetInt32Value(Attributes::ATTR_TOKEN_TYPE, tokenType) &&
+        tokenType == AuthTokenType::TOKEN_TYPE_SCHEDULED_AUTH) {
+        userAuth::TokenRedemptionSchedule schedule = {};
+        IF_FALSE_LOGE_AND_RETURN_VAL(FillAniTokenSchedule(verifyAuthTokenResult.extraInfo, schedule),
+            ResultCode::GENERAL_ERROR);
+        authTokenOut.schedule = optional<userAuth::TokenRedemptionSchedule>::make(schedule);
+    }
 
     IAM_LOGD("success");
     return ResultCode::SUCCESS;
 }
 
-void ThrowBusinessError(ResultCode ret)
+void ThrowBusinessError(ResultCode ret, bool useV26Table = false)
 {
-    const std::map<ResultCode, std::pair<JsResultCode, std::string>> result2Pair = {
-        { ResultCode::INVALID_PARAMETERS, { JsResultCode::OHOS_INVALID_PARAM, "Invalid authentication parameters." } },
-        { ResultCode::CHECK_PERMISSION_FAILED, { JsResultCode::OHOS_CHECK_PERMISSION_FAILED, "Permission denied." } },
-        { ResultCode::CHECK_SYSTEM_APP_FAILED,
-            { JsResultCode::OHOS_CHECK_SYSTEM_APP_FAILED, "The caller is not a system application." } },
-        { ResultCode::GENERAL_ERROR, { JsResultCode::GENERAL_ERROR, "Unknown errors." } },
-        { ResultCode::AUTH_TOKEN_CHECK_FAILED,
-            { JsResultCode::AUTH_TOKEN_CHECK_FAILED,
-                "Operation failed because of authToken integrity check failed." } },
-        { ResultCode::AUTH_TOKEN_EXPIRED,
-            { JsResultCode::AUTH_TOKEN_EXPIRED, "Operation failed because of authToken has expired." } }
-    };
-
     if (ret == ResultCode::SUCCESS) {
         return;
     }
 
-    auto pair = result2Pair.find(ret);
-    if (pair == result2Pair.end()) {
-        pair = result2Pair.find(ResultCode::GENERAL_ERROR);
-    }
-    IF_FALSE_LOGE_AND_RETURN(pair != result2Pair.end());
-    IAM_LOGE("ThrowBusinessError, result: %{public}d, errorCode: %{public}d, errmsg: %{public}s", pair->first,
-        pair->second.first, pair->second.second.c_str());
-    set_business_error(static_cast<int32_t>(pair->second.first), pair->second.second);
+    UserAuthResultCode errorCode = useV26Table
+        ? UserAuthHelper::GetResultCodeV26(static_cast<int32_t>(ret))
+        : UserAuthHelper::GetResultCodeV16(static_cast<int32_t>(ret));
+    const std::string &errMsg = g_resultV92Str.at(errorCode);
+    IAM_LOGE("ThrowBusinessError, result: %{public}d, errorCode: %{public}d, errmsg: %{public}s", ret,
+        static_cast<int32_t>(errorCode), errMsg.c_str());
+    set_business_error(static_cast<int32_t>(errorCode), errMsg);
 }
 
 userAccessCtrl::AuthToken VerifyAuthTokenSync(array_view<uint8_t> authToken, double allowableDuration)
@@ -306,11 +322,52 @@ userAccessCtrl::AuthToken VerifyAuthTokenSync(array_view<uint8_t> authToken, dou
 
     ResultCode ret = VerifyAuthTokenSyncInner(authToken, allowableDuration, authTokenOut);
     if (ret != ResultCode::SUCCESS) {
-        ThrowBusinessError(ret);
+        ThrowBusinessError(ret, true);
         return authTokenOut;
     }
     IAM_LOGI("success");
     return authTokenOut;
+}
+
+ResultCode RedeemScheduledAuthTokenInner(array_view<uint8_t> scheduleToken, array_view<uint8_t> challenge,
+    std::vector<uint8_t> &authToken)
+{
+    int32_t maxWaitTime = 10000;
+    IAM_LOGI("start, scheduleToken len:%{public}zu, challenge len:%{public}zu", scheduleToken.size(),
+        challenge.size());
+    std::shared_ptr<VerifyAuthTokenCallback> callback = MakeShared<VerifyAuthTokenCallback>();
+    IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, ResultCode::GENERAL_ERROR);
+
+    std::vector<uint8_t> localToken(scheduleToken.begin(), scheduleToken.end());
+    if (!CheckAuthTokenLen(localToken)) {
+        return ResultCode::INVALID_PARAMETERS;
+    }
+    std::vector<uint8_t> localChallenge(challenge.begin(), challenge.end());
+    if (localChallenge.empty() || localChallenge.size() > MAX_CHALLENG_LEN) {
+        IAM_LOGE("challenge length check fail:%{public}zu", localChallenge.size());
+        return ResultCode::INVALID_PARAMETERS;
+    }
+
+    UserAccessCtrlClient::GetInstance().RedeemScheduledAuthToken(localChallenge, localToken, callback);
+    auto future = callback->GetFuture();
+    auto result = future.wait_for(std::chrono::milliseconds(maxWaitTime));
+    if (result == std::future_status::timeout) {
+        IAM_LOGE("redeemScheduledAuthToken timeout");
+        return ResultCode::TIMEOUT;
+    }
+
+    VerifyAuthTokenResult verifyResult = future.get();
+    if (verifyResult.resultCode != ResultCode::SUCCESS) {
+        IAM_LOGE("redeemScheduledAuthToken resultCode error:%{public}d", verifyResult.resultCode);
+        return static_cast<ResultCode>(verifyResult.resultCode);
+    }
+    Attributes attr(verifyResult.extraInfo);
+    if (!attr.GetUint8ArrayValue(Attributes::ATTR_SIGNATURE, authToken)) {
+        IAM_LOGE("ATTR_SIGNATURE is null");
+        return ResultCode::GENERAL_ERROR;
+    }
+    IAM_LOGI("success, authToken len:%{public}zu", authToken.size());
+    return ResultCode::SUCCESS;
 }
 } // namespace UserAuth
 } // namespace UserIam
@@ -321,6 +378,18 @@ userAccessCtrl::AuthToken verifyAuthTokenSync(array_view<uint8_t> authToken, dou
 {
     return UserAuth::VerifyAuthTokenSync(authToken, allowableDuration);
 }
+
+array<uint8_t> redeemScheduledAuthToken(array_view<uint8_t> challenge, array_view<uint8_t> scheduleToken)
+{
+    std::vector<uint8_t> authToken;
+    UserAuth::ResultCode ret = UserAuth::RedeemScheduledAuthTokenInner(scheduleToken, challenge, authToken);
+    if (ret != UserAuth::ResultCode::SUCCESS) {
+        UserAuth::ThrowBusinessError(ret, true);
+        return array<uint8_t>(nullptr, 0);
+    }
+    return array<uint8_t>(taihe::copy_data_t{}, authToken.data(), authToken.size());
+}
 } // namespace
 TH_EXPORT_CPP_API_verifyAuthTokenSync(verifyAuthTokenSync);
 TH_EXPORT_CPP_API_verifyAuthToken(verifyAuthTokenSync);
+TH_EXPORT_CPP_API_redeemScheduledAuthToken(redeemScheduledAuthToken);

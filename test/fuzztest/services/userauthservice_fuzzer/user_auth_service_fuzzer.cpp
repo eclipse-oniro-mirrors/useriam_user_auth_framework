@@ -342,6 +342,9 @@ void FuzzAuthUser(Parcel &parcel)
         .authType = parcel.ReadInt32(),
         .authTrustLevel = parcel.ReadInt32(),
     };
+    if (parcel.ReadBool()) {
+        param.authTypes.push_back(parcel.ReadInt32());
+    }
     IpcRemoteAuthParam remoteAuthParam = {
         .isHasRemoteAuthParam = parcel.ReadBool(),
     };
@@ -957,6 +960,27 @@ void FuzzVerifyAuthToken(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzRedeemScheduledAuthToken(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    std::vector<uint8_t> scheduleToken = {};
+    Common::FillFuzzUint8Vector(parcel, scheduleToken);
+    std::vector<uint8_t> challenge = {};
+    Common::FillFuzzUint8Vector(parcel, challenge);
+    sptr<IVerifyTokenCallback> callback(nullptr);
+    if (parcel.ReadBool()) {
+        callback = sptr<IVerifyTokenCallback>(new (std::nothrow) DummyVerifyTokenCallback());
+    }
+    g_userAuthService.RedeemScheduledAuthToken(challenge, scheduleToken, callback);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+    g_userAuthService.RedeemScheduledAuthToken(challenge, scheduleToken, callback);
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    g_userAuthService.RedeemScheduledAuthToken(challenge, scheduleToken, callback);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
 void FuzzQueryReusableAuthResult(Parcel &parcel)
 {
     IAM_LOGI("begin");
@@ -1076,6 +1100,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzGetPropertyById,
     FuzzGetPropertyInner,
     FuzzVerifyAuthToken,
+    FuzzRedeemScheduledAuthToken,
     FuzzGetAuthTokenAttr,
     FuzzQueryReusableAuthResult,
     FuzzGetAuthLockState,

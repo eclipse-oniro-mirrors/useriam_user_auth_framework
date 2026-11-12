@@ -13,20 +13,13 @@
 
 import("//build/config/features.gni")
 import("//build/test.gni")
+import("../../../test_common.gni")
 
 ohos_fuzztest("UserAuthDriverManagerFuzzTest") {
   branch_protector_ret = "pac_ret"
   module_out_path = "user_auth_framework/user_auth/concurrent"
   fuzz_config_file = "../userauthdrivermanager_fuzzer"
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-    "-DIAM_TEST_ENABLE",
-    "-Dprivate=public",
-    "-Dprotected=public",
-  ]
+  cflags = userauth_test_fuzz_cflags + [ "-DIAM_TEST_ENABLE" ]
   include_dirs = [
     "../../../../frameworks/native/executors/include",
     "../../../../frameworks/native/executors/include/async_command",
@@ -37,27 +30,11 @@ ohos_fuzztest("UserAuthDriverManagerFuzzTest") {
     "../../../../common/logs",
   ]
 
-  sources = [
-    "../../../../frameworks/native/executors/src/async_command/abandon_command.cpp",
-    "../../../../frameworks/native/executors/src/async_command/async_command_base.cpp",
-    "../../../../frameworks/native/executors/src/async_command/auth_command.cpp",
-    "../../../../frameworks/native/executors/src/async_command/collect_command.cpp",
-    "../../../../frameworks/native/executors/src/async_command/custom_command.cpp",
-    "../../../../frameworks/native/executors/src/async_command/enroll_command.cpp",
-    "../../../../frameworks/native/executors/src/async_command/identify_command.cpp",
-    "../../../../frameworks/native/executors/src/driver.cpp",
-    "../../../../frameworks/native/executors/src/driver_manager.cpp",
-    "../../../../frameworks/native/executors/src/executor.cpp",
-    "../../../../frameworks/native/executors/src/framework/executor_mgr_wrapper.cpp",
-    "../../../../frameworks/native/executors/src/framework/framework_executor_callback.cpp",
-    "../../../../frameworks/native/executors/src/iauth_executor_hdi.cpp",
-    "../../../../frameworks/native/executors/src/idriver_manager.cpp",
-    "../../../../frameworks/native/executors/src/listener/device_manager_listener.cpp",
-    "../../../../frameworks/native/executors/src/listener/framework_ready_listener.cpp",
-    "../../dummy/mock_parameter.cpp",
-    "../../dummy/mock_system_ability_listener.cpp",
-    "user_auth_driver_manager_fuzzer.cpp",
-  ]
+  sources = userauth_test_executors_sources + [
+              "../../dummy/mock_parameter.cpp",
+              "../../dummy/mock_system_ability_listener.cpp",
+              "user_auth_driver_manager_fuzzer.cpp",
+            ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 

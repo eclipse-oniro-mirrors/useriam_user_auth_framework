@@ -108,6 +108,19 @@ void SyncSerialThread()
     handler->EnsureTask([]() {});
 }
 
+// Widget teardown (FSM stop event -> EndAuthAsCancel -> End -> StopAllRunTask ->
+// DisconnectExtension) runs on the singleton timer-backed thread, and the last posts
+// come from the destructors of the harness-local contexts, i.e. after the final
+// SyncSerialThread() inside each fuzz func. Without a drain after those destructors,
+// libFuzzer's exit() races the in-flight DisconnectExtension into aafwk singletons
+// being torn down (exit-time SEGV, non-deterministic).
+void DrainSingletonThread()
+{
+    SyncSerialThread();
+    // one extra beat for teardown tasks that re-post a follow-up event
+    SyncSerialThread();
+}
+
 // schedule/start through the real profile query (no HDI mock, so it fail-closes),
 // a direct fuzz-profile Route and a child terminal, then a pool cancel; the
 // FAIL-to-LOCKED synthesis in OnChildResult is unreachable without a profile mock
@@ -192,12 +205,15 @@ FuzzFunc *g_fuzzFuncs[] = {
 
 void SudoAuthContextFuzzTest(const uint8_t *data, size_t size)
 {
-    Parcel parcel;
-    parcel.WriteBuffer(data, size);
-    parcel.RewindRead(0);
-    uint32_t index = parcel.ReadUint32() % (sizeof(g_fuzzFuncs) / sizeof(FuzzFunc *));
-    auto fuzzFunc = g_fuzzFuncs[index];
-    fuzzFunc(parcel);
+    {
+        Parcel parcel;
+        parcel.WriteBuffer(data, size);
+        parcel.RewindRead(0);
+        uint32_t index = parcel.ReadUint32() % (sizeof(g_fuzzFuncs) / sizeof(FuzzFunc *));
+        auto fuzzFunc = g_fuzzFuncs[index];
+        fuzzFunc(parcel);
+    } // harness-local contexts are destroyed here; their destructors post the final stop events
+    DrainSingletonThread();
     return;
 }
 } // namespace UserAuth

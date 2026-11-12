@@ -13,57 +13,21 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
+import("../../../test_common.gni")
 
 ohos_fuzztest("RemoteAuthCallbackServiceFuzzTest") {
   branch_protector_ret = "pac_ret"
   module_out_path = "user_auth_framework/user_auth/concurrent"
   fuzz_config_file = "../remoteauthcallbackservice_fuzzer"
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-    "-Dprivate=public",
-    "-Dprotected=public",
-  ]
+  cflags = userauth_test_fuzz_cflags
 
-  include_dirs = [
-    "../../../../interfaces/inner_api",
-    "../../../../frameworks/common/inc",
-    "../../../../frameworks/native/ipc/inc",
-    "../../../../frameworks/native/client/inc",
-    "../../../../frameworks/native/ipc/common_defines",
-    "../../../../services/engine/pub_inc",
-    "../../../../common/utils",
-    "../../../../common/logs",
-  ]
+  include_dirs = userauth_test_client_include_dirs
 
-  sources = [
-    "../../../../frameworks/native/client/src/auth_message_impl.cpp",
-    "../../../../frameworks/native/client/src/callback_manager_impl.cpp",
-    "../../../../frameworks/native/client/src/co_auth_client_impl.cpp",
-    "../../../../frameworks/native/client/src/event_listener_callback_manager.cpp",
-    "../../../../frameworks/native/client/src/event_listener_callback_service.cpp",
-    "../../../../frameworks/native/client/src/executor_callback_service.cpp",
-    "../../../../frameworks/native/client/src/executor_messenger_client.cpp",
-    "../../../../frameworks/native/client/src/ipc_client_utils.cpp",
-    "../../../../frameworks/native/client/src/load_mode_client_util.cpp",
-    "../../../../frameworks/native/client/src/modal_callback_service.cpp",
-    "../../../../frameworks/native/client/src/remote_auth_callback_service.cpp",
-    "../../../../frameworks/native/client/src/set_widget_param_callback.cpp",
-    "../../../../frameworks/native/client/src/user_access_ctrl_callback_service.cpp",
-    "../../../../frameworks/native/client/src/user_access_ctrl_client_impl.cpp",
-    "../../../../frameworks/native/client/src/user_auth_callback_service.cpp",
-    "../../../../frameworks/native/client/src/user_auth_client_impl.cpp",
-    "../../../../frameworks/native/client/src/user_auth_modal_inner_callback.cpp",
-    "../../../../frameworks/native/client/src/user_auth_napi_client_impl.cpp",
-    "../../../../frameworks/native/client/src/user_idm_callback_service.cpp",
-    "../../../../frameworks/native/client/src/user_idm_client_impl.cpp",
-    "../../../../frameworks/native/client/src/user_recognition_callback_service.cpp",
-    "../../../../frameworks/native/client/src/widget_callback_service.cpp",
-    "remote_auth_callback_service_fuzzer.cpp",
-  ]
+  sources =
+      userauth_test_client_sources + userauth_test_client_access_ctrl_sources +
+      userauth_test_client_napi_sources +
+      [ "remote_auth_callback_service_fuzzer.cpp" ]
 
   deps = [
     "../../../../frameworks/native/ipc:userauth_client_ipc_fuzzer",
@@ -84,7 +48,6 @@ ohos_fuzztest("RemoteAuthCallbackServiceFuzzTest") {
     "ability_runtime:ui_extension",
     "access_token:libaccesstoken_sdk",
     "ace_engine:ace_uicontent",
-    "c_utils:utils",
     "hilog:libhilog",
     "init:libbeget_proxy",
     "init:libbegetutil",

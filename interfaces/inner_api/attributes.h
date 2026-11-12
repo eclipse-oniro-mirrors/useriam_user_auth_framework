@@ -220,10 +220,18 @@ public:
         ATTR_CAMERA_STATUS  = 100097,
         /* Pin abandon flag, the value type is bool */
         ATTR_ABANDON_FLAG = 100098,
+        /** Schedule window valid start time of a scheduled auth token, the value type is int64_t (epoch ms). */
+        ATTR_TOKEN_SCHEDULE_VALID_START = 100099,
+        /** Schedule window valid end time of a scheduled auth token, the value type is int64_t (epoch ms). */
+        ATTR_TOKEN_SCHEDULE_VALID_END = 100100,
+        /** Repeat interval between schedule windows, the value type is int64_t (ms). */
+        ATTR_TOKEN_SCHEDULE_REPEAT_INTERVAL = 100101,
+        /** Duration of each redeemable schedule window, the value type is int64_t (ms). */
+        ATTR_TOKEN_SCHEDULE_WINDOW_DURATION = 100102,
         /* Private pin custom protect question, the value type is std::vector<uint8_t> */
-        ATTR_CLONE_PROTECT_QUESTION = 100099,
+        ATTR_CLONE_PROTECT_QUESTION = 100103,
         /* Private pin clone all info, the value type is std::vector<uint8_t> */
-        ATTR_CLONE_PRIVATE_PIN_INFO = 100100,
+        ATTR_CLONE_PRIVATE_PIN_INFO = 100104,
 
         /* Peer device UDID for private pin clone, the value type is std::vector<uint8_t>. */
         HAL_ATTR_PEER_UDID = 900001,
@@ -281,6 +289,14 @@ public:
      * @brief Deconstructor.
      */
     virtual ~Attributes();
+
+    /**
+     * @brief Erase the value of the specified key.
+     *
+     * @param key The attribute key.
+     * @return Return true if the key exists and is erased; return false otherwise.
+     */
+    bool EraseValue(AttributeKey key);
 
     /**
      * @brief Set bool value.

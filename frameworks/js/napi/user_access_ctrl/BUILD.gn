@@ -31,6 +31,7 @@ ohos_shared_library("useraccessctrl") {
   ]
 
   sources = [
+    "../../../common/src/user_auth_helper.cpp",
     "../user_auth/src/user_auth_napi_helper.cpp",
     "src/user_access_ctrl_callback_v16.cpp",
     "src/user_access_ctrl_entry.cpp",
@@ -45,6 +46,7 @@ ohos_shared_library("useraccessctrl") {
 
   external_deps = [
     "ability_base:want",
+    "access_token:libtokenid_sdk",
     "c_utils:utils",
     "hilog:libhilog",
     "ipc:ipc_single",

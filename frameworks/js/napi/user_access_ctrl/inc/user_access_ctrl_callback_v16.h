@@ -29,16 +29,39 @@ class UserAccessCtrlCallbackV16 : public UserAuth::VerifyTokenCallback,
                                   public std::enable_shared_from_this<UserAccessCtrlCallbackV16>,
                                   public NoCopyable {
 public:
-    UserAccessCtrlCallbackV16(napi_env env, napi_deferred promise);
+    enum class PromiseResultType {
+        AUTH_TOKEN,
+        RAW_TOKEN,
+    };
+    enum class ResultCodeTable {
+        V16,
+        V26,
+    };
+    UserAccessCtrlCallbackV16(napi_env env, napi_deferred promise,
+        PromiseResultType type = PromiseResultType::AUTH_TOKEN, ResultCodeTable table = ResultCodeTable::V16);
     ~UserAccessCtrlCallbackV16() override;
     void OnResult(int32_t result, const UserAuth::Attributes &extraInfo) override;
 
-    napi_status DoResultPromise(int32_t result, AuthToken authToken);
+    napi_status DoResultPromise(int32_t result, AuthToken authToken, const UserAuth::TokenSchedule &schedule,
+        bool hasSchedule);
+    napi_status DoRawTokenPromise(int32_t result, const std::vector<uint8_t> &token);
     napi_status ProcessAuthTokenResult(napi_env env, napi_value value, AuthToken authToken);
+    napi_status ProcessTokenSchedule(napi_env env, napi_value value, const UserAuth::TokenSchedule &schedule);
+    PromiseResultType GetPromiseResultType() const
+    {
+        return type_;
+    }
+    ResultCodeTable GetResultCodeTable() const
+    {
+        return table_;
+    }
 
 private:
+    napi_status RejectWithGeneralError();
     napi_env env_ = nullptr;
     napi_deferred promise_ = nullptr;
+    PromiseResultType type_ = PromiseResultType::AUTH_TOKEN;
+    ResultCodeTable table_ = ResultCodeTable::V16;
 };
 } // namespace UserAccessCtrl
 } // namespace UserIam

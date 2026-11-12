@@ -118,6 +118,106 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserIdmOnResult, TestSize.L
     contextCallback->OnResult(testResult, *testAttr);
 }
 
+HWTEST_F(ContextCallbackImplTest, ContextCallbackImplStripSystemApiOnlyAttrsForNonSystemCaller, TestSize.Level0)
+{
+    auto testAttr = Common::MakeShared<Attributes>();
+    ASSERT_TRUE(testAttr != nullptr);
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_RESULT_CODE, SUCCESS));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 2));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_FREEZING_TIME, 40));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION, 80));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_USER_ID, 100));
+    EXPECT_TRUE(testAttr->SetUint64Value(Attributes::ATTR_CREDENTIAL_ID, 12345));
+    EXPECT_TRUE(testAttr->SetInt64Value(Attributes::ATTR_PIN_EXPIRED_INFO, 60000));
+
+    sptr<MockUserAuthCallback> mockCallback(new (nothrow) MockUserAuthCallback());
+    ASSERT_TRUE(mockCallback != nullptr);
+    EXPECT_CALL(*mockCallback, OnResult(_, _))
+        .Times(Exactly(1))
+        .WillOnce([](int32_t result, const std::vector<uint8_t> &reqRet) {
+            Attributes received(reqRet);
+            EXPECT_TRUE(received.HasAttribute(Attributes::ATTR_RESULT_CODE));
+            // public v9/v10 fields are never stripped at the SA (audit 2026-11-10 finding H1)
+            EXPECT_TRUE(received.HasAttribute(Attributes::ATTR_REMAIN_TIMES));
+            EXPECT_TRUE(received.HasAttribute(Attributes::ATTR_FREEZING_TIME));
+            EXPECT_TRUE(received.HasAttribute(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION));
+            // system-only keys are stripped before leaving the SA
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_USER_ID));
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_CREDENTIAL_ID));
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_PIN_EXPIRED_INFO));
+            return SUCCESS;
+        });
+    sptr<IIamCallback> callback = mockCallback;
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    ASSERT_NE(contextCallback, nullptr);
+    contextCallback->SetSystemApiCaller(false);
+    contextCallback->OnResult(SUCCESS, *testAttr);
+}
+
+HWTEST_F(ContextCallbackImplTest, ContextCallbackImplStripV10SystemApiOnlyAttrsForNonSystemCaller, TestSize.Level0)
+{
+    // the v10 UserAuthResult path (AuthUser entry) reports the lockout fields as @systemapi,
+    // so the SA must strip them before the result leaves the service
+    auto testAttr = Common::MakeShared<Attributes>();
+    ASSERT_TRUE(testAttr != nullptr);
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_RESULT_CODE, SUCCESS));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 2));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_FREEZING_TIME, 40));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION, 80));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_USER_ID, 100));
+    EXPECT_TRUE(testAttr->SetUint64Value(Attributes::ATTR_CREDENTIAL_ID, 12345));
+    EXPECT_TRUE(testAttr->SetInt64Value(Attributes::ATTR_PIN_EXPIRED_INFO, 60000));
+
+    sptr<MockUserAuthCallback> mockCallback(new (nothrow) MockUserAuthCallback());
+    ASSERT_TRUE(mockCallback != nullptr);
+    EXPECT_CALL(*mockCallback, OnResult(_, _))
+        .Times(Exactly(1))
+        .WillOnce([](int32_t result, const std::vector<uint8_t> &reqRet) {
+            Attributes received(reqRet);
+            EXPECT_TRUE(received.HasAttribute(Attributes::ATTR_RESULT_CODE));
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_REMAIN_TIMES));
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_FREEZING_TIME));
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION));
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_USER_ID));
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_CREDENTIAL_ID));
+            EXPECT_FALSE(received.HasAttribute(Attributes::ATTR_PIN_EXPIRED_INFO));
+            return SUCCESS;
+        });
+    sptr<IIamCallback> callback = mockCallback;
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    ASSERT_NE(contextCallback, nullptr);
+    contextCallback->SetSystemApiCaller(false);
+    contextCallback->SetTraceSdkVersion(INNER_API_VERSION_10000);
+    contextCallback->OnResult(SUCCESS, *testAttr);
+}
+
+HWTEST_F(ContextCallbackImplTest, ContextCallbackImplKeepSystemApiOnlyAttrsForSystemCaller, TestSize.Level0)
+{
+    auto testAttr = Common::MakeShared<Attributes>();
+    ASSERT_TRUE(testAttr != nullptr);
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_RESULT_CODE, SUCCESS));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 2));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_FREEZING_TIME, 40));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION, 80));
+    EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_USER_ID, 100));
+    EXPECT_TRUE(testAttr->SetUint64Value(Attributes::ATTR_CREDENTIAL_ID, 12345));
+    EXPECT_TRUE(testAttr->SetInt64Value(Attributes::ATTR_PIN_EXPIRED_INFO, 60000));
+
+    sptr<MockUserAuthCallback> mockCallback(new (nothrow) MockUserAuthCallback());
+    ASSERT_TRUE(mockCallback != nullptr);
+    EXPECT_CALL(*mockCallback, OnResult(_, _))
+        .Times(Exactly(1))
+        .WillOnce([&testAttr](int32_t result, const std::vector<uint8_t> &reqRet) {
+            EXPECT_TRUE(reqRet == testAttr->Serialize());
+            return SUCCESS;
+        });
+    sptr<IIamCallback> callback = mockCallback;
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    ASSERT_NE(contextCallback, nullptr);
+    contextCallback->SetSystemApiCaller(true);
+    contextCallback->OnResult(SUCCESS, *testAttr);
+}
+
 HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserAuthOnAcquireInfo_001, TestSize.Level0)
 {
     int32_t acquire = 9999;

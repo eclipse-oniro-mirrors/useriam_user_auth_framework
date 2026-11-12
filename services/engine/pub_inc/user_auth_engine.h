@@ -96,6 +96,8 @@ public:
         EngGlobalConfigValue &value) = 0;
     virtual int32_t VerifyAuthToken(int32_t userId, const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
         EngUserAuthTokenPlain &tokenPlainOut, EngUserAuthTokenExtraInfo &extraInfoOut) = 0;
+    virtual int32_t RedeemScheduleToken(const std::vector<uint8_t> &challenge,
+        const std::vector<uint8_t> &scheduleToken, std::vector<uint8_t> &authTokenOut) = 0;
     virtual int32_t RegisterMessageCallback(const sptr<IMessageCallback> &messageCallback) = 0;
     virtual int32_t GetValidSolution(int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
         std::vector<int32_t> &validTypes) = 0;

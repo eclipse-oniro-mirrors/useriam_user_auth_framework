@@ -26,12 +26,19 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 /** Max length of challenge. */
 constexpr size_t MAX_CHALLENG_LEN = 32;
+/** Max length of auth token, aligned with the d.ts contract. */
+constexpr size_t MAX_AUTH_TOKEN_LEN = 1024;
+/** Max span between validStartTime and validEndTime of a token schedule, 30 days in ms. */
+constexpr int64_t MAX_TOKEN_SCHEDULE_SPAN_MS = 30LL * 24 * 60 * 60 * 1000;
+/** Min repeatInterval of a redemption window, 1 hour in ms. */
+constexpr int64_t MIN_REPEAT_INTERVAL_MS = 60LL * 60 * 1000;
 constexpr int32_t USER_AUTH_TIP_AUTH_SUCC = 9998;
 constexpr int32_t USER_AUTH_TIP_SINGLE_AUTH_RESULT = 9999;
 constexpr int INVALID_SOCKET_ID = -1;
@@ -39,6 +46,7 @@ constexpr int INVALID_USER_ID = -1;
 constexpr int32_t MAIN_USER_ID = 100;
 constexpr int32_t MAX_USER = 5;
 const int32_t TITLE_MAX = 500;
+const int32_t ADDITIONAL_INFO_MAX = 10000;
 const int32_t MAX_USER_CREDENTIAL_SIZE = 100;
 
 /**
@@ -196,6 +204,8 @@ enum AuthTokenType: int32_t {
     TOKEN_TYPE_LOCAL_RESIGN = 1,
     /** The auth token type is local coauth. */
     TOKEN_TYPE_LOCAL_COAUTH = 2,
+    /** The auth token type is scheduled auth. */
+    TOKEN_TYPE_SCHEDULED_AUTH = 3,
 };
 
 /**
@@ -267,6 +277,10 @@ enum ResultCode : int32_t {
     DEVICE_CAPABILITY_NOT_SUPPORT = 1009,
     /** The result is fail, because env is not trusted. */
     NOT_TRUSTED_ENV = 1010,
+    /** The result is fail, because current time is not in a schedule window. */
+    AUTH_TOKEN_NOT_IN_WINDOW = 1011,
+    /** The result is fail, because the credential bound to the token is invalid. */
+    AUTH_TOKEN_CREDENTIAL_INVALID = 1012,
     /** The result is fail, because something wrong from vendor. */
     VENDOR_ERROR_CODE_BEGIN = 10000,
 };
@@ -287,6 +301,32 @@ enum AuthIntent : int32_t {
     ABANDONED_PIN_AUTH = 4,
     /**< The auth intention is sudo pin auth. */
     SUDO_PIN_AUTH = 5,
+};
+
+/**
+ * @brief Repeated windows in which a scheduled auth token can be redeemed.
+ */
+struct RedemptionWindow {
+    /** Epoch ms; in [windowDuration, +inf) and >= MIN_REPEAT_INTERVAL_MS. */
+    int64_t repeatInterval {0};
+    /** Duration of each window, in (0, repeatInterval]. */
+    int64_t windowDuration {0};
+};
+
+/**
+ * @brief Schedule declared by a scheduled auth token.
+ */
+struct TokenSchedule {
+    /** false = schedule starts at issuance. */
+    bool hasValidStartTime {false};
+    /** Start time S, epoch ms; valid only when hasValidStartTime. */
+    int64_t validStartTime {0};
+    /** false = no time limit. */
+    bool hasValidEndTime {false};
+    /** End time (exclusive) E, epoch ms; valid only when hasValidEndTime. */
+    int64_t validEndTime {0};
+    /** Nullopt = [S, E) is a single window. */
+    std::optional<RedemptionWindow> windowConfig;
 };
 
 /**

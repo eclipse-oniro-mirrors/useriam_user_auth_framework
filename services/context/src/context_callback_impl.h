@@ -32,6 +32,7 @@ public:
     void OnResult(int32_t resultCode, const Attributes &finalResult) override;
     void OnAcquireInfo(ExecutorRole src, int32_t moduleType, const std::vector<uint8_t> &acquireMsg) override;
     void SetTraceCallerName(const std::string &callerName) override;
+    void SetSystemApiCaller(bool isSystemApiCaller) override;
     void SetTraceRequestContextId(uint64_t requestContextId) override;
     void SetTraceAuthContextId(uint64_t authContextId) override;
     void SetTraceUserId(int32_t userId) override;
@@ -64,7 +65,9 @@ public:
 
 private:
     void HandleAuthSuccessResult(int32_t resultCode, const Attributes &finalResult);
+    std::vector<uint8_t> FilterSystemApiOnlyKeys(const Attributes &finalResult, std::vector<uint8_t> extraInfo);
     sptr<IIamCallback> iamCallback_ {nullptr};
+    bool isSystemApiCaller_ {false};
     Context::ContextStopCallback stopCallback_ {nullptr};
     ContextCallbackNotifyListener::MetaData metaData_;
     std::shared_ptr<IamHitraceHelper> iamHitraceHelper_;

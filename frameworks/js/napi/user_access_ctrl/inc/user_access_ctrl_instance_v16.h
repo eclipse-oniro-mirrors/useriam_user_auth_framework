@@ -32,6 +32,7 @@ public:
     ~UserAccessCtrlInstanceV16() override = default;
 
     static napi_value VerifyAuthToken(napi_env env, napi_callback_info info);
+    static napi_value RedeemScheduledAuthToken(napi_env env, napi_callback_info info);
 };
 } // namespace UserAccessCtrl
 } // namespace UserIam

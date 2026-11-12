@@ -365,6 +365,7 @@ int32_t UserIdmService::AddCredential(int32_t userId, const IpcCredentialPara &i
         idmCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
     std::string callerName = "";
     int32_t callerType = Security::AccessToken::TOKEN_INVALID;
     static_cast<void>(IpcCommon::GetCallerName(*this, callerName, callerType));
@@ -514,6 +515,7 @@ int32_t UserIdmService::EnforceDelUser(int32_t userId, const sptr<IIamCallback> 
         idmCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
     std::string callerName = "";
     int32_t callerType = Security::AccessToken::TOKEN_INVALID;
     static_cast<void>(IpcCommon::GetCallerName(*this, callerName, callerType));
@@ -596,6 +598,7 @@ int32_t UserIdmService::DelUser(int32_t userId, const std::vector<uint8_t> &auth
         idmCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
     std::string callerName = "";
     int32_t callerType = Security::AccessToken::TOKEN_INVALID;
     static_cast<void>(IpcCommon::GetCallerName(*this, callerName, callerType));
@@ -666,6 +669,7 @@ int32_t UserIdmService::DelCredential(int32_t userId, uint64_t credentialId,
         idmCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
     std::string callerName = "";
     int32_t callerType = Security::AccessToken::TOKEN_INVALID;
     static_cast<void>(IpcCommon::GetCallerName(*this, callerName, callerType));
@@ -829,6 +833,7 @@ int32_t UserIdmService::ClearRedundancyCredential(const sptr<IIamCallback> &idmC
         idmCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
 
     std::string callerName = "";
     int32_t callerType = Security::AccessToken::TOKEN_INVALID;

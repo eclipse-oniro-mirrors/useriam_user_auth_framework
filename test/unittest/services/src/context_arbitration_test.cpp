@@ -28,7 +28,7 @@
 #include "mock_context.h"
 #include "mock_deletion.h"
 #include "mock_enrollment.h"
-#include "mock_user_auth_engine.h"
+#include "mock_iuser_auth_interface.h"
 #include "mock_resource_node.h"
 #include "mock_schedule_node.h"
 #include "resource_node_pool.h"
@@ -60,14 +60,14 @@ void DrainSerialThread()
 
 void PrimePinCredentialAndExecutor(int32_t remainTimes, int32_t freezingTime)
 {
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential(_, _, _))
         .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
             infos.push_back({.credentialId = 1, .executorIndex = PIN_EXECUTOR_INDEX, .templateId = 9,
                 .authType = static_cast<HdiAuthType>(AuthType::PIN), .executorMatcher = 1,
                 .executorSensorHint = 1, .authSubType = static_cast<uint64_t>(PinSubType::PIN_SIX)});
-            return SUCCESS;
+            return HDF_SUCCESS;
         });
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(PIN_EXECUTOR_INDEX, PIN, ALL_IN_ONE);
     ASSERT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
@@ -309,7 +309,7 @@ public:
         }
         DrainSerialThread();
         ResourceNodePool::Instance().Delete(PIN_EXECUTOR_INDEX);
-        MockUserAuthEngine::Holder::GetInstance().Reset();
+        MockIUserAuthInterface::Holder::GetInstance().Reset();
     }
 
     void Track(uint64_t contextId)

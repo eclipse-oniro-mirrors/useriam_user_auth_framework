@@ -192,6 +192,14 @@ int32_t IpcCommon::GetDirectCallerType(IPCObjectStub &stub)
     return 0;
 }
 
+bool IpcCommon::IsSystemCaller(IPCObjectStub &stub)
+{
+    if (GetDirectCallerType(stub) == Security::AccessToken::TOKEN_NATIVE) {
+        return true;
+    }
+    return CheckPermission(stub, IS_SYSTEM_APP);
+}
+
 std::optional<EngCallerType> IpcCommon::GetEngCallerType(int32_t callerType)
 {
     if (callerType == Security::AccessToken::TOKEN_HAP) {

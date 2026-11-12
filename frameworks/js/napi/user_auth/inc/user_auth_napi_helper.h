@@ -16,6 +16,7 @@
 #ifndef USER_AUTH_NAPI_HELPER
 #define USER_AUTH_NAPI_HELPER
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -34,11 +35,18 @@ struct ResultInfo {
     std::vector<uint8_t> token;
     int32_t authType;
     EnrolledState enrolledState;
+    std::optional<int32_t> remainingAuthAttempts;
+    std::optional<int32_t> lockoutDuration;
+    std::optional<int32_t> nextPhaseLockoutDuration;
+    std::vector<uint8_t> credentialId;
+    std::optional<int32_t> userId;
+    std::optional<int64_t> pinValidityPeriod;
 };
 
 class UserAuthNapiHelper {
 public:
     static bool CheckAuthType(int32_t authType);
+    static bool IsSystemApiCaller();
     static napi_value GenerateBusinessErrorV9(napi_env env, UserAuthResultCode result);
     static napi_value GenerateBusinessErrorV21(napi_env env, UserAuthResultCode result);
     static napi_value GenerateErrorMsg(napi_env env, UserAuthResultCode result, std::string errorMsg);
@@ -57,6 +65,7 @@ public:
     static napi_value Uint8VectorToNapiUint8Array(napi_env env,  std::vector<uint8_t> &value);
     static napi_status SetBoolProperty(napi_env env, napi_value obj, const char *name, int32_t value);
     static napi_status SetInt32Property(napi_env env, napi_value obj, const char *name, int32_t value);
+    static napi_status SetInt64Property(napi_env env, napi_value obj, const char *name, int64_t value);
     static napi_status SetUint32Property(napi_env env, napi_value obj, const char *name, uint32_t value);
     static napi_status SetUint8ArrayProperty(napi_env env,
         napi_value obj, const char *name, const std::vector<uint8_t> &value);
@@ -75,6 +84,9 @@ public:
         napi_env env, napi_value object, const std::string &name, const std::string &value);
     static bool ConvertSizeToUint32(size_t in, uint32_t &out);
     static napi_status SetResultInfoProperty(napi_env env, napi_value obj, const ResultInfo &resultInfo);
+    static napi_status SetBasicResultInfo(napi_env env, napi_value obj, const ResultInfo &resultInfo);
+    static napi_status SetAuthStatusResultInfo(napi_env env, napi_value obj, const ResultInfo &resultInfo);
+    static napi_status SetCredentialResultInfo(napi_env env, napi_value obj, const ResultInfo &resultInfo);
 private:
     UserAuthNapiHelper() = default;
     ~UserAuthNapiHelper() = default;

@@ -122,6 +122,28 @@ HWTEST_F(AttributesTest, AttributesBoolValue, TestSize.Level0)
     EXPECT_FALSE(value2);
 }
 
+HWTEST_F(AttributesTest, AttributesEraseValue, TestSize.Level0)
+{
+    Attributes attrs;
+    EXPECT_FALSE(attrs.EraseValue(Attributes::ATTR_REMAIN_TIMES));
+    EXPECT_TRUE(attrs.SetInt32Value(Attributes::ATTR_RESULT_CODE, SUCCESS));
+    EXPECT_TRUE(attrs.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 3));
+    EXPECT_TRUE(attrs.SetInt32Value(Attributes::ATTR_FREEZING_TIME, 30));
+
+    EXPECT_TRUE(attrs.EraseValue(Attributes::ATTR_REMAIN_TIMES));
+    EXPECT_FALSE(attrs.HasAttribute(Attributes::ATTR_REMAIN_TIMES));
+    EXPECT_TRUE(attrs.HasAttribute(Attributes::ATTR_RESULT_CODE));
+    EXPECT_TRUE(attrs.HasAttribute(Attributes::ATTR_FREEZING_TIME));
+    EXPECT_FALSE(attrs.EraseValue(Attributes::ATTR_REMAIN_TIMES));
+
+    auto raw = attrs.Serialize();
+    Attributes roundTrip(raw);
+    EXPECT_FALSE(roundTrip.HasAttribute(Attributes::ATTR_REMAIN_TIMES));
+    int32_t resultCode = 0;
+    EXPECT_TRUE(roundTrip.GetInt32Value(Attributes::ATTR_RESULT_CODE, resultCode));
+    EXPECT_EQ(resultCode, SUCCESS);
+}
+
 HWTEST_F(AttributesTest, AttributesUint64Value, TestSize.Level0)
 {
     Attributes attrs;

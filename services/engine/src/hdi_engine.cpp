@@ -15,6 +15,8 @@
 
 #include "hdi_engine.h"
 
+#include <cinttypes>
+
 #include "hdi_type_aliases.h"
 #include "hdi_type_convert.h"
 #include "hdi_wrapper.h"
@@ -400,6 +402,15 @@ int32_t HdiEngineImpl::BeginEnrollmentExt(const std::vector<uint8_t> &authToken,
 int32_t HdiEngineImpl::BeginAuthenticationExt(uint64_t contextId, EngAuthParamExt &param,
     std::vector<EngScheduleInfo> &scheduleInfos, AcquireInfoCallback &acquireInfoCallback)
 {
+    IAM_LOGD("start, userId:%{public}d, authType:%{public}d, authIntent:%{public}d",
+        param.baseParam.userId, param.authType, param.authIntent);
+    if (param.tokenSchedule.has_value()) {
+        IAM_LOGW("schedule token is not supported by current hdi engine, hasValidStart:%{public}d"
+            ", validStart:%{public}" PRId64 ", hasValidEnd:%{public}d, validEnd:%{public}" PRId64,
+            static_cast<int32_t>(param.tokenSchedule->hasValidStartTime), param.tokenSchedule->validStartTime,
+            static_cast<int32_t>(param.tokenSchedule->hasValidEndTime), param.tokenSchedule->validEndTime);
+        return CAPABILITY_NOT_SUPPORTED;
+    }
     auto hdi = HdiWrapper::GetHdiInstance();
     IF_FALSE_LOGE_AND_RETURN_VAL(hdi != nullptr, ENGINE_UNAVAILABLE);
     std::vector<HdiScheduleInfo> hdiScheduleInfos;
@@ -409,6 +420,14 @@ int32_t HdiEngineImpl::BeginAuthenticationExt(uint64_t contextId, EngAuthParamEx
     }
     scheduleInfos = VecHdiToEng<EngScheduleInfo, HdiScheduleInfo>(hdiScheduleInfos);
     return SUCCESS;
+}
+
+int32_t HdiEngineImpl::RedeemScheduleToken(const std::vector<uint8_t> &challenge,
+    const std::vector<uint8_t> &scheduleToken, std::vector<uint8_t> &authTokenOut)
+{
+    IAM_LOGI("start, challengeLen:%{public}zu, scheduleTokenLen:%{public}zu", challenge.size(),
+        scheduleToken.size());
+    return CAPABILITY_NOT_SUPPORTED;
 }
 
 int32_t HdiEngineImpl::SendMessage(uint64_t scheduleId, int32_t srcRole, const std::vector<uint8_t> &msg)

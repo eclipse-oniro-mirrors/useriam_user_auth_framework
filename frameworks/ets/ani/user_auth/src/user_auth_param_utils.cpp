@@ -58,57 +58,246 @@ const std::string WIDGET_PARAM_CONTEXT = "uiContext";
 const std::string NOTICETYPE = "noticeType";
 const std::string REUSEMODE = "reuseMode";
 const std::string REUSEDURATION = "reuseDuration";
+constexpr uint32_t BITS_PER_BYTE = 8;
 
 namespace WidgetType {
 constexpr int32_t BUTTON_MAX = 60;
 }  // namespace WidgetType
 
+namespace RemoteLimit {
+constexpr size_t MAX_NETWORK_ID_LEN = 64;
+}  // namespace RemoteLimit
+
 UserAuthResultCode UserAuthParamUtils::InitAuthParam(userAuth::AuthParam const &authParam,
     AuthParamInner &authParamInner)
 {
     IAM_LOGI("InitAuthParam start");
+    UserAuthResultCode errorCode = InitMandatoryAuthParam(authParam, authParamInner);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    errorCode = InitOptionalAuthParam(authParam, authParamInner);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::InitMandatoryAuthParam(userAuth::AuthParam const &authParam,
+    AuthParamInner &authParamInner)
+{
     std::vector<uint8_t> challenge(authParam.challenge.begin(), authParam.challenge.end());
     if (challenge.size() > MAX_CHALLENG_LEN) {
         IAM_LOGE("challenge len %{public}zu", challenge.size());
         return UserAuthResultCode::OHOS_INVALID_PARAM;
     }
     authParamInner.challenge = challenge;
-
     UserAuthResultCode errorCode = InitAuthType(authParam, authParamInner);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("InitAuthType fail:%{public}d", errorCode);
         return errorCode;
     }
-
     errorCode = InitAuthTrustLevel(authParam, authParamInner);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("InitAuthTrustLevel fail:%{public}d", errorCode);
-        return errorCode;
     }
+    return errorCode;
+}
 
-    errorCode = InitReuseUnlockResult(authParam, authParamInner);
+UserAuthResultCode UserAuthParamUtils::InitOptionalAuthParam(userAuth::AuthParam const &authParam,
+    AuthParamInner &authParamInner)
+{
+    UserAuthResultCode errorCode = InitReuseUnlockResult(authParam, authParamInner);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("InitReuseUnlockResult fail:%{public}d", errorCode);
         return errorCode;
     }
-
     errorCode = InitUserId(authParam, authParamInner);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("InitUserId fail:%{public}d", errorCode);
         return errorCode;
     }
-
     errorCode = InitSkipLockedBiometricAuth(authParam, authParamInner);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("InitSkipLockedBiometricAuth fail:%{public}d", errorCode);
         return errorCode;
     }
-
     errorCode = InitCredentialIdList(authParam, authParamInner);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("InitCredentialIdList fail:%{public}d", errorCode);
         return errorCode;
     }
+    errorCode = InitAuthIntent(authParam, authParamInner);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("InitAuthIntent fail:%{public}d", errorCode);
+        return errorCode;
+    }
+    errorCode = InitRemoteAuthOptions(authParam, authParamInner);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("InitRemoteAuthOptions fail:%{public}d", errorCode);
+        return errorCode;
+    }
+    errorCode = InitAdditionalInfo(authParam, authParamInner);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("InitAdditionalInfo fail:%{public}d", errorCode);
+        return errorCode;
+    }
+    return InitScheduledAuthTokenOptions(authParam, authParamInner);
+}
+
+UserAuthResultCode UserAuthParamUtils::InitAuthIntent(userAuth::AuthParam const &authParam,
+    AuthParamInner &authParamInner)
+{
+    IAM_LOGI("InitAuthIntent start.");
+    if (!authParam.authIntent.has_value()) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    switch (authParam.authIntent->get_key()) {
+        case userAuth::AuthIntent::key_t::UNLOCK:
+            authParamInner.authIntent = AuthIntent::UNLOCK;
+            break;
+        case userAuth::AuthIntent::key_t::SILENT_AUTH:
+            authParamInner.authIntent = AuthIntent::SILENT_AUTH;
+            break;
+        case userAuth::AuthIntent::key_t::QUESTION_AUTH:
+            authParamInner.authIntent = AuthIntent::QUESTION_AUTH;
+            break;
+        case userAuth::AuthIntent::key_t::ABANDONED_PIN_AUTH:
+            authParamInner.authIntent = AuthIntent::ABANDONED_PIN_AUTH;
+            break;
+        case userAuth::AuthIntent::key_t::SUDO_PIN_AUTH:
+            authParamInner.authIntent = AuthIntent::SUDO_PIN_AUTH;
+            break;
+        default:
+            IAM_LOGE("invalid authIntent");
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+    }
+    IAM_LOGI("authIntent: %{public}d", static_cast<int32_t>(authParamInner.authIntent));
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::InitRemoteAuthOptions(userAuth::AuthParam const &authParam,
+    AuthParamInner &authParamInner)
+{
+    IAM_LOGI("InitRemoteAuthOptions start.");
+    if (!authParam.remoteAuthOptions.has_value()) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    RemoteAuthParam remoteAuthParam = {};
+    if (authParam.remoteAuthOptions->verifierNetworkId.has_value()) {
+        std::string verifierNetworkId = authParam.remoteAuthOptions->verifierNetworkId->c_str();
+        if (verifierNetworkId.size() > RemoteLimit::MAX_NETWORK_ID_LEN) {
+            IAM_LOGE("verifierNetworkId len:%{public}zu", verifierNetworkId.size());
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+        remoteAuthParam.verifierNetworkId = verifierNetworkId;
+    }
+    if (authParam.remoteAuthOptions->collectorNetworkId.has_value()) {
+        std::string collectorNetworkId = authParam.remoteAuthOptions->collectorNetworkId->c_str();
+        if (collectorNetworkId.size() > RemoteLimit::MAX_NETWORK_ID_LEN) {
+            IAM_LOGE("collectorNetworkId len:%{public}zu", collectorNetworkId.size());
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+        remoteAuthParam.collectorNetworkId = collectorNetworkId;
+    }
+    if (authParam.remoteAuthOptions->collectorTokenId.has_value()) {
+        if (authParam.remoteAuthOptions->collectorTokenId.value() < 0) {
+            IAM_LOGE("collectorTokenId error");
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+        remoteAuthParam.collectorTokenId =
+            static_cast<uint32_t>(authParam.remoteAuthOptions->collectorTokenId.value());
+    }
+    authParamInner.remoteAuthParam = remoteAuthParam;
+    if (!remoteAuthParam.verifierNetworkId.has_value() && !remoteAuthParam.collectorNetworkId.has_value() &&
+        !remoteAuthParam.collectorTokenId.has_value()) {
+        IAM_LOGI("remoteAuthOptions has no effective field, treat as absent");
+        authParamInner.remoteAuthParam = std::nullopt;
+    }
+    IAM_LOGI("InitRemoteAuthOptions done");
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::InitAdditionalInfo(userAuth::AuthParam const &authParam,
+    AuthParamInner &authParamInner)
+{
+    IAM_LOGI("InitAdditionalInfo start.");
+    if (!authParam.additionalInfo.has_value()) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    std::string additionalInfo = authParam.additionalInfo->c_str();
+    if (UserAuthHelper::GetUtf8CharCount(additionalInfo) > static_cast<size_t>(ADDITIONAL_INFO_MAX)) {
+        IAM_LOGE("additionalInfo len:%{public}zu", additionalInfo.size());
+        return UserAuthResultCode::OHOS_INVALID_PARAM;
+    }
+    authParamInner.additionalInfo = additionalInfo;
+    IAM_LOGI("additionalInfo len:%{public}zu", additionalInfo.size());
+    return UserAuthResultCode::SUCCESS;
+}
+
+namespace {
+UserAuthResultCode ValidateTokenSchedule(const TokenSchedule &tokenSchedule)
+{
+    if (tokenSchedule.hasValidStartTime && tokenSchedule.hasValidEndTime) {
+        if (tokenSchedule.validEndTime <= tokenSchedule.validStartTime) {
+            IAM_LOGE("validEndTime must be greater than validStartTime");
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+        if (tokenSchedule.validEndTime - tokenSchedule.validStartTime > MAX_TOKEN_SCHEDULE_SPAN_MS) {
+            IAM_LOGE("schedule span must not exceed 30 days");
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+    }
+    if (tokenSchedule.windowConfig.has_value()) {
+        if (tokenSchedule.windowConfig->repeatInterval < MIN_REPEAT_INTERVAL_MS) {
+            IAM_LOGE("repeatInterval must not be less than 1 hour");
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+        if (tokenSchedule.windowConfig->windowDuration <= 0) {
+            IAM_LOGE("windowDuration must be greater than 0");
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+        if (tokenSchedule.windowConfig->windowDuration > tokenSchedule.windowConfig->repeatInterval) {
+            IAM_LOGE("windowDuration must not be greater than repeatInterval");
+            return UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+    }
+    return UserAuthResultCode::SUCCESS;
+}
+} // namespace
+
+UserAuthResultCode UserAuthParamUtils::InitScheduledAuthTokenOptions(userAuth::AuthParam const &authParam,
+    AuthParamInner &authParamInner)
+{
+    IAM_LOGI("InitScheduledAuthTokenOptions start.");
+    if (!authParam.scheduledAuthTokenOptions.has_value()) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    const userAuth::TokenRedemptionSchedule &schedule = authParam.scheduledAuthTokenOptions.value();
+    TokenSchedule tokenSchedule = {};
+    tokenSchedule.hasValidStartTime = schedule.validStartTime.has_value();
+    if (tokenSchedule.hasValidStartTime) {
+        tokenSchedule.validStartTime = schedule.validStartTime.value();
+    }
+    tokenSchedule.hasValidEndTime = schedule.validEndTime.has_value();
+    if (tokenSchedule.hasValidEndTime) {
+        tokenSchedule.validEndTime = schedule.validEndTime.value();
+    }
+    if (schedule.windowConfig.has_value()) {
+        RedemptionWindow window = {};
+        window.repeatInterval = schedule.windowConfig->repeatInterval;
+        window.windowDuration = schedule.windowConfig->windowDuration;
+        tokenSchedule.windowConfig = window;
+    }
+    UserAuthResultCode validateResult = ValidateTokenSchedule(tokenSchedule);
+    if (validateResult != UserAuthResultCode::SUCCESS) {
+        return validateResult;
+    }
+    authParamInner.tokenSchedule = tokenSchedule;
+    IAM_LOGI("InitScheduledAuthTokenOptions done, hasValidStart:%{public}d, validStart:%{public}" PRId64
+        ", hasValidEnd:%{public}d, validEnd:%{public}" PRId64,
+        static_cast<int32_t>(tokenSchedule.hasValidStartTime), tokenSchedule.validStartTime,
+        static_cast<int32_t>(tokenSchedule.hasValidEndTime), tokenSchedule.validEndTime);
     return UserAuthResultCode::SUCCESS;
 }
 
@@ -255,6 +444,12 @@ UserAuthResultCode UserAuthParamUtils::InitWidgetParam(userAuth::WidgetParam con
         return UserAuthResultCode::OHOS_INVALID_PARAM;
     }
 
+    // appWindow is system-api-only and never crosses IPC; reject non-system callers here.
+    if (widgetParam.appWindow.has_value() && !UserAuthAniHelper::IsSystemApiCaller()) {
+        IAM_LOGE("appWindow used by non-system caller");
+        return UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED;
+    }
+
     if (widgetParam.uiContext.has_value()) {
         IAM_LOGI("widgetParam has uiContext");
         errorCode = InitContext(widgetParam, widgetParamExt, abilityContext);
@@ -397,7 +592,7 @@ bool UserAuthParamUtils::CheckUIContext(const std::shared_ptr<OHOS::AbilityRunti
     return true;
 }
 
-UserAuthResultCode UserAuthParamUtils::GetUserAuthResult(int32_t result, const Attributes &extraInfo,
+UserAuthResultCode UserAuthParamUtils::FillAuthResult(int32_t result, const Attributes &extraInfo,
     userAuth::UserAuthResult &userAuthResult)
 {
     std::vector<uint8_t> token = {};
@@ -415,7 +610,6 @@ UserAuthResultCode UserAuthParamUtils::GetUserAuthResult(int32_t result, const A
     if (!extraInfo.GetUint16Value(Attributes::ATTR_CREDENTIAL_COUNT, enrolledState.credentialCount)) {
         IAM_LOGE("ATTR_CREDENTIAL_COUNT is null");
     }
-
     userAuthResult.result = UserAuthHelper::GetResultCodeV10(result);
     if (!token.empty()) {
         userAuthResult.token =
@@ -430,9 +624,45 @@ UserAuthResultCode UserAuthParamUtils::GetUserAuthResult(int32_t result, const A
         }
         userAuthResult.authType = taihe::optional<userAuth::UserAuthType>::make(authTypeAni);
     }
-    if (UserAuthResultCode(result) == UserAuthResultCode::SUCCESS) {
+    if (UserAuthResultCode(userAuthResult.result) == UserAuthResultCode::SUCCESS || !token.empty()) {
         userAuth::EnrolledState enrolledStateAni = {enrolledState.credentialDigest, enrolledState.credentialCount};
         userAuthResult.enrolledState = taihe::optional<userAuth::EnrolledState>::make(enrolledStateAni);
+    }
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::GetUserAuthResult(int32_t result, const Attributes &extraInfo,
+    userAuth::UserAuthResult &userAuthResult)
+{
+    UserAuthResultCode errorCode = FillAuthResult(result, extraInfo, userAuthResult);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    int32_t int32Value = 0;
+    if (extraInfo.GetInt32Value(Attributes::ATTR_REMAIN_TIMES, int32Value)) {
+        userAuthResult.remainingAuthAttempts = taihe::optional<int32_t>::make(int32Value);
+    }
+    if (extraInfo.GetInt32Value(Attributes::ATTR_FREEZING_TIME, int32Value)) {
+        userAuthResult.lockoutDuration = taihe::optional<int32_t>::make(int32Value);
+    }
+    if (extraInfo.GetInt32Value(Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION, int32Value)) {
+        userAuthResult.nextPhaseLockoutDuration = taihe::optional<int32_t>::make(int32Value);
+    }
+    uint64_t credentialId = 0;
+    if (extraInfo.GetUint64Value(Attributes::ATTR_CREDENTIAL_ID, credentialId)) {
+        std::vector<uint8_t> credentialIdVec(sizeof(credentialId), 0);
+        for (size_t i = 0; i < credentialIdVec.size(); ++i) {
+            credentialIdVec[i] = static_cast<uint8_t>((credentialId >> (i * BITS_PER_BYTE)) & 0xFF);
+        }
+        userAuthResult.credentialId = taihe::optional<taihe::array<uint8_t>>(
+            std::in_place_t{}, taihe::copy_data_t{}, credentialIdVec.data(), credentialIdVec.size());
+    }
+    if (extraInfo.GetInt32Value(Attributes::ATTR_USER_ID, int32Value)) {
+        userAuthResult.userId = taihe::optional<int32_t>::make(int32Value);
+    }
+    int64_t int64Value = 0;
+    if (extraInfo.GetInt64Value(Attributes::ATTR_PIN_EXPIRED_INFO, int64Value)) {
+        userAuthResult.pinValidityPeriod = taihe::optional<int64_t>::make(int64Value);
     }
     return UserAuthResultCode::SUCCESS;
 }

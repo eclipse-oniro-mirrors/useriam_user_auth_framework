@@ -39,12 +39,18 @@ public:
         std::shared_ptr<AbilityRuntime::Context> &abilityContext, sptr<OHOS::Rosen::Window> &window);
 
 private:
+    struct ScheduleFields {
+        bool hasWindowConfig = false;
+        int64_t repeatInterval = 0;
+        int64_t windowDuration = 0;
+    };
+
     static UserAuthResultCode InitChallenge(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode InitAuthType(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode InitAuthTrustLevel(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode InitReuseUnlockResult(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode InitUserId(napi_env env, napi_value value, AuthParamInner &authParam);
-    static UserAuthResultCode ProcessAuthTrustLevelAndUserId(napi_env env, napi_value value, AuthParamInner &authParam);
+    static UserAuthResultCode ProcessUserId(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode ProcessReuseUnlockResult(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode ProcessWindowMode(napi_env env, napi_value value,
         SetWidgetParamClientCallback::WidgetParamExt &widgetParamExt);
@@ -56,6 +62,25 @@ private:
     static bool CheckUIContext(const std::shared_ptr<OHOS::AbilityRuntime::Context> context);
     static UserAuthResultCode ProcessSkipLockedBiometricAuth(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode ProcessCredentialIdList(napi_env env, napi_value value, AuthParamInner &authParam);
+    static UserAuthResultCode ProcessAuthIntent(napi_env env, napi_value value, AuthParamInner &authParam);
+    static UserAuthResultCode ProcessRemoteAuthOptions(napi_env env, napi_value value, AuthParamInner &authParam);
+    static UserAuthResultCode ProcessAdditionalInfo(napi_env env, napi_value value, AuthParamInner &authParam);
+    static UserAuthResultCode ProcessScheduledAuthTokenOptions(napi_env env, napi_value value,
+        AuthParamInner &authParam);
+    static UserAuthResultCode InitMandatoryAuthParam(napi_env env, napi_value value, AuthParamInner &authParam);
+    static UserAuthResultCode InitOptionalAuthParam(napi_env env, napi_value value, AuthParamInner &authParam);
+    static UserAuthResultCode ProcessRemoteNetworkId(napi_env env, napi_value remoteValue,
+        const std::string &propertyName, std::optional<std::string> &networkId);
+    static UserAuthResultCode ProcessCollectorTokenId(napi_env env, napi_value remoteValue,
+        RemoteAuthParam &remoteAuthParam);
+    static UserAuthResultCode ReadMandatoryInt64Field(napi_env env, napi_value value,
+        const std::string &propertyName, int64_t &out);
+    static UserAuthResultCode ReadOptionalInt64Field(napi_env env, napi_value value,
+        const std::string &propertyName, bool &hasValue, int64_t &out);
+    static UserAuthResultCode ReadScheduleFields(napi_env env, napi_value scheduleValue, ScheduleFields &fields);
+    static UserAuthResultCode FillScheduleFields(napi_env env, const ScheduleFields &fields,
+        TokenSchedule &schedule);
+    static UserAuthResultCode ValidateScheduleTimeRange(napi_env env, const TokenSchedule &schedule);
 };
 } // namespace UserAuth
 } // namespace UserIam

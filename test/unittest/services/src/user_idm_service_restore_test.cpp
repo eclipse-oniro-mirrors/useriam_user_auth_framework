@@ -26,7 +26,7 @@
 #include "nlohmann/json.hpp"
 #include "mock_ipc_common.h"
 #include "mock_resource_node.h"
-#include "mock_user_auth_engine.h"
+#include "mock_iuser_auth_interface.h"
 #include "mock_user_idm_callback.h"
 #include "mock_user_idm_database.h"
 #include "resource_node_pool.h"
@@ -123,13 +123,13 @@ void UserIdmServiceRestoreTest::TearDownTestCase()
 
 void UserIdmServiceRestoreTest::SetUp()
 {
-    MockUserAuthEngine::Holder::GetInstance().Reset();
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
 void UserIdmServiceRestoreTest::TearDown()
 {
     DrainIdmSerialThread();
-    MockUserAuthEngine::Holder::GetInstance().Reset();
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
 // OnExtension with unknown extension name returns GENERAL_ERROR.
@@ -423,9 +423,9 @@ HWTEST_F(UserIdmServiceRestoreTest, OnRestoreInnerOpenSessionFail, TestSize.Leve
     std::vector<uint8_t> peerUdid(64, 'a');
     Attributes innerAttr = {};
     innerAttr.SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, std::vector<uint8_t>{0x10, 0x20});
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, OpenSession(_, _)).WillOnce(Return(GENERAL_ERROR));
+    EXPECT_CALL(*mockHdi, OpenSession(_, _)).WillOnce(Return(HDF_FAILURE));
     IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
     int32_t ret = service.OnRestoreInner(testUserId, PRIVATE_PIN, peerUdid, innerAttr.Serialize());
     EXPECT_EQ(ret, GENERAL_ERROR);
@@ -545,9 +545,9 @@ HWTEST_F(UserIdmServiceRestoreTest, OnBackupVerifyAuthTokenFail, TestSize.Level0
     MessageParcel data;
     data.WriteString(BuildCloneInfoJson(testUserId, BuildUdidString(), "token"));
     MessageParcel reply;
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _, _)).WillOnce(Return(GENERAL_ERROR));
+    EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _)).WillOnce(Return(HDF_FAILURE));
     int32_t ret = service.OnBackup(data, reply);
     EXPECT_EQ(ret, GENERAL_ERROR);
 }
@@ -599,9 +599,9 @@ HWTEST_F(UserIdmServiceRestoreTest, StartRestoreEnrollOpenSessionFail, TestSize.
 {
     UserIdmService service(123123, true);
     const int32_t testUserId = 100;
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, OpenSession(_, _)).WillOnce(Return(GENERAL_ERROR));
+    EXPECT_CALL(*mockHdi, OpenSession(_, _)).WillOnce(Return(HDF_FAILURE));
     IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
     auto promise = std::make_shared<std::promise<int32_t>>();
     std::vector<uint8_t> restoreData = {1, 2, 3};
@@ -615,9 +615,9 @@ HWTEST_F(UserIdmServiceRestoreTest, WaitForRestoreEnrollResultSuccess, TestSize.
 {
     UserIdmService service(123123, true);
     const int32_t testUserId = 100;
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, CloseSession(_)).WillRepeatedly(Return(SUCCESS));
+    EXPECT_CALL(*mockHdi, CloseSession(_)).WillRepeatedly(Return(HDF_SUCCESS));
     auto promise = std::make_shared<std::promise<int32_t>>();
     std::future<int32_t> future = promise->get_future();
     promise->set_value(SUCCESS);

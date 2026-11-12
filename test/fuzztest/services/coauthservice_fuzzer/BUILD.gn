@@ -13,28 +13,14 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
-import("../../../../user_auth_framework.gni")
-
-if (!defined(global_parts_info) ||
-    defined(global_parts_info.account_os_account)) {
-  has_os_account_part = true
-} else {
-  has_os_account_part = false
-}
+import("../../../test_common.gni")
 
 ohos_fuzztest("CoAuthServiceFuzzTest") {
   branch_protector_ret = "pac_ret"
   module_out_path = "user_auth_framework/user_auth/concurrent"
   fuzz_config_file = "../coauthservice_fuzzer"
 
-  cflags = [
-    "-g",
-    "-O0",
-    "-Wno-unused-variable",
-    "-fno-omit-frame-pointer",
-    "-Dprivate=public",
-    "-Dprotected=public",
-  ]
+  cflags = userauth_test_fuzz_cflags
 
   include_dirs = [
     "../inc",
@@ -53,96 +39,14 @@ ohos_fuzztest("CoAuthServiceFuzzTest") {
     "../../../../common/logs",
   ]
 
-  sources = [
-    "../../../../frameworks/common/src/user_auth_helper.cpp",
-    "../../../../services/base/src/finite_state_machine_builder.cpp",
-    "../../../../services/base/src/finite_state_machine_impl.cpp",
-    "../../../../services/base/src/iam_event_dispatcher.cpp",
-    "../../../../services/base/src/thread_handler_impl.cpp",
-    "../../../../services/base/src/thread_handler_manager.cpp",
-    "../../../../services/base/src/thread_handler_singleton_impl.cpp",
-    "../../../../services/context/src/auth_widget_helper.cpp",
-    "../../../../services/context/src/base_context.cpp",
-    "../../../../services/context/src/context_appstate_observer.cpp",
-    "../../../../services/context/src/context_callback_impl.cpp",
-    "../../../../services/context/src/context_death_recipient.cpp",
-    "../../../../services/context/src/context_factory.cpp",
-    "../../../../services/context/src/context_pool_impl.cpp",
-    "../../../../services/context/src/delete_context.cpp",
-    "../../../../services/context/src/enroll_context.cpp",
-    "../../../../services/context/src/identify_context.cpp",
-    "../../../../services/context/src/local_remote_auth_context.cpp",
-    "../../../../services/context/src/context_arbitration_policy.cpp",
-    "../../../../services/context/src/remote_auth_context.cpp",
-    "../../../../services/context/src/remote_auth_invoker_context.cpp",
-    "../../../../services/context/src/remote_auth_service.cpp",
-    "../../../../services/context/src/remote_executor_stub.cpp",
-    "../../../../services/context/src/remote_iam_callback.cpp",
-    "../../../../services/context/src/schedule_holder_context.cpp",
-    "../../../../services/context/src/set_widget_param_callback_service.cpp",
-    "../../../../services/context/src/simple_auth_context.cpp",
-    "../../../../services/context/src/sudo_auth_context.cpp",
-    "../../../../services/context/src/trace.cpp",
-    "../../../../services/context/src/ui_extension_ability_connection.cpp",
-    "../../../../services/context/src/widget_client.cpp",
-    "../../../../services/context/src/widget_context.cpp",
-    "../../../../services/context/src/widget_context_callback_impl.cpp",
-    "../../../../services/context/src/widget_json.cpp",
-    "../../../../services/core/src/authentication_impl.cpp",
-    "../../../../services/core/src/credential_info_impl.cpp",
-    "../../../../services/core/src/credential_updated_manager.cpp",
-    "../../../../services/core/src/delete_impl.cpp",
-    "../../../../services/core/src/engine_state_manager.cpp",
-    "../../../../services/core/src/enrolled_info_impl.cpp",
-    "../../../../services/core/src/enrollment_impl.cpp",
-    "../../../../services/core/src/event_listener_manager.cpp",
-    "../../../../services/core/src/user_recognition_state_manager.cpp",
-    "../../../../services/base/src/callback_death_recipient.cpp",
-    "../../../../services/core/src/identification_impl.cpp",
-    "../../../../services/core/src/publish_event_adapter_mock.cpp",
-    "../../../../services/core/src/remote_auth_callback_manager.cpp",
-    "../../../../services/core/src/remote_executor_proxy.cpp",
-    "../../../../services/core/src/remote_msg_util.cpp",
-    "../../../../services/core/src/resource_node_impl.cpp",
-    "../../../../services/core/src/resource_node_pool_impl.cpp",
-    "../../../../services/core/src/resource_node_utils.cpp",
-    "../../../../services/core/src/risk_event_manager.cpp",
-    "../../../../services/core/src/schedule_node_builder.cpp",
-    "../../../../services/core/src/schedule_node_helper.cpp",
-    "../../../../services/core/src/schedule_node_impl.cpp",
-    "../../../../services/core/src/schedule_resource_node_listener.cpp",
-    "../../../../services/core/src/screenlock_status_listener.cpp",
-    "../../../../services/core/src/secure_user_info_impl.cpp",
-    "../../../../services/core/src/update_pin_param_impl.cpp",
-    "../../../../services/core/src/user_idm_database_impl.cpp",
-    "../../../../services/core/src/user_info_impl.cpp",
-    "../../../../services/core/src/widget_schedule_node_impl.cpp",
-    "../../../../services/ipc/src/co_auth_service.cpp",
-    "../../../../services/ipc/src/executor_messenger_service.cpp",
-    "../../../../services/ipc/src/message_callback_service.cpp",
-    "../../../../services/ipc/src/service_init_manager.cpp",
-    "../../../../services/ipc/src/template_cache_manager.cpp",
-    "../../../../services/ipc/src/user_auth_service.cpp",
-    "../../../../services/ipc/src/user_auth_service_global_config.cpp",
-    "../../../../services/ipc/src/user_idm_service.cpp",
-    "../../../../services/ipc/src/user_idm_service_restore.cpp",
-    "../../../../services/load_mode/src/load_mode_handler.cpp",
-    "../../../../services/load_mode/src/load_mode_handler_default.cpp",
-    "../../dummy/mock_ipc_common.cpp",
-    "../../dummy/dummy_user_auth_engine.cpp",
-    "../../dummy/mock_system_ability_listener.cpp",
-    "co_auth_service_fuzzer.cpp",
-  ]
+  sources = userauth_test_services_sources + [
+              "../../dummy/mock_ipc_common.cpp",
+              "../../dummy/mock_iuser_auth_interface.cpp",
+              "../../dummy/mock_system_ability_listener.cpp",
+            ] + userauth_test_screenlock_sources +
+            userauth_test_os_account_sources + [ "co_auth_service_fuzzer.cpp" ]
 
-  deps = [
-    "../../../../frameworks/native/client:userauth_client",
-    "../../../../frameworks/native/ipc:userauth_service_ipc_fuzzer",
-    "../../common_fuzzer:attributes_fuzzer",
-    "../../common_fuzzer:dfx_fuzzer",
-    "../../common_fuzzer:iam_test_fuzzer",
-    "../../common_fuzzer:iam_utils_fuzzer",
-    "../../common_fuzzer:userauth_service_remote_connect_fuzzer",
-  ]
+  deps = userauth_test_services_fuzz_deps
 
   public_configs = [
     "../../../../frameworks/native/ipc:userauth_client_ipc_config",
@@ -158,58 +62,40 @@ ohos_fuzztest("CoAuthServiceFuzzTest") {
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
   external_deps = [
-    "ability_base:base",
-    "ability_base:want",
-    "ability_base:zuri",
-    "ability_runtime:ability_connect_callback_stub",
-    "ability_runtime:ability_context_native",
-    "ability_runtime:abilitykit_native",
-    "ability_runtime:app_manager",
-    "ability_runtime:extension_manager",
-    "access_token:libaccesstoken_sdk",
-    "access_token:libtokenid_sdk",
-    "c_utils:utils",
-    "config_policy:configpolicy_util",
-    "eventhandler:libeventhandler",
-    "hdf_core:libhdf_utils",
-    "hdf_core:libhdi",
-    "hicollie:libhicollie",
-    "hilog:libhilog",
-    "hitrace:hitrace_meter",
-    "init:libbeget_proxy",
-    "init:libbegetutil",
-    "ipc:ipc_core",
-    "ipc:ipc_single",
-    "napi:ace_napi",
-    "node:node_header_notice",
-    "safwk:system_ability_fwk",
-    "samgr:samgr_proxy",
-  ]
+                    "ability_base:base",
+                    "ability_base:want",
+                    "ability_base:zuri",
+                    "ability_runtime:ability_connect_callback_stub",
+                    "ability_runtime:ability_context_native",
+                    "ability_runtime:abilitykit_native",
+                    "ability_runtime:app_manager",
+                    "ability_runtime:extension_manager",
+                    "ability_runtime:extensionkit_native",
+                    "access_token:libaccesstoken_sdk",
+                    "access_token:libtokenid_sdk",
+                    "c_utils:utils",
+                    "config_policy:configpolicy_util",
+                    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+                    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
+                    "eventhandler:libeventhandler",
+                    "hdf_core:libhdf_utils",
+                    "hdf_core:libhdi",
+                    "hicollie:libhicollie",
+                    "hilog:libhilog",
+                    "hitrace:hitrace_meter",
+                    "init:libbeget_proxy",
+                    "init:libbegetutil",
+                    "ipc:ipc_core",
+                    "ipc:ipc_single",
+                    "napi:ace_napi",
+                    "node:node_header_notice",
+                    "safwk:system_ability_fwk",
+                    "samgr:samgr_proxy",
+                  ] + userauth_test_screenlock_external_deps +
+                  userauth_test_os_account_external_deps
 
-  defines = []
-  if (screenlock_client_enable) {
-    external_deps += [
-      "eventhandler:libeventhandler",
-      "ffrt:libffrt",
-      "preferences:native_preferences",
-      "screenlock_mgr:screenlock_client",
-      "window_manager:libdm_lite",
-    ]
-    sources +=
-        [ "../../../../services/core/src/strong_auth_status_manager_impl.cpp" ]
-    defines += [ "SCREENLOCK_CLIENT_ENABLE" ]
-  } else {
-    sources +=
-        [ "../../../../services/core/src/strong_auth_status_manager_mock.cpp" ]
-  }
-
-  if (has_os_account_part) {
-    cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
-    external_deps += [ "os_account:os_account_innerkits" ]
-    sources += [ "../../../../services/core/src/os_accounts_manager_impl.cpp" ]
-  } else {
-    sources += [ "../../../../services/core/src/os_accounts_manager_mock.cpp" ]
-  }
+  defines = userauth_test_screenlock_defines
+  cflags_cc = userauth_test_os_account_cflags_cc
 
   subsystem_name = "useriam"
   part_name = "user_auth_framework"
