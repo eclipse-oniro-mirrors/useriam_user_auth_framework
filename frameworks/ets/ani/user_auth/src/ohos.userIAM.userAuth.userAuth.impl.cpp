@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <mutex>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -641,6 +642,25 @@ UserRecognitionMgrOrNull getUserRecognitionMgr()
     return UserRecognitionMgrOrNull::make_nValue();
 }
 
+static UserAuth::UserAuthResultCode ValidateSystemAuthParamInner(const UserAuth::AuthParamInner &authParamInner,
+    std::string &initErrorMsg)
+{
+    if (authParamInner.authTypes.size() != 1) {
+        IAM_LOGE("authType must contain exactly one authentication type, typeCount:%{public}zu",
+            authParamInner.authTypes.size());
+        return UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+    }
+    if (authParamInner.remoteAuthParam.has_value() && authParamInner.tokenSchedule.has_value()) {
+        IAM_LOGE("remoteAuthOptions cannot be specified together with scheduledAuthTokenOptions");
+        return UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+    }
+    if (UserAuth::UserAuthHelper::CheckTokenSchedule(authParamInner.tokenSchedule, initErrorMsg) !=
+        UserAuth::SUCCESS) {
+        return UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+    }
+    return UserAuth::UserAuthResultCode::SUCCESS;
+}
+
 class SystemUserAuthInstanceImpl {
 public:
     explicit SystemUserAuthInstanceImpl(AuthParam const &authParam)
@@ -662,15 +682,8 @@ public:
             return;
         }
         initResult_ = UserAuth::UserAuthParamUtils::InitAuthParam(authParam, authParamInner_);
-        if (initResult_ == UserAuth::UserAuthResultCode::SUCCESS && authParamInner_.authTypes.size() != 1) {
-            IAM_LOGE("authType must contain exactly one authentication type, typeCount:%{public}zu",
-                authParamInner_.authTypes.size());
-            initResult_ = UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
-        }
-        if (initResult_ == UserAuth::UserAuthResultCode::SUCCESS && authParamInner_.remoteAuthParam.has_value() &&
-            authParamInner_.tokenSchedule.has_value()) {
-            IAM_LOGE("remoteAuthOptions cannot be specified together with scheduledAuthTokenOptions");
-            initResult_ = UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+        if (initResult_ == UserAuth::UserAuthResultCode::SUCCESS) {
+            initResult_ = ValidateSystemAuthParamInner(authParamInner_, initErrorMsg_);
         }
     }
 
@@ -682,6 +695,11 @@ public:
     UserAuth::UserAuthResultCode GetInitResult() const
     {
         return initResult_;
+    }
+
+    std::string GetInitErrorMsg() const
+    {
+        return initErrorMsg_;
     }
 
     void onResult(::taihe::callback_view<void(UserAuthResult const&)> callback)
@@ -792,6 +810,7 @@ public:
 
 private:
     UserAuth::UserAuthResultCode initResult_ = UserAuth::UserAuthResultCode::GENERAL_ERROR;
+    std::string initErrorMsg_ = "";
     UserAuth::AuthParamInner authParamInner_ = {};
     std::shared_ptr<UserAuth::UserAuthCallbackV10> callback_ = nullptr;
     std::mutex mutex_;
@@ -808,7 +827,7 @@ SystemUserAuthInstance getSystemUserAuthInstance(AuthParam const &authParam)
     if (!instance->IsValid()) {
         UserAuth::UserAuthResultCode initResult = instance->GetInitResult();
         reporter.ReportFailed(initResult);
-        UserAuth::UserAuthAniHelper::ThrowBusinessError(initResult);
+        UserAuth::UserAuthAniHelper::ThrowBusinessError(initResult, instance->GetInitErrorMsg());
     } else {
         reporter.ReportSuccess();
     }

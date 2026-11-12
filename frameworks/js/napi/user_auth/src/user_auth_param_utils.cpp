@@ -764,8 +764,8 @@ UserAuthResultCode UserAuthParamUtils::ReadOptionalInt64Field(napi_env env, napi
     return UserAuthResultCode::SUCCESS;
 }
 
-UserAuthResultCode UserAuthParamUtils::ReadScheduleFields(napi_env env, napi_value scheduleValue,
-    ScheduleFields &fields)
+UserAuthResultCode UserAuthParamUtils::ReadWindowConfig(napi_env env, napi_value scheduleValue,
+    std::optional<RedemptionWindow> &windowConfig)
 {
     if (!UserAuthNapiHelper::HasNamedProperty(env, scheduleValue, SCHEDULE_PARAM_WINDOW_CONFIG)) {
         return UserAuthResultCode::SUCCESS;
@@ -781,62 +781,18 @@ UserAuthResultCode UserAuthParamUtils::ReadScheduleFields(napi_env env, napi_val
         std::string msgStr = "Parameter error. The type of \"windowConfig\" must be RedemptionWindow.";
         return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
     }
+    RedemptionWindow window = {};
     UserAuthResultCode errorCode = ReadMandatoryInt64Field(env, windowConfigValue,
-        SCHEDULE_PARAM_REPEAT_INTERVAL, fields.repeatInterval);
+        SCHEDULE_PARAM_REPEAT_INTERVAL, window.repeatInterval);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         return errorCode;
     }
-    fields.hasWindowConfig = true;
-    return ReadMandatoryInt64Field(env, windowConfigValue, SCHEDULE_PARAM_WINDOW_DURATION,
-        fields.windowDuration);
-}
-
-UserAuthResultCode UserAuthParamUtils::FillScheduleFields(napi_env env, const ScheduleFields &fields,
-    TokenSchedule &schedule)
-{
-    if (!fields.hasWindowConfig) {
-        return UserAuthResultCode::SUCCESS;
+    errorCode = ReadMandatoryInt64Field(env, windowConfigValue, SCHEDULE_PARAM_WINDOW_DURATION,
+        window.windowDuration);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
     }
-    if (fields.repeatInterval < MIN_REPEAT_INTERVAL_MS) {
-        IAM_LOGE("repeatInterval must not be less than 1 hour");
-        std::string msgStr = "Parameter error. \"repeatInterval\" must not be less than 3600000.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
-    }
-    if (fields.windowDuration <= 0) {
-        IAM_LOGE("windowDuration must be greater than 0");
-        std::string msgStr = "Parameter error. \"windowDuration\" must be greater than 0.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
-    }
-    if (fields.windowDuration > fields.repeatInterval) {
-        IAM_LOGE("windowDuration must not be greater than repeatInterval");
-        std::string msgStr =
-            "Parameter error. \"windowDuration\" must not be greater than \"repeatInterval\".";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
-    }
-    RedemptionWindow window = {};
-    window.repeatInterval = fields.repeatInterval;
-    window.windowDuration = fields.windowDuration;
-    schedule.windowConfig = window;
-    return UserAuthResultCode::SUCCESS;
-}
-
-UserAuthResultCode UserAuthParamUtils::ValidateScheduleTimeRange(napi_env env, const TokenSchedule &schedule)
-{
-    if (!(schedule.hasValidStartTime && schedule.hasValidEndTime)) {
-        return UserAuthResultCode::SUCCESS;
-    }
-    if (schedule.validEndTime <= schedule.validStartTime) {
-        IAM_LOGE("validEndTime must be greater than validStartTime");
-        std::string msgStr = "Parameter error. \"validEndTime\" must be greater than \"validStartTime\".";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
-    }
-    if (schedule.validEndTime - schedule.validStartTime > MAX_TOKEN_SCHEDULE_SPAN_MS) {
-        IAM_LOGE("schedule span must not exceed 30 days");
-        std::string msgStr =
-            "Parameter error. The difference between \"validEndTime\" and \"validStartTime\" must not"
-            " exceed 30 days.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
-    }
+    windowConfig = window;
     return UserAuthResultCode::SUCCESS;
 }
 
@@ -860,8 +816,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessScheduledAuthTokenOptions(napi_env
         return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
     }
     TokenSchedule schedule = {};
-    ScheduleFields fields;
-    UserAuthResultCode errorCode = ReadScheduleFields(env, scheduleValue, fields);
+    UserAuthResultCode errorCode = ReadWindowConfig(env, scheduleValue, schedule.windowConfig);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         return errorCode;
     }
@@ -875,19 +830,13 @@ UserAuthResultCode UserAuthParamUtils::ProcessScheduledAuthTokenOptions(napi_env
     if (errorCode != UserAuthResultCode::SUCCESS) {
         return errorCode;
     }
-    errorCode = ValidateScheduleTimeRange(env, schedule);
-    if (errorCode != UserAuthResultCode::SUCCESS) {
-        return errorCode;
-    }
-    errorCode = FillScheduleFields(env, fields, schedule);
-    if (errorCode != UserAuthResultCode::SUCCESS) {
-        return errorCode;
+    std::string scheduleErrorDesc;
+    if (UserAuthHelper::CheckTokenSchedule(schedule, scheduleErrorDesc) != SUCCESS) {
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, scheduleErrorDesc);
     }
     authParam.tokenSchedule = schedule;
-    IAM_LOGI("Init scheduledAuthTokenOptions, hasValidStart:%{public}d, validStart:%{public}" PRId64
-        ", hasValidEnd:%{public}d, validEnd:%{public}" PRId64 ", hasWindowConfig:%{public}d",
-        static_cast<int32_t>(schedule.hasValidStartTime), schedule.validStartTime,
-        static_cast<int32_t>(schedule.hasValidEndTime), schedule.validEndTime, fields.hasWindowConfig);
+    IAM_LOGI("Init scheduledAuthTokenOptions: %{public}s",
+        UserAuthHelper::TokenScheduleToString(schedule).c_str());
     return UserAuthResultCode::SUCCESS;
 }
 } // namespace UserAuth

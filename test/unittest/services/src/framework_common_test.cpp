@@ -13,7 +13,9 @@
  * limitations under the License.
  */
 
+#include <chrono>
 #include <climits>
+#include <cstdint>
 #include <gtest/gtest.h>
 
 #include "attributes.h"
@@ -321,7 +323,7 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_001, TestSize.Lev
     TokenSchedule windowed = singleWindow;
     RedemptionWindow window;
     window.repeatInterval = MIN_REPEAT_INTERVAL_MS;
-    window.windowDuration = MIN_REPEAT_INTERVAL_MS;
+    window.windowDuration = 2LL * 60 * 1000;
     windowed.windowConfig = window;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(windowed), SUCCESS);
 
@@ -329,11 +331,20 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_001, TestSize.Lev
     windowed.windowConfig = window;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(windowed), SUCCESS);
 
-    // optional start/end: unset start means from issuance, unset end means no limit
+    // optional start/end: unset start means from issuance (checked against the current time),
+    // unset end means no limit; windowless schedules are capped at 10 minutes
+    int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
     TokenSchedule openEnded;
     openEnded.hasValidEndTime = true;
-    openEnded.validEndTime = 2000;
+    openEnded.validEndTime = now + 60 * 1000;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(openEnded), SUCCESS);
+    openEnded.validEndTime = now;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(openEnded), INVALID_PARAMETERS);
+    openEnded.validEndTime = now + MAX_WINDOW_DURATION_MS;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(openEnded), SUCCESS);
+    openEnded.validEndTime = now + MAX_WINDOW_DURATION_MS + 1000; // 1s margin against clock reads
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(openEnded), INVALID_PARAMETERS);
     openEnded.hasValidEndTime = false;
     openEnded.hasValidStartTime = true;
     openEnded.validStartTime = 1000;
@@ -362,8 +373,12 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_003, TestSize.Lev
     schedule.validEndTime = 365LL * 24 * 60 * 60 * 1000;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
 
-    // span equal to the 30-day cap is allowed; unset end has no span limit
-    schedule.validEndTime = MAX_TOKEN_SCHEDULE_SPAN_MS;
+    // no span cap: a windowless span beyond 10 minutes hits the single-window cap,
+    // while the same span with windowConfig (repeatInterval == span) is allowed
+    RedemptionWindow window;
+    window.repeatInterval = 365LL * 24 * 60 * 60 * 1000;
+    window.windowDuration = MAX_WINDOW_DURATION_MS - 1;
+    schedule.windowConfig = window;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
     schedule.hasValidEndTime = false;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
@@ -396,9 +411,104 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_004, TestSize.Lev
     schedule.windowConfig = window;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
 
-    window.windowDuration = MIN_REPEAT_INTERVAL_MS;
+    // when 5% of repeatInterval is the smaller bound (1h * 5% = 3min < 10min), it caps windowDuration
+    window.windowDuration = MAX_WINDOW_DURATION_MS;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    window.windowDuration = MIN_REPEAT_INTERVAL_MS * TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT / 100;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    window.windowDuration = MIN_REPEAT_INTERVAL_MS * TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT / 100 - 1;
     schedule.windowConfig = window;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
+
+    // when 10 minutes is the smaller bound (10h * 5% = 30min > 10min), it caps windowDuration
+    window.repeatInterval = 10LL * 60 * 60 * 1000;
+    window.windowDuration = MAX_WINDOW_DURATION_MS - 1;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
+
+    window.windowDuration = MAX_WINDOW_DURATION_MS;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_005, TestSize.Level0)
+{
+    // repeatInterval must not be less than the schedule span
+    TokenSchedule schedule;
+    schedule.hasValidStartTime = true;
+    schedule.validStartTime = 0;
+    schedule.hasValidEndTime = true;
+    schedule.validEndTime = 2LL * 60 * 60 * 1000;
+    RedemptionWindow window;
+    window.repeatInterval = MIN_REPEAT_INTERVAL_MS;
+    window.windowDuration = 60 * 1000;
+    schedule.windowConfig = window;
+    std::string errorDesc;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+    EXPECT_FALSE(UserAuthHelper::CheckTokenSchedule(schedule, errorDesc) == SUCCESS);
+    EXPECT_FALSE(errorDesc.empty());
+
+    // repeatInterval equal to the span is allowed
+    window.repeatInterval = 2LL * 60 * 60 * 1000;
+    window.windowDuration = 2LL * 60 * 1000;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule, errorDesc), SUCCESS);
+    EXPECT_TRUE(errorDesc.empty());
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_006, TestSize.Level0)
+{
+    // without windowConfig the schedule is a single window capped at 10 minutes
+    TokenSchedule schedule;
+    schedule.hasValidStartTime = true;
+    schedule.validStartTime = 1000;
+    schedule.hasValidEndTime = true;
+    schedule.validEndTime = 1000 + MAX_WINDOW_DURATION_MS;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
+
+    schedule.validEndTime = 1000 + MAX_WINDOW_DURATION_MS + 1;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_007, TestSize.Level0)
+{
+    // both ends are caller-provided int64; a span beyond int64 range is rejected
+    // by the dedicated out-of-range check
+    TokenSchedule schedule;
+    schedule.hasValidStartTime = true;
+    schedule.validStartTime = INT64_MIN;
+    schedule.hasValidEndTime = true;
+    schedule.validEndTime = INT64_MAX;
+
+    // windowless: rejected by the out-of-range check
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    // negative epoch values that do not overflow are validated normally
+    schedule.validStartTime = INT64_MIN;
+    schedule.validEndTime = INT64_MIN + 5;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
+
+    // a negative start with a span just past INT64_MAX is rejected
+    schedule.validStartTime = -1;
+    schedule.validEndTime = INT64_MAX;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    // windowed: rejected likewise
+    RedemptionWindow window;
+    window.repeatInterval = MIN_REPEAT_INTERVAL_MS;
+    window.windowDuration = 60 * 1000;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    // the largest non-overflowing span (INT64_MAX) still exceeds the 10-minute cap
+    schedule.validStartTime = 0;
+    schedule.validEndTime = INT64_MAX;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
 }
 
 HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckAuthTokenParam_001, TestSize.Level0)

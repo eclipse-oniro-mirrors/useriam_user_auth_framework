@@ -16,6 +16,7 @@
 #ifndef USER_AUTH_ANI_HELPER
 #define USER_AUTH_ANI_HELPER
 
+#include <string>
 #include <vector>
 
 #include "nocopyable.h"
@@ -32,6 +33,7 @@ namespace UserAuth {
 class UserAuthAniHelper {
 public:
     static UserAuthResultCode ThrowBusinessError(UserAuthResultCode error);
+    static UserAuthResultCode ThrowBusinessError(UserAuthResultCode error, const std::string &errorMsg);
     static bool IsSystemApiCaller();
     static bool VerifyNoticeParam(const std::string &eventData);
     static bool ConvertUserAuthType(int32_t userAuthType, userAuth::UserAuthType &userAuthTypeOut);

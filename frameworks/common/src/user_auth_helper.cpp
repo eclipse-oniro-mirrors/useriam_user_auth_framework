@@ -15,8 +15,10 @@
 
 #include "user_auth_helper.h"
 
+#include <chrono>
 #include <cinttypes>
- 
+#include <sstream>
+
 #include "iam_logger.h"
  
 #define LOG_TAG "USER_AUTH_COMMON"
@@ -25,6 +27,50 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+namespace {
+constexpr int64_t PERCENT_SCALE = 100;
+
+int64_t GetNowTimeMs()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+std::string LogScheduleErrorDesc(std::string desc)
+{
+    IAM_LOGE("%{public}s", desc.c_str());
+    return desc;
+}
+
+int32_t CheckRedemptionWindow(const RedemptionWindow &window, bool hasSpan, int64_t span,
+    const std::string &startDesc, std::string &errorDesc)
+{
+    if (window.repeatInterval < MIN_REPEAT_INTERVAL_MS) {
+        errorDesc = LogScheduleErrorDesc("Parameter error. \"repeatInterval\" must not be less than 3600000.");
+        return INVALID_PARAMETERS;
+    }
+    if (window.windowDuration <= 0) {
+        errorDesc = LogScheduleErrorDesc("Parameter error. \"windowDuration\" must be greater than 0.");
+        return INVALID_PARAMETERS;
+    }
+    if (window.windowDuration >= window.repeatInterval) {
+        errorDesc = LogScheduleErrorDesc("Parameter error. \"windowDuration\" must be less than \"repeatInterval\".");
+        return INVALID_PARAMETERS;
+    }
+    if (window.windowDuration >= MAX_WINDOW_DURATION_MS ||
+        window.windowDuration * PERCENT_SCALE / window.repeatInterval >= TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT) {
+        errorDesc = LogScheduleErrorDesc("Parameter error. \"windowDuration\" must be less than the smaller of"
+            " 600000 and 5% of \"repeatInterval\".");
+        return INVALID_PARAMETERS;
+    }
+    if (hasSpan && window.repeatInterval < span) {
+        errorDesc = LogScheduleErrorDesc("Parameter error. \"repeatInterval\" must not be less than the difference"
+            " between \"validEndTime\" and " + startDesc + ".");
+        return INVALID_PARAMETERS;
+    }
+    return SUCCESS;
+}
+} // namespace
 
 int32_t UserAuthHelper::GetResultCodeV10(int32_t result)
 {
@@ -223,38 +269,61 @@ bool UserAuthHelper::GetTokenScheduleAttr(const Attributes &extraInfo, TokenSche
     return true;
 }
 
-int32_t UserAuthHelper::CheckTokenSchedule(const std::optional<TokenSchedule> &schedule)
+int32_t UserAuthHelper::CheckTokenSchedule(const std::optional<TokenSchedule> &schedule, std::string &errorDesc)
 {
+    errorDesc.clear();
     if (!schedule.has_value()) {
         return SUCCESS;
     }
-    if (schedule->hasValidStartTime && schedule->hasValidEndTime) {
-        if (schedule->validEndTime <= schedule->validStartTime) {
-            IAM_LOGE("validEndTime must be greater than validStartTime");
+    const std::string startDesc = schedule->hasValidStartTime ? "\"validStartTime\"" : "the current time";
+    bool hasSpan = schedule->hasValidEndTime;
+    int64_t span = 0;
+    if (hasSpan) {
+        int64_t startTime = schedule->hasValidStartTime ? schedule->validStartTime : GetNowTimeMs();
+        if (schedule->validEndTime <= startTime) {
+            errorDesc = LogScheduleErrorDesc("Parameter error. \"validEndTime\" must be greater than " +
+                startDesc + ".");
             return INVALID_PARAMETERS;
         }
-        if (schedule->validEndTime - schedule->validStartTime > MAX_TOKEN_SCHEDULE_SPAN_MS) {
-            IAM_LOGE("schedule span must not exceed 30 days");
+        if (__builtin_sub_overflow(schedule->validEndTime, startTime, &span)) {
+            errorDesc = LogScheduleErrorDesc("Parameter error. The difference between \"validEndTime\" and " +
+                startDesc + " is out of range.");
             return INVALID_PARAMETERS;
         }
     }
     if (!schedule->windowConfig.has_value()) {
+        if (hasSpan && span > MAX_WINDOW_DURATION_MS) {
+            errorDesc = LogScheduleErrorDesc("Parameter error. The difference between \"validEndTime\" and " +
+                startDesc + " must not exceed 600000.");
+            return INVALID_PARAMETERS;
+        }
         return SUCCESS;
     }
-    const RedemptionWindow &window = schedule->windowConfig.value();
-    if (window.repeatInterval < MIN_REPEAT_INTERVAL_MS) {
-        IAM_LOGE("repeatInterval must not be less than 1 hour");
-        return INVALID_PARAMETERS;
+    return CheckRedemptionWindow(schedule->windowConfig.value(), hasSpan, span, startDesc, errorDesc);
+}
+
+int32_t UserAuthHelper::CheckTokenSchedule(const std::optional<TokenSchedule> &schedule)
+{
+    std::string errorDesc;
+    return CheckTokenSchedule(schedule, errorDesc);
+}
+
+std::string UserAuthHelper::TokenScheduleToString(const std::optional<TokenSchedule> &schedule)
+{
+    if (!schedule.has_value()) {
+        return "not set";
     }
-    if (window.windowDuration <= 0) {
-        IAM_LOGE("windowDuration must be greater than 0");
-        return INVALID_PARAMETERS;
+    std::ostringstream oss;
+    oss << "validStartTime:" << (schedule->hasValidStartTime ? std::to_string(schedule->validStartTime) : "unset")
+        << " validEndTime:" << (schedule->hasValidEndTime ? std::to_string(schedule->validEndTime) : "unset")
+        << " window:";
+    if (schedule->windowConfig.has_value()) {
+        oss << "{repeatInterval:" << schedule->windowConfig->repeatInterval
+            << ", windowDuration:" << schedule->windowConfig->windowDuration << "}";
+    } else {
+        oss << "none";
     }
-    if (window.windowDuration > window.repeatInterval) {
-        IAM_LOGE("windowDuration must not be greater than repeatInterval");
-        return INVALID_PARAMETERS;
-    }
-    return SUCCESS;
+    return oss.str();
 }
 
  bool UserAuthHelper::CheckReuseUnlockResult(ReuseUnlockResult reuseUnlockResult)

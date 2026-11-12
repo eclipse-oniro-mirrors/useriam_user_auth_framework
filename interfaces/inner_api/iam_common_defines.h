@@ -35,10 +35,10 @@ namespace UserAuth {
 constexpr size_t MAX_CHALLENG_LEN = 32;
 /** Max length of auth token, aligned with the d.ts contract. */
 constexpr size_t MAX_AUTH_TOKEN_LEN = 1024;
-/** Max span between validStartTime and validEndTime of a token schedule, 30 days in ms. */
-constexpr int64_t MAX_TOKEN_SCHEDULE_SPAN_MS = 30LL * 24 * 60 * 60 * 1000;
 /** Min repeatInterval of a redemption window, 1 hour in ms. */
 constexpr int64_t MIN_REPEAT_INTERVAL_MS = 60LL * 60 * 1000;
+constexpr int64_t MAX_WINDOW_DURATION_MS = 10LL * 60 * 1000;
+constexpr int64_t TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT = 5;
 constexpr int32_t USER_AUTH_TIP_AUTH_SUCC = 9998;
 constexpr int32_t USER_AUTH_TIP_SINGLE_AUTH_RESULT = 9999;
 constexpr int INVALID_SOCKET_ID = -1;
@@ -303,9 +303,10 @@ enum AuthIntent : int32_t {
  * @brief Repeated windows in which a scheduled auth token can be redeemed.
  */
 struct RedemptionWindow {
-    /** Epoch ms; in [windowDuration, +inf) and >= MIN_REPEAT_INTERVAL_MS. */
+    /** Epoch ms; must not be less than MIN_REPEAT_INTERVAL_MS. */
     int64_t repeatInterval {0};
-    /** Duration of each window, in (0, repeatInterval]. */
+    /** Duration of each window, in (0, repeatInterval) and below the smaller of
+     *  MAX_WINDOW_DURATION_MS and repeatInterval * 5%. */
     int64_t windowDuration {0};
 };
 

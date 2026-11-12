@@ -235,37 +235,6 @@ UserAuthResultCode UserAuthParamUtils::InitAdditionalInfo(userAuth::AuthParam co
     return UserAuthResultCode::SUCCESS;
 }
 
-namespace {
-UserAuthResultCode ValidateTokenSchedule(const TokenSchedule &tokenSchedule)
-{
-    if (tokenSchedule.hasValidStartTime && tokenSchedule.hasValidEndTime) {
-        if (tokenSchedule.validEndTime <= tokenSchedule.validStartTime) {
-            IAM_LOGE("validEndTime must be greater than validStartTime");
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
-        }
-        if (tokenSchedule.validEndTime - tokenSchedule.validStartTime > MAX_TOKEN_SCHEDULE_SPAN_MS) {
-            IAM_LOGE("schedule span must not exceed 30 days");
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
-        }
-    }
-    if (tokenSchedule.windowConfig.has_value()) {
-        if (tokenSchedule.windowConfig->repeatInterval < MIN_REPEAT_INTERVAL_MS) {
-            IAM_LOGE("repeatInterval must not be less than 1 hour");
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
-        }
-        if (tokenSchedule.windowConfig->windowDuration <= 0) {
-            IAM_LOGE("windowDuration must be greater than 0");
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
-        }
-        if (tokenSchedule.windowConfig->windowDuration > tokenSchedule.windowConfig->repeatInterval) {
-            IAM_LOGE("windowDuration must not be greater than repeatInterval");
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
-        }
-    }
-    return UserAuthResultCode::SUCCESS;
-}
-} // namespace
-
 UserAuthResultCode UserAuthParamUtils::InitScheduledAuthTokenOptions(userAuth::AuthParam const &authParam,
     AuthParamInner &authParamInner)
 {
@@ -288,10 +257,6 @@ UserAuthResultCode UserAuthParamUtils::InitScheduledAuthTokenOptions(userAuth::A
         window.repeatInterval = schedule.windowConfig->repeatInterval;
         window.windowDuration = schedule.windowConfig->windowDuration;
         tokenSchedule.windowConfig = window;
-    }
-    UserAuthResultCode validateResult = ValidateTokenSchedule(tokenSchedule);
-    if (validateResult != UserAuthResultCode::SUCCESS) {
-        return validateResult;
     }
     authParamInner.tokenSchedule = tokenSchedule;
     IAM_LOGI("InitScheduledAuthTokenOptions done, hasValidStart:%{public}d, validStart:%{public}" PRId64

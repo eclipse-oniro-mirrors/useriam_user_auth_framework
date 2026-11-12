@@ -39,12 +39,6 @@ public:
         std::shared_ptr<AbilityRuntime::Context> &abilityContext, sptr<OHOS::Rosen::Window> &window);
 
 private:
-    struct ScheduleFields {
-        bool hasWindowConfig = false;
-        int64_t repeatInterval = 0;
-        int64_t windowDuration = 0;
-    };
-
     static UserAuthResultCode InitChallenge(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode InitAuthType(napi_env env, napi_value value, AuthParamInner &authParam);
     static UserAuthResultCode InitAuthTrustLevel(napi_env env, napi_value value, AuthParamInner &authParam);
@@ -77,10 +71,8 @@ private:
         const std::string &propertyName, int64_t &out);
     static UserAuthResultCode ReadOptionalInt64Field(napi_env env, napi_value value,
         const std::string &propertyName, bool &hasValue, int64_t &out);
-    static UserAuthResultCode ReadScheduleFields(napi_env env, napi_value scheduleValue, ScheduleFields &fields);
-    static UserAuthResultCode FillScheduleFields(napi_env env, const ScheduleFields &fields,
-        TokenSchedule &schedule);
-    static UserAuthResultCode ValidateScheduleTimeRange(napi_env env, const TokenSchedule &schedule);
+    static UserAuthResultCode ReadWindowConfig(napi_env env, napi_value scheduleValue,
+        std::optional<RedemptionWindow> &windowConfig);
 };
 } // namespace UserAuth
 } // namespace UserIam
