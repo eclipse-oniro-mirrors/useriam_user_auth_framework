@@ -340,10 +340,17 @@ int32_t UserIdmService::OnRestoreInner(int32_t userId, AuthType authType,
         return GENERAL_ERROR;
     }
 
+    std::vector<uint8_t> challenge = {};
+    int32_t ret = GetUserAuthEngine().OpenSession(userId, challenge);
+    if (ret != SUCCESS) {
+        IAM_LOGE("failed to open session, error code:%{public}d", ret);
+        return GENERAL_ERROR;
+    }
+
     auto promise = std::make_shared<std::promise<int32_t>>();
     std::future<int32_t> future = promise->get_future();
     std::vector<uint8_t> restoreData = restoreAttr.Serialize();
-    int32_t ret = StartRestoreEnroll(userId, authType, restoreData, promise);
+    ret = StartRestoreEnroll(userId, authType, restoreData, promise);
     if (ret != SUCCESS) {
         IAM_LOGE("StartRestoreEnroll fail, ret:%{public}d", ret);
         CloseSession(userId);
@@ -388,15 +395,9 @@ int32_t UserIdmService::StartRestoreEnroll(int32_t userId, AuthType authType, st
     Attributes extraInfo = {};
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        std::vector<uint8_t> challenge = {};
-        int32_t ret = GetUserAuthEngine().OpenSession(userId, challenge);
+        int32_t ret = StartEnroll(para, contextCallback, extraInfo, true);
         if (ret != SUCCESS) {
-            IAM_LOGE("failed to open session, error code:%{public}d", ret);
-            return GENERAL_ERROR;
-        }
-        ret = StartEnroll(para, contextCallback, extraInfo, true);
-        if (ret != SUCCESS) {
-            return ret;
+            IAM_LOGE("StartEnroll fail, %{public}d", ret);
         }
     }
     return SUCCESS;
