@@ -480,7 +480,8 @@ int32_t UserAuthService::SetProperty(int32_t userId, int32_t authType, const std
                 return;
             }
             const Attributes properties(attributes);
-            int32_t result = resourceNode->SetProperty(properties);
+            Attributes values;
+            int32_t result = resourceNode->SetProperty(properties, values);
             if (result != SUCCESS) {
                 IAM_LOGE("set property failed, result = %{public}d", result);
             }
@@ -1918,31 +1919,31 @@ bool UserAuthService::CompleteRemoteAuthParam(RemoteAuthParam &remoteAuthParam, 
     return true;
 }
 
-bool UserAuthService::GetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain, const std::vector<uint8_t> &rootSecret,
-    Attributes &extraInfo)
+bool UserAuthService::GetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain,
+    const EngUserAuthTokenExtraInfo &extraInfo, Attributes &attributes)
 {
-    bool setTokenVersionRet = extraInfo.SetUint32Value(Attributes::ATTR_TOKEN_VERSION, tokenPlain.version);
+    bool setTokenVersionRet = attributes.SetUint32Value(Attributes::ATTR_TOKEN_VERSION, tokenPlain.version);
     IF_FALSE_LOGE_AND_RETURN_VAL(setTokenVersionRet == true, false);
-    bool setUserIdRet = extraInfo.SetInt32Value(Attributes::ATTR_USER_ID, tokenPlain.userId);
+    bool setUserIdRet = attributes.SetInt32Value(Attributes::ATTR_USER_ID, tokenPlain.userId);
     IF_FALSE_LOGE_AND_RETURN_VAL(setUserIdRet == true, false);
-    bool setChallengeRet = extraInfo.SetUint8ArrayValue(Attributes::ATTR_CHALLENGE, tokenPlain.challenge);
+    bool setChallengeRet = attributes.SetUint8ArrayValue(Attributes::ATTR_CHALLENGE, tokenPlain.challenge);
     IF_FALSE_LOGE_AND_RETURN_VAL(setChallengeRet == true, false);
-    bool setTimeStampRet = extraInfo.SetUint64Value(Attributes::ATTR_TOKEN_TIME_INTERVAL, tokenPlain.timeInterval);
+    bool setTimeStampRet = attributes.SetUint64Value(Attributes::ATTR_TOKEN_TIME_INTERVAL, tokenPlain.timeInterval);
     IF_FALSE_LOGE_AND_RETURN_VAL(setTimeStampRet == true, false);
-    bool setTrustLevelRet = extraInfo.SetUint32Value(Attributes::ATTR_AUTH_TRUST_LEVEL, tokenPlain.authTrustLevel);
+    bool setTrustLevelRet = attributes.SetUint32Value(Attributes::ATTR_AUTH_TRUST_LEVEL, tokenPlain.authTrustLevel);
     IF_FALSE_LOGE_AND_RETURN_VAL(setTrustLevelRet == true, false);
-    bool setAuthTypeRet = extraInfo.SetInt32Value(Attributes::ATTR_AUTH_TYPE, tokenPlain.authType);
+    bool setAuthTypeRet = attributes.SetInt32Value(Attributes::ATTR_AUTH_TYPE, tokenPlain.authType);
     IF_FALSE_LOGE_AND_RETURN_VAL(setAuthTypeRet == true, false);
-    bool setTokenTypeRet = extraInfo.SetInt32Value(Attributes::ATTR_TOKEN_TYPE, tokenPlain.tokenType);
+    bool setTokenTypeRet = attributes.SetInt32Value(Attributes::ATTR_TOKEN_TYPE, tokenPlain.tokenType);
     IF_FALSE_LOGE_AND_RETURN_VAL(setTokenTypeRet == true, false);
-    bool setSecureUidRet = extraInfo.SetUint64Value(Attributes::ATTR_SEC_USER_ID, tokenPlain.secureUid);
+    bool setSecureUidRet = attributes.SetUint64Value(Attributes::ATTR_SEC_USER_ID, tokenPlain.secureUid);
     IF_FALSE_LOGE_AND_RETURN_VAL(setSecureUidRet == true, false);
-    bool setEnrolledIdRet = extraInfo.SetUint64Value(Attributes::ATTR_CREDENTIAL_DIGEST, tokenPlain.enrolledId);
+    bool setEnrolledIdRet = attributes.SetUint64Value(Attributes::ATTR_CREDENTIAL_DIGEST, tokenPlain.enrolledId);
     IF_FALSE_LOGE_AND_RETURN_VAL(setEnrolledIdRet == true, false);
-    bool setCredentialIdRet = extraInfo.SetUint64Value(Attributes::ATTR_CREDENTIAL_ID, tokenPlain.credentialId);
+    bool setCredentialIdRet = attributes.SetUint64Value(Attributes::ATTR_CREDENTIAL_ID, tokenPlain.credentialId);
     IF_FALSE_LOGE_AND_RETURN_VAL(setCredentialIdRet == true, false);
-    if (rootSecret.size() != 0) {
-        bool setRootSecret = extraInfo.SetUint8ArrayValue(Attributes::ATTR_ROOT_SECRET, rootSecret);
+    if (extraInfo.rootSecret.size() != 0) {
+        bool setRootSecret = attributes.SetUint8ArrayValue(Attributes::ATTR_ROOT_SECRET, extraInfo.rootSecret);
         IF_FALSE_LOGE_AND_RETURN_VAL(setRootSecret == true, false);
     }
     return true;
@@ -1974,14 +1975,15 @@ int32_t UserAuthService::VerifyAuthToken(const std::vector<uint8_t> &tokenIn, ui
     }
 
     EngUserAuthTokenPlain tokenPlain = {};
-    std::vector<uint8_t> rootSecret = {};
-    int32_t result = GetUserAuthEngine().VerifyAuthToken(tokenIn, allowableDuration, tokenPlain, rootSecret);
+    EngUserAuthTokenExtraInfo extraInfoOut = {};
+    int32_t result = GetUserAuthEngine().VerifyAuthToken(INVALID_USER_ID, tokenIn, allowableDuration, tokenPlain,
+        extraInfoOut);
     if (result != SUCCESS) {
         IAM_LOGE("VerifyAuthToken failed result:%{public}d", result);
         verifyTokenCallback->OnVerifyTokenResult(result, extraInfo.Serialize());
         return result;
     }
-    if (!GetAuthTokenAttr(tokenPlain, rootSecret, extraInfo)) {
+    if (!GetAuthTokenAttr(tokenPlain, extraInfoOut, extraInfo)) {
         IAM_LOGE("GetAuthTokenAttr failed");
         verifyTokenCallback->OnVerifyTokenResult(GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;

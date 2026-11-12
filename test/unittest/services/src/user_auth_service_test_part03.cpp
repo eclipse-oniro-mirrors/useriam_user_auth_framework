@@ -507,9 +507,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceVerifyAuthToken001, TestSize.Level0
 
     auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _))
-        .WillOnce([](const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
-            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) {
+    EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _, _))
+        .WillOnce([](int32_t userId, const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+            EngUserAuthTokenPlain &tokenPlainOut, EngUserAuthTokenExtraInfo &extraInfoOut) {
             return SUCCESS;
         });
 
@@ -569,9 +569,9 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceVerifyAuthToken004, TestSize.Level0
 
     auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _))
-        .WillOnce([](const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
-            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) {
+    EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _, _))
+        .WillOnce([](int32_t userId, const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+            EngUserAuthTokenPlain &tokenPlainOut, EngUserAuthTokenExtraInfo &extraInfoOut) {
             return GENERAL_ERROR;
         });
 
@@ -596,10 +596,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceVerifyAuthToken005, TestSize.Level0
 
     auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _))
-        .WillOnce([](const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
-            HdiUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) {
-            rootSecret.push_back(1);
+    EXPECT_CALL(*mockHdi, VerifyAuthToken(_, _, _, _, _))
+        .WillOnce([](int32_t userId, const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+            EngUserAuthTokenPlain &tokenPlainOut, EngUserAuthTokenExtraInfo &extraInfoOut) {
+            extraInfoOut.rootSecret.push_back(1);
             return SUCCESS;
         });
 

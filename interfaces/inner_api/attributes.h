@@ -220,6 +220,17 @@ public:
         ATTR_CAMERA_STATUS  = 100097,
         /* Pin abandon flag, the value type is bool */
         ATTR_ABANDON_FLAG = 100098,
+        /* Private pin custom protect question, the value type is std::vector<uint8_t> */
+        ATTR_CLONE_PROTECT_QUESTION = 100099,
+        /* Private pin clone all info, the value type is std::vector<uint8_t> */
+        ATTR_CLONE_PRIVATE_PIN_INFO = 100100,
+
+        /* Peer device UDID for private pin clone, the value type is std::vector<uint8_t>. */
+        HAL_ATTR_PEER_UDID = 900001,
+        /* Framework message for private pin clone, the value type is std::vector<uint8_t>. */
+        HAL_ATTR_FWK_MSG = 900002,
+        /* Schedule ID for private pin restore, the value type is uint64_t. */
+        HAL_ATTR_SCHEDULE_ID = 900003,
     };
 
     /**

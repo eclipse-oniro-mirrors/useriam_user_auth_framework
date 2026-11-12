@@ -40,7 +40,7 @@ public:
     MOCK_METHOD3(BeginExecute,
         int32_t(uint64_t scheduleId, const std::vector<uint8_t> &publicKey, const Attributes &command));
     MOCK_METHOD2(EndExecute, int32_t(uint64_t scheduleId, const Attributes &command));
-    MOCK_METHOD1(SetProperty, int32_t(const Attributes &properties));
+    MOCK_METHOD2(SetProperty, int32_t(const Attributes &properties, Attributes &values));
     MOCK_METHOD2(GetProperty, int32_t(const Attributes &condition, Attributes &values));
     MOCK_METHOD2(SendData, int32_t(uint64_t scheduleId, const Attributes &data));
     MOCK_METHOD0(DeleteFromEngine, void());

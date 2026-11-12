@@ -1323,7 +1323,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_General, TestSize.Leve
     int32_t ret = GetExecutorAndMockStub(executor, executorCallback, mockExecutorHdi, mockMessenger);
     ASSERT_EQ(ret, ResultCode::SUCCESS);
     Attributes attr;
-    ret = executorCallback->OnSetProperty(attr);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(attr, results);
     ASSERT_EQ(ret, ResultCode::GENERAL_ERROR);
 }
 
@@ -1350,7 +1351,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_DeleteTemplateTest_001
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, PROPERTY_MODE_DEL);
     property->SetUint64Value(Attributes::ATTR_TEMPLATE_ID, testTemplateId);
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::SUCCESS);
 }
 
@@ -1369,7 +1371,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_DeleteTemplateTest_002
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, PROPERTY_MODE_DEL);
     // Error: missing template id
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::GENERAL_ERROR);
 }
 
@@ -1392,7 +1395,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_DeleteTemplateTest_003
     property->SetUint64Value(Attributes::ATTR_TEMPLATE_ID, testTemplateId);
     // Error: Executor is disconnected
     executor->OnHdiDisconnect();
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::GENERAL_ERROR);
 }
 
@@ -1420,7 +1424,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_DeleteTemplateTest_004
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, PROPERTY_MODE_DEL);
     property->SetUint64Value(Attributes::ATTR_TEMPLATE_ID, testTemplateId);
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::GENERAL_ERROR);
 }
 
@@ -1464,9 +1469,10 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_CustomCommandTest_001,
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, testCommandId);
     property->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, testExtraInfo);
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::SUCCESS);
-    ret = executorCallback->OnSetProperty(*property);
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::SUCCESS);
     t.join();
 }
@@ -1497,7 +1503,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_CustomCommandTest_002,
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, testCommandId);
     property->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, testExtraInfo);
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::TIMEOUT);
 }
 
@@ -1528,7 +1535,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_CustomCommandTest_003,
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, testCommandId);
     property->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, testExtraInfo);
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::TYPE_NOT_SUPPORT);
 }
 
@@ -1558,7 +1566,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_CustomCommandTest_004,
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, testCommandId);
     property->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, testExtraInfo);
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::TYPE_NOT_SUPPORT);
 }
 
@@ -1579,7 +1588,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_CustomCommandTest_005,
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, testCommandId);
     // Error: ATTR_EXTRA_INFO not set
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::GENERAL_ERROR);
 }
 
@@ -1597,7 +1607,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_ProcessSetCachedTempla
     auto property = MakeShared<Attributes>();
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, PROPERTY_MODE_SET_CACHED_TEMPLATES);
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::GENERAL_ERROR);
 }
 
@@ -1615,7 +1626,8 @@ HWTEST_F(ExecutorUnitTest, UserAuthExecutor_OnSetProperty_ProcessNotifyExecutorR
     auto property = MakeShared<Attributes>();
     ASSERT_NE(property, nullptr);
     property->SetUint32Value(Attributes::ATTR_PROPERTY_MODE, PROPERTY_MODE_NOTIFY_COLLECTOR_READY);
-    ret = executorCallback->OnSetProperty(*property);
+    Attributes results;
+    ret = executorCallback->OnSetProperty(*property, results);
     ASSERT_EQ(ret, ResultCode::GENERAL_ERROR);
 }
 

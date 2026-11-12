@@ -180,6 +180,10 @@ enum PropertyMode : uint32_t {
     PROPERTY_MODE_NOTIFY_COLLECTOR_READY = 8,
     /** The property mode is risk event. */
     PROPERTY_MODE_RISK_EVENT = 9,
+    /** The property mode is back up private pin. */
+    PROPERTY_MODE_BACK_UP = 10,
+    /** The property mode is restore private pin. */
+    PROPERTY_MODE_RESTORE = 11,
 };
 
 /**

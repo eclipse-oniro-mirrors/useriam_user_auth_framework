@@ -52,7 +52,7 @@ public:
     int32_t BeginExecute(uint64_t scheduleId, const std::vector<uint8_t> &publicKey,
         const Attributes &command) override;
     int32_t EndExecute(uint64_t scheduleId, const Attributes &command) override;
-    int32_t SetProperty(const Attributes &properties) override;
+    int32_t SetProperty(const Attributes &properties, Attributes &values) override;
     int32_t GetProperty(const Attributes &condition, Attributes &values) override;
     int32_t SendData(uint64_t scheduleId, const Attributes &data) override;
     void DeleteFromEngine() override;
@@ -158,11 +158,16 @@ int32_t ResourceNodeImpl::EndExecute(uint64_t scheduleId, const Attributes &comm
     return GENERAL_ERROR;
 }
 
-int32_t ResourceNodeImpl::SetProperty(const Attributes &properties)
+int32_t ResourceNodeImpl::SetProperty(const Attributes &properties, Attributes &values)
 {
     IAM_LOGD("start");
     if (callback_ != nullptr) {
-        return callback_->OnSetProperty(properties.Serialize());
+        std::vector<uint8_t> outBytes;
+        auto ret = callback_->OnSetProperty(properties.Serialize(), outBytes);
+        if (ret == SUCCESS && !outBytes.empty()) {
+            values = Attributes(outBytes);
+        }
+        return ret;
     }
     return GENERAL_ERROR;
 }

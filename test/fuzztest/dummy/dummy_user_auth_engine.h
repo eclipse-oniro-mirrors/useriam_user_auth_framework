@@ -202,8 +202,8 @@ public:
         return SUCCESS;
     }
 
-    int32_t VerifyAuthToken(const std::vector<uint8_t> &, uint64_t, EngUserAuthTokenPlain &,
-        std::vector<uint8_t> &) override
+    int32_t VerifyAuthToken(int32_t, const std::vector<uint8_t> &, uint64_t, EngUserAuthTokenPlain &,
+        EngUserAuthTokenExtraInfo &) override
     {
         return SUCCESS;
     }

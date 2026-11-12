@@ -113,10 +113,11 @@ public:
         return SUCCESS;
     }
 
-    int32_t SetProperty(const Attributes &properties)
+    int32_t SetProperty(const Attributes &properties, Attributes &values)
     {
         IAM_LOGI("start");
         static_cast<void>(properties);
+        static_cast<void>(values);
         return SUCCESS;
     }
 

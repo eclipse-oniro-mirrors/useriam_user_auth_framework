@@ -45,7 +45,7 @@ public:
     virtual int32_t BeginExecute(uint64_t scheduleId, const std::vector<uint8_t> &publicKey,
         const Attributes &command) = 0;
     virtual int32_t EndExecute(uint64_t scheduleId, const Attributes &command) = 0;
-    virtual int32_t SetProperty(const Attributes &properties) = 0;
+    virtual int32_t SetProperty(const Attributes &properties, Attributes &values) = 0;
     virtual int32_t GetProperty(const Attributes &condition, Attributes &values) = 0;
     virtual int32_t SendData(uint64_t scheduleId, const Attributes &data) = 0;
     virtual void DeleteFromEngine() = 0;

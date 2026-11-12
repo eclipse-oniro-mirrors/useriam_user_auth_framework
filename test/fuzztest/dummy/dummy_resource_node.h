@@ -75,7 +75,7 @@ public:
     {
         return 0;
     };
-    int32_t SetProperty(const Attributes &properties)
+    int32_t SetProperty(const Attributes &properties, Attributes &values)
     {
         return 0;
     };

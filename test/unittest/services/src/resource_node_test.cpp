@@ -133,7 +133,7 @@ HWTEST_F(ResourceNodeTest, ResourceNodeTest001, TestSize.Level0)
     Attributes values;
     EXPECT_EQ(node->BeginExecute(scheduleId, publicKey, command), GENERAL_ERROR);
     EXPECT_EQ(node->EndExecute(scheduleId, command), GENERAL_ERROR);
-    EXPECT_EQ(node->SetProperty(properties), GENERAL_ERROR);
+    EXPECT_EQ(node->SetProperty(properties, values), GENERAL_ERROR);
     EXPECT_EQ(node->GetProperty(condition, values), GENERAL_ERROR);
 }
 
@@ -151,7 +151,7 @@ HWTEST_F(ResourceNodeTest, ResourceNodeTest002, TestSize.Level0)
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnBeginExecute(_, _, _)).WillRepeatedly(Return(SUCCESS));
     EXPECT_CALL(*testCallback, OnEndExecute(_, _)).WillRepeatedly(Return(SUCCESS));
-    EXPECT_CALL(*testCallback, OnSetProperty(_)).WillRepeatedly(Return(SUCCESS));
+    EXPECT_CALL(*testCallback, OnSetProperty(_, _)).WillRepeatedly(Return(SUCCESS));
     EXPECT_CALL(*testCallback, OnGetProperty(_, _)).WillRepeatedly(Return(SUCCESS));
     auto node = ResourceNode::MakeNewResource(info, testCallback, templateIdList, fwkPublicKey);
     EXPECT_NE(node, nullptr);
@@ -164,7 +164,7 @@ HWTEST_F(ResourceNodeTest, ResourceNodeTest002, TestSize.Level0)
     Attributes values;
     EXPECT_EQ(node->BeginExecute(scheduleId, publicKey, command), SUCCESS);
     EXPECT_EQ(node->EndExecute(scheduleId, command), SUCCESS);
-    EXPECT_EQ(node->SetProperty(properties), SUCCESS);
+    EXPECT_EQ(node->SetProperty(properties, values), SUCCESS);
     EXPECT_EQ(node->GetProperty(condition, values), SUCCESS);
 }
 

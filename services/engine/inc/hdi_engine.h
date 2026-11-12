@@ -97,8 +97,8 @@ public:
     int32_t SetUserConfigParam(const EngGlobalConfigParam &param) override;
     int32_t GetUserConfigParam(int32_t userId, int32_t authType, int32_t type,
         EngGlobalConfigValue &value) override;
-    int32_t VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
-        EngUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) override;
+    int32_t VerifyAuthToken(int32_t userId, const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+        EngUserAuthTokenPlain &tokenPlainOut, EngUserAuthTokenExtraInfo &extraInfoOut) override;
     int32_t RegisterMessageCallback(const sptr<IMessageCallback> &messageCallback) override;
     int32_t GetValidSolution(int32_t userId, const std::vector<int32_t> &authTypes, uint32_t authTrustLevel,
         std::vector<int32_t> &validTypes) override;

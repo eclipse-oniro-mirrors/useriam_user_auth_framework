@@ -433,7 +433,8 @@ void FuzzFrameworkOnSetProperty(std::shared_ptr<Parcel> parcel)
     }
     Attributes properties;
     FillIAttributes(parcel, properties);
-    g_executorCallback->OnSetProperty(properties);
+    Attributes results;
+    g_executorCallback->OnSetProperty(properties, results);
     IAM_LOGI("end");
 }
 
@@ -523,7 +524,8 @@ void FuzzFrameworkExecutorOnSetProperty(std::shared_ptr<Parcel> parcel)
     }
     Attributes properties;
     FillIAttributes(parcel, properties);
-    g_frameworkExecutorCallback->OnSetProperty(properties);
+    Attributes results;
+    g_frameworkExecutorCallback->OnSetProperty(properties, results);
     IAM_LOGI("end");
 }
 
@@ -634,19 +636,6 @@ void FuzzFrameworkExecutorProcessNotifyExecutorReady(std::shared_ptr<Parcel> par
     Attributes properties;
     FillIAttributes(parcel, properties);
     g_frameworkExecutorCallback->ProcessNotifyExecutorReady(properties);
-    IAM_LOGI("end");
-}
-
-void FuzzFrameworkExecutorProcessCustomCommand(std::shared_ptr<Parcel> parcel)
-{
-    IAM_LOGI("begin");
-    // g_frameworkExecutorCallback may be not set
-    if (g_frameworkExecutorCallback == nullptr) {
-        return;
-    }
-    Attributes properties;
-    FillIAttributes(parcel, properties);
-    g_frameworkExecutorCallback->ProcessCustomCommand(properties);
     IAM_LOGI("end");
 }
 
@@ -888,7 +877,6 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzFrameworkExecutorProcessCancelCommand,
     FuzzFrameworkExecutorProcessTemplateCommand,
     FuzzFrameworkExecutorProcessNotifyExecutorReady,
-    FuzzFrameworkExecutorProcessCustomCommand,
     FuzzFrameworkExecutorProcessGetPropertyCommand,
     FuzzFillPropertyToAttribute,
     FuzzAuthCommandOnResultInner,

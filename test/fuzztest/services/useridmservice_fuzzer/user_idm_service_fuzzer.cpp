@@ -16,6 +16,9 @@
 #include "user_idm_service_fuzzer.h"
 
 #include <cstdio>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "parcel.h"
 #include "securec.h"
 
@@ -400,6 +403,124 @@ void FuzzGetSessionInfoMasked(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzOnExtension(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    std::string extension = parcel.ReadString();
+    MessageParcel data;
+    MessageParcel reply;
+    std::string jsonStr = parcel.ReadString();
+    data.WriteString(jsonStr);
+    g_userIdmService.OnExtension(extension, data, reply);
+    IAM_LOGI("end");
+}
+
+void FuzzOnBackup(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    MessageParcel data;
+    MessageParcel reply;
+    std::string jsonStr = parcel.ReadString();
+    data.WriteString(jsonStr);
+    g_userIdmService.OnBackup(data, reply);
+    IAM_LOGI("end");
+}
+
+void FuzzOnRestore(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    MessageParcel data;
+    MessageParcel reply;
+    // Optionally write a file descriptor for clone data.
+    if (parcel.ReadBool()) {
+        std::vector<uint8_t> cloneData;
+        FillFuzzUint8Vector(parcel, cloneData);
+        int fd = open("/data/local/tmp", O_TMPFILE | O_RDWR, S_IRUSR | S_IWUSR);
+        if (fd >= 0) {
+            if (!cloneData.empty()) {
+                write(fd, cloneData.data(), cloneData.size());
+            }
+            lseek(fd, 0, SEEK_SET);
+            data.WriteFileDescriptor(fd);
+        }
+    }
+    std::string jsonStr = parcel.ReadString();
+    data.WriteString(jsonStr);
+    g_userIdmService.OnRestore(data, reply);
+    IAM_LOGI("end");
+}
+
+void FuzzParseCloneInfo(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    MessageParcel data;
+    std::string jsonStr = parcel.ReadString();
+    data.WriteString(jsonStr);
+    int32_t userId = 0;
+    std::vector<uint8_t> peerUdid;
+    std::vector<uint8_t> token;
+    g_userIdmService.ParseCloneInfo(data, userId, peerUdid, token);
+    IAM_LOGI("end");
+}
+
+void FuzzWriteCloneDataToFile(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    MessageParcel reply;
+    std::vector<uint8_t> backUpData;
+    FillFuzzUint8Vector(parcel, backUpData);
+    g_userIdmService.WriteCloneDataToFile(backUpData, reply);
+    IAM_LOGI("end");
+}
+
+void FuzzReadCloneDataFromFile(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    MessageParcel data;
+    if (parcel.ReadBool()) {
+        std::vector<uint8_t> fileData;
+        FillFuzzUint8Vector(parcel, fileData);
+        int fd = open("/data/local/tmp", O_TMPFILE | O_RDWR, S_IRUSR | S_IWUSR);
+        if (fd >= 0) {
+            if (!fileData.empty()) {
+                write(fd, fileData.data(), fileData.size());
+            }
+            lseek(fd, 0, SEEK_SET);
+            data.WriteFileDescriptor(fd);
+        }
+    }
+    int32_t maxLen = parcel.ReadInt32();
+    std::vector<uint8_t> cloneData;
+    g_userIdmService.ReadCloneDataFromFile(data, cloneData, maxLen);
+    IAM_LOGI("end");
+}
+
+void FuzzBuildBackupExtraIn(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t userId = parcel.ReadInt32();
+    std::vector<uint8_t> peerUdid;
+    FillFuzzUint8Vector(parcel, peerUdid);
+    std::vector<uint8_t> executorMsg;
+    FillFuzzUint8Vector(parcel, executorMsg);
+    Attributes result = g_userIdmService.BuildBackupExtraIn(userId, peerUdid, executorMsg);
+    (void)result.Serialize();
+    IAM_LOGI("end");
+}
+
+void FuzzOnBackupInner(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t userId = parcel.ReadInt32();
+    auto authType = static_cast<AuthType>(parcel.ReadInt32());
+    std::vector<uint8_t> extraInData;
+    FillFuzzUint8Vector(parcel, extraInData);
+    Attributes extraIn(extraInData);
+    Attributes extraOut;
+    g_userIdmService.OnBackupInner(userId, authType, extraIn, extraOut);
+    IAM_LOGI("end");
+}
+
 using FuzzFunc = decltype(FuzzOpenSession);
 FuzzFunc *g_fuzzFuncs[] = {
     FuzzOpenSession,
@@ -423,7 +544,15 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzGetLatestEnrollmentTime,
     FuzzClearUnavailableCredential,
     FuzzGetSessionInfoMasked,
-    FuzzGetCredentialInfoInner
+    FuzzGetCredentialInfoInner,
+    FuzzOnExtension,
+    FuzzOnBackup,
+    FuzzOnRestore,
+    FuzzParseCloneInfo,
+    FuzzWriteCloneDataToFile,
+    FuzzReadCloneDataFromFile,
+    FuzzBuildBackupExtraIn,
+    FuzzOnBackupInner
 };
 
 void UserIdmFuzzTest(const uint8_t *data, size_t size)

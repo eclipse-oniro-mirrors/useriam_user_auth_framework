@@ -82,9 +82,10 @@ public:
         return onEndExecuteResult_;
     }
 
-    int32_t OnSetProperty(const std::vector<uint8_t> &properties) override
+    int32_t OnSetProperty(const std::vector<uint8_t> &properties, std::vector<uint8_t> &values) override
     {
         IAM_LOGI("start");
+        static_cast<void>(values);
         return onSetPropertyResult_;
     }
 

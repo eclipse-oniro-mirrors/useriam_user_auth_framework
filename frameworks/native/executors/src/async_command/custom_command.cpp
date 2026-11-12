@@ -71,7 +71,13 @@ ResultCode CustomCommand::SendRequest()
 void CustomCommand::OnResultInner(ResultCode result, const std::vector<uint8_t> &extraInfo)
 {
     IAM_LOGD("%{public}s on result start", GetDescription());
+    extraInfo_ = extraInfo;
     SetResult(result);
+}
+
+const std::vector<uint8_t> &CustomCommand::GetExtraInfo() const
+{
+    return extraInfo_;
 }
 
 void CustomCommand::OnAcquireInfoInner(int32_t acquire, const std::vector<uint8_t> &extraInfo)

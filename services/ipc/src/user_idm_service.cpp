@@ -37,7 +37,6 @@
 #include "load_mode_handler.h"
 #include "nlohmann/json.hpp"
 #include "publish_event_adapter.h"
-#include "resource_node_pool.h"
 #include "resource_node_utils.h"
 #include "service_init_manager.h"
 #include "system_param_manager.h"

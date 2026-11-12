@@ -60,7 +60,7 @@ public:
         return callback->OnEndExecute(scheduleId, commandAttrs);
     }
 
-    int32_t OnSetProperty(const Attributes &properties) override
+    int32_t OnSetProperty(const Attributes &properties, Attributes &results) override
     {
         IAM_LOGE("OnSetProperty is not supported");
         return GENERAL_ERROR;

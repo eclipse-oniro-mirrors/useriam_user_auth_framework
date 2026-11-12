@@ -57,10 +57,11 @@ public:
         return SUCCESS;
     }
 
-    int32_t OnSetProperty(const std::vector<uint8_t> &properties) override
+    int32_t OnSetProperty(const std::vector<uint8_t> &properties, std::vector<uint8_t> &values) override
     {
         IAM_LOGI("start");
         static_cast<void>(properties);
+        static_cast<void>(values);
         return SUCCESS;
     }
 
@@ -258,7 +259,8 @@ void FuzzResourceNodeSetProperty(Parcel &parcel)
     Attributes properties(attr);
     auto node = GetResourceNode(parcel);
     if (node != nullptr) {
-        node->SetProperty(properties);
+        Attributes values;
+        node->SetProperty(properties, values);
     }
     IAM_LOGI("end");
 }

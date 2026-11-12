@@ -28,6 +28,7 @@ public:
     CustomCommand(std::weak_ptr<Executor> executor, const Attributes &attributes);
     ~CustomCommand() override = default;
     ResultCode GetResult();
+    const std::vector<uint8_t> &GetExtraInfo() const;
 
 protected:
     ResultCode SendRequest() override;
@@ -39,6 +40,7 @@ private:
     void SetResult(ResultCode resultCode);
     std::shared_ptr<Attributes> attributes_ {nullptr};
     ResultCode result_ = ResultCode::GENERAL_ERROR;
+    std::vector<uint8_t> extraInfo_;
     std::promise<void> promise_;
     std::future<void> future_;
 };

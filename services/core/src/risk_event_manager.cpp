@@ -58,7 +58,8 @@ void RiskEventManager::SetRiskEventPropertyForAuthType(int32_t userId,
     for (auto &authTypeNode : authTypeNodes) {
         auto resourceNode = authTypeNode.lock();
         if (resourceNode != nullptr) {
-            int32_t result = resourceNode->SetProperty(attributes);
+            Attributes values;
+            int32_t result = resourceNode->SetProperty(attributes, values);
             IAM_LOGI("set authType %{public}d property finish, ret:%{public}d", authType, result);
         } else {
             IAM_LOGE("resourceNode already expired");

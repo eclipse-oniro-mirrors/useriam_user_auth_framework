@@ -997,8 +997,9 @@ void FuzzGetAuthTokenAttr(Parcel &parcel)
     };
     std::vector<uint8_t> rootSecret;
     FillFuzzUint8Vector(parcel, rootSecret);
+    EngUserAuthTokenExtraInfo extraInfoOut = { .rootSecret = rootSecret };
     Attributes extraInfo;
-    g_userAuthService.GetAuthTokenAttr(tokenPlain, rootSecret, extraInfo);
+    g_userAuthService.GetAuthTokenAttr(tokenPlain, extraInfoOut, extraInfo);
     EnsureTask();
     IAM_LOGI("end");
 }

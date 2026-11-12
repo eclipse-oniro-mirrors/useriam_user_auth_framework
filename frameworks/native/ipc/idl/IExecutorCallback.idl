@@ -25,7 +25,7 @@ interface OHOS.UserIam.UserAuth.IExecutorCallback {
 
     void OnEndExecute([in] unsigned long scheduleId, [in] unsigned char[] command);
 
-    void OnSetProperty([in] unsigned char[] properties);
+    void OnSetProperty([in] unsigned char[] properties, [out] unsigned char[] values);
 
     void OnGetProperty([in] unsigned char[] condition, [out] unsigned char[] values);
 

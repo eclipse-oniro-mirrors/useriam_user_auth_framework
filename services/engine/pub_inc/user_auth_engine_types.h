@@ -181,6 +181,7 @@ struct EngEnrollParam {
     int32_t userId {};
     int32_t userType {};
     int32_t authSubType {};
+    bool isRestore {};
 };
 
 struct EngEnrollParamExt {
@@ -193,6 +194,7 @@ struct EngEnrollParamExt {
     int32_t userType {};
     int32_t authSubType {};
     std::string additionalInfo;
+    bool isRestore {false};
 };
 
 struct EngEnrolledState {
@@ -235,6 +237,11 @@ struct EngUserAuthTokenPlain {
     uint64_t credentialId {};
     std::string collectorUdid;
     std::string verifierUdid;
+};
+
+struct EngUserAuthTokenExtraInfo {
+    std::vector<uint8_t> rootSecret;
+    std::vector<uint8_t> executorMsg;
 };
 
 struct EngCredentialOperateResult {
