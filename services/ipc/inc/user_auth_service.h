@@ -159,8 +159,8 @@ private:
     int32_t GetUserConfigParamInner(int32_t userId, int32_t authType, int32_t type,
         IpcGlobalConfigValue &ipcGlobalConfigValue);
     bool IsUserIdValid(int32_t userId) const;
-    bool SetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain, const std::vector<uint8_t> &rootSecret,
-        Attributes &extraInfo);
+    bool GetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain, const EngUserAuthTokenExtraInfo &extraInfo,
+        Attributes &attributes);
     std::shared_ptr<ResourceNode> GetResourseNode(AuthType authType);
     int32_t ProcessPinExpired(int32_t ret, const AuthParamInner &authParam, std::vector<AuthType> &validType,
         ContextFactory::AuthWidgetContextPara &para);

@@ -18,6 +18,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <vector>
 
 #include "base_context.h"
 #include "enrollment.h"
@@ -40,6 +42,7 @@ protected:
     bool OnStop() override;
 
 private:
+    bool SendRestoreCommand(const std::shared_ptr<ScheduleNode> &scheduleNode);
     bool UpdateScheduleResult(const std::shared_ptr<Attributes> &scheduleResultAttr, uint64_t &credentialId,
         std::shared_ptr<UpdatePinParamInterface> &pinInfo, std::optional<uint64_t> &secUserId);
     void InvokeResultCallback(int32_t resultCode, const uint64_t credentialId,

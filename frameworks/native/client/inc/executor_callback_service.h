@@ -32,7 +32,7 @@ public:
     int32_t OnBeginExecute(uint64_t scheduleId, const std::vector<uint8_t> &publicKey,
         const std::vector<uint8_t> &command) override;
     int32_t OnEndExecute(uint64_t scheduleId, const std::vector<uint8_t> &command) override;
-    int32_t OnSetProperty(const std::vector<uint8_t> &properties) override;
+    int32_t OnSetProperty(const std::vector<uint8_t> &properties, std::vector<uint8_t> &values) override;
     int32_t OnGetProperty(const std::vector<uint8_t> &condition, std::vector<uint8_t> &values) override;
     int32_t OnSendData(uint64_t scheduleId, const std::vector<uint8_t> &extraInfo) override;
     int32_t CallbackEnter([[maybe_unused]] uint32_t code) override;

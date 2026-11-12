@@ -34,6 +34,8 @@ public:
         const std::vector<std::shared_ptr<CredentialInfoInterface>> &infos);
     static ResultCode ClassifyCredInfoByExecutor(const std::vector<std::shared_ptr<CredentialInfoInterface>> &in,
         std::map<uint64_t, std::vector<std::shared_ptr<CredentialInfoInterface>>> &out);
+    static int32_t SendCommandToExecutor(AuthType authType, ExecutorRole role, uint32_t propertyMode,
+        const std::vector<uint8_t> &extraInfo, std::vector<uint8_t> &extraOut);
 };
 } // namespace UserAuth
 } // namespace UserIam

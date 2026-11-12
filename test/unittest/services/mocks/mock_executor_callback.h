@@ -32,7 +32,7 @@ public:
     MOCK_METHOD3(OnBeginExecute,
         int32_t(uint64_t scheduleId, const std::vector<uint8_t> &publicKey, const std::vector<uint8_t> &command));
     MOCK_METHOD2(OnEndExecute, int32_t(uint64_t scheduleId, const std::vector<uint8_t> &command));
-    MOCK_METHOD1(OnSetProperty, int32_t(const std::vector<uint8_t> &properties));
+    MOCK_METHOD2(OnSetProperty, int32_t(const std::vector<uint8_t> &properties, std::vector<uint8_t> &values));
     MOCK_METHOD2(OnGetProperty, int32_t(const std::vector<uint8_t> &condition, std::vector<uint8_t> &values));
     MOCK_METHOD2(OnSendData, int32_t(uint64_t scheduleId, const std::vector<uint8_t> &data));
     MOCK_METHOD1(CallbackEnter, int32_t(uint32_t code));

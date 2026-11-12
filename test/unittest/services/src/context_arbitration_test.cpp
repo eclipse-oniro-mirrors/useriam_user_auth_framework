@@ -122,6 +122,7 @@ std::shared_ptr<EnrollContext> MakeEnrollContext(uint64_t contextId, std::shared
     ON_CALL(*node, StopSchedule()).WillByDefault(Return(true));
     ON_CALL(*enroll, GetAccessTokenId()).WillByDefault(Return(1U));
     ON_CALL(*enroll, GetUserId()).WillByDefault(Return(1));
+    ON_CALL(*enroll, GetRestoreData()).WillByDefault(Return(std::vector<uint8_t> {}));
     ON_CALL(*enroll, Start(_, _))
         .WillByDefault([node](std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
             std::shared_ptr<ScheduleNodeCallback> callback) {

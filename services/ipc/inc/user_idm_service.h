@@ -18,6 +18,8 @@
 
 #include "user_idm_stub.h"
 
+#include <cstdint>
+#include <future>
 #include <memory>
 #include <optional>
 #include <string>
@@ -25,7 +27,9 @@
 
 #include "system_ability.h"
 #include "system_ability_definition.h"
+#include "message_parcel.h"
 
+#include "attributes.h"
 #include "context.h"
 #include "context_factory.h"
 #include "credential_info_interface.h"
@@ -34,6 +38,7 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+
 class UserIdmService : public SystemAbility, public UserIdmStub, public NoCopyable {
 public:
     DECLARE_SYSTEM_ABILITY(UserIdmService);
@@ -70,10 +75,23 @@ public:
 protected:
     void OnStart() override;
     void OnStop() override;
+    int32_t OnExtension(const std::string& extension, MessageParcel& data, MessageParcel& reply) override;
 
 private:
     int32_t GetCredentialInfoImpl(int32_t userId, int32_t authType,
         const sptr<IIdmGetCredInfoCallback> &idmGetCredInfoCallback);
+    int32_t OnBackup(MessageParcel &data, MessageParcel &reply);
+    int32_t OnBackupInner(int32_t userId, AuthType authType, const Attributes &extraIn,
+        Attributes &attrOut);
+    int32_t OnRestore(MessageParcel &data, MessageParcel &reply);
+    int32_t OnRestoreInner(int32_t userId, AuthType authType,
+        const std::vector<uint8_t> &peerUdid, const std::vector<uint8_t> &innerData);
+    int32_t ParseCloneInfo(MessageParcel &data, int32_t &userId,
+        std::vector<uint8_t> &deviceUdid, std::vector<uint8_t> &token);
+    Attributes BuildBackupExtraIn(int32_t userId, const std::vector<uint8_t> &deviceUdid,
+        const std::vector<uint8_t> &executorMsg);
+    int32_t WriteCloneDataToFile(const std::vector<uint8_t> &backUpData, MessageParcel &reply);
+    int32_t ReadCloneDataFromFile(MessageParcel &data, std::vector<uint8_t> &cloneData);
 
 private:
     void CancelCurrentEnrollIfExist();
@@ -88,6 +106,9 @@ private:
         const std::shared_ptr<ContextCallback> &contextCallback);
     int32_t StartEnroll(Enrollment::EnrollmentPara &para,
         const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo, bool needSubscribeAppState);
+    int32_t StartRestoreEnroll(int32_t userId, AuthType authType, std::vector<uint8_t> &restoreData,
+        std::shared_ptr<std::promise<int32_t>> promise);
+    int32_t WaitForRestoreEnrollResult(int32_t userId, std::future<int32_t> &future);
     int32_t StartDelete(Deletion::DeleteParam &para, const std::shared_ptr<ContextCallback> &contextCallback,
         Attributes &extraInfo);
     void ClearUnavailableCredential(int32_t userId);

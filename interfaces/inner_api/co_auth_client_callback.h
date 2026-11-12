@@ -68,7 +68,7 @@ public:
      * @param properties The properties need to set.
      * @return Return set property success or not(0:success; other:failed).
      */
-    virtual int32_t OnSetProperty(const Attributes &properties) = 0;
+    virtual int32_t OnSetProperty(const Attributes &properties, Attributes &results) = 0;
 
     /**
      * @brief Called by coAuth resource pool to get executor's property.

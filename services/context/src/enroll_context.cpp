@@ -14,8 +14,10 @@
  */
 #include "enroll_context.h"
 
+#include "attributes.h"
 #include "hisysevent_adapter.h"
 #include "iam_check.h"
+#include "iam_common_defines.h"
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "resource_node_utils.h"
@@ -67,6 +69,10 @@ bool EnrollContext::OnStart()
 
     IF_FALSE_LOGE_AND_RETURN_VAL(scheduleList.size() == 1, false);
     IF_FALSE_LOGE_AND_RETURN_VAL(scheduleList[0] != nullptr, false);
+
+    startRet = SendRestoreCommand(scheduleList[0]);
+    IF_FALSE_LOGE_AND_RETURN_VAL(startRet, false);
+
     bool startScheduleRet = scheduleList[0]->StartSchedule();
     IF_FALSE_LOGE_AND_RETURN_VAL(startScheduleRet, false);
     IAM_LOGI("%{public}s Schedule:%{public}s Type:%{public}d success", GetDescription(),
@@ -106,6 +112,29 @@ bool EnrollContext::OnStop()
         HILOG_COMM_ERROR("%{public}s enroll stop fail, result: %{public}d", GetDescription(), cancelRet);
         SetLatestError(enroll_->GetLatestError());
         return cancelRet;
+    }
+    return true;
+}
+
+bool EnrollContext::SendRestoreCommand(const std::shared_ptr<ScheduleNode> &scheduleNode)
+{
+    IF_FALSE_LOGE_AND_RETURN_VAL(enroll_ != nullptr, false);
+    IF_FALSE_LOGE_AND_RETURN_VAL(scheduleNode != nullptr, false);
+    std::vector<uint8_t> restoreData = enroll_->GetRestoreData();
+    if (restoreData.empty()) {
+        return true;
+    }
+    Attributes restoreAttr(restoreData);
+    bool setScheduleIdRet = restoreAttr.SetUint64Value(Attributes::HAL_ATTR_SCHEDULE_ID, scheduleNode->GetScheduleId());
+    IF_FALSE_LOGE_AND_RETURN_VAL(setScheduleIdRet, false);
+    std::vector<uint8_t> extraIn = restoreAttr.Serialize();
+    std::vector<uint8_t> extraOut = {};
+    int32_t ret = ResourceNodeUtils::SendCommandToExecutor(scheduleNode->GetAuthType(), ExecutorRole::ALL_IN_ONE,
+        static_cast<uint32_t>(PROPERTY_MODE_RESTORE), extraIn, extraOut);
+    if (ret != SUCCESS) {
+        IAM_LOGE("%{public}s SendCommandToExecutor failed, ret:%{public}d", GetDescription(), ret);
+        SetLatestError(ret);
+        return false;
     }
     return true;
 }

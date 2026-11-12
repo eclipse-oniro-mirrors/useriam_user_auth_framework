@@ -156,12 +156,12 @@ void FrameworkExecutorCallback::OnMessengerReady(const std::shared_ptr<ExecutorM
     hdi->OnRegisterFinish(templateIdList, publicKey, extraInfo);
 }
 
-int32_t FrameworkExecutorCallback::OnSetProperty(const Attributes &properties)
+int32_t FrameworkExecutorCallback::OnSetProperty(const Attributes &properties, Attributes &results)
 {
-    return OnSetPropertyInner(properties);
+    return OnSetPropertyInner(properties, results);
 }
 
-ResultCode FrameworkExecutorCallback::OnSetPropertyInner(const Attributes &properties)
+ResultCode FrameworkExecutorCallback::OnSetPropertyInner(const Attributes &properties, Attributes &results)
 {
     uint32_t commandId = 0;
     bool getAuthPropertyModeRet =
@@ -176,7 +176,7 @@ ResultCode FrameworkExecutorCallback::OnSetPropertyInner(const Attributes &prope
     } else if (commandId == PROPERTY_MODE_NOTIFY_COLLECTOR_READY) {
         ret = ProcessNotifyExecutorReady(properties);
     } else {
-        ret = ProcessCustomCommand(properties);
+        ret = ProcessCustomCommandWithOutput(properties, results);
     }
     IAM_LOGI("command id = %{public}u ret = %{public}d", commandId, ret);
     return ret;
@@ -356,7 +356,8 @@ ResultCode FrameworkExecutorCallback::ProcessNotifyExecutorReady(const Attribute
     return hdi->NotifyCollectorReady(scheduleId);
 }
 
-ResultCode FrameworkExecutorCallback::ProcessCustomCommand(const Attributes &properties)
+ResultCode FrameworkExecutorCallback::ProcessCustomCommandWithOutput(const Attributes &properties,
+    Attributes &results)
 {
     auto command = Common::MakeShared<CustomCommand>(executor_, properties);
     IF_FALSE_LOGE_AND_RETURN_VAL(command != nullptr, ResultCode::GENERAL_ERROR);
@@ -365,8 +366,14 @@ ResultCode FrameworkExecutorCallback::ProcessCustomCommand(const Attributes &pro
         IAM_LOGE("start process command fail ret = %{public}d", ret);
         return ret;
     }
-
-    return command->GetResult();
+    ret = command->GetResult();
+    if (ret == ResultCode::SUCCESS) {
+        const auto &extraInfo = command->GetExtraInfo();
+        if (!extraInfo.empty()) {
+            results.SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo);
+        }
+    }
+    return ret;
 }
 
 ResultCode FrameworkExecutorCallback::ProcessGetPropertyCommand(std::shared_ptr<Attributes> conditions,

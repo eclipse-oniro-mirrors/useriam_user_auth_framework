@@ -468,9 +468,10 @@ void FuzzVerifyAuthToken(Parcel &parcel)
     std::vector<uint8_t> tokenIn;
     Common::FillFuzzUint8Vector(parcel, tokenIn);
     uint64_t allowableDuration = parcel.ReadUint64();
+    int32_t userId = parcel.ReadInt32();
     EngUserAuthTokenPlain tokenPlainOut;
-    std::vector<uint8_t> rootSecret;
-    (void)GetUserAuthEngine().VerifyAuthToken(tokenIn, allowableDuration, tokenPlainOut, rootSecret);
+    EngUserAuthTokenExtraInfo extraInfoOut;
+    (void)GetUserAuthEngine().VerifyAuthToken(userId, tokenIn, allowableDuration, tokenPlainOut, extraInfoOut);
     IAM_LOGI("end");
 }
 

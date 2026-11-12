@@ -40,6 +40,8 @@ public:
         int32_t sdkVersion;
         int32_t callerType;
         std::string additionalInfo;
+        bool isRestore {false};
+        std::vector<uint8_t> restoreData;
     };
 
     virtual ~Enrollment() = default;
@@ -58,6 +60,7 @@ public:
     virtual uint32_t GetAccessTokenId() const = 0;
     virtual int32_t GetLatestError() const = 0;
     virtual int32_t GetUserId() const = 0;
+    virtual std::vector<uint8_t> GetRestoreData() const = 0;
 
 protected:
     virtual void SetLatestError(int32_t error) = 0;

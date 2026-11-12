@@ -617,7 +617,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceVerifyAuthToken005, TestSize.Level0
     IpcCommon::DeleteAllPermission();
 }
 
-HWTEST_F(UserAuthServiceTest, UserAuthServiceSetAuthTokenAttrSchedule001, TestSize.Level0)
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAuthTokenAttrSchedule001, TestSize.Level0)
 {
     UserAuthService service;
     EngUserAuthTokenPlain tokenPlain = {};
@@ -626,13 +626,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetAuthTokenAttrSchedule001, TestSi
     tokenPlain.tokenSchedule->validStartTime = 1000;
 
     Attributes regularTokenAttr;
-    EXPECT_TRUE(service.SetAuthTokenAttr(tokenPlain, {}, regularTokenAttr));
+    EXPECT_TRUE(service.GetAuthTokenAttr(tokenPlain, {}, regularTokenAttr));
     TokenSchedule schedule = {};
     EXPECT_FALSE(UserAuthHelper::GetTokenScheduleAttr(regularTokenAttr, schedule));
 
     tokenPlain.tokenType = TOKEN_TYPE_SCHEDULED_AUTH;
     Attributes scheduledTokenAttr;
-    EXPECT_TRUE(service.SetAuthTokenAttr(tokenPlain, {}, scheduledTokenAttr));
+    EXPECT_TRUE(service.GetAuthTokenAttr(tokenPlain, {}, scheduledTokenAttr));
     EXPECT_TRUE(UserAuthHelper::GetTokenScheduleAttr(scheduledTokenAttr, schedule));
     EXPECT_TRUE(schedule.hasValidStartTime);
     EXPECT_EQ(schedule.validStartTime, 1000);

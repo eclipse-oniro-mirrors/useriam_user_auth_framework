@@ -44,7 +44,7 @@ public:
     int32_t OnBeginExecute(uint64_t scheduleId, const std::vector<uint8_t> &publicKey,
         const Attributes &commandAttrs) override;
     int32_t OnEndExecute(uint64_t scheduleId, const Attributes &commandAttrs) override;
-    int32_t OnSetProperty(const Attributes &properties) override;
+    int32_t OnSetProperty(const Attributes &properties, Attributes &results) override;
 
     int32_t OnGetProperty(const Attributes &conditions, Attributes &results) override;
     int32_t OnSendData(uint64_t scheduleId, const Attributes &data) override;
@@ -54,7 +54,7 @@ private:
     ResultCode OnBeginExecuteInner(uint64_t scheduleId, std::vector<uint8_t> &publicKey,
         const Attributes &commandAttrs);
     ResultCode OnEndExecuteInner(uint64_t scheduleId, const Attributes &consumerAttr);
-    ResultCode OnSetPropertyInner(const Attributes &properties);
+    ResultCode OnSetPropertyInner(const Attributes &properties, Attributes &results);
     ResultCode OnGetPropertyInner(std::shared_ptr<Attributes> conditions,
         std::shared_ptr<Attributes> values);
     ResultCode ProcessEnrollCommand(uint64_t scheduleId, const Attributes &properties);
@@ -64,7 +64,7 @@ private:
     ResultCode ProcessDeleteTemplateCommand(const Attributes &properties);
     ResultCode ProcessSetCachedTemplates(const Attributes &properties);
     ResultCode ProcessNotifyExecutorReady(const Attributes &properties);
-    ResultCode ProcessCustomCommand(const Attributes &properties);
+    ResultCode ProcessCustomCommandWithOutput(const Attributes &properties, Attributes &results);
     ResultCode ProcessGetPropertyCommand(std::shared_ptr<Attributes> conditions, std::shared_ptr<Attributes> values);
     ResultCode ProcessAbandonCommand(uint64_t scheduleId, const Attributes &properties);
     ResultCode FillPropertyToAttribute(const std::vector<Attributes::AttributeKey> &keyList, const Property property,

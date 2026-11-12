@@ -228,6 +228,17 @@ public:
         ATTR_TOKEN_SCHEDULE_REPEAT_INTERVAL = 100101,
         /** Duration of each redeemable schedule window, the value type is int64_t (ms). */
         ATTR_TOKEN_SCHEDULE_WINDOW_DURATION = 100102,
+        /* Private pin custom protect question, the value type is std::vector<uint8_t> */
+        ATTR_CLONE_PROTECT_QUESTION = 100103,
+        /* Private pin clone all info, the value type is std::vector<uint8_t> */
+        ATTR_CLONE_PRIVATE_PIN_INFO = 100104,
+
+        /* Peer device UDID for private pin clone, the value type is std::vector<uint8_t>. */
+        HAL_ATTR_PEER_UDID = 900001,
+        /* Framework message for private pin clone, the value type is std::vector<uint8_t>. */
+        HAL_ATTR_FWK_MSG = 900002,
+        /* Schedule ID for private pin restore, the value type is uint64_t. */
+        HAL_ATTR_SCHEDULE_ID = 900003,
     };
 
     /**

@@ -83,11 +83,11 @@ HWTEST_F(ResourceNodeUtilsTest, NotifyExecutorToDeleteTemplates003, TestSize.Lev
     auto resourceNode1 = Common::MakeShared<MockResourceNode>();
     EXPECT_NE(resourceNode1, nullptr);
     EXPECT_CALL(*resourceNode1, GetExecutorIndex()).WillRepeatedly(Return(10));
-    EXPECT_CALL(*resourceNode1, SetProperty(_)).WillRepeatedly(Return(FAIL));
+    EXPECT_CALL(*resourceNode1, SetProperty(_, _)).WillRepeatedly(Return(FAIL));
     auto resourceNode2 = Common::MakeShared<MockResourceNode>();
     EXPECT_NE(resourceNode2, nullptr);
     EXPECT_CALL(*resourceNode2, GetExecutorIndex()).WillRepeatedly(Return(100));
-    EXPECT_CALL(*resourceNode2, SetProperty(_)).WillRepeatedly(Return(SUCCESS));
+    EXPECT_CALL(*resourceNode2, SetProperty(_, _)).WillRepeatedly(Return(SUCCESS));
 
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode1));
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode2));
@@ -117,11 +117,11 @@ HWTEST_F(ResourceNodeUtilsTest, SendMsgToExecutor002, TestSize.Level0)
     auto resourceNode1 = Common::MakeShared<MockResourceNode>();
     EXPECT_NE(resourceNode1, nullptr);
     EXPECT_CALL(*resourceNode1, GetExecutorIndex()).WillRepeatedly(Return(10));
-    EXPECT_CALL(*resourceNode1, SetProperty(_)).WillRepeatedly(Return(FAIL));
+    EXPECT_CALL(*resourceNode1, SetProperty(_, _)).WillRepeatedly(Return(FAIL));
     auto resourceNode2 = Common::MakeShared<MockResourceNode>();
     EXPECT_NE(resourceNode2, nullptr);
     EXPECT_CALL(*resourceNode2, GetExecutorIndex()).WillRepeatedly(Return(100));
-    EXPECT_CALL(*resourceNode2, SetProperty(_)).WillRepeatedly(Return(SUCCESS));
+    EXPECT_CALL(*resourceNode2, SetProperty(_, _)).WillRepeatedly(Return(SUCCESS));
 
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode1));
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode2));
@@ -143,7 +143,7 @@ HWTEST_F(ResourceNodeUtilsTest, SetCachedTemplates002, TestSize.Level0)
 {
     const uint64_t testIndex = 10;
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(testIndex);
-    EXPECT_CALL(*(static_cast<MockResourceNode *>(resourceNode.get())), SetProperty(_))
+    EXPECT_CALL(*(static_cast<MockResourceNode *>(resourceNode.get())), SetProperty(_, _))
         .WillRepeatedly(Return(FAIL));
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
     auto mockCredentialInfo = Common::MakeShared<MockCredentialInfo>();
@@ -157,7 +157,7 @@ HWTEST_F(ResourceNodeUtilsTest, SetCachedTemplates003, TestSize.Level0)
 {
     const uint64_t testIndex = 10;
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(testIndex);
-    EXPECT_CALL(*(static_cast<MockResourceNode *>(resourceNode.get())), SetProperty(_))
+    EXPECT_CALL(*(static_cast<MockResourceNode *>(resourceNode.get())), SetProperty(_, _))
         .WillRepeatedly(Return(SUCCESS));
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
     auto mockCredentialInfo = Common::MakeShared<MockCredentialInfo>();

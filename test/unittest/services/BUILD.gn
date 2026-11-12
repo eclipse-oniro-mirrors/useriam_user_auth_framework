@@ -134,6 +134,7 @@ ohos_unittest("iam_services_test") {
               "src/user_auth_service_test_part04.cpp",
               "src/user_auth_service_test_part05.cpp",
               "src/user_idm_database_test.cpp",
+              "src/user_idm_service_restore_test.cpp",
               "src/user_idm_service_test.cpp",
               "src/user_info_test.cpp",
               "src/user_recognition_state_manager_test.cpp",

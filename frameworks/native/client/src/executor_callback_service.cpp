@@ -70,7 +70,7 @@ int32_t ExecutorCallbackService::OnEndExecute(uint64_t scheduleId, const std::ve
     return callback_->OnEndExecute(scheduleId, attributes);
 }
 
-int32_t ExecutorCallbackService::OnSetProperty(const std::vector<uint8_t> &properties)
+int32_t ExecutorCallbackService::OnSetProperty(const std::vector<uint8_t> &properties, std::vector<uint8_t> &values)
 {
     IAM_LOGD("start");
     if (callback_ == nullptr) {
@@ -78,7 +78,12 @@ int32_t ExecutorCallbackService::OnSetProperty(const std::vector<uint8_t> &prope
         return GENERAL_ERROR;
     }
     Attributes attributes(properties);
-    return callback_->OnSetProperty(attributes);
+    Attributes results;
+    auto ret = callback_->OnSetProperty(attributes, results);
+    if (ret == SUCCESS) {
+        values = results.Serialize();
+    }
+    return ret;
 }
 
 int32_t ExecutorCallbackService::OnGetProperty(const std::vector<uint8_t> &condition, std::vector<uint8_t> &values)

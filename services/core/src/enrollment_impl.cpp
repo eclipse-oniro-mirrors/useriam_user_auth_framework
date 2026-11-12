@@ -92,6 +92,11 @@ int32_t EnrollmentImpl::GetUserId() const
     return enrollPara_.userId;
 }
 
+std::vector<uint8_t> EnrollmentImpl::GetRestoreData() const
+{
+    return enrollPara_.restoreData;
+}
+
 bool EnrollmentImpl::Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleList,
     std::shared_ptr<ScheduleNodeCallback> callback)
 {
@@ -124,6 +129,7 @@ bool EnrollmentImpl::Start(std::vector<std::shared_ptr<ScheduleNode>> &scheduleL
         .userType = userType,
         .authSubType = enrollPara_.pinType,
         .additionalInfo = enrollPara_.additionalInfo,
+        .isRestore = enrollPara_.isRestore,
     };
     IamHitraceHelper traceHelper("hdi BeginEnrollment");
     auto result = GetUserAuthEngine().BeginEnrollmentExt(authToken_, param, info);

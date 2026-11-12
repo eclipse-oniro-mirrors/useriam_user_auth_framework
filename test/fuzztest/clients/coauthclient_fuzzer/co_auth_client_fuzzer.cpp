@@ -60,10 +60,11 @@ public:
         return SUCCESS;
     }
 
-    int32_t OnSetProperty(const Attributes &properties)
+    int32_t OnSetProperty(const Attributes &properties, Attributes &results)
     {
         IAM_LOGI("start");
         static_cast<void>(properties);
+        static_cast<void>(results);
         return SUCCESS;
     }
 
@@ -196,7 +197,8 @@ void FuzzExecutorCallbackServiceOnSetProperty(Parcel &parcel)
     Common::FillFuzzUint8Vector(parcel, attr);
     Attributes properties(attr);
     if (g_ExecutorCallbackService != nullptr) {
-        g_ExecutorCallbackService->OnSetProperty(properties.Serialize());
+        std::vector<uint8_t> values;
+        g_ExecutorCallbackService->OnSetProperty(properties.Serialize(), values);
     }
     IAM_LOGI("end");
 }

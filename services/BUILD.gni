@@ -100,6 +100,7 @@ userauth_services_sources = [
   "ipc/src/user_auth_service_global_config.cpp",
   "ipc/src/user_auth_service_token.cpp",
   "ipc/src/user_idm_service.cpp",
+  "ipc/src/user_idm_service_restore.cpp",
   "load_mode/src/load_mode_handler.cpp",
   "../frameworks/common/src/user_auth_helper.cpp",
 ]

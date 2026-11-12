@@ -497,17 +497,19 @@ int32_t HdiEngineImpl::GetUserConfigParam(int32_t userId, int32_t authType, int3
     return CAPABILITY_NOT_SUPPORTED;
 }
 
-int32_t HdiEngineImpl::VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
-    EngUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret)
+int32_t HdiEngineImpl::VerifyAuthToken(int32_t userId, const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+    EngUserAuthTokenPlain &tokenPlainOut, EngUserAuthTokenExtraInfo &extraInfoOut)
 {
     auto hdi = HdiWrapper::GetHdiInstance();
     IF_FALSE_LOGE_AND_RETURN_VAL(hdi != nullptr, ENGINE_UNAVAILABLE);
     HdiUserAuthTokenPlain hdiTokenPlainOut;
+    std::vector<uint8_t> rootSecret;
     int32_t ret = hdi->VerifyAuthToken(tokenIn, allowableDuration, hdiTokenPlainOut, rootSecret);
     if (ret != HDF_SUCCESS) {
         return HdfCodeToResult(ret);
     }
     tokenPlainOut = HdiToEng(hdiTokenPlainOut);
+    extraInfoOut.rootSecret = std::move(rootSecret);
     return SUCCESS;
 }
 

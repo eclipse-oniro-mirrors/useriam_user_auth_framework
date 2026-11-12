@@ -94,8 +94,8 @@ public:
     virtual int32_t SetUserConfigParam(const EngGlobalConfigParam &param) = 0;
     virtual int32_t GetUserConfigParam(int32_t userId, int32_t authType, int32_t type,
         EngGlobalConfigValue &value) = 0;
-    virtual int32_t VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
-        EngUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret) = 0;
+    virtual int32_t VerifyAuthToken(int32_t userId, const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
+        EngUserAuthTokenPlain &tokenPlainOut, EngUserAuthTokenExtraInfo &extraInfoOut) = 0;
     virtual int32_t RedeemScheduleToken(const std::vector<uint8_t> &challenge,
         const std::vector<uint8_t> &scheduleToken, std::vector<uint8_t> &authTokenOut) = 0;
     virtual int32_t RegisterMessageCallback(const sptr<IMessageCallback> &messageCallback) = 0;

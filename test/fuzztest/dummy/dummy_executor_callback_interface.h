@@ -40,7 +40,7 @@ public:
     {
         return 0;
     };
-    int32_t OnSetProperty(const std::vector<uint8_t> &properties)
+    int32_t OnSetProperty(const std::vector<uint8_t> &properties, std::vector<uint8_t> &values)
     {
         return 0;
     };

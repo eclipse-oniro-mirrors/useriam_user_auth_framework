@@ -489,7 +489,8 @@ int32_t UserAuthService::SetProperty(int32_t userId, int32_t authType, const std
                 return;
             }
             const Attributes properties(attributes);
-            int32_t result = resourceNode->SetProperty(properties);
+            Attributes values;
+            int32_t result = resourceNode->SetProperty(properties, values);
             if (result != SUCCESS) {
                 IAM_LOGE("set property failed, result = %{public}d", result);
             }

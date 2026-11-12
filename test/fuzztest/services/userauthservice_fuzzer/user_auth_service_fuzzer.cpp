@@ -1002,7 +1002,7 @@ void FuzzQueryReusableAuthResult(Parcel &parcel)
     IAM_LOGI("end");
 }
 
-void FuzzSetAuthTokenAttr(Parcel &parcel)
+void FuzzGetAuthTokenAttr(Parcel &parcel)
 {
     IAM_LOGI("begin");
     std::vector<uint8_t> challenge;
@@ -1021,8 +1021,9 @@ void FuzzSetAuthTokenAttr(Parcel &parcel)
     };
     std::vector<uint8_t> rootSecret;
     FillFuzzUint8Vector(parcel, rootSecret);
+    EngUserAuthTokenExtraInfo extraInfoOut = { .rootSecret = rootSecret };
     Attributes extraInfo;
-    g_userAuthService.SetAuthTokenAttr(tokenPlain, rootSecret, extraInfo);
+    g_userAuthService.GetAuthTokenAttr(tokenPlain, extraInfoOut, extraInfo);
     EnsureTask();
     IAM_LOGI("end");
 }
@@ -1100,7 +1101,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzGetPropertyInner,
     FuzzVerifyAuthToken,
     FuzzRedeemScheduledAuthToken,
-    FuzzSetAuthTokenAttr,
+    FuzzGetAuthTokenAttr,
     FuzzQueryReusableAuthResult,
     FuzzGetAuthLockState,
     FuzzProcessPinExpired,

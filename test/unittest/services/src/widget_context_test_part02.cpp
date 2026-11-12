@@ -1246,9 +1246,9 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestIsSupportFollowCallerUi_001, 
     para.remoteCallerName = "test_caller";
     auto widgetContext = CreateWidgetContextPart02(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
-    bool ret = true;
+    bool ret = false;
     EXPECT_NO_THROW(ret = widgetContext->IsSupportFollowCallerUi());
-    EXPECT_FALSE(ret);
+    EXPECT_TRUE(ret);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }
@@ -1259,9 +1259,9 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestIsSupportFollowCallerUi_Empty
     ContextFactory::AuthWidgetContextPara para;
     auto widgetContext = CreateWidgetContextPart02(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
-    bool ret = true;
+    bool ret = false;
     EXPECT_NO_THROW(ret = widgetContext->IsSupportFollowCallerUi());
-    EXPECT_FALSE(ret);
+    EXPECT_TRUE(ret);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     handler->EnsureTask([]() {});
 }

@@ -110,6 +110,7 @@ _userauth_test_services_ipc_sources = [
   "services/ipc/src/user_auth_service_global_config.cpp",
   "services/ipc/src/user_auth_service_token.cpp",
   "services/ipc/src/user_idm_service.cpp",
+  "services/ipc/src/user_idm_service_restore.cpp",
 ]
 
 _userauth_test_services_load_mode_default_sources = [

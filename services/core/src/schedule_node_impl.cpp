@@ -464,7 +464,8 @@ void ScheduleNodeImpl::NotifyCollectorReady()
     bool setScheduleIdRet = attr.SetUint64Value(Attributes::ATTR_SCHEDULE_ID, GetScheduleId());
     IF_FALSE_LOGE_AND_RETURN(setScheduleIdRet);
 
-    int32_t ret = verifier->SetProperty(attr);
+    Attributes values;
+    int32_t ret = verifier->SetProperty(attr, values);
     if (ret != SUCCESS) {
         IAM_LOGE("notify collector ready failed, result = %{public}d", ret);
     }

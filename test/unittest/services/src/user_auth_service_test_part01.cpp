@@ -733,7 +733,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetProperty002, TestSize.Level0)
     EXPECT_NE(resourceNode, nullptr);
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
     MockResourceNode *node = static_cast<MockResourceNode *>(resourceNode.get());
-    ON_CALL(*node, SetProperty(_))
+    ON_CALL(*node, SetProperty(_, _))
         .WillByDefault(Return(SUCCESS));
     std::promise<void> promise1;
     std::promise<void> promise2;
@@ -785,7 +785,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceSetProperty003, TestSize.Level0)
     EXPECT_NE(resourceNode, nullptr);
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
     MockResourceNode *node = static_cast<MockResourceNode *>(resourceNode.get());
-    ON_CALL(*node, SetProperty(_))
+    ON_CALL(*node, SetProperty(_, _))
         .WillByDefault(Return(FAIL));
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     auto ret = service->SetProperty(testUserId, testAuthType, testAtrr.Serialize(), callbackInterface);
