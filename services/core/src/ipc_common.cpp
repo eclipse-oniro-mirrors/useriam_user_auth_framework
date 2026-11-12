@@ -332,6 +332,14 @@ int32_t IpcCommon::GetDirectCallerType(IPCObjectStub &stub)
     return Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(GetTokenId(stub));
 }
 
+bool IpcCommon::IsSystemCaller(IPCObjectStub &stub)
+{
+    if (GetDirectCallerType(stub) == Security::AccessToken::TOKEN_NATIVE) {
+        return true;
+    }
+    return CheckPermission(stub, IS_SYSTEM_APP);
+}
+
 bool IpcCommon::GetCallerName(IPCObjectStub &stub, std::string &callerName, int32_t &callerType)
 {
     uint32_t tokenId = GetAccessTokenId(stub);

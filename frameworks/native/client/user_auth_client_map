@@ -32,6 +32,7 @@
         OHOS::UserIam::UserAuth::UserAccessCtrlClient::GetInstance*;
         OHOS::UserIam::UserAuth::UserAuthNapiClientImpl::Instance*;
         OHOS::UserIam::UserAuth::UserAuthNapiClientImpl::BeginWidgetAuth*;
+        OHOS::UserIam::UserAuth::UserAuthNapiClientImpl::BeginAuthentication*;
         OHOS::UserIam::UserAuth::UserAuthNapiClientImpl::CancelAuthentication*;
         OHOS::UserIam::UserAuth::UserAuthClientImpl::QueryReusableAuthResult*;
         OHOS::UserIam::UserAuth::UserAuthClientImpl::GetAuthLockState*;

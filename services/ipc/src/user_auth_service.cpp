@@ -129,6 +129,14 @@ void GetResourceNodeByTypeAndRole(AuthType authType, ExecutorRole role,
         });
 }
 
+int32_t NotifyAuthFail(const std::shared_ptr<ContextCallback> &contextCallback, int32_t resultCode,
+    const std::string &finishReason)
+{
+    contextCallback->SetTraceAuthFinishReason(finishReason);
+    contextCallback->OnResult(resultCode, Attributes());
+    return resultCode;
+}
+
 const bool REGISTER_RESULT = SystemAbility::MakeAndRegisterAbility(UserAuthService::GetInstance().get());
 #ifndef IAM_TEST_ENABLE
 } // namespace
@@ -505,6 +513,7 @@ std::shared_ptr<ContextCallback> UserAuthService::GetAuthContextCallback(int32_t
         userAuthCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return nullptr;
     }
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
     contextCallback->SetTraceAuthType(authType);
     contextCallback->SetTraceAuthWidgetType(authType);
     contextCallback->SetTraceAuthTrustLevel(authTrustLevel);
@@ -557,14 +566,11 @@ int32_t UserAuthService::Auth(int32_t apiVersion, const IpcAuthParamInner &ipcAu
         IAM_LOGE("contextCallback is nullptr");
         return GENERAL_ERROR;
     }
-    std::string callerName = "";
     Attributes extraInfo;
     Authentication::AuthenticationPara para = {};
     if ((!IpcCommon::GetCallerName(*this, para.callerName, para.callerType))) {
         IAM_LOGE("get bundle name fail");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService Auth GetCallerName fail");
-        contextCallback->OnResult(GENERAL_ERROR, extraInfo);
-        return GENERAL_ERROR;
+        return NotifyAuthFail(contextCallback, GENERAL_ERROR, "UserAuthService Auth GetCallerName fail");
     }
     contextCallback->SetTraceCallerName(para.callerName);
     contextCallback->SetTraceCallerType(para.callerType);
@@ -572,9 +578,11 @@ int32_t UserAuthService::Auth(int32_t apiVersion, const IpcAuthParamInner &ipcAu
         para.callerName, static_cast<AuthTrustLevel>(ipcAuthParamInner.authTrustLevel));
     if (checkRet != SUCCESS) {
         IAM_LOGE("check auth permission and param fail");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService Auth CheckAuthPermissionAndParam fail");
-        contextCallback->OnResult(checkRet, extraInfo);
-        return checkRet;
+        return NotifyAuthFail(contextCallback, checkRet, "UserAuthService Auth CheckAuthPermissionAndParam fail");
+    }
+    if (ipcAuthParamInner.hasTokenSchedule) {
+        IAM_LOGE("token schedule is not supported by legacy auth");
+        return NotifyAuthFail(contextCallback, INVALID_PARAMETERS, "UserAuthService Auth tokenSchedule not supported");
     }
     int32_t userId = INVALID_USER_ID;
     if (IpcCommon::GetCallingUserId(*this, userId) != SUCCESS) {
@@ -678,6 +686,56 @@ bool UserAuthService::CheckAuthPermissionAndParam(AuthType authType, AuthTrustLe
     return true;
 }
 
+int32_t UserAuthService::CheckSystemOnlyAuthParam(const IpcAuthParamInner &ipcAuthParamInner, bool hasRemoteAuthParam)
+{
+    bool hasSystemOnlyField = ipcAuthParamInner.hasAdditionalInfo || ipcAuthParamInner.hasTokenSchedule ||
+        ipcAuthParamInner.authIntent >= AuthIntent::QUESTION_AUTH || !ipcAuthParamInner.credentialIdList.empty() ||
+        hasRemoteAuthParam;
+    if (hasSystemOnlyField && !IpcCommon::IsSystemCaller(*this)) {
+        IAM_LOGE("system-only auth param used by non-system caller, hasAdditionalInfo:%{public}d, "
+            "hasTokenSchedule:%{public}d, authIntent:%{public}d, credentialIdCount:%{public}zu, "
+            "hasRemoteAuthParam:%{public}d", ipcAuthParamInner.hasAdditionalInfo,
+            ipcAuthParamInner.hasTokenSchedule, ipcAuthParamInner.authIntent,
+            ipcAuthParamInner.credentialIdList.size(), hasRemoteAuthParam);
+        return CHECK_SYSTEM_APP_FAILED;
+    }
+    return SUCCESS;
+}
+
+int32_t UserAuthService::CheckAuthUserParam(const IpcAuthParamInner &ipcAuthParamInner,
+    const AuthParamInner &authParam, const std::optional<RemoteAuthParam> &remoteAuthParam,
+    const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo)
+{
+    int32_t checkRet = CheckSystemOnlyAuthParam(ipcAuthParamInner, remoteAuthParam.has_value());
+    if (checkRet != SUCCESS) {
+        IAM_LOGE("CheckSystemOnlyAuthParam fail");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser CheckSystemOnlyAuthParam fail");
+        contextCallback->OnResult(checkRet, extraInfo);
+        return checkRet;
+    }
+    checkRet = UserAuthHelper::CheckTokenSchedule(authParam.tokenSchedule);
+    if (checkRet != SUCCESS) {
+        IAM_LOGE("CheckTokenSchedule fail");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser CheckTokenSchedule fail");
+        contextCallback->OnResult(checkRet, extraInfo);
+        return checkRet;
+    }
+    if (authParam.tokenSchedule.has_value() && remoteAuthParam.has_value()) {
+        IAM_LOGE("token schedule with remote auth is not supported");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser schedule with remote not supported");
+        contextCallback->OnResult(INVALID_PARAMETERS, extraInfo);
+        return INVALID_PARAMETERS;
+    }
+    if (!authParam.authTypes.empty()) {
+        IAM_LOGE("authTypes must be empty for system user auth, typeCount:%{public}zu",
+            authParam.authTypes.size());
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser authTypes not empty");
+        contextCallback->OnResult(INVALID_PARAMETERS, extraInfo);
+        return INVALID_PARAMETERS;
+    }
+    return SUCCESS;
+}
+
 int32_t UserAuthService::StartAuthUser(AuthParamInner &authParam, std::optional<RemoteAuthParam> &remoteAuthParam,
     Authentication::AuthenticationPara &para, std::shared_ptr<ContextCallback> &contextCallback, uint64_t &contextId)
 {
@@ -724,7 +782,25 @@ int32_t UserAuthService::AuthUser(const IpcAuthParamInner &ipcAuthParamInner,
     contextCallback->SetTraceIsRemoteAuth(remoteAuthParam.has_value());
     contextCallback->SetTraceUserId(authParam.userId);
     Attributes extraInfo;
+    int32_t checkRet = CheckAuthUserParam(ipcAuthParamInner, authParam, remoteAuthParam, contextCallback, extraInfo);
+    if (checkRet != SUCCESS) {
+        return checkRet;
+    }
     Authentication::AuthenticationPara para = {};
+    checkRet = FillAuthenticationPara(authParam, para, contextCallback, extraInfo);
+    if (checkRet != SUCCESS) {
+        return checkRet;
+    }
+    if (authParam.authIntent == AuthIntent::SUDO_PIN_AUTH) {
+        return StartSudoAuthUser(authParam, remoteAuthParam, para, contextCallback, contextId);
+    }
+    return StartAuthUser(authParam, remoteAuthParam, para, contextCallback, contextId);
+}
+
+int32_t UserAuthService::FillAuthenticationPara(const AuthParamInner &authParam,
+    Authentication::AuthenticationPara &para, const std::shared_ptr<ContextCallback> &contextCallback,
+    Attributes &extraInfo)
+{
     if ((!IpcCommon::GetCallerName(*this, para.callerName, para.callerType))) {
         IAM_LOGE("get caller name fail");
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser GetCallerName fail");
@@ -738,7 +814,17 @@ int32_t UserAuthService::AuthUser(const IpcAuthParamInner &ipcAuthParamInner,
         return CHECK_PERMISSION_FAILED;
     }
     para.tokenId = IpcCommon::GetAccessTokenId(*this);
-    para.userId = authParam.userId;
+    if (authParam.userId == INVALID_USER_ID) {
+        para.userId = INVALID_USER_ID;
+        if (IpcCommon::GetCallingUserId(*this, para.userId) != SUCCESS) {
+            IAM_LOGE("get callingUserId fail");
+            contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser GetCallingUserId fail");
+            contextCallback->OnResult(GENERAL_ERROR, extraInfo);
+            return GENERAL_ERROR;
+        }
+    } else {
+        para.userId = authParam.userId;
+    }
     para.authType = authParam.authType;
     para.atl = authParam.authTrustLevel;
     para.challenge = authParam.challenge;
@@ -747,11 +833,10 @@ int32_t UserAuthService::AuthUser(const IpcAuthParamInner &ipcAuthParamInner,
     para.authIntent = authParam.authIntent;
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     para.credentialIdList = authParam.credentialIdList;
-    para.isOsAccountVerified = IpcCommon::IsOsAccountVerified(authParam.userId);
-    if (authParam.authIntent == AuthIntent::SUDO_PIN_AUTH) {
-        return StartSudoAuthUser(authParam, remoteAuthParam, para, contextCallback, contextId);
-    }
-    return StartAuthUser(authParam, remoteAuthParam, para, contextCallback, contextId);
+    para.isOsAccountVerified = IpcCommon::IsOsAccountVerified(para.userId);
+    para.tokenSchedule = authParam.tokenSchedule;
+    para.additionalInfo = authParam.additionalInfo.value_or("");
+    return SUCCESS;
 }
 
 int32_t UserAuthService::StartSudoAuthUser(const AuthParamInner &authParam,
@@ -759,8 +844,7 @@ int32_t UserAuthService::StartSudoAuthUser(const AuthParamInner &authParam,
     const std::shared_ptr<ContextCallback> &contextCallback, uint64_t &contextId)
 {
     Attributes extraInfo;
-    if (IpcCommon::GetDirectCallerType(*this) != Security::AccessToken::TOKEN_NATIVE &&
-        !IpcCommon::CheckPermission(*this, IS_SYSTEM_APP)) {
+    if (!IpcCommon::IsSystemCaller(*this)) {
         IAM_LOGE("sudo auth is only allowed for system app or SA caller");
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser sudo caller check fail");
         contextCallback->OnResult(CHECK_PERMISSION_FAILED, extraInfo);
@@ -788,9 +872,9 @@ int32_t UserAuthService::CheckSudoAuthParam(const AuthParamInner &authParam,
         IAM_LOGE("sudo auth only supports pin, authType: %{public}d", static_cast<int32_t>(authParam.authType));
         return INVALID_PARAMETERS;
     }
-    if (authParam.additionalInfo.empty() ||
-        UserAuthHelper::GetUtf8CharCount(authParam.additionalInfo) > static_cast<size_t>(TITLE_MAX)) {
-        IAM_LOGE("sudo additionalInfo is empty or longer than TITLE_MAX");
+    if (!authParam.additionalInfo.has_value() || authParam.additionalInfo->empty() ||
+        UserAuthHelper::GetUtf8CharCount(authParam.additionalInfo.value()) > static_cast<size_t>(ADDITIONAL_INFO_MAX)) {
+        IAM_LOGE("sudo additionalInfo is empty or longer than ADDITIONAL_INFO_MAX");
         return INVALID_PARAMETERS;
     }
     if (authParam.reuseUnlockResult.isReuse) {
@@ -812,7 +896,8 @@ uint64_t UserAuthService::StartSudoAuthContext(const AuthParamInner &authParam,
     sudoPara.callerName = para.callerName;
     sudoPara.challenge = para.challenge;
     sudoPara.atl = para.atl;
-    sudoPara.additionalInfo = authParam.additionalInfo;
+    sudoPara.additionalInfo = authParam.additionalInfo.value_or("");
+    sudoPara.tokenSchedule = para.tokenSchedule;
     sudoPara.isOsAccountVerified = para.isOsAccountVerified;
     sudoPara.needSubscribeAppState = !IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND);
     auto context = ContextFactory::CreateSudoAuthContext(sudoPara, contextCallback);
@@ -1004,6 +1089,7 @@ int32_t UserAuthService::Identify(const std::vector<uint8_t> &challenge, int32_t
         userAuthCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
     if (static_cast<AuthType>(authType) == PIN) {
         IAM_LOGE("type not support %{public}d", authType);
         contextCallback->SetTraceAuthFinishReason("UserAuthService Identify IsAuthTypeEnable fail");
@@ -1551,18 +1637,24 @@ int32_t UserAuthService::AuthWidget(int32_t apiVersion, const IpcAuthParamInner 
     ContextFactory::AuthWidgetContextPara para;
     para.sdkVersion = apiVersion;
     Attributes extraInfo;
-    int32_t checkRet = GetCallerInfo(authParam.isUserIdSpecified, authParam.userId, para, contextCallback);
+    int32_t checkRet = CheckSystemOnlyAuthParam(ipcAuthParamInner);
     if (checkRet != SUCCESS) {
-        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget GetCallerInfo fail");
-        contextCallback->OnResult(checkRet, extraInfo);
-        return checkRet;
+        IAM_LOGE("CheckSystemOnlyAuthParam fail");
+        return NotifyAuthFail(contextCallback, checkRet, "UserAuthService AuthWidget CheckSystemOnlyAuthParam fail");
+    }
+    if (ipcAuthParamInner.hasTokenSchedule) {
+        IAM_LOGE("token schedule is not supported by widget auth");
+        return NotifyAuthFail(contextCallback, INVALID_PARAMETERS,
+            "UserAuthService AuthWidget tokenSchedule not supported");
+    }
+    checkRet = GetCallerInfo(authParam.isUserIdSpecified, authParam.userId, para, contextCallback);
+    if (checkRet != SUCCESS) {
+        return NotifyAuthFail(contextCallback, checkRet, "UserAuthService AuthWidget GetCallerInfo fail");
     }
     checkRet = CheckAuthPermissionAndParam(authParam, widgetParam, para.isBackgroundApplication);
     if (checkRet != SUCCESS) {
         IAM_LOGE("check permission and auth widget param failed");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget CheckAuthPermissionAndParam fail");
-        contextCallback->OnResult(checkRet, extraInfo);
-        return checkRet;
+        return NotifyAuthFail(contextCallback, checkRet, "UserAuthService AuthWidget CheckAuthPermissionAndParam fail");
     }
     if (IpcCommon::CheckPermission(*this, ENTERPRISE_MANAGE_SECURITY)) {
         IAM_LOGI("caller has enterprise manage security permission");
@@ -1595,6 +1687,7 @@ std::shared_ptr<ContextCallback> UserAuthService::GetAuthContextCallback(int32_t
         callback->OnResult(ResultCode::GENERAL_ERROR, extraInfo.Serialize());
         return nullptr;
     }
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
     contextCallback->SetTraceSdkVersion(apiVersion);
     contextCallback->SetTraceAuthTrustLevel(authParam.authTrustLevel);
 
@@ -1918,123 +2011,6 @@ bool UserAuthService::CompleteRemoteAuthParam(RemoteAuthParam &remoteAuthParam, 
     return true;
 }
 
-bool UserAuthService::GetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain, const std::vector<uint8_t> &rootSecret,
-    Attributes &extraInfo)
-{
-    bool setTokenVersionRet = extraInfo.SetUint32Value(Attributes::ATTR_TOKEN_VERSION, tokenPlain.version);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setTokenVersionRet == true, false);
-    bool setUserIdRet = extraInfo.SetInt32Value(Attributes::ATTR_USER_ID, tokenPlain.userId);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setUserIdRet == true, false);
-    bool setChallengeRet = extraInfo.SetUint8ArrayValue(Attributes::ATTR_CHALLENGE, tokenPlain.challenge);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setChallengeRet == true, false);
-    bool setTimeStampRet = extraInfo.SetUint64Value(Attributes::ATTR_TOKEN_TIME_INTERVAL, tokenPlain.timeInterval);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setTimeStampRet == true, false);
-    bool setTrustLevelRet = extraInfo.SetUint32Value(Attributes::ATTR_AUTH_TRUST_LEVEL, tokenPlain.authTrustLevel);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setTrustLevelRet == true, false);
-    bool setAuthTypeRet = extraInfo.SetInt32Value(Attributes::ATTR_AUTH_TYPE, tokenPlain.authType);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setAuthTypeRet == true, false);
-    bool setTokenTypeRet = extraInfo.SetInt32Value(Attributes::ATTR_TOKEN_TYPE, tokenPlain.tokenType);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setTokenTypeRet == true, false);
-    bool setSecureUidRet = extraInfo.SetUint64Value(Attributes::ATTR_SEC_USER_ID, tokenPlain.secureUid);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setSecureUidRet == true, false);
-    bool setEnrolledIdRet = extraInfo.SetUint64Value(Attributes::ATTR_CREDENTIAL_DIGEST, tokenPlain.enrolledId);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setEnrolledIdRet == true, false);
-    bool setCredentialIdRet = extraInfo.SetUint64Value(Attributes::ATTR_CREDENTIAL_ID, tokenPlain.credentialId);
-    IF_FALSE_LOGE_AND_RETURN_VAL(setCredentialIdRet == true, false);
-    if (rootSecret.size() != 0) {
-        bool setRootSecret = extraInfo.SetUint8ArrayValue(Attributes::ATTR_ROOT_SECRET, rootSecret);
-        IF_FALSE_LOGE_AND_RETURN_VAL(setRootSecret == true, false);
-    }
-    return true;
-}
-
-int32_t UserAuthService::VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
-    const sptr<IVerifyTokenCallback> &verifyTokenCallback)
-{
-    IAM_LOGI("start, duration:%{public}" PRIu64 ", tokenIn size:%{public}zu.", allowableDuration, tokenIn.size());
-    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
-    IF_FALSE_LOGE_AND_RETURN_VAL(verifyTokenCallback != nullptr, INVALID_PARAMETERS);
-
-    Attributes extraInfo;
-    if (tokenIn.size() == 0 || tokenIn.data() == nullptr) {
-        IAM_LOGE("bad parameter");
-        verifyTokenCallback->OnVerifyTokenResult(INVALID_PARAMETERS, extraInfo.Serialize());
-        return INVALID_PARAMETERS;
-    }
-    if (!IpcCommon::CheckPermission(*this, USE_USER_ACCESS_MANAGER)) {
-        IAM_LOGE("failed to check permission");
-        verifyTokenCallback->OnVerifyTokenResult(CHECK_PERMISSION_FAILED, extraInfo.Serialize());
-        return CHECK_PERMISSION_FAILED;
-    }
-    if (IpcCommon::GetDirectCallerType(*this) != Security::AccessToken::TOKEN_NATIVE &&
-        !IpcCommon::CheckPermission(*this, IS_SYSTEM_APP)) {
-        IAM_LOGE("caller is not systemApp.");
-        verifyTokenCallback->OnVerifyTokenResult(CHECK_SYSTEM_APP_FAILED, extraInfo.Serialize());
-        return CHECK_SYSTEM_APP_FAILED;
-    }
-
-    EngUserAuthTokenPlain tokenPlain = {};
-    std::vector<uint8_t> rootSecret = {};
-    int32_t result = GetUserAuthEngine().VerifyAuthToken(tokenIn, allowableDuration, tokenPlain, rootSecret);
-    if (result != SUCCESS) {
-        IAM_LOGE("VerifyAuthToken failed result:%{public}d", result);
-        verifyTokenCallback->OnVerifyTokenResult(result, extraInfo.Serialize());
-        return result;
-    }
-    if (!GetAuthTokenAttr(tokenPlain, rootSecret, extraInfo)) {
-        IAM_LOGE("GetAuthTokenAttr failed");
-        verifyTokenCallback->OnVerifyTokenResult(GENERAL_ERROR, extraInfo.Serialize());
-        return GENERAL_ERROR;
-    }
-    verifyTokenCallback->OnVerifyTokenResult(SUCCESS, extraInfo.Serialize());
-    return SUCCESS;
-}
-
-int32_t UserAuthService::QueryReusableAuthResult(const IpcAuthParamInner &ipcAuthParamInner,
-    std::vector<uint8_t> &token)
-{
-    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
-        IAM_LOGE("failed to check permission");
-        return CHECK_PERMISSION_FAILED;
-    }
-
-    if (!(IpcCommon::GetDirectCallerType(*this) == Security::AccessToken::TOKEN_HAP &&
-        IpcCommon::CheckPermission(*this, IS_SYSTEM_APP))) {
-        IAM_LOGE("caller is not systemApp.");
-        return CHECK_SYSTEM_APP_FAILED;
-    }
-
-    AuthParamInner authParam = {};
-    InitAuthParam(ipcAuthParamInner, authParam);
-    if (!UserAuthHelper::CheckAuthTrustLevel(static_cast<uint32_t>(authParam.authTrustLevel))) {
-        IAM_LOGE("invalid authTrustLevel: %{public}u", static_cast<uint32_t>(authParam.authTrustLevel));
-        return TRUST_LEVEL_NOT_SUPPORT;
-    }
-    for (const auto &type : authParam.authTypes) {
-        if (!UserAuthHelper::CheckUserAuthType(static_cast<int32_t>(type))) {
-            IAM_LOGE("invalid authType: %{public}d", static_cast<int32_t>(type));
-            return TYPE_NOT_SUPPORT;
-        }
-    }
-    if (!authParam.isUserIdSpecified) {
-        if (IpcCommon::GetCallingUserId(*this, authParam.userId) != SUCCESS) {
-            IAM_LOGE("failed to get callingUserId");
-            return GENERAL_ERROR;
-        }
-    }
-
-    EngReuseUnlockInfo reuseResultInfo = {};
-    int32_t result = AuthWidgetHelper::QueryReusableAuthResult(authParam.userId, authParam, reuseResultInfo);
-    if (result != SUCCESS) {
-        IAM_LOGE("CheckReuseUnlockResult failed result:%{public}d userId:%{public}d", result,
-            ipcAuthParamInner.userId);
-        return result;
-    }
-
-    token = reuseResultInfo.token;
-    return SUCCESS;
-}
-
 int32_t UserAuthService::RegisterRemoteAuthCallback(const sptr<IRemoteAuthCallback> &remoteAuthCallback)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(remoteAuthCallback != nullptr, INVALID_PARAMETERS);
@@ -2097,7 +2073,23 @@ void UserAuthService::InitAuthParam(const IpcAuthParamInner &ipcAuthParam, AuthP
     if (ipcAuthParam.isHasRemoteTokenId) {
         authParam.remoteTokenId = ipcAuthParam.remoteTokenId;
     }
-    authParam.additionalInfo = ipcAuthParam.additionalInfo;
+    if (ipcAuthParam.hasAdditionalInfo) {
+        authParam.additionalInfo = ipcAuthParam.additionalInfo;
+    }
+    if (ipcAuthParam.hasTokenSchedule) {
+        authParam.tokenSchedule = TokenSchedule {
+            .hasValidStartTime = ipcAuthParam.hasTokenScheduleValidStartTime,
+            .validStartTime = ipcAuthParam.tokenScheduleValidStartTime,
+            .hasValidEndTime = ipcAuthParam.hasTokenScheduleValidEndTime,
+            .validEndTime = ipcAuthParam.tokenScheduleValidEndTime,
+        };
+        if (ipcAuthParam.hasTokenScheduleWindowConfig) {
+            authParam.tokenSchedule->windowConfig = RedemptionWindow {
+                .repeatInterval = ipcAuthParam.tokenScheduleRepeatInterval,
+                .windowDuration = ipcAuthParam.tokenScheduleWindowDuration,
+            };
+        }
+    }
 }
 
 void UserAuthService::InitRemoteAuthParam(const IpcRemoteAuthParam &ipcRemoteAuthParam,

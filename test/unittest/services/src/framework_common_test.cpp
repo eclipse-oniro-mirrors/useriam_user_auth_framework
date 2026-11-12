@@ -16,6 +16,7 @@
 #include <climits>
 #include <gtest/gtest.h>
 
+#include "attributes.h"
 #include "auth_common.h"
 #include "iam_common_defines.h"
 #include "user_auth_helper.h"
@@ -115,6 +116,53 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV10_003, TestSize.Level
     int32_t negativeResult = -1;
     EXPECT_EQ(UserAuthHelper::GetResultCodeV10(negativeResult),
         static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR));
+
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV10(AUTH_TOKEN_NOT_IN_WINDOW),
+        static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR));
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV10(AUTH_TOKEN_CREDENTIAL_INVALID),
+        static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR));
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV16_001, TestSize.Level0)
+{
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(SUCCESS), UserAuthResultCode::SUCCESS);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(FAIL), UserAuthResultCode::FAIL);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(AUTH_TOKEN_CHECK_FAILED),
+        UserAuthResultCode::AUTH_TOKEN_CHECK_FAILED);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(AUTH_TOKEN_EXPIRED), UserAuthResultCode::AUTH_TOKEN_EXPIRED);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(INVALID_PARAMETERS), UserAuthResultCode::OHOS_INVALID_PARAM);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(CHECK_PERMISSION_FAILED),
+        UserAuthResultCode::OHOS_CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(CHECK_SYSTEM_APP_FAILED),
+        UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV16_002, TestSize.Level0)
+{
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(AUTH_TOKEN_NOT_IN_WINDOW), UserAuthResultCode::GENERAL_ERROR);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(AUTH_TOKEN_CREDENTIAL_INVALID), UserAuthResultCode::GENERAL_ERROR);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV16(9999), UserAuthResultCode::GENERAL_ERROR);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV26_001, TestSize.Level0)
+{
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(AUTH_TOKEN_NOT_IN_WINDOW),
+        UserAuthResultCode::AUTH_TOKEN_NOT_IN_WINDOW);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(AUTH_TOKEN_CREDENTIAL_INVALID),
+        UserAuthResultCode::AUTH_TOKEN_CREDENTIAL_INVALID);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV26_002, TestSize.Level0)
+{
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(SUCCESS), UserAuthResultCode::SUCCESS);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(FAIL), UserAuthResultCode::FAIL);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(AUTH_TOKEN_CHECK_FAILED),
+        UserAuthResultCode::AUTH_TOKEN_CHECK_FAILED);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(AUTH_TOKEN_EXPIRED), UserAuthResultCode::AUTH_TOKEN_EXPIRED);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(INVALID_PARAMETERS), UserAuthResultCode::OHOS_INVALID_PARAM);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(CHECK_PERMISSION_FAILED),
+        UserAuthResultCode::OHOS_CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(UserAuthHelper::GetResultCodeV26(9999), UserAuthResultCode::GENERAL_ERROR);
 }
 
 HWTEST_F(FrameworkCommonTest, UserAuthHelperGetResultCodeV20_001, TestSize.Level0)
@@ -172,7 +220,7 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckUserAuthType_001, TestSize.Leve
 HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckUserAuthType_002, TestSize.Level0)
 {
     EXPECT_FALSE(UserAuthHelper::CheckUserAuthType(static_cast<int32_t>(AuthType::ALL)));
-    EXPECT_FALSE(UserAuthHelper::CheckUserAuthType(static_cast<int32_t>(AuthType::RECOVERY_KEY)));
+    EXPECT_TRUE(UserAuthHelper::CheckUserAuthType(static_cast<int32_t>(AuthType::RECOVERY_KEY)));
     EXPECT_FALSE(UserAuthHelper::CheckUserAuthType(static_cast<int32_t>(AuthType::TUI_PIN)));
     EXPECT_TRUE(UserAuthHelper::CheckUserAuthType(static_cast<int32_t>(AuthType::COMPANION_DEVICE)));
     EXPECT_FALSE(UserAuthHelper::CheckUserAuthType(static_cast<int32_t>(AuthType::INVALID_AUTH_TYPE)));
@@ -257,6 +305,171 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckReuseUnlockResult_004, TestSize
     
     validResult.reuseDuration = 5 * 60 * 1000;
     EXPECT_TRUE(UserAuthHelper::CheckReuseUnlockResult(validResult));
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_001, TestSize.Level0)
+{
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(std::nullopt), SUCCESS);
+
+    TokenSchedule singleWindow;
+    singleWindow.hasValidStartTime = true;
+    singleWindow.validStartTime = 1000;
+    singleWindow.hasValidEndTime = true;
+    singleWindow.validEndTime = 2000;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(singleWindow), SUCCESS);
+
+    TokenSchedule windowed = singleWindow;
+    RedemptionWindow window;
+    window.repeatInterval = MIN_REPEAT_INTERVAL_MS;
+    window.windowDuration = MIN_REPEAT_INTERVAL_MS;
+    windowed.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(windowed), SUCCESS);
+
+    window.windowDuration = 300;
+    windowed.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(windowed), SUCCESS);
+
+    // optional start/end: unset start means from issuance, unset end means no limit
+    TokenSchedule openEnded;
+    openEnded.hasValidEndTime = true;
+    openEnded.validEndTime = 2000;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(openEnded), SUCCESS);
+    openEnded.hasValidEndTime = false;
+    openEnded.hasValidStartTime = true;
+    openEnded.validStartTime = 1000;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(openEnded), SUCCESS);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_002, TestSize.Level0)
+{
+    TokenSchedule schedule;
+    schedule.hasValidStartTime = true;
+    schedule.validStartTime = 2000;
+    schedule.hasValidEndTime = true;
+    schedule.validEndTime = 2000;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    schedule.validEndTime = 1000;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_003, TestSize.Level0)
+{
+    TokenSchedule schedule;
+    schedule.hasValidStartTime = true;
+    schedule.validStartTime = 0;
+    schedule.hasValidEndTime = true;
+    schedule.validEndTime = 365LL * 24 * 60 * 60 * 1000;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    // span equal to the 30-day cap is allowed; unset end has no span limit
+    schedule.validEndTime = MAX_TOKEN_SCHEDULE_SPAN_MS;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
+    schedule.hasValidEndTime = false;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_004, TestSize.Level0)
+{
+    TokenSchedule schedule;
+    schedule.hasValidStartTime = true;
+    schedule.validStartTime = 1000;
+    schedule.hasValidEndTime = true;
+    schedule.validEndTime = 2000;
+    RedemptionWindow window;
+    window.repeatInterval = 0;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    // repeatInterval below 1 hour is rejected
+    window.repeatInterval = MIN_REPEAT_INTERVAL_MS - 1;
+    window.windowDuration = 0;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    window.repeatInterval = MIN_REPEAT_INTERVAL_MS;
+    window.windowDuration = 0;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    window.windowDuration = MIN_REPEAT_INTERVAL_MS + 1;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+
+    window.windowDuration = MIN_REPEAT_INTERVAL_MS;
+    schedule.windowConfig = window;
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckAuthTokenParam_001, TestSize.Level0)
+{
+    EXPECT_FALSE(UserAuthHelper::CheckAuthTokenParam({}));
+
+    std::vector<uint8_t> token(MAX_AUTH_TOKEN_LEN, 1);
+    EXPECT_TRUE(UserAuthHelper::CheckAuthTokenParam(token));
+
+    token.resize(MAX_AUTH_TOKEN_LEN + 1);
+    EXPECT_FALSE(UserAuthHelper::CheckAuthTokenParam(token));
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckChallengeParam_001, TestSize.Level0)
+{
+    EXPECT_TRUE(UserAuthHelper::CheckChallengeParam({}));
+
+    std::vector<uint8_t> challenge(MAX_CHALLENG_LEN, 1);
+    EXPECT_TRUE(UserAuthHelper::CheckChallengeParam(challenge));
+
+    challenge.resize(MAX_CHALLENG_LEN + 1);
+    EXPECT_FALSE(UserAuthHelper::CheckChallengeParam(challenge));
+}
+
+HWTEST_F(FrameworkCommonTest, UserAuthHelperTokenScheduleAttr_001, TestSize.Level0)
+{
+    Attributes extraInfo;
+    TokenSchedule schedule;
+    schedule.hasValidStartTime = true;
+    schedule.validStartTime = 1000;
+    schedule.hasValidEndTime = true;
+    schedule.validEndTime = 2000;
+    RedemptionWindow window;
+    window.repeatInterval = 500;
+    window.windowDuration = 300;
+    schedule.windowConfig = window;
+    EXPECT_TRUE(UserAuthHelper::SetTokenScheduleAttr(schedule, extraInfo));
+
+    TokenSchedule decoded = {};
+    EXPECT_TRUE(UserAuthHelper::GetTokenScheduleAttr(extraInfo, decoded));
+    EXPECT_TRUE(decoded.hasValidStartTime);
+    EXPECT_EQ(decoded.validStartTime, 1000);
+    EXPECT_TRUE(decoded.hasValidEndTime);
+    EXPECT_EQ(decoded.validEndTime, 2000);
+    ASSERT_TRUE(decoded.windowConfig.has_value());
+    EXPECT_EQ(decoded.windowConfig->repeatInterval, 500);
+    EXPECT_EQ(decoded.windowConfig->windowDuration, 300);
+
+    TokenSchedule singleWindow;
+    singleWindow.hasValidStartTime = true;
+    singleWindow.validStartTime = 1000;
+    singleWindow.hasValidEndTime = true;
+    singleWindow.validEndTime = 2000;
+    Attributes singleInfo;
+    EXPECT_TRUE(UserAuthHelper::SetTokenScheduleAttr(singleWindow, singleInfo));
+    EXPECT_TRUE(UserAuthHelper::GetTokenScheduleAttr(singleInfo, decoded));
+    EXPECT_FALSE(decoded.windowConfig.has_value());
+
+    // optional start/end: only windowConfig is declared, start means issuance and end means no limit
+    TokenSchedule windowOnly;
+    windowOnly.windowConfig = window;
+    Attributes windowOnlyInfo;
+    EXPECT_TRUE(UserAuthHelper::SetTokenScheduleAttr(windowOnly, windowOnlyInfo));
+    EXPECT_TRUE(UserAuthHelper::GetTokenScheduleAttr(windowOnlyInfo, decoded));
+    EXPECT_FALSE(decoded.hasValidStartTime);
+    EXPECT_FALSE(decoded.hasValidEndTime);
+    ASSERT_TRUE(decoded.windowConfig.has_value());
+
+    Attributes emptyInfo;
+    EXPECT_TRUE(UserAuthHelper::SetTokenScheduleAttr(std::nullopt, emptyInfo));
+    EXPECT_FALSE(UserAuthHelper::GetTokenScheduleAttr(emptyInfo, decoded));
 }
 } // namespace UserAuth
 } // namespace UserIam

@@ -169,6 +169,145 @@ HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginWidgetAuth004, TestSize.
     IpcClientUtils::ResetObj();
 }
 
+HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginAuthentication001, TestSize.Level0)
+{
+    static const int32_t apiVersion = 10;
+    uint64_t testContextId = 1;
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, AuthUser(_, _, _, _)).Times(1);
+    ON_CALL(*service, AuthUser)
+        .WillByDefault(
+            [&testContextId](const IpcAuthParamInner &authParam, const IpcRemoteAuthParam &remoteAuthParam,
+            const sptr<IIamCallback> &callback, uint64_t &contextId) {
+                // the single-element JS array must reach the service folded into the scalar dialect
+                EXPECT_EQ(authParam.authType, static_cast<int32_t>(AuthType::FACE));
+                EXPECT_TRUE(authParam.authTypes.empty());
+                EXPECT_FALSE(remoteAuthParam.isHasRemoteAuthParam);
+                if (callback != nullptr) {
+                    Attributes extraInfo;
+                    callback->OnResult(static_cast<int32_t>(ResultCode::GENERAL_ERROR), extraInfo.Serialize());
+                }
+                contextId = testContextId;
+                return SUCCESS;
+            }
+        );
+
+    sptr<MockRemoteObject> obj = new MockRemoteObject();
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    AuthParamInner testAuthParam = {};
+    testAuthParam.challenge = {0};
+    testAuthParam.authTypes = {AuthType::FACE};
+    auto testCallback = Common::MakeShared<MockAuthenticationCallback>();
+    uint64_t contextId = UserAuthNapiClientImpl::Instance().BeginAuthentication(apiVersion,
+        testAuthParam, testCallback);
+    EXPECT_EQ(contextId, testContextId);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
+HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginAuthentication002, TestSize.Level0)
+{
+    static const int32_t apiVersion = 10;
+    uint64_t testContextId = 1;
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, AuthUser(_, _, _, _)).Times(1);
+    ON_CALL(*service, AuthUser)
+        .WillByDefault(
+            [&testContextId](const IpcAuthParamInner &authParam, const IpcRemoteAuthParam &remoteAuthParam,
+            const sptr<IIamCallback> &callback, uint64_t &contextId) {
+                // multi-element arrays are not foldable and must stay intact for the service to reject
+                EXPECT_EQ(authParam.authTypes.size(), 2UL);
+                EXPECT_EQ(authParam.authTypes[0], static_cast<int32_t>(AuthType::FACE));
+                EXPECT_EQ(authParam.authTypes[1], static_cast<int32_t>(AuthType::FINGERPRINT));
+                if (callback != nullptr) {
+                    Attributes extraInfo;
+                    callback->OnResult(static_cast<int32_t>(ResultCode::GENERAL_ERROR), extraInfo.Serialize());
+                }
+                contextId = testContextId;
+                return SUCCESS;
+            }
+        );
+
+    sptr<MockRemoteObject> obj = new MockRemoteObject();
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    AuthParamInner testAuthParam = {};
+    testAuthParam.challenge = {0};
+    testAuthParam.authTypes = {AuthType::FACE, AuthType::FINGERPRINT};
+    auto testCallback = Common::MakeShared<MockAuthenticationCallback>();
+    uint64_t contextId = UserAuthNapiClientImpl::Instance().BeginAuthentication(apiVersion,
+        testAuthParam, testCallback);
+    EXPECT_EQ(contextId, testContextId);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
+HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginAuthentication003, TestSize.Level0)
+{
+    static const int32_t apiVersion = 10;
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, AuthUser(_, _, _, _)).Times(0);
+
+    sptr<MockRemoteObject> obj = new MockRemoteObject();
+    // empty authTypes is rejected locally: no IPC is sent, no death recipient is registered
+    EXPECT_CALL(*obj, SendRequest(_, _, _, _)).Times(0);
+    IpcClientUtils::SetObj(obj);
+    AuthParamInner testAuthParam = {};
+    testAuthParam.challenge = {0};
+    testAuthParam.authTypes = {};
+    auto testCallback = Common::MakeShared<MockAuthenticationCallback>();
+    EXPECT_CALL(*testCallback, OnResult(_, _))
+        .WillOnce([](int32_t result, const Attributes &extraInfo) {
+            EXPECT_EQ(result, static_cast<int32_t>(ResultCode::INVALID_PARAMETERS));
+        });
+    uint64_t contextId = UserAuthNapiClientImpl::Instance().BeginAuthentication(apiVersion,
+        testAuthParam, testCallback);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
+    // empty authTypes rejects locally before GetProxy registers a death recipient, dr stays null here
+    IpcClientUtils::ResetObj();
+}
+
+HWTEST_F(UserAuthNapiClientTest, UserAuthNapiClientBeginAuthentication004, TestSize.Level0)
+{
+    static const int32_t apiVersion = 10;
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, AuthUser(_, _, _, _)).Times(1);
+    ON_CALL(*service, AuthUser)
+        .WillByDefault(
+            [](const IpcAuthParamInner &authParam, const IpcRemoteAuthParam &remoteAuthParam,
+            const sptr<IIamCallback> &callback, uint64_t &contextId) {
+                // transport-level failure: the service returns without invoking the callback
+                (void)authParam;
+                (void)remoteAuthParam;
+                (void)callback;
+                contextId = BAD_CONTEXT_ID;
+                return GENERAL_ERROR;
+            }
+        );
+
+    sptr<MockRemoteObject> obj = new MockRemoteObject();
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+    AuthParamInner testAuthParam = {};
+    testAuthParam.challenge = {0};
+    testAuthParam.authTypes = {AuthType::FACE};
+    auto testCallback = Common::MakeShared<MockAuthenticationCallback>();
+    EXPECT_CALL(*testCallback, OnResult(_, _))
+        .WillOnce([](int32_t result, const Attributes &extraInfo) {
+            EXPECT_EQ(result, static_cast<int32_t>(ResultCode::GENERAL_ERROR));
+        });
+    uint64_t contextId = UserAuthNapiClientImpl::Instance().BeginAuthentication(apiVersion,
+        testAuthParam, testCallback);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
 void UserAuthNapiClientTest::CallRemoteObject(const std::shared_ptr<MockUserAuthService> service,
     const sptr<MockRemoteObject> &obj, sptr<IRemoteObject::DeathRecipient> &dr)
 {

@@ -35,12 +35,14 @@ namespace UserIam {
 namespace UserAuth {
 using AuthTipCallback = taihe::callback<void(userAuth::AuthTipInfo const &)>;
 using AuthTipCallbackPtr = std::shared_ptr<taihe::optional<AuthTipCallback>>;
+using AcquireInfoCallback = AuthTipCallback;
+using AcquireInfoCallbackPtr = AuthTipCallbackPtr;
 
 class UserAuthCallbackV10 : public AuthenticationCallback,
                             public std::enable_shared_from_this<UserAuthCallbackV10>,
                             public NoCopyable {
 public:
-    explicit UserAuthCallbackV10();
+    UserAuthCallbackV10() = default;
     ~UserAuthCallbackV10() override;
     void OnAcquireInfo(int32_t module, uint32_t acquireInfo, const Attributes &extraInfo) override;
     void OnResult(int32_t result, const Attributes &extraInfo) override;
@@ -50,14 +52,20 @@ public:
     void SetTipCallback(taihe::optional<AuthTipCallback> tipCallback);
     void ClearTipCallback();
     bool HasTipCallback();
+    void SetAcquireInfoCallback(taihe::optional<AcquireInfoCallback> acquireInfoCallback);
+    void ClearAcquireInfoCallback();
+    bool HasAcquireInfoCallback();
 
 private:
     bool DoResultCallback(int32_t result, const Attributes &extraInfo);
     bool DoTipInfoCallBack(int32_t tipType, uint32_t tipCode);
+    bool DoAcquireInfoCallBack(int32_t module, int32_t acquireInfo, const std::vector<uint8_t> &extraInfo);
     AuthTipCallbackPtr GetTipCallback();
+    AcquireInfoCallbackPtr GetAcquireInfoCallback();
     std::mutex mutex_;
     std::shared_ptr<userAuth::IAuthCallback> resultCallback_ = nullptr;
     AuthTipCallbackPtr tipCallback_ = nullptr;
+    AcquireInfoCallbackPtr acquireInfoCallback_ = nullptr;
 };
 }  // namespace UserAuth
 }  // namespace UserIam

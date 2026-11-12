@@ -37,6 +37,9 @@ int32_t UserAuthHelper::GetResultCodeV10(int32_t result)
     if (result == CHECK_SYSTEM_APP_FAILED) {
         return static_cast<int32_t>(UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED);
     }
+    if (result == CAPABILITY_NOT_SUPPORTED) {
+        return static_cast<int32_t>(UserAuthResultCode::OHOS_CAPABILITY_NOT_SUPPORTED);
+    }
     if (result == HARDWARE_NOT_SUPPORTED) {
         return static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR);
     }
@@ -51,6 +54,50 @@ int32_t UserAuthHelper::GetResultCodeV10(int32_t result)
     }
     IAM_LOGE("version GetResultCodeV10 resultCodeV10 error");
     return static_cast<int32_t>(UserAuthResultCode::GENERAL_ERROR);
+}
+
+UserAuthResultCode UserAuthHelper::GetResultCodeV16(int32_t result)
+{
+    static const std::map<int32_t, UserAuthResultCode> resultV16Map = {
+        { ResultCode::SUCCESS, UserAuthResultCode::SUCCESS },
+        { ResultCode::FAIL, UserAuthResultCode::FAIL },
+        { ResultCode::GENERAL_ERROR, UserAuthResultCode::GENERAL_ERROR },
+        { ResultCode::CANCELED, UserAuthResultCode::CANCELED },
+        { ResultCode::TIMEOUT, UserAuthResultCode::TIMEOUT },
+        { ResultCode::TYPE_NOT_SUPPORT, UserAuthResultCode::TYPE_NOT_SUPPORT },
+        { ResultCode::TRUST_LEVEL_NOT_SUPPORT, UserAuthResultCode::TRUST_LEVEL_NOT_SUPPORT },
+        { ResultCode::BUSY, UserAuthResultCode::BUSY },
+        { ResultCode::INVALID_PARAMETERS, UserAuthResultCode::OHOS_INVALID_PARAM },
+        { ResultCode::LOCKED, UserAuthResultCode::LOCKED },
+        { ResultCode::NOT_ENROLLED, UserAuthResultCode::NOT_ENROLLED },
+        { ResultCode::CANCELED_FROM_WIDGET, UserAuthResultCode::CANCELED_FROM_WIDGET },
+        { ResultCode::PIN_EXPIRED, UserAuthResultCode::PIN_EXPIRED },
+        { ResultCode::AUTH_TOKEN_CHECK_FAILED, UserAuthResultCode::AUTH_TOKEN_CHECK_FAILED },
+        { ResultCode::AUTH_TOKEN_EXPIRED, UserAuthResultCode::AUTH_TOKEN_EXPIRED },
+        { ResultCode::REUSE_AUTH_RESULT_FAILED, UserAuthResultCode::REUSE_AUTH_RESULT_FAILED },
+        { ResultCode::CAPABILITY_NOT_SUPPORTED, UserAuthResultCode::OHOS_CAPABILITY_NOT_SUPPORTED },
+        { ResultCode::CHECK_PERMISSION_FAILED, UserAuthResultCode::OHOS_CHECK_PERMISSION_FAILED },
+        { ResultCode::CHECK_SYSTEM_APP_FAILED, UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED },
+    };
+    auto it = resultV16Map.find(result);
+    if (it == resultV16Map.end()) {
+        IAM_LOGE("GetResultCodeV16 unmapped result: %{public}d", result);
+        return UserAuthResultCode::GENERAL_ERROR;
+    }
+    IAM_LOGI("GetResultCodeV16 result: %{public}d, resultCodeV16: %{public}d", result,
+        static_cast<int32_t>(it->second));
+    return it->second;
+}
+
+UserAuthResultCode UserAuthHelper::GetResultCodeV26(int32_t result)
+{
+    if (result == ResultCode::AUTH_TOKEN_NOT_IN_WINDOW) {
+        return UserAuthResultCode::AUTH_TOKEN_NOT_IN_WINDOW;
+    }
+    if (result == ResultCode::AUTH_TOKEN_CREDENTIAL_INVALID) {
+        return UserAuthResultCode::AUTH_TOKEN_CREDENTIAL_INVALID;
+    }
+    return GetResultCodeV16(result);
 }
 
 int32_t UserAuthHelper::GetResultCodeV20(int32_t result)
@@ -79,7 +126,8 @@ bool UserAuthHelper::CheckUserAuthType(int32_t authType)
 {
     if (authType != AuthType::PIN && authType != AuthType::FACE &&
         authType != AuthType::FINGERPRINT && authType != AuthType::PRIVATE_PIN &&
-        authType != AuthType::COMPANION_DEVICE && authType != AuthType::CUSTOM_AUTH) {
+        authType != AuthType::COMPANION_DEVICE && authType != AuthType::CUSTOM_AUTH &&
+        authType != AuthType::RECOVERY_KEY) {
         IAM_LOGE("authType check fail:%{public}d", authType);
         return false;
     }
@@ -95,7 +143,120 @@ bool UserAuthHelper::CheckAuthTrustLevel(uint32_t authTrustLevel)
     }
     return true;
 }
- 
+
+bool UserAuthHelper::CheckAuthTokenParam(const std::vector<uint8_t> &authToken)
+{
+    if (authToken.size() == 0 || authToken.size() > MAX_AUTH_TOKEN_LEN) {
+        IAM_LOGE("bad authToken, size:%{public}zu", authToken.size());
+        return false;
+    }
+    return true;
+}
+
+bool UserAuthHelper::CheckChallengeParam(const std::vector<uint8_t> &challenge)
+{
+    if (challenge.size() > MAX_CHALLENG_LEN) {
+        IAM_LOGE("bad challenge, size:%{public}zu", challenge.size());
+        return false;
+    }
+    return true;
+}
+bool UserAuthHelper::SetTokenScheduleAttr(const std::optional<TokenSchedule> &schedule, Attributes &extraInfo)
+{
+    if (!schedule.has_value()) {
+        return true;
+    }
+    if (schedule->hasValidStartTime &&
+        !extraInfo.SetInt64Value(Attributes::ATTR_TOKEN_SCHEDULE_VALID_START, schedule->validStartTime)) {
+        IAM_LOGE("set schedule attr fail");
+        return false;
+    }
+    if (schedule->hasValidEndTime &&
+        !extraInfo.SetInt64Value(Attributes::ATTR_TOKEN_SCHEDULE_VALID_END, schedule->validEndTime)) {
+        IAM_LOGE("set schedule attr fail");
+        return false;
+    }
+    if (!schedule->windowConfig.has_value()) {
+        return true;
+    }
+    if (!extraInfo.SetInt64Value(Attributes::ATTR_TOKEN_SCHEDULE_REPEAT_INTERVAL,
+        schedule->windowConfig->repeatInterval)) {
+        IAM_LOGE("set schedule repeatInterval fail");
+        return false;
+    }
+    if (!extraInfo.SetInt64Value(Attributes::ATTR_TOKEN_SCHEDULE_WINDOW_DURATION,
+        schedule->windowConfig->windowDuration)) {
+        IAM_LOGE("set schedule windowDuration fail");
+        return false;
+    }
+    return true;
+}
+
+bool UserAuthHelper::GetTokenScheduleAttr(const Attributes &extraInfo, TokenSchedule &schedule)
+{
+    int64_t validStartTime = 0;
+    int64_t validEndTime = 0;
+    int64_t repeatInterval = 0;
+    schedule.hasValidStartTime =
+        extraInfo.GetInt64Value(Attributes::ATTR_TOKEN_SCHEDULE_VALID_START, validStartTime);
+    schedule.hasValidEndTime = extraInfo.GetInt64Value(Attributes::ATTR_TOKEN_SCHEDULE_VALID_END, validEndTime);
+    bool hasRepeatInterval =
+        extraInfo.GetInt64Value(Attributes::ATTR_TOKEN_SCHEDULE_REPEAT_INTERVAL, repeatInterval);
+    if (!schedule.hasValidStartTime && !schedule.hasValidEndTime && !hasRepeatInterval) {
+        return false;
+    }
+    schedule.validStartTime = validStartTime;
+    schedule.validEndTime = validEndTime;
+    schedule.windowConfig = std::nullopt;
+    if (!hasRepeatInterval) {
+        return true;
+    }
+    RedemptionWindow window = {};
+    window.repeatInterval = repeatInterval;
+    int64_t windowDuration = 0;
+    if (!extraInfo.GetInt64Value(Attributes::ATTR_TOKEN_SCHEDULE_WINDOW_DURATION, windowDuration)) {
+        IAM_LOGE("get schedule windowDuration fail");
+        return false;
+    }
+    window.windowDuration = windowDuration;
+    schedule.windowConfig = window;
+    return true;
+}
+
+int32_t UserAuthHelper::CheckTokenSchedule(const std::optional<TokenSchedule> &schedule)
+{
+    if (!schedule.has_value()) {
+        return SUCCESS;
+    }
+    if (schedule->hasValidStartTime && schedule->hasValidEndTime) {
+        if (schedule->validEndTime <= schedule->validStartTime) {
+            IAM_LOGE("validEndTime must be greater than validStartTime");
+            return INVALID_PARAMETERS;
+        }
+        if (schedule->validEndTime - schedule->validStartTime > MAX_TOKEN_SCHEDULE_SPAN_MS) {
+            IAM_LOGE("schedule span must not exceed 30 days");
+            return INVALID_PARAMETERS;
+        }
+    }
+    if (!schedule->windowConfig.has_value()) {
+        return SUCCESS;
+    }
+    const RedemptionWindow &window = schedule->windowConfig.value();
+    if (window.repeatInterval < MIN_REPEAT_INTERVAL_MS) {
+        IAM_LOGE("repeatInterval must not be less than 1 hour");
+        return INVALID_PARAMETERS;
+    }
+    if (window.windowDuration <= 0) {
+        IAM_LOGE("windowDuration must be greater than 0");
+        return INVALID_PARAMETERS;
+    }
+    if (window.windowDuration > window.repeatInterval) {
+        IAM_LOGE("windowDuration must not be greater than repeatInterval");
+        return INVALID_PARAMETERS;
+    }
+    return SUCCESS;
+}
+
  bool UserAuthHelper::CheckReuseUnlockResult(ReuseUnlockResult reuseUnlockResult)
  {
     if (reuseUnlockResult.reuseMode != ReuseMode::AUTH_TYPE_RELEVANT &&

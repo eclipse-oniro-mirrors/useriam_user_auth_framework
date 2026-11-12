@@ -45,6 +45,8 @@ public:
         std::string title;
         AuthScene authScene {AUTH_SCENE_DEFAULT};
         uint32_t callerPermissions {0};
+        std::string additionalInfo;
+        std::optional<TokenSchedule> tokenSchedule;
     };
 
     struct AuthResultInfo {

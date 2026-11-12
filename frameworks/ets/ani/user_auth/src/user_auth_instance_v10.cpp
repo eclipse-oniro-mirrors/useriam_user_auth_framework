@@ -42,7 +42,8 @@ namespace userAuth = ohos::userIAM::userAuth::userAuth;
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-UserAuthInstanceV10::UserAuthInstanceV10() : callback_(Common::MakeShared<UserAuthCallbackV10>())
+UserAuthInstanceV10::UserAuthInstanceV10()
+    : callback_(Common::MakeShared<UserAuthCallbackV10>())
 {
     if (callback_ == nullptr) {
         IAM_LOGE("get null callback");
@@ -65,6 +66,11 @@ UserAuthResultCode UserAuthInstanceV10::Init(
     if (errCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("AuthParamInner type error, errorCode: %{public}d", errCode);
         return errCode;
+    }
+    // AuthWidget IPC has no parameter slot for these options.
+    if (authParam_.remoteAuthParam.has_value() || authParam_.tokenSchedule.has_value()) {
+        IAM_LOGE("remoteAuthOptions/scheduledAuthTokenOptions is not supported by getUserAuthInstance");
+        return UserAuthResultCode::PARAM_VERIFIED_FAILED;
     }
 
     errCode = UserAuthParamUtils::InitWidgetParam(widgetParam, widgetParamExt_, context_, window_);

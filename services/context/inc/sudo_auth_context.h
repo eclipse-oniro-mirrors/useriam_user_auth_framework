@@ -45,6 +45,7 @@ public:
     std::string GetCallerName() const override;
     bool CanStart(const std::vector<std::weak_ptr<Context>> &predecessors) const override;
     PreemptDecision GetPreemptDecision(const Context &newRequest) const override;
+    static std::string ResolveWidgetTitle(const std::string &additionalInfo);
 
 protected:
     bool OnStart() override;

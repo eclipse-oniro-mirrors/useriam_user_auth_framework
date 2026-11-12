@@ -57,6 +57,13 @@ public:
      */
     virtual void VerifyAuthToken(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
         const std::shared_ptr<VerifyTokenCallback> &callback) = 0;
+
+    /**
+     * @brief Redeem a scheduled auth token to a real-time auth token.
+     */
+    virtual void RedeemScheduledAuthToken(const std::vector<uint8_t> &challenge,
+        const std::vector<uint8_t> &scheduleToken,
+        const std::shared_ptr<VerifyTokenCallback> &callback) = 0;
 };
 } // namespace UserAuth
 } // namespace UserIam

@@ -14,6 +14,9 @@
  */
 
 #include "user_auth_callback_v10.h"
+
+#include "taihe/runtime.hpp"
+
 #include "iam_logger.h"
 #include "iam_ptr.h"
 #include "user_auth_client_impl.h"
@@ -27,9 +30,6 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-
-UserAuthCallbackV10::UserAuthCallbackV10()
-{}
 
 UserAuthCallbackV10::~UserAuthCallbackV10()
 {}
@@ -76,11 +76,44 @@ bool UserAuthCallbackV10::HasTipCallback()
     return tipCallback_ != nullptr;
 }
 
+void UserAuthCallbackV10::SetAcquireInfoCallback(taihe::optional<AcquireInfoCallback> acquireInfoCallback)
+{
+    std::lock_guard<std::mutex> guard(mutex_);
+    acquireInfoCallback_ = Common::MakeShared<taihe::optional<AcquireInfoCallback>>(acquireInfoCallback);
+}
+
+void UserAuthCallbackV10::ClearAcquireInfoCallback()
+{
+    std::lock_guard<std::mutex> guard(mutex_);
+    acquireInfoCallback_ = nullptr;
+}
+
+AcquireInfoCallbackPtr UserAuthCallbackV10::GetAcquireInfoCallback()
+{
+    std::lock_guard<std::mutex> guard(mutex_);
+    return acquireInfoCallback_;
+}
+
+bool UserAuthCallbackV10::HasAcquireInfoCallback()
+{
+    std::lock_guard<std::mutex> guard(mutex_);
+    return acquireInfoCallback_ != nullptr;
+}
+
 bool UserAuthCallbackV10::DoResultCallback(int32_t result, const Attributes &extraInfo)
 {
     IAM_LOGI("start");
-    std::lock_guard<std::mutex> guard(mutex_);
-    if (resultCallback_ == nullptr) {
+    ::taihe::env_guard guard;
+    if (guard.get_env() == nullptr) {
+        IAM_LOGE("attach ani env fail, drop result");
+        return false;
+    }
+    std::shared_ptr<userAuth::IAuthCallback> resultCallback = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        resultCallback = resultCallback_;
+    }
+    if (resultCallback == nullptr) {
         IAM_LOGI("resultCallback_ is nullptr.");
         return false;
     }
@@ -91,13 +124,18 @@ bool UserAuthCallbackV10::DoResultCallback(int32_t result, const Attributes &ext
         IAM_LOGE("GetUserAuthResult failed %{public}d", ret);
         return false;
     }
-    resultCallback_->onResult(userAuthResult);
+    resultCallback->onResult(userAuthResult);
     return true;
 }
 
 bool UserAuthCallbackV10::DoTipInfoCallBack(int32_t tipType, uint32_t tipCode)
 {
     IAM_LOGI("DoTipInfoCallBack start, authType:%{public}d, tipCode:%{public}u", tipType, tipCode);
+    ::taihe::env_guard guard;
+    if (guard.get_env() == nullptr) {
+        IAM_LOGE("attach ani env fail, drop tip info");
+        return false;
+    }
     auto tipCallback = GetTipCallback();
     if (tipCallback == nullptr || !tipCallback->has_value()) {
         IAM_LOGE("tipCallback is null or has no value");
@@ -125,12 +163,52 @@ bool UserAuthCallbackV10::DoTipInfoCallBack(int32_t tipType, uint32_t tipCode)
     return false;
 }
 
+bool UserAuthCallbackV10::DoAcquireInfoCallBack(int32_t module, int32_t acquireInfo,
+    const std::vector<uint8_t> &extraInfo)
+{
+    IAM_LOGD("start, module:%{public}d, acquireInfo:%{public}d, extraInfo len:%{public}zu", module, acquireInfo,
+        extraInfo.size());
+    auto acquireInfoCallback = GetAcquireInfoCallback();
+    if (acquireInfoCallback == nullptr || !acquireInfoCallback->has_value()) {
+        IAM_LOGI("acquireInfoCallback is null or has no value");
+        return false;
+    }
+    ::taihe::env_guard guard;
+    if (guard.get_env() == nullptr) {
+        IAM_LOGE("attach ani env fail, drop acquire info");
+        return false;
+    }
+    userAuth::AuthTipInfo authTipInfo = {
+        userAuth::UserAuthType::key_t::PIN, userAuth::UserAuthTipCode::key_t::COMPARE_FAILURE};
+    userAuth::UserAuthType tipTypeAni(userAuth::UserAuthType::key_t::PIN);
+    if (!UserAuthAniHelper::ConvertUserAuthType(module, tipTypeAni)) {
+        IAM_LOGI("drop non-standard tip, module:%{public}d, acquireInfo:%{public}d", module, acquireInfo);
+        return false;
+    }
+    authTipInfo.tipType = tipTypeAni;
+    userAuth::UserAuthTipCode tipCodeAni(userAuth::UserAuthTipCode::key_t::COMPARE_FAILURE);
+    if (!UserAuthAniHelper::ConvertUserAuthTipCode(acquireInfo, tipCodeAni)) {
+        IAM_LOGI("drop non-standard tip, module:%{public}d, acquireInfo:%{public}d", module, acquireInfo);
+        return false;
+    }
+    authTipInfo.tipCode = tipCodeAni;
+    authTipInfo.extraInfo = taihe::optional<taihe::array<uint8_t>>(
+        std::in_place_t{}, taihe::copy_data_t{}, extraInfo.data(), extraInfo.size());
+    (**acquireInfoCallback)(authTipInfo);
+    return true;
+}
+
 void UserAuthCallbackV10::OnAcquireInfo(
     int32_t module, uint32_t acquireInfo, const UserIam::UserAuth::Attributes &extraInfo)
 {
     IAM_LOGI("start, authType:%{public}d, tipCode:%{public}u", module, acquireInfo);
     bool ret = DoTipInfoCallBack(module, acquireInfo);
     IAM_LOGD("DoTipInfoCallBack ret = %{public}d", ret);
+    if (!HasAcquireInfoCallback()) {
+        return;
+    }
+    bool acquireRet = DoAcquireInfoCallBack(module, static_cast<int32_t>(acquireInfo), extraInfo.Serialize());
+    IAM_LOGD("DoAcquireInfoCallBack ret = %{public}d", acquireRet);
 }
 
 void UserAuthCallbackV10::OnResult(int32_t result, const Attributes &extraInfo)

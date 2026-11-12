@@ -70,6 +70,8 @@ ohos_fuzztest("SetWidgetParamCallbackServiceFuzzTest") {
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
     "config_policy:configpolicy_util",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "eventhandler:libeventhandler",
     "hdf_core:libhdf_utils",
     "hdf_core:libhdi",

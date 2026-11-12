@@ -29,8 +29,10 @@ enum UserAuthType : i32 {
     PIN = 1,
     FACE = 2,
     FINGERPRINT = 4,
+    RECOVERY_KEY = 8,
     PRIVATE_PIN = 16,
-    COMPANION_DEVICE = 64
+    COMPANION_DEVICE = 64,
+    CUSTOM = 128
 }
 
 enum AuthTrustLevel : i32 {
@@ -72,7 +74,9 @@ enum UserAuthResultCode : i32 {
     PIN_EXPIRED = 12500013,
     AUTH_TOKEN_CHECK_FAILED = 12500015,
     AUTH_TOKEN_EXPIRED = 12500016,
-    REUSE_AUTH_RESULT_FAILED = 12500017
+    REUSE_AUTH_RESULT_FAILED = 12500017,
+    AUTH_TOKEN_NOT_IN_WINDOW = 12500018,
+    AUTH_TOKEN_CREDENTIAL_INVALID = 12500019
 }
 
 enum UserAuthTipCode : i32 {
@@ -88,6 +92,7 @@ enum UserAuthTipCode : i32 {
 struct AuthTipInfo {
     tipType: UserAuthType;
     tipCode: UserAuthTipCode;
+    extraInfo: Optional<@typedarray Array<u8>>;
 }
 
 struct EnrolledState {
@@ -114,6 +119,10 @@ struct AuthParam {
     userId: Optional<i32>;
     skipLockedBiometricAuth: Optional<bool>;
     credentialIdList: Optional<Array<@typedarray Array<u8>>>;
+    authIntent: Optional<AuthIntent>;
+    remoteAuthOptions: Optional<RemoteAuthOptions>;
+    additionalInfo: Optional<String>;
+    scheduledAuthTokenOptions: Optional<TokenRedemptionSchedule>;
 }
 
 struct WidgetParam {
@@ -127,8 +136,14 @@ struct WidgetParam {
 struct UserAuthResult {
     result: i32;
     token: Optional<@typedarray Array<u8>>;
+    remainingAuthAttempts: Optional<i32>;
+    lockoutDuration: Optional<i32>;
     authType: Optional<UserAuthType>;
     enrolledState: Optional<EnrolledState>;
+    nextPhaseLockoutDuration: Optional<i32>;
+    credentialId: Optional<@typedarray Array<u8>>;
+    userId: Optional<i32>;
+    pinValidityPeriod: Optional<i64>;
 }
 
 struct IAuthCallback {
@@ -205,3 +220,39 @@ union UserRecognitionMgrOrNull {
 }
 
 function getUserRecognitionMgr(): UserRecognitionMgrOrNull;
+
+enum AuthIntent : i32 {
+    UNLOCK = 1,
+    SILENT_AUTH = 2,
+    QUESTION_AUTH = 3,
+    ABANDONED_PIN_AUTH = 4,
+    SUDO_PIN_AUTH = 5
+}
+
+struct RemoteAuthOptions {
+    verifierNetworkId: Optional<String>;
+    collectorNetworkId: Optional<String>;
+    collectorTokenId: Optional<i32>;
+}
+
+struct RedemptionWindow {
+    repeatInterval: i64;
+    windowDuration: i64;
+}
+
+struct TokenRedemptionSchedule {
+    validStartTime: Optional<i64>;
+    validEndTime: Optional<i64>;
+    windowConfig: Optional<RedemptionWindow>;
+}
+
+interface SystemUserAuthInstance {
+    onResult(callback: (result: UserAuthResult) => void): void;
+    offResult(callback: Optional<(result: UserAuthResult) => void>): void;
+    onAcquireInfo(callback: (authTipInfo: AuthTipInfo) => void): void;
+    offAcquireInfo(callback: Optional<(authTipInfo: AuthTipInfo) => void>): void;
+    start(): void;
+    cancel(): void;
+}
+
+function getSystemUserAuthInstance(authParam: AuthParam): SystemUserAuthInstance;

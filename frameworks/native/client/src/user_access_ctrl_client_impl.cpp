@@ -55,6 +55,34 @@ void UserAccessCtrlClientImpl::VerifyAuthToken(const std::vector<uint8_t> &token
     proxy->VerifyAuthToken(tokenIn, allowableDuration, wrapper);
 }
 
+void UserAccessCtrlClientImpl::RedeemScheduledAuthToken(const std::vector<uint8_t> &challenge,
+    const std::vector<uint8_t> &scheduleToken,
+    const std::shared_ptr<VerifyTokenCallback> &callback)
+{
+    IAM_LOGI("start, challenge size:%{public}zu, scheduleToken size:%{public}zu", challenge.size(),
+        scheduleToken.size());
+    if (!callback) {
+        IAM_LOGE("user access ctrl client callback is nullptr");
+        return;
+    }
+    auto proxy = GetProxy();
+    if (!proxy) {
+        IAM_LOGE("proxy is nullptr");
+        Attributes extraInfo;
+        callback->OnResult(GENERAL_ERROR, extraInfo);
+        return;
+    }
+
+    sptr<IVerifyTokenCallback> wrapper(new (std::nothrow) VerifyTokenCallbackService(callback));
+    if (wrapper == nullptr) {
+        IAM_LOGE("failed to create wrapper");
+        Attributes extraInfo;
+        callback->OnResult(GENERAL_ERROR, extraInfo);
+        return;
+    }
+    proxy->RedeemScheduledAuthToken(challenge, scheduleToken, wrapper);
+}
+
 sptr<IUserAuth> UserAccessCtrlClientImpl::GetProxy()
 {
     std::lock_guard<std::mutex> lock(mutex_);

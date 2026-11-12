@@ -13,7 +13,6 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
-import("../../../../user_auth_framework.gni")
 
 ohos_fuzztest("HdiTypeConvertFuzzTest") {
   branch_protector_ret = "pac_ret"
@@ -53,16 +52,11 @@ ohos_fuzztest("HdiTypeConvertFuzzTest") {
   external_deps = [
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "hilog:libhilog",
     "ipc:ipc_core",
   ]
-
-  if (!user_auth_framework_has_ext) {
-    external_deps += [
-      "drivers_interface_user_auth:libuser_auth_proxy_4.0",
-      "drivers_interface_user_auth:libuser_auth_proxy_4.1",
-    ]
-  }
 
   subsystem_name = "useriam"
   part_name = "user_auth_framework"

@@ -26,12 +26,12 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAccessCtrl {
+constexpr size_t ARGS_ONE = 1;
 constexpr size_t ARGS_TWO = 2;
 
 constexpr size_t PARAM0 = 0;
 constexpr size_t PARAM1 = 1;
 
-constexpr size_t MAX_AUTH_TOKEN_LEN = 1024;
 constexpr const uint64_t MAX_ALLOWABLE_VERIFY_AUTH_TOKEN_DURATION = 24 * 60 * 60 * 1000;
 
 struct AuthToken {
@@ -50,6 +50,7 @@ enum AuthTokenType: int32_t {
     TOKEN_TYPE_LOCAL_AUTH = 0,
     TOKEN_TYPE_LOCAL_RESIGN = 1,
     TOKEN_TYPE_LOCAL_COAUTH = 2,
+    TOKEN_TYPE_SCHEDULED_AUTH = 3,
 };
 } // namespace OHOS
 } // namespace UserIam

@@ -35,6 +35,8 @@
 #include "user_auth_client_impl.h"
 #include "user_auth_common_defines.h"
 #include "user_auth_instance_v10.h"
+#include "user_auth_napi_client_impl.h"
+#include "user_auth_param_utils.h"
 #include "user_auth_widget_mgr_v10.h"
 #include "user_auth_api_event_reporter.h"
 #include "user_auth_client_callback.h"
@@ -638,6 +640,180 @@ UserRecognitionMgrOrNull getUserRecognitionMgr()
     UserAuth::UserAuthAniHelper::ThrowBusinessError(resultCode);
     return UserRecognitionMgrOrNull::make_nValue();
 }
+
+class SystemUserAuthInstanceImpl {
+public:
+    explicit SystemUserAuthInstanceImpl(AuthParam const &authParam)
+    {
+        if (!UserAuth::UserAuthAniHelper::IsSystemApiCaller()) {
+            IAM_LOGE("getSystemUserAuthInstance is system api only");
+            initResult_ = UserAuth::UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED;
+            return;
+        }
+        authParamInner_.authTrustLevel = UserAuth::AuthTrustLevel::ATL1;
+        authParamInner_.userId = UserAuth::INVALID_USER_ID;
+        authParamInner_.isUserIdSpecified = false;
+        authParamInner_.skipLockedBiometricAuth = false;
+        authParamInner_.reuseUnlockResult.isReuse = false;
+        callback_ = MakeShared<UserAuth::UserAuthCallbackV10>();
+        if (callback_ == nullptr) {
+            IAM_LOGE("get null callback");
+            initResult_ = UserAuth::UserAuthResultCode::GENERAL_ERROR;
+            return;
+        }
+        initResult_ = UserAuth::UserAuthParamUtils::InitAuthParam(authParam, authParamInner_);
+        if (initResult_ == UserAuth::UserAuthResultCode::SUCCESS && authParamInner_.authTypes.size() != 1) {
+            IAM_LOGE("authType must contain exactly one authentication type, typeCount:%{public}zu",
+                authParamInner_.authTypes.size());
+            initResult_ = UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+        if (initResult_ == UserAuth::UserAuthResultCode::SUCCESS && authParamInner_.remoteAuthParam.has_value() &&
+            authParamInner_.tokenSchedule.has_value()) {
+            IAM_LOGE("remoteAuthOptions cannot be specified together with scheduledAuthTokenOptions");
+            initResult_ = UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+        }
+    }
+
+    bool IsValid() const
+    {
+        return callback_ != nullptr && initResult_ == UserAuth::UserAuthResultCode::SUCCESS;
+    }
+
+    UserAuth::UserAuthResultCode GetInitResult() const
+    {
+        return initResult_;
+    }
+
+    void onResult(::taihe::callback_view<void(UserAuthResult const&)> callback)
+    {
+        if (!IsValid()) {
+            IAM_LOGE("system user auth instance is invalid");
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        if (callback_->HasResultCallback()) {
+            IAM_LOGE("result callback has been registered");
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        // callback_view cannot be stored across stacks; copy it into a holding callback first.
+        IAuthCallback iCallback{::taihe::callback<void(UserAuthResult const&)>(callback)};
+        callback_->SetResultCallback(iCallback);
+    }
+
+    void offResult(::taihe::optional_view<::taihe::callback<void(UserAuthResult const&)>> callback)
+    {
+        if (callback_ == nullptr) {
+            IAM_LOGE("callback is null");
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        callback_->ClearResultCallback();
+    }
+
+    void onAcquireInfo(::taihe::callback_view<void(AuthTipInfo const&)> callback)
+    {
+        if (!IsValid()) {
+            IAM_LOGE("system user auth instance is invalid");
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        if (callback_->HasAcquireInfoCallback()) {
+            IAM_LOGE("acquire callback has been registered");
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        callback_->SetAcquireInfoCallback(::taihe::optional<UserAuth::AcquireInfoCallback>(
+            std::in_place_t{}, callback));
+    }
+
+    void offAcquireInfo(::taihe::optional_view<::taihe::callback<void(AuthTipInfo const&)>> callback)
+    {
+        if (callback_ == nullptr) {
+            IAM_LOGE("callback is null");
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        callback_->ClearAcquireInfoCallback();
+    }
+
+    void start()
+    {
+        UserAuth::UserAuthApiEventReporter reporter("SystemUserAuthInstance::start");
+        if (!IsValid()) {
+            IAM_LOGE("system user auth instance is invalid");
+            reporter.ReportFailed(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        std::lock_guard<std::mutex> guard(mutex_);
+        if (isStarted_ || isFinished_) {
+            IAM_LOGE("instance already started or finished");
+            reporter.ReportFailed(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        uint64_t contextId = UserAuth::UserAuthNapiClientImpl::Instance().BeginAuthentication(
+            UserAuth::API_VERSION_10, authParamInner_, callback_);
+        contextId_ = contextId;
+        isStarted_ = true;
+        isFinished_ = true;
+        if (contextId == UserAuth::BAD_CONTEXT_ID) {
+            IAM_LOGE("BeginAuthentication fail");
+            reporter.ReportFailed(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        reporter.ReportSuccess();
+    }
+
+    void cancel()
+    {
+        UserAuth::UserAuthApiEventReporter reporter("SystemUserAuthInstance::cancel");
+        std::lock_guard<std::mutex> guard(mutex_);
+        if (!isStarted_) {
+            IAM_LOGE("auth not started");
+            reporter.ReportFailed(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(UserAuth::UserAuthResultCode::GENERAL_ERROR);
+            return;
+        }
+        int32_t result = UserAuth::UserAuthNapiClientImpl::Instance().CancelAuthentication(contextId_,
+            UserAuth::ResultCode::CANCELED);
+        if (result != UserAuth::ResultCode::SUCCESS) {
+            IAM_LOGE("CancelAuthentication fail:%{public}d", result);
+            UserAuth::UserAuthResultCode resultCode =
+                UserAuth::UserAuthResultCode(UserAuth::UserAuthHelper::GetResultCodeV10(result));
+            reporter.ReportFailed(resultCode);
+            UserAuth::UserAuthAniHelper::ThrowBusinessError(resultCode);
+            return;
+        }
+        isStarted_ = false;
+        reporter.ReportSuccess();
+    }
+
+private:
+    UserAuth::UserAuthResultCode initResult_ = UserAuth::UserAuthResultCode::GENERAL_ERROR;
+    UserAuth::AuthParamInner authParamInner_ = {};
+    std::shared_ptr<UserAuth::UserAuthCallbackV10> callback_ = nullptr;
+    std::mutex mutex_;
+    uint64_t contextId_ = UserAuth::BAD_CONTEXT_ID;
+    bool isStarted_ = false;
+    bool isFinished_ = false;
+};
+
+SystemUserAuthInstance getSystemUserAuthInstance(AuthParam const &authParam)
+{
+    IAM_LOGI("getSystemUserAuthInstance begin");
+    UserAuth::UserAuthApiEventReporter reporter("getSystemUserAuthInstance");
+    auto instance = make_holder<SystemUserAuthInstanceImpl, SystemUserAuthInstance>(authParam);
+    if (!instance->IsValid()) {
+        UserAuth::UserAuthResultCode initResult = instance->GetInitResult();
+        reporter.ReportFailed(initResult);
+        UserAuth::UserAuthAniHelper::ThrowBusinessError(initResult);
+    } else {
+        reporter.ReportSuccess();
+    }
+    return instance;
+}
 }  // namespace
 
 TH_EXPORT_CPP_API_GetAvailableStatus(GetAvailableStatus);
@@ -651,3 +827,4 @@ TH_EXPORT_CPP_API_getAuthLockState(getAuthLockStateSync);
 TH_EXPORT_CPP_API_RegisterRemoteAuthCallback(RegisterRemoteAuthCallback);
 TH_EXPORT_CPP_API_UnregisterRemoteAuthCallback(UnregisterRemoteAuthCallback);
 TH_EXPORT_CPP_API_getUserRecognitionMgr(getUserRecognitionMgr);
+TH_EXPORT_CPP_API_getSystemUserAuthInstance(getSystemUserAuthInstance);

@@ -18,7 +18,7 @@
 #include "risk_event_manager.h"
 
 #include "securec.h"
-#include "mock_user_auth_engine.h"
+#include "mock_iuser_auth_interface.h"
 
 namespace OHOS {
 namespace UserIam {
@@ -42,7 +42,7 @@ void RiskEventManagerTest::TearDown()
 {
     // stale EXPECT_CALL on the process-wide HDI mock would shadow later suites'
     // ON_CALL defaults; reset first
-    MockUserAuthEngine::Holder::GetInstance().Reset();
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(RiskEventManagerTest, SetRiskEventPropertyForAuthTypeTest, TestSize.Level0)
@@ -92,7 +92,7 @@ HWTEST_F(RiskEventManagerTest, GetTemplateIdListTestFail, TestSize.Level0)
     int32_t mainUserId = 100;
     AuthType authType = PIN;
     std::vector<uint64_t> templateIds;
-    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
 
     {
         EXPECT_CALL(*mock, GetCredential(_, _, _)).WillRepeatedly(Return(NOT_ENROLLED));
@@ -109,7 +109,7 @@ HWTEST_F(RiskEventManagerTest, SetAttributesTestFail, TestSize.Level0)
 {
     int32_t mainUserId = 100;
     Attributes attributes;
-    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
+    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, GetCredential(_, _, _)).WillRepeatedly(Return(1));
     EXPECT_NO_THROW(RiskEventManager::GetInstance().SetAttributes(mainUserId, AuthType::FACE,
         RiskEventManager::EventType::SCREENLOCK_STRONG_AUTH, attributes));

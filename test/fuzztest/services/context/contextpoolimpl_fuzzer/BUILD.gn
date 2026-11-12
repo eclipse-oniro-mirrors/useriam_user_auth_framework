@@ -70,6 +70,8 @@ ohos_fuzztest("ContextPoolImplFuzzTest") {
     "ability_runtime:extension_manager",
     "access_token:libaccesstoken_sdk",
     "c_utils:utils",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.0",
+    "drivers_interface_user_auth:libuser_auth_proxy_4.1",
     "eventhandler:libeventhandler",
     "hdf_core:libhdf_utils",
     "hdf_core:libhdi",

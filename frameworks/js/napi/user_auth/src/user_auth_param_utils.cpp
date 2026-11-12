@@ -47,6 +47,18 @@ namespace {
     const std::string AUTH_PARAM_USER_ID = "userId";
     const std::string AUTH_PARAM_SKIP_LOCKED_BIOMETRIC_AUTH = "skipLockedBiometricAuth";
     const std::string AUTH_PARAM_CREDENTIAL_ID_LIST = "credentialIdList";
+    const std::string AUTH_PARAM_AUTH_INTENT = "authIntent";
+    const std::string AUTH_PARAM_REMOTE_AUTH_OPTIONS = "remoteAuthOptions";
+    const std::string REMOTE_PARAM_VERIFIER_NETWORK_ID = "verifierNetworkId";
+    const std::string REMOTE_PARAM_COLLECTOR_NETWORK_ID = "collectorNetworkId";
+    const std::string REMOTE_PARAM_COLLECTOR_TOKEN_ID = "collectorTokenId";
+    const std::string AUTH_PARAM_ADDITIONAL_INFO = "additionalInfo";
+    const std::string AUTH_PARAM_SCHEDULED_AUTH_TOKEN_OPTIONS = "scheduledAuthTokenOptions";
+    const std::string SCHEDULE_PARAM_VALID_START_TIME = "validStartTime";
+    const std::string SCHEDULE_PARAM_VALID_END_TIME = "validEndTime";
+    const std::string SCHEDULE_PARAM_WINDOW_CONFIG = "windowConfig";
+    const std::string SCHEDULE_PARAM_REPEAT_INTERVAL = "repeatInterval";
+    const std::string SCHEDULE_PARAM_WINDOW_DURATION = "windowDuration";
     const std::string WIDGET_PARAM_TITLE = "title";
     const std::string WIDGET_PARAM_NAVIBTNTEXT = "navigationButtonText";
     const std::string WIDGET_PARAM_WINDOWMODE = "windowMode";
@@ -59,6 +71,16 @@ namespace {
 
 namespace WidgetType {
     constexpr int32_t BUTTON_MAX = 60;
+}
+
+namespace RemoteLimit {
+    constexpr size_t MAX_NETWORK_ID_LEN = 64;
+}
+
+bool IsNullOrUndefined(napi_env env, napi_value value)
+{
+    return UserAuthNapiHelper::CheckNapiType(env, value, napi_null) == napi_ok ||
+        UserAuthNapiHelper::CheckNapiType(env, value, napi_undefined) == napi_ok;
 }
 
 UserAuthResultCode UserAuthParamUtils::InitChallenge(napi_env env, napi_value value, AuthParamInner &authParam)
@@ -208,28 +230,16 @@ UserAuthResultCode UserAuthParamUtils::InitUserId(napi_env env, napi_value value
         std::string msgStr = "Parameter error. The \"userId\" must be greater than or equal to 0";
         return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
     }
+    authParam.isUserIdSpecified = true;
     IAM_LOGI("InitUserId userId: %{public}d", authParam.userId);
     return UserAuthResultCode::SUCCESS;
 }
 
-UserAuthResultCode UserAuthParamUtils::ProcessAuthTrustLevelAndUserId(napi_env env, napi_value value,
-    AuthParamInner &authParam)
+UserAuthResultCode UserAuthParamUtils::ProcessUserId(napi_env env, napi_value value, AuthParamInner &authParam)
 {
-    if (!UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_AUTHTRUSTLEVEL)) {
-        IAM_LOGE("propertyName: %{public}s not exists.", AUTH_PARAM_AUTHTRUSTLEVEL.c_str());
-        std::string msgStr = "Parameter error. \"authTrustLevel\" is a mandatory parameter and is left unspecified.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
-    }
-    napi_value napi_authTrustLevel = UserAuthNapiHelper::GetNamedProperty(env, value, AUTH_PARAM_AUTHTRUSTLEVEL);
-    UserAuthResultCode errorCode = InitAuthTrustLevel(env, napi_authTrustLevel, authParam);
-    if (errorCode != UserAuthResultCode::SUCCESS) {
-        IAM_LOGE("InitAuthTrustLevel fail:%{public}d", errorCode);
-        return errorCode;
-    }
-
     if (UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_USER_ID)) {
         napi_value napi_userId = UserAuthNapiHelper::GetNamedProperty(env, value, AUTH_PARAM_USER_ID);
-        errorCode = InitUserId(env, napi_userId, authParam);
+        UserAuthResultCode errorCode = InitUserId(env, napi_userId, authParam);
         if (errorCode != UserAuthResultCode::SUCCESS) {
             IAM_LOGE("InitUserId fail:%{public}d", errorCode);
             return errorCode;
@@ -246,7 +256,20 @@ UserAuthResultCode UserAuthParamUtils::InitAuthParam(napi_env env, napi_value va
         std::string msgStr = "Parameter error. \"authParam\" is a mandatory parameter and is left unspecified.";
         return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
     }
+    UserAuthResultCode errorCode = InitMandatoryAuthParam(env, value, authParam);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    errorCode = InitOptionalAuthParam(env, value, authParam);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    return UserAuthResultCode::SUCCESS;
+}
 
+UserAuthResultCode UserAuthParamUtils::InitMandatoryAuthParam(napi_env env, napi_value value,
+    AuthParamInner &authParam)
+{
     if (!UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_CHALLENGE)) {
         IAM_LOGE("propertyName: %{public}s not exists.", AUTH_PARAM_CHALLENGE.c_str());
         std::string msgStr = "Parameter error. \"challenge\" is a mandatory parameter and is left unspecified.";
@@ -271,13 +294,30 @@ UserAuthResultCode UserAuthParamUtils::InitAuthParam(napi_env env, napi_value va
         return errorCode;
     }
 
-    errorCode = ProcessReuseUnlockResult(env, value, authParam);
+    if (!UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_AUTHTRUSTLEVEL)) {
+        IAM_LOGE("propertyName: %{public}s not exists.", AUTH_PARAM_AUTHTRUSTLEVEL.c_str());
+        std::string msgStr = "Parameter error. \"authTrustLevel\" is a mandatory parameter and is left unspecified.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    napi_value napi_authTrustLevel = UserAuthNapiHelper::GetNamedProperty(env, value, AUTH_PARAM_AUTHTRUSTLEVEL);
+    errorCode = InitAuthTrustLevel(env, napi_authTrustLevel, authParam);
     if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("InitAuthTrustLevel fail:%{public}d", errorCode);
+    }
+    return errorCode;
+}
+
+UserAuthResultCode UserAuthParamUtils::InitOptionalAuthParam(napi_env env, napi_value value,
+    AuthParamInner &authParam)
+{
+    UserAuthResultCode errorCode = ProcessReuseUnlockResult(env, value, authParam);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("ProcessReuseUnlockResult fail:%{public}d", errorCode);
         return errorCode;
     }
-    errorCode = ProcessAuthTrustLevelAndUserId(env, value, authParam);
+    errorCode = ProcessUserId(env, value, authParam);
     if (errorCode != UserAuthResultCode::SUCCESS) {
-        IAM_LOGE("ProcessAuthTrustLevelAndUserId fail:%{public}d", errorCode);
+        IAM_LOGE("ProcessUserId fail:%{public}d", errorCode);
         return errorCode;
     }
     errorCode = ProcessSkipLockedBiometricAuth(env, value, authParam);
@@ -290,7 +330,22 @@ UserAuthResultCode UserAuthParamUtils::InitAuthParam(napi_env env, napi_value va
         IAM_LOGE("ProcessCredentialIdList fail:%{public}d", errorCode);
         return errorCode;
     }
-    return UserAuthResultCode::SUCCESS;
+    errorCode = ProcessAuthIntent(env, value, authParam);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("ProcessAuthIntent fail:%{public}d", errorCode);
+        return errorCode;
+    }
+    errorCode = ProcessRemoteAuthOptions(env, value, authParam);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("ProcessRemoteAuthOptions fail:%{public}d", errorCode);
+        return errorCode;
+    }
+    errorCode = ProcessAdditionalInfo(env, value, authParam);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        IAM_LOGE("ProcessAdditionalInfo fail:%{public}d", errorCode);
+        return errorCode;
+    }
+    return ProcessScheduledAuthTokenOptions(env, value, authParam);
 }
 
 UserAuthResultCode UserAuthParamUtils::ProcessReuseUnlockResult(napi_env env, napi_value value,
@@ -348,6 +403,14 @@ UserAuthResultCode UserAuthParamUtils::InitWidgetParam(napi_env env, napi_value 
     UserAuthResultCode errorCode = ProcessWindowMode(env, value, widgetParamExt);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         return errorCode;
+    }
+
+    // appWindow is system-api-only and never crosses IPC; reject non-system callers here.
+    if (UserAuthNapiHelper::HasNamedProperty(env, value, WIDGET_PARAM_WINDOW) &&
+        !UserAuthNapiHelper::IsSystemApiCaller()) {
+        IAM_LOGE("appWindow used by non-system caller");
+        std::string msgStr = "Permission denied. \"appWindow\" is a system api only parameter.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_CHECK_SYSTEM_APP_FAILED, msgStr);
     }
 
     if (UserAuthNapiHelper::HasNamedProperty(env, value, WIDGET_PARAM_CONTEXT)) {
@@ -514,6 +577,317 @@ UserAuthResultCode UserAuthParamUtils::ProcessCredentialIdList(napi_env env, nap
         }
         IAM_LOGI("Init credentialIdList.size(): %{public}zu", authParam.credentialIdList.size());
     }
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ProcessAuthIntent(napi_env env, napi_value value, AuthParamInner &authParam)
+{
+    if (!UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_AUTH_INTENT)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_value authIntentValue = UserAuthNapiHelper::GetNamedProperty(env, value, AUTH_PARAM_AUTH_INTENT);
+    int32_t intent = 0;
+    napi_status ret = UserAuthNapiHelper::GetInt32Value(env, authIntentValue, intent);
+    if (ret != napi_ok) {
+        IAM_LOGE("GetInt32Value fail:%{public}d", ret);
+        std::string msgStr = "Parameter error. The type of \"authIntent\" must be AuthIntent.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    if (intent < static_cast<int32_t>(AuthIntent::UNLOCK) ||
+        intent > static_cast<int32_t>(AuthIntent::SUDO_PIN_AUTH)) {
+        IAM_LOGE("invalid authIntent:%{public}d", intent);
+        std::string msgStr = "Parameter error. The value of \"authIntent\" is out of range.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    authParam.authIntent = static_cast<AuthIntent>(intent);
+    IAM_LOGI("Init authIntent: %{public}d", intent);
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ProcessRemoteNetworkId(napi_env env, napi_value remoteValue,
+    const std::string &propertyName, std::optional<std::string> &networkId)
+{
+    if (!UserAuthNapiHelper::HasNamedProperty(env, remoteValue, propertyName)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_value networkIdValue = UserAuthNapiHelper::GetNamedProperty(env, remoteValue, propertyName);
+    if (IsNullOrUndefined(env, networkIdValue)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    if (UserAuthNapiHelper::CheckNapiType(env, networkIdValue, napi_string) != napi_ok) {
+        IAM_LOGE("%{public}s is not a string", propertyName.c_str());
+        std::string msgStr = "Parameter error. The value of \"" + propertyName + "\" is invalid.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    std::string networkIdStr = UserAuthNapiHelper::GetStringFromValueUtf8(env, networkIdValue);
+    if (networkIdStr.size() > RemoteLimit::MAX_NETWORK_ID_LEN) {
+        IAM_LOGE("%{public}s len:%{public}zu", propertyName.c_str(), networkIdStr.size());
+        std::string msgStr = "Parameter error. The value of \"" + propertyName + "\" is invalid.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    networkId = networkIdStr;
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ProcessCollectorTokenId(napi_env env, napi_value remoteValue,
+    RemoteAuthParam &remoteAuthParam)
+{
+    if (!UserAuthNapiHelper::HasNamedProperty(env, remoteValue, REMOTE_PARAM_COLLECTOR_TOKEN_ID)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_value tokenIdValue = UserAuthNapiHelper::GetNamedProperty(env, remoteValue,
+        REMOTE_PARAM_COLLECTOR_TOKEN_ID);
+    if (IsNullOrUndefined(env, tokenIdValue)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    int32_t tokenId = 0;
+    napi_status ret = UserAuthNapiHelper::GetInt32Value(env, tokenIdValue, tokenId);
+    if (ret != napi_ok || tokenId < 0) {
+        IAM_LOGE("collectorTokenId is invalid:%{public}d", tokenId);
+        std::string msgStr = "Parameter error. The value of \"collectorTokenId\" is invalid.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    remoteAuthParam.collectorTokenId = static_cast<uint32_t>(tokenId);
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ProcessRemoteAuthOptions(napi_env env, napi_value value,
+    AuthParamInner &authParam)
+{
+    if (!UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_REMOTE_AUTH_OPTIONS)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_value remoteValue = UserAuthNapiHelper::GetNamedProperty(env, value, AUTH_PARAM_REMOTE_AUTH_OPTIONS);
+    if (IsNullOrUndefined(env, remoteValue)) {
+        IAM_LOGI("remoteAuthOptions is null");
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_status ret = UserAuthNapiHelper::CheckNapiType(env, remoteValue, napi_object);
+    if (ret != napi_ok) {
+        IAM_LOGE("CheckNapiType fail:%{public}d", ret);
+        std::string msgStr = "Parameter error. The type of \"remoteAuthOptions\" must be RemoteAuthOptions.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    RemoteAuthParam remoteAuthParam = {};
+    UserAuthResultCode errorCode = ProcessRemoteNetworkId(env, remoteValue, REMOTE_PARAM_VERIFIER_NETWORK_ID,
+        remoteAuthParam.verifierNetworkId);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    errorCode = ProcessRemoteNetworkId(env, remoteValue, REMOTE_PARAM_COLLECTOR_NETWORK_ID,
+        remoteAuthParam.collectorNetworkId);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    errorCode = ProcessCollectorTokenId(env, remoteValue, remoteAuthParam);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    authParam.remoteAuthParam = remoteAuthParam;
+    if (!remoteAuthParam.verifierNetworkId.has_value() && !remoteAuthParam.collectorNetworkId.has_value() &&
+        !remoteAuthParam.collectorTokenId.has_value()) {
+        IAM_LOGI("remoteAuthOptions has no effective field, treat as absent");
+        authParam.remoteAuthParam = std::nullopt;
+        return UserAuthResultCode::SUCCESS;
+    }
+    IAM_LOGI("Init remoteAuthOptions, verifierHasValue:%{public}s, collectorHasValue:%{public}s, "
+        "tokenIdHasValue:%{public}s",
+        remoteAuthParam.verifierNetworkId.has_value() ? "true" : "false",
+        remoteAuthParam.collectorNetworkId.has_value() ? "true" : "false",
+        remoteAuthParam.collectorTokenId.has_value() ? "true" : "false");
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ProcessAdditionalInfo(napi_env env, napi_value value,
+    AuthParamInner &authParam)
+{
+    if (!UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_ADDITIONAL_INFO)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_value additionalInfoValue = UserAuthNapiHelper::GetNamedProperty(env, value, AUTH_PARAM_ADDITIONAL_INFO);
+    if (IsNullOrUndefined(env, additionalInfoValue)) {
+        IAM_LOGI("additionalInfo is null");
+        return UserAuthResultCode::SUCCESS;
+    }
+    if (UserAuthNapiHelper::CheckNapiType(env, additionalInfoValue, napi_string) != napi_ok) {
+        IAM_LOGE("additionalInfo is not a string");
+        std::string msgStr = "Parameter error. The value of \"additionalInfo\" is invalid.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    std::string additionalInfo = UserAuthNapiHelper::GetStringFromValueUtf8(env, additionalInfoValue);
+    if (UserAuthHelper::GetUtf8CharCount(additionalInfo) > static_cast<size_t>(ADDITIONAL_INFO_MAX)) {
+        IAM_LOGE("additionalInfo len:%{public}zu", additionalInfo.size());
+        std::string msgStr = "Parameter error. The length of \"additionalInfo\" cannot exceed 10000.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    authParam.additionalInfo = additionalInfo;
+    IAM_LOGI("Init additionalInfo, len:%{public}zu", additionalInfo.size());
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ReadMandatoryInt64Field(napi_env env, napi_value value,
+    const std::string &propertyName, int64_t &out)
+{
+    if (!UserAuthNapiHelper::HasNamedProperty(env, value, propertyName)) {
+        IAM_LOGE("mandatory field %{public}s not exists", propertyName.c_str());
+        std::string msgStr = "Parameter error. \"" + propertyName + "\" is a mandatory parameter.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    napi_value fieldValue = UserAuthNapiHelper::GetNamedProperty(env, value, propertyName);
+    napi_status ret = napi_get_value_int64(env, fieldValue, &out);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_get_value_int64 fail:%{public}d, field:%{public}s", ret, propertyName.c_str());
+        std::string msgStr = "Parameter error. The value of \"" + propertyName + "\" must be number.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ReadOptionalInt64Field(napi_env env, napi_value value,
+    const std::string &propertyName, bool &hasValue, int64_t &out)
+{
+    hasValue = false;
+    if (!UserAuthNapiHelper::HasNamedProperty(env, value, propertyName)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_value fieldValue = UserAuthNapiHelper::GetNamedProperty(env, value, propertyName);
+    if (IsNullOrUndefined(env, fieldValue)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_status ret = napi_get_value_int64(env, fieldValue, &out);
+    if (ret != napi_ok) {
+        IAM_LOGE("napi_get_value_int64 fail:%{public}d, field:%{public}s", ret, propertyName.c_str());
+        std::string msgStr = "Parameter error. The value of \"" + propertyName + "\" must be number.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    hasValue = true;
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ReadScheduleFields(napi_env env, napi_value scheduleValue,
+    ScheduleFields &fields)
+{
+    if (!UserAuthNapiHelper::HasNamedProperty(env, scheduleValue, SCHEDULE_PARAM_WINDOW_CONFIG)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_value windowConfigValue = UserAuthNapiHelper::GetNamedProperty(env, scheduleValue,
+        SCHEDULE_PARAM_WINDOW_CONFIG);
+    if (IsNullOrUndefined(env, windowConfigValue)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_status ret = UserAuthNapiHelper::CheckNapiType(env, windowConfigValue, napi_object);
+    if (ret != napi_ok) {
+        IAM_LOGE("CheckNapiType fail:%{public}d", ret);
+        std::string msgStr = "Parameter error. The type of \"windowConfig\" must be RedemptionWindow.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    UserAuthResultCode errorCode = ReadMandatoryInt64Field(env, windowConfigValue,
+        SCHEDULE_PARAM_REPEAT_INTERVAL, fields.repeatInterval);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    fields.hasWindowConfig = true;
+    return ReadMandatoryInt64Field(env, windowConfigValue, SCHEDULE_PARAM_WINDOW_DURATION,
+        fields.windowDuration);
+}
+
+UserAuthResultCode UserAuthParamUtils::FillScheduleFields(napi_env env, const ScheduleFields &fields,
+    TokenSchedule &schedule)
+{
+    if (!fields.hasWindowConfig) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    if (fields.repeatInterval < MIN_REPEAT_INTERVAL_MS) {
+        IAM_LOGE("repeatInterval must not be less than 1 hour");
+        std::string msgStr = "Parameter error. \"repeatInterval\" must not be less than 3600000.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    if (fields.windowDuration <= 0) {
+        IAM_LOGE("windowDuration must be greater than 0");
+        std::string msgStr = "Parameter error. \"windowDuration\" must be greater than 0.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    if (fields.windowDuration > fields.repeatInterval) {
+        IAM_LOGE("windowDuration must not be greater than repeatInterval");
+        std::string msgStr =
+            "Parameter error. \"windowDuration\" must not be greater than \"repeatInterval\".";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    RedemptionWindow window = {};
+    window.repeatInterval = fields.repeatInterval;
+    window.windowDuration = fields.windowDuration;
+    schedule.windowConfig = window;
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ValidateScheduleTimeRange(napi_env env, const TokenSchedule &schedule)
+{
+    if (!(schedule.hasValidStartTime && schedule.hasValidEndTime)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    if (schedule.validEndTime <= schedule.validStartTime) {
+        IAM_LOGE("validEndTime must be greater than validStartTime");
+        std::string msgStr = "Parameter error. \"validEndTime\" must be greater than \"validStartTime\".";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    if (schedule.validEndTime - schedule.validStartTime > MAX_TOKEN_SCHEDULE_SPAN_MS) {
+        IAM_LOGE("schedule span must not exceed 30 days");
+        std::string msgStr =
+            "Parameter error. The difference between \"validEndTime\" and \"validStartTime\" must not"
+            " exceed 30 days.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    return UserAuthResultCode::SUCCESS;
+}
+
+UserAuthResultCode UserAuthParamUtils::ProcessScheduledAuthTokenOptions(napi_env env, napi_value value,
+    AuthParamInner &authParam)
+{
+    if (!UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_SCHEDULED_AUTH_TOKEN_OPTIONS)) {
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_value scheduleValue = UserAuthNapiHelper::GetNamedProperty(env, value,
+        AUTH_PARAM_SCHEDULED_AUTH_TOKEN_OPTIONS);
+    if (IsNullOrUndefined(env, scheduleValue)) {
+        IAM_LOGI("scheduledAuthTokenOptions is null");
+        return UserAuthResultCode::SUCCESS;
+    }
+    napi_status ret = UserAuthNapiHelper::CheckNapiType(env, scheduleValue, napi_object);
+    if (ret != napi_ok) {
+        IAM_LOGE("CheckNapiType fail:%{public}d", ret);
+        std::string msgStr =
+            "Parameter error. The type of \"scheduledAuthTokenOptions\" must be TokenRedemptionSchedule.";
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+    }
+    TokenSchedule schedule = {};
+    ScheduleFields fields;
+    UserAuthResultCode errorCode = ReadScheduleFields(env, scheduleValue, fields);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    errorCode = ReadOptionalInt64Field(env, scheduleValue, SCHEDULE_PARAM_VALID_START_TIME,
+        schedule.hasValidStartTime, schedule.validStartTime);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    errorCode = ReadOptionalInt64Field(env, scheduleValue, SCHEDULE_PARAM_VALID_END_TIME,
+        schedule.hasValidEndTime, schedule.validEndTime);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    errorCode = ValidateScheduleTimeRange(env, schedule);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    errorCode = FillScheduleFields(env, fields, schedule);
+    if (errorCode != UserAuthResultCode::SUCCESS) {
+        return errorCode;
+    }
+    authParam.tokenSchedule = schedule;
+    IAM_LOGI("Init scheduledAuthTokenOptions, hasValidStart:%{public}d, validStart:%{public}" PRId64
+        ", hasValidEnd:%{public}d, validEnd:%{public}" PRId64 ", hasWindowConfig:%{public}d",
+        static_cast<int32_t>(schedule.hasValidStartTime), schedule.validStartTime,
+        static_cast<int32_t>(schedule.hasValidEndTime), schedule.validEndTime, fields.hasWindowConfig);
     return UserAuthResultCode::SUCCESS;
 }
 } // namespace UserAuth

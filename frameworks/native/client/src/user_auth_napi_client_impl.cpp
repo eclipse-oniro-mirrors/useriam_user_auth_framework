@@ -200,7 +200,95 @@ void UserAuthNapiClientImpl::InitIpcAuthParam(const AuthParamInner &authParam,
         ipcAuthParamInner.isHasRemoteTokenId = true;
         ipcAuthParamInner.remoteTokenId = authParam.remoteTokenId.value();
     }
-    ipcAuthParamInner.additionalInfo = authParam.additionalInfo;
+    ipcAuthParamInner.hasAdditionalInfo = authParam.additionalInfo.has_value();
+    ipcAuthParamInner.additionalInfo = authParam.additionalInfo.value_or("");
+    ipcAuthParamInner.hasTokenSchedule = authParam.tokenSchedule.has_value();
+    if (authParam.tokenSchedule.has_value()) {
+        ipcAuthParamInner.hasTokenScheduleValidStartTime = authParam.tokenSchedule->hasValidStartTime;
+        ipcAuthParamInner.tokenScheduleValidStartTime = authParam.tokenSchedule->validStartTime;
+        ipcAuthParamInner.hasTokenScheduleValidEndTime = authParam.tokenSchedule->hasValidEndTime;
+        ipcAuthParamInner.tokenScheduleValidEndTime = authParam.tokenSchedule->validEndTime;
+        ipcAuthParamInner.hasTokenScheduleWindowConfig = authParam.tokenSchedule->windowConfig.has_value();
+        if (authParam.tokenSchedule->windowConfig.has_value()) {
+            ipcAuthParamInner.tokenScheduleRepeatInterval = authParam.tokenSchedule->windowConfig->repeatInterval;
+            ipcAuthParamInner.tokenScheduleWindowDuration = authParam.tokenSchedule->windowConfig->windowDuration;
+        }
+    }
+}
+
+void UserAuthNapiClientImpl::InitIpcRemoteAuthParam(const std::optional<RemoteAuthParam> &remoteAuthParam,
+    IpcRemoteAuthParam &ipcRemoteAuthParam)
+{
+    if (!remoteAuthParam.has_value()) {
+        ipcRemoteAuthParam.isHasRemoteAuthParam = false;
+        return;
+    }
+    ipcRemoteAuthParam.isHasRemoteAuthParam = true;
+    ipcRemoteAuthParam.isHasVerifierNetworkId = remoteAuthParam->verifierNetworkId.has_value();
+    if (remoteAuthParam->verifierNetworkId.has_value()) {
+        ipcRemoteAuthParam.verifierNetworkId = remoteAuthParam->verifierNetworkId.value();
+    }
+    ipcRemoteAuthParam.isHasCollectorNetworkId = remoteAuthParam->collectorNetworkId.has_value();
+    if (remoteAuthParam->collectorNetworkId.has_value()) {
+        ipcRemoteAuthParam.collectorNetworkId = remoteAuthParam->collectorNetworkId.value();
+    }
+    ipcRemoteAuthParam.isHasCollectorTokenId = remoteAuthParam->collectorTokenId.has_value();
+    if (remoteAuthParam->collectorTokenId.has_value()) {
+        ipcRemoteAuthParam.collectorTokenId = remoteAuthParam->collectorTokenId.value();
+    }
+}
+
+uint64_t UserAuthNapiClientImpl::BeginAuthentication(int32_t apiVersion, const AuthParamInner &authParam,
+    const std::shared_ptr<AuthenticationCallback> &callback)
+{
+    IAM_LOGI("start, apiVersion: %{public}d authTypeSize: %{public}zu authTrustLevel: %{public}u userId:%{public}d",
+        apiVersion, authParam.authTypes.size(), authParam.authTrustLevel, authParam.userId);
+    if (!callback) {
+        IAM_LOGE("auth callback is nullptr");
+        return BAD_CONTEXT_ID;
+    }
+    if (authParam.authTypes.empty()) {
+        IAM_LOGE("authTypes is empty");
+        Attributes extraInfo;
+        callback->OnResult(static_cast<int32_t>(ResultCode::INVALID_PARAMETERS), extraInfo);
+        return BAD_CONTEXT_ID;
+    }
+    AuthParamInner foldedParam = authParam;
+    if (authParam.authTypes.size() == 1) {
+        foldedParam.authType = foldedParam.authTypes[0];
+        foldedParam.authTypes.clear();
+    }
+    auto proxy = GetProxy();
+    if (!proxy) {
+        IAM_LOGE("proxy is nullptr");
+        Attributes extraInfo;
+        int32_t result = LoadModeUtil::GetProxyNullResultCode(__func__, std::vector<std::string>({
+            ACCESS_USER_AUTH_INTERNAL_PERMISSION
+        }));
+        callback->OnResult(result, extraInfo);
+        return BAD_CONTEXT_ID;
+    }
+
+    sptr<IIamCallback> wrapper(new (std::nothrow) UserAuthCallbackService(callback));
+    if (wrapper == nullptr) {
+        IAM_LOGE("failed to create wrapper");
+        Attributes extraInfo;
+        callback->OnResult(static_cast<int32_t>(ResultCode::GENERAL_ERROR), extraInfo);
+        return BAD_CONTEXT_ID;
+    }
+    uint64_t contextId = BAD_CONTEXT_ID;
+    IpcAuthParamInner ipcAuthParam = {};
+    IpcRemoteAuthParam ipcRemoteAuthParam = {};
+    InitIpcAuthParam(foldedParam, ipcAuthParam);
+    InitIpcRemoteAuthParam(foldedParam.remoteAuthParam, ipcRemoteAuthParam);
+    auto ret = proxy->AuthUser(ipcAuthParam, ipcRemoteAuthParam, wrapper, contextId);
+    if (ret != SUCCESS) {
+        IAM_LOGE("AuthUser fail, ret:%{public}d", ret);
+        Attributes extraInfo;
+        callback->OnResult(ret, extraInfo);
+        return BAD_CONTEXT_ID;
+    }
+    return contextId;
 }
 
 void UserAuthNapiClientImpl::InitIpcWidgetParam(const WidgetParamInner &widgetParam,

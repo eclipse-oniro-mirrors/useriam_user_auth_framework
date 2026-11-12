@@ -30,6 +30,20 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
+namespace {
+const std::vector<Attributes::AttributeKey> SYSTEM_API_ONLY_KEYS = {
+    Attributes::ATTR_CREDENTIAL_ID,
+    Attributes::ATTR_USER_ID,
+    Attributes::ATTR_PIN_EXPIRED_INFO,
+};
+
+const std::vector<Attributes::AttributeKey> V10_SYSTEM_API_ONLY_KEYS = {
+    Attributes::ATTR_REMAIN_TIMES,
+    Attributes::ATTR_FREEZING_TIME,
+    Attributes::ATTR_NEXT_FAIL_LOCKOUT_DURATION,
+};
+} // namespace
+
 ContextCallbackImpl::ContextCallbackImpl(sptr<IIamCallback> iamCallback, OperationType operationType)
     : iamCallback_(iamCallback)
 {
@@ -138,7 +152,8 @@ void ContextCallbackImpl::OnResult(int32_t resultCode, const Attributes &finalRe
     metaData_.endTime = std::chrono::steady_clock::now();
 
     if (iamCallback_ != nullptr) {
-        iamCallback_->OnResult(resultCode, finalResult.Serialize());
+        std::vector<uint8_t> extraInfo = FilterSystemApiOnlyKeys(finalResult, finalResult.Serialize());
+        iamCallback_->OnResult(resultCode, extraInfo);
         Mark(StageId::S_ON_RESULT);
     }
 
@@ -154,6 +169,37 @@ void ContextCallbackImpl::OnResult(int32_t resultCode, const Attributes &finalRe
     if (stopCallback_ != nullptr) {
         stopCallback_();
     }
+}
+
+std::vector<uint8_t> ContextCallbackImpl::FilterSystemApiOnlyKeys(const Attributes &finalResult,
+    std::vector<uint8_t> extraInfo)
+{
+    if (isSystemApiCaller_) {
+        return extraInfo;
+    }
+    std::vector<Attributes::AttributeKey> keysToErase;
+    for (auto key : SYSTEM_API_ONLY_KEYS) {
+        if (finalResult.HasAttribute(key)) {
+            keysToErase.push_back(key);
+        }
+    }
+    bool isV10ResultPath = metaData_.sdkVersion.has_value() &&
+        metaData_.sdkVersion.value() >= INNER_API_VERSION_10000;
+    if (isV10ResultPath) {
+        for (auto key : V10_SYSTEM_API_ONLY_KEYS) {
+            if (finalResult.HasAttribute(key)) {
+                keysToErase.push_back(key);
+            }
+        }
+    }
+    if (keysToErase.empty()) {
+        return extraInfo;
+    }
+    Attributes filtered(extraInfo);
+    for (auto key : keysToErase) {
+        filtered.EraseValue(key);
+    }
+    return filtered.Serialize();
 }
 
 void ContextCallbackImpl::HandleAuthSuccessResult(int32_t resultCode, const Attributes &finalResult)
@@ -192,6 +238,11 @@ void ContextCallbackImpl::SetTraceRemainTime(int32_t remainTime)
 void ContextCallbackImpl::SetTraceCallerName(const std::string &callerName)
 {
     metaData_.callerName = callerName;
+}
+
+void ContextCallbackImpl::SetSystemApiCaller(bool isSystemApiCaller)
+{
+    isSystemApiCaller_ = isSystemApiCaller;
 }
 
 void ContextCallbackImpl::SetTraceRequestContextId(uint64_t requestContextId)

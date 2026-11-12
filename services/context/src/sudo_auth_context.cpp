@@ -23,6 +23,7 @@
 #include "iam_logger.h"
 #include "iam_ptr.h"
 #include "iiam_callback.h"
+#include "nlohmann/json.hpp"
 #include "simple_auth_context.h"
 #include "widget_client.h"
 #include "widget_context.h"
@@ -138,6 +139,9 @@ std::shared_ptr<ContextCallback> SudoAuthContext::BuildChildCallback()
     IF_FALSE_LOGE_AND_RETURN_VAL(iamCallback != nullptr, nullptr);
     auto childCallback = ContextCallback::NewInstance(iamCallback, TRACE_AUTH_USER_SECURITY);
     IF_FALSE_LOGE_AND_RETURN_VAL(childCallback != nullptr, nullptr);
+    // Must stay true: this is an in-process bridge and the sudo entry admits only system callers;
+    // a false would silently strip remainTimes/freezingTime from the child's result.
+    childCallback->SetSystemApiCaller(true);
     childCallback->SetTraceCallerName(para_.callerName);
     childCallback->SetTraceCallerType(para_.callerType);
     childCallback->SetTraceRequestContextId(GetContextId());
@@ -219,11 +223,30 @@ bool SudoAuthContext::StartSilentChild(const ContextFactory::AuthProfile &profil
     para.callerType = para_.callerType;
     para.sdkVersion = para_.sdkVersion;
     para.authIntent = AuthIntent::DEFAULT;
+    para.tokenSchedule = para_.tokenSchedule;
     para.isOsAccountVerified = para_.isOsAccountVerified;
     auto child = ContextFactory::CreateSimpleAuthContext(para, false, false, childCallback);
     IF_FALSE_LOGE_AND_RETURN_VAL(child != nullptr, false);
     childCallback->SetCleaner(ContextPool::Cleaner(child));
     return LaunchChild(child);
+}
+
+std::string SudoAuthContext::ResolveWidgetTitle(const std::string &additionalInfo)
+{
+    static const std::string titleKey = "title";
+    nlohmann::json json = nlohmann::json::parse(additionalInfo, nullptr, false);
+    if (json.is_discarded() || !json.is_object()) {
+        IAM_LOGE("additionalInfo is not a json object, use empty title, len: %{public}zu", additionalInfo.size());
+        return "";
+    }
+    auto it = json.find(titleKey);
+    if (it == json.end() || !it->is_string() || it->get<std::string>().empty()) {
+        IAM_LOGE("json additionalInfo has no valid title field, use empty title");
+        return "";
+    }
+    std::string title = it->get<std::string>();
+    IAM_LOGI("extract title from json additionalInfo, titleLen: %{public}zu", title.size());
+    return title;
 }
 
 bool SudoAuthContext::StartWidgetChild(const ContextFactory::AuthProfile &profile)
@@ -241,7 +264,8 @@ bool SudoAuthContext::StartWidgetChild(const ContextFactory::AuthProfile &profil
     para.challenge = para_.challenge;
     para.authTypeList = {AuthType::PIN};
     para.atl = para_.atl;
-    para.widgetParam.title = para_.additionalInfo;
+    para.tokenSchedule = para_.tokenSchedule;
+    para.widgetParam.title = ResolveWidgetTitle(para_.additionalInfo);
     para.widgetParam.windowMode = WindowModeType::DIALOG_BOX;
     para.authProfileMap[AuthType::PIN] = profile;
     auto child = ContextFactory::CreateWidgetContext(para, false, childCallback, nullptr, nullptr);

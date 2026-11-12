@@ -416,7 +416,8 @@ uint64_t UserAuthClientImpl::BeginAuthenticationInner(const AuthParam &authParam
         .authTrustLevel = static_cast<int32_t>(authParam.authTrustLevel),
         .authIntent = static_cast<int32_t>(authParam.authIntent),
         .credentialIdList = std::vector<uint64_t>{},
-        .additionalInfo = authParam.additionalInfo,
+        .additionalInfo = authParam.additionalInfo.value_or(""),
+        .hasAdditionalInfo = authParam.additionalInfo.has_value(),
     };
     IpcRemoteAuthParam ipcRemoteAuthParam = {};
     InitIpcRemoteAuthParam(authParam.remoteAuthParam, ipcRemoteAuthParam);
@@ -1222,7 +1223,8 @@ void UserAuthClientImpl::InitIpcAuthParam(const AuthParamInner &authParam,
         ipcAuthParamInner.isHasRemoteTokenId = true;
         ipcAuthParamInner.remoteTokenId = authParam.remoteTokenId.value();
     }
-    ipcAuthParamInner.additionalInfo = authParam.additionalInfo;
+    ipcAuthParamInner.hasAdditionalInfo = authParam.additionalInfo.has_value();
+    ipcAuthParamInner.additionalInfo = authParam.additionalInfo.value_or("");
 }
 
 void UserAuthClientImpl::InitIpcWidgetParam(const WidgetParamInner &widgetParam,

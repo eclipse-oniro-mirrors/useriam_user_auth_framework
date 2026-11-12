@@ -187,6 +187,8 @@ std::shared_ptr<ContextCallback> RemoteAuthServiceImpl::GetRemoteAuthContextCall
 
     auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
     IF_FALSE_LOGE_AND_RETURN_VAL(contextCallback != nullptr, nullptr);
+    // Verifier-side bridge to the peer device's SA; the peer re-gates at its own client boundary.
+    contextCallback->SetSystemApiCaller(true);
     contextCallback->SetTraceUserId(para.userId);
     contextCallback->SetTraceAuthWidgetType(para.authType);
     contextCallback->SetTraceAuthType(para.authType);

@@ -101,6 +101,9 @@ enum class UserAuthResultCode : int32_t {
     AUTH_TOKEN_EXPIRED = 12500016,
     REUSE_AUTH_RESULT_FAILED = 12500017,
     RESULT_CODE_V16_MAX = 12500017,
+    AUTH_TOKEN_NOT_IN_WINDOW = 12500018,
+    AUTH_TOKEN_CREDENTIAL_INVALID = 12500019,
+    RESULT_CODE_V26_MAX = 12500019,
 };
 
 enum FaceTipsCode {
@@ -160,7 +163,11 @@ const std::map<UserAuthResultCode, std::string> g_resultV92Str = {
     {UserAuthResultCode::PIN_EXPIRED, "Operation failed because of PIN expired."},
     {UserAuthResultCode::AUTH_TOKEN_CHECK_FAILED, "Operation failed because of authToken integrity check failed."},
     {UserAuthResultCode::AUTH_TOKEN_EXPIRED, "Operation failed because of authToken has expired."},
-    {UserAuthResultCode::REUSE_AUTH_RESULT_FAILED, "Failed to reuse authentication result."}
+    {UserAuthResultCode::REUSE_AUTH_RESULT_FAILED, "Failed to reuse authentication result."},
+    {UserAuthResultCode::AUTH_TOKEN_NOT_IN_WINDOW,
+     "Operation failed because current time is not in the schedule window."},
+    {UserAuthResultCode::AUTH_TOKEN_CREDENTIAL_INVALID,
+     "Operation failed because the credential bound to the token is invalid."}
 };
 
 const std::map<UserAuthResultCode, std::string> g_resultV212Str = {

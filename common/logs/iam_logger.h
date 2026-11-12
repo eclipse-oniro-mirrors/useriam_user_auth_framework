@@ -225,6 +225,9 @@ enum LogTraceFileId : uint16_t {
     LOG_FILE_REMOTE_CONNECT_MANAGER_DYNAMIC = 0x03BC,
     LOG_FILE_HDI_ENGINE = 0x03BD,
     LOG_FILE_TA_ENGINE = 0x03BE,
+
+    // frameworks/js/napi/user_auth (0x03Cx)
+    LOG_FILE_SYSTEM_USER_AUTH_INSTANCE_V10_NAPI = 0x03C0,
 };
 
 namespace OHOS {

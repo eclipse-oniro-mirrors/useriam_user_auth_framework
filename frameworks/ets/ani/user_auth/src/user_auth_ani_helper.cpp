@@ -20,6 +20,9 @@
 #include <cinttypes>
 #include "nlohmann/json.hpp"
 
+#include "accesstoken_kit.h"
+#include "ipc_skeleton.h"
+#include "tokenid_kit.h"
 #include "taihe/runtime.hpp"
 #include "iam_logger.h"
 #include "auth_common.h"
@@ -55,6 +58,12 @@ bool UserAuthAniHelper::ConvertUserAuthType(int32_t userAuthType, userAuth::User
         case AuthType::COMPANION_DEVICE:
             userAuthTypeOut = userAuth::UserAuthType::key_t::COMPANION_DEVICE;
             return true;
+        case AuthType::RECOVERY_KEY:
+            userAuthTypeOut = userAuth::UserAuthType::key_t::RECOVERY_KEY;
+            return true;
+        case AuthType::CUSTOM_AUTH:
+            userAuthTypeOut = userAuth::UserAuthType::key_t::CUSTOM;
+            return true;
         default:
             IAM_LOGE("invalid userAuthType:%{public}d", userAuthType);
             return false;
@@ -89,6 +98,20 @@ bool UserAuthAniHelper::ConvertUserAuthTipCode(int32_t userAuthTipCode, userAuth
             IAM_LOGE("invalid userAuthTipCode:%{public}d", userAuthTipCode);
             return false;
     }
+}
+
+bool UserAuthAniHelper::IsSystemApiCaller()
+{
+    uint64_t fullTokenId = IPCSkeleton::GetSelfTokenID();
+    Security::AccessToken::AccessTokenID tokenId =
+        static_cast<Security::AccessToken::AccessTokenID>(fullTokenId);
+    if (Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
+        Security::AccessToken::TOKEN_NATIVE) {
+        return true;
+    }
+    return Security::AccessToken::TokenIdKit::IsSystemAppByFullTokenID(fullTokenId) &&
+        Security::AccessToken::AccessTokenKit::GetTokenTypeFlag(tokenId) ==
+        Security::AccessToken::TOKEN_HAP;
 }
 
 UserAuthResultCode UserAuthAniHelper::ThrowBusinessError(UserAuthResultCode error)

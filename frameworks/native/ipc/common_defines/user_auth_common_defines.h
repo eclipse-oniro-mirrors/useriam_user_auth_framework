@@ -77,8 +77,12 @@ struct AuthParamInner {
     std::vector<uint64_t> credentialIdList;
     /** Remote token id */
     std::optional<uint32_t> remoteTokenId;
-    /** Additional info */
-    std::string additionalInfo;
+    /** Remote auth parameter */
+    std::optional<RemoteAuthParam> remoteAuthParam;
+    /** Additional info specified by the caller; nullopt = not specified */
+    std::optional<std::string> additionalInfo;
+    /** Schedule for issuing a scheduled auth token; nullopt = regular token */
+    std::optional<TokenSchedule> tokenSchedule;
 };
 
 /**

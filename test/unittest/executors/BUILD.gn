@@ -12,6 +12,7 @@
 # limitations under the License.
 import("//build/ohos.gni")
 import("//build/test.gni")
+import("../../test_common.gni")
 
 ohos_unittest("iam_executors_test") {
   sanitize = {
@@ -39,34 +40,18 @@ ohos_unittest("iam_executors_test") {
     "../../../common/logs",
   ]
 
-  sources = [
-    "../../../frameworks/native/executors/src/async_command/abandon_command.cpp",
-    "../../../frameworks/native/executors/src/async_command/async_command_base.cpp",
-    "../../../frameworks/native/executors/src/async_command/auth_command.cpp",
-    "../../../frameworks/native/executors/src/async_command/collect_command.cpp",
-    "../../../frameworks/native/executors/src/async_command/custom_command.cpp",
-    "../../../frameworks/native/executors/src/async_command/enroll_command.cpp",
-    "../../../frameworks/native/executors/src/async_command/identify_command.cpp",
-    "../../../frameworks/native/executors/src/driver.cpp",
-    "../../../frameworks/native/executors/src/driver_manager.cpp",
-    "../../../frameworks/native/executors/src/executor.cpp",
-    "../../../frameworks/native/executors/src/framework/executor_mgr_wrapper.cpp",
-    "../../../frameworks/native/executors/src/framework/framework_executor_callback.cpp",
-    "../../../frameworks/native/executors/src/iauth_executor_hdi.cpp",
-    "../../../frameworks/native/executors/src/idriver_manager.cpp",
-    "../../../frameworks/native/executors/src/listener/device_manager_listener.cpp",
-    "../../../frameworks/native/executors/src/listener/framework_ready_listener.cpp",
-    "abandon_command_unit_test.cpp",
-    "auth_command_unit_test.cpp",
-    "collect_command_unit_test.cpp",
-    "custom_command_unit_test.cpp",
-    "driver_manager_unit_test.cpp",
-    "driver_unit_test.cpp",
-    "enroll_command_unit_test.cpp",
-    "executor_unit_test.cpp",
-    "iauth_executor_hdi_test.cpp",
-    "identify_command_unit_test.cpp",
-  ]
+  sources = userauth_test_executors_sources + [
+              "abandon_command_unit_test.cpp",
+              "auth_command_unit_test.cpp",
+              "collect_command_unit_test.cpp",
+              "custom_command_unit_test.cpp",
+              "driver_manager_unit_test.cpp",
+              "driver_unit_test.cpp",
+              "enroll_command_unit_test.cpp",
+              "executor_unit_test.cpp",
+              "iauth_executor_hdi_test.cpp",
+              "identify_command_unit_test.cpp",
+            ]
 
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
