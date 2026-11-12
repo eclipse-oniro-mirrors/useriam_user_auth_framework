@@ -53,7 +53,7 @@ napi_value AuthTokenTypeConstructor(napi_env env)
     NAPI_CALL(env, napi_create_int32(env, AuthTokenType::TOKEN_TYPE_SCHEDULED_AUTH, &tokenTypeScheduledAuth));
     NAPI_CALL(env, napi_set_named_property(env, authTokenType, "TOKEN_TYPE_LOCAL_AUTH", tokenTypeLocalAuth));
     NAPI_CALL(env, napi_set_named_property(env, authTokenType, "TOKEN_TYPE_LOCAL_RESIGN", tokenTypeLocalResign));
-    NAPI_CALL(env, napi_set_named_property(env, authTokenType, "TOKEN_TYPE_LOCAL_COAUTH", tokenTypeLocalCoauth));
+    NAPI_CALL(env, napi_set_named_property(env, authTokenType, "TOKEN_TYPE_COAUTH", tokenTypeLocalCoauth));
     NAPI_CALL(env, napi_set_named_property(env, authTokenType,
         "TOKEN_TYPE_SCHEDULED_AUTH", tokenTypeScheduledAuth));
     return authTokenType;
