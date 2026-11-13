@@ -461,19 +461,21 @@ int32_t UserAuthService::SetLaunchServiceState(int32_t uid, const std::vector<ui
     para.tokenId = IpcCommon::GetAccessTokenId(*this);
     ThreadHandlerManager::GetInstance().PostTaskOnTemporaryThread("SetLaunchServiceState",
         [this, uid, token, activeState, launchServiceCallback, para]() {
+            ContextFactory::AuthWidgetContextPara authPara = std::move(para);
+            std::vector<uint8_t> authToken = std::move(token);
             EngLaunchServiceType serviceType = EngLaunchServiceType::INVALID;
             int32_t ret = GetUserAuthEngine().GetAppLaunchServiceType(uid, serviceType);
             if (ret != SUCCESS) {
                 launchServiceCallback->OnLaunchServiceResult(ret);
                 return;
             }
-            ret = GetAuthToken(serviceType, uid, para, authToken);
+            ret = GetAuthToken(serviceType, uid, authPara, authToken);
             if (ret != SUCCESS) {
                 launchServiceCallback->OnLaunchServiceResult(ret);
                 return;
             }
             EngLaunchServiceState engineState = ConvertToEngLaunchServiceState(activeState, serviceType);
-            ret = GetUserAuthEngine().SetLaunchServiceState(uid, token, engineState);
+            ret = GetUserAuthEngine().SetLaunchServiceState(uid, authToken, engineState);
             launchServiceCallback->OnLaunchServiceResult(ret);
         });
     return SUCCESS;
