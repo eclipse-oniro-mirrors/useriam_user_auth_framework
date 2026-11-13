@@ -596,6 +596,43 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyCompa
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
+HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeAllPermutations_001, TestSize.Level0)
+{
+    UserAuthService service;
+    AuthParamInner authParam = {};
+    authParam.authTypes = {AuthType::FINGERPRINT, AuthType::PIN, AuthType::FACE};
+    WidgetParamInner widgetParam = {};
+    widgetParam.title = "test_title";
+    widgetParam.navigationButtonText = "";
+    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    EXPECT_EQ(ret, SUCCESS);
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_NavBtnNotEmpty_001, TestSize.Level0)
+{
+    UserAuthService service;
+    AuthParamInner authParam = {};
+    authParam.authTypes = {AuthType::FACE, AuthType::FINGERPRINT, AuthType::COMPANION_DEVICE};
+    WidgetParamInner widgetParam = {};
+    widgetParam.title = "test_title";
+    widgetParam.navigationButtonText = "nav_btn";
+    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    EXPECT_EQ(ret, SUCCESS);
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeFour_001, TestSize.Level0)
+{
+    UserAuthService service;
+    std::vector<AuthType> authTypeList;
+    authTypeList.push_back(AuthType::PRIVATE_PIN);
+    std::vector<AuthType> validAuthTypeList;
+    validAuthTypeList.push_back(AuthType::FINGERPRINT);
+    validAuthTypeList.push_back(AuthType::FACE);
+    validAuthTypeList.push_back(AuthType::COMPANION_DEVICE);
+    validAuthTypeList.push_back(AuthType::PIN);
+    EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
+}
+
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptySinglePin_001, TestSize.Level0)
 {
     UserAuthService service;
