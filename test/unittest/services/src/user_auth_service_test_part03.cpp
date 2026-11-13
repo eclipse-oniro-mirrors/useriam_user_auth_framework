@@ -54,7 +54,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_001, Te
         .isUserIdSpecified = true,
     };
     const WidgetParamInner widgetParam = {
-        .title = "浣跨敤瀵嗙爜楠岃瘉",
+        .title = "使用密码验证",
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::NONE_INTERRUPTION_DIALOG_BOX,
     };
@@ -79,7 +79,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_002, Te
         .isUserIdSpecified = true,
     };
     const WidgetParamInner widgetParam = {
-        .title = "浣跨敤瀵嗙爜楠岃瘉",
+        .title = "使用密码验证",
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
@@ -109,7 +109,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_003, Te
         .isUserIdSpecified = true,
     };
     WidgetParamInner widgetParam = {
-        .title = "浣跨敤瀵嗙爜楠岃瘉",
+        .title = "使用密码验证",
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
@@ -919,7 +919,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_Utf8Tit
         .isUserIdSpecified = true,
     };
     WidgetParamInner widgetParam = {
-        .title = "浣跨敤瀵嗙爜楠岃瘉",
+        .title = "使用密码验证",
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
@@ -980,8 +980,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_Utf8Nav
         .isUserIdSpecified = true,
     };
     WidgetParamInner widgetParam = {
-        .title = "浣跨敤瀵嗙爜楠岃瘉",
-        .navigationButtonText = "纭畾",
+        .title = "使用密码验证",
+        .navigationButtonText = "确定",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
@@ -1011,7 +1011,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_Utf8Nav
     };
     std::string longNaviBtn(61, 'a');
     WidgetParamInner widgetParam = {
-        .title = "浣跨敤瀵嗙爜楠岃瘉",
+        .title = "使用密码验证",
         .navigationButtonText = longNaviBtn,
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
