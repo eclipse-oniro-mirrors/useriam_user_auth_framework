@@ -214,7 +214,8 @@ private:
     int32_t UnRegisterLaunchServiceInner(int32_t uid, const std::optional<IpcLaunchServiceKey> &key);
     int32_t GetLaunchServiceInfoInner(int32_t uid, const std::optional<IpcLaunchServiceKey> &key,
         std::vector<IpcLaunchServiceFlatInfo> &serviceList);
-    int32_t GetLaunchServiceListInner(std::optional<int32_t> optUserId, std::vector<IpcLaunchServiceFlatInfo> &serviceList);
+    int32_t GetLaunchServiceListInner(std::optional<int32_t> optUserId,
+        std::vector<IpcLaunchServiceFlatInfo> &serviceList);
     int32_t AuthWidgetForToken(ContextFactory::AuthWidgetContextPara &para, std::vector<uint8_t> &token);
     int32_t AdminAuthForToken(std::vector<uint8_t> &authToken);
     static std::mutex mutex_;

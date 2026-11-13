@@ -199,7 +199,7 @@ void UserLaunchServiceImpl::GetLaunchServiceInfo(int32_t uid, const std::optiona
 void UserLaunchServiceImpl::GetLaunchServiceList(const std::optional<int32_t> &userId,
     const std::shared_ptr<LaunchServiceListCallback> &callback)
 {
-    IAM_LOGI("start %{public}u", userId.has_value());
+    IAM_LOGI("start %{public}d", userId.has_value());
     if (callback == nullptr) {
         IAM_LOGE("get launch service list callback is nullptr");
         return;

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2026 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_001, Te
         .isUserIdSpecified = true,
     };
     const WidgetParamInner widgetParam = {
-        .title = "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈",
+        .title = "浣跨敤瀵嗙爜楠岃瘉",
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::NONE_INTERRUPTION_DIALOG_BOX,
     };
@@ -79,7 +79,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_002, Te
         .isUserIdSpecified = true,
     };
     const WidgetParamInner widgetParam = {
-        .title = "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈",
+        .title = "浣跨敤瀵嗙爜楠岃瘉",
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
@@ -92,6 +92,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_002, Te
     int32_t ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    para.credentialIdList = authParam.credentialIdList;
     ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
     IpcCommon::DeleteAllPermission();
@@ -108,17 +109,17 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_003, Te
         .isUserIdSpecified = true,
     };
     WidgetParamInner widgetParam = {
-        .title = "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈",
+        .title = "浣跨敤瀵嗙爜楠岃瘉",
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
     ContextFactory::AuthWidgetContextPara para = {};
     para.challenge = authParam.challenge;
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
     para.widgetParam = widgetParam;
     para.isBackgroundApplication = true;
-    IpcCommon::AddPermission(IS_SYSTEM_APP);
     int32_t ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
 
@@ -144,17 +145,16 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_004, Te
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
+    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    IpcCommon::AddPermission(USER_AUTH_FROM_BACKGROUND);
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     ContextFactory::AuthWidgetContextPara para = {};
-    para.userId = authParam.userId;
     para.challenge = authParam.challenge;
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
     para.widgetParam = widgetParam;
     para.isBackgroundApplication = true;
-    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
-    IpcCommon::AddPermission(IS_SYSTEM_APP);
-    IpcCommon::AddPermission(USER_AUTH_FROM_BACKGROUND);
-    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     int32_t ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     IpcCommon::DeleteAllPermission();
@@ -178,7 +178,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_002, TestSize.Le
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _)).WillOnce(Return(HDF_ERR_INVALID_PARAM));
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -914,7 +919,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_Utf8Tit
         .isUserIdSpecified = true,
     };
     WidgetParamInner widgetParam = {
-        .title = "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈",
+        .title = "浣跨敤瀵嗙爜楠岃瘉",
         .navigationButtonText = "navigationButtonText",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
@@ -975,8 +980,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_Utf8Nav
         .isUserIdSpecified = true,
     };
     WidgetParamInner widgetParam = {
-        .title = "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈",
-        .navigationButtonText = "绾喖鐣?,
+        .title = "浣跨敤瀵嗙爜楠岃瘉",
+        .navigationButtonText = "纭畾",
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
@@ -1006,7 +1011,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_Utf8Nav
     };
     std::string longNaviBtn(61, 'a');
     WidgetParamInner widgetParam = {
-        .title = "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈",
+        .title = "浣跨敤瀵嗙爜楠岃瘉",
         .navigationButtonText = longNaviBtn,
         .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
     };
@@ -1118,92 +1123,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
-            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, SUCCESS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
-            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
-            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
-            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
-            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
-            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, SUCCESS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1235,7 +1162,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1267,7 +1199,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1297,32 +1234,15 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1426,32 +1346,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
-            validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1484,7 +1386,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1516,7 +1423,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
             validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1549,7 +1461,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1582,7 +1499,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1615,7 +1537,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_CompanionDevice_
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1655,7 +1582,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_Compa
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
@@ -1722,11 +1654,3 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetPropertyHelperTest, TestSize.Lev
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
-
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _)).WillOnce(Return(INVALID_PARAMETERS));
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-}

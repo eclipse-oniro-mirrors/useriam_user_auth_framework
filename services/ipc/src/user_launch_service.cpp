@@ -430,7 +430,8 @@ int32_t UserAuthService::SetLaunchServiceState(int32_t uid, const std::vector<ui
 
     ContextFactory::AuthWidgetContextPara para = {};
     static_cast<void>(IpcCommon::GetCallerName(*this, para.callerName, para.callerType));
-    if (para.callerType == Security::AccessToken::TOKEN_HAP && !IpcCommon::CheckForegroundApplication(para.callerName)) {
+    if (para.callerType == Security::AccessToken::TOKEN_HAP &&
+        !IpcCommon::CheckForegroundApplication(para.callerName)) {
         IAM_LOGE("failed to CheckForegroundApplication");
         launchServiceCallback->OnLaunchServiceResult(CHECK_PERMISSION_FAILED);
         return SUCCESS;
@@ -451,19 +452,18 @@ int32_t UserAuthService::SetLaunchServiceState(int32_t uid, const std::vector<ui
             }
             if (authToken.empty()) {
                 if (serviceType == EngLaunchServiceType::PRIVILEGED_DAEMON) {
-                    int32_t ret = AdminAuthForToken(authToken);
-                    if (ret != SUCCESS) {
-                        launchServiceCallback->OnLaunchServiceResult(ret);
+                    int32_t authRet = AdminAuthForToken(authToken);
+                    if (authRet != SUCCESS) {
+                        launchServiceCallback->OnLaunchServiceResult(authRet);
                         return;
                     }
                 } else {
-                    int32_t ret = AuthWidgetForToken(authPara, authToken);
-                    if (ret != SUCCESS) {
-                        launchServiceCallback->OnLaunchServiceResult(ret);
+                    int32_t authRet = AuthWidgetForToken(authPara, authToken);
+                    if (authRet != SUCCESS) {
+                        launchServiceCallback->OnLaunchServiceResult(authRet);
                         return;
                     }
                 }
-
             }
             EngLaunchServiceState engineState = ConvertToEngLaunchServiceState(activeState, serviceType);
             int32_t funcRet = GetUserAuthEngine().SetLaunchServiceState(uid, authToken, engineState);

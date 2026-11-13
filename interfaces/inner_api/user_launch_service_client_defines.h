@@ -89,6 +89,7 @@ struct BundleExtInfo {
  * @brief Describes the registration info of a launch service.
  */
 struct LaunchServiceRegisterInfo {
+    /** Caller uid. */
     int32_t uid {};
     /** Launch service key. */
     LaunchServiceKey serviceKey {};

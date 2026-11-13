@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (C) 2022-2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_001, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "绾喖鐣?, 0);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "纭畾", 0);
     sptr<IIamCallback> testUserAuthCallback(nullptr);
     sptr<IModalCallback> testModalCallback(nullptr);
     uint64_t contextId = 0;
@@ -86,7 +86,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_002, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -109,7 +109,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_003, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -132,7 +132,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_004, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -160,7 +160,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidgetTokenSchedule001, TestSiz
     authParam.hasTokenScheduleValidEndTime = true;
     authParam.tokenScheduleValidEndTime = 2000;
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -202,7 +202,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidgetSystemOnlyParam001, TestS
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     authParam.credentialIdList = {1};
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -488,7 +488,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_005, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -496,12 +496,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_005, TestSize.Level0)
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
-    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(GENERAL_ERROR));
-
-    int32_t result = service.ProcessPinExpired(ret, validType, para);
-    EXPECT_EQ(result, GENERAL_ERROR);
-    EXPECT_TRUE(para.isPinExpired);
-    ASSERT_EQ(validType.size(), 1);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _)).WillRepeatedly(Return(FAIL));
     sptr<IIamCallback> callbackInterface = testCallback;
     sptr<IModalCallback> testModalCallback(nullptr);
@@ -522,7 +516,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_006, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _)).WillRepeatedly(Return(FAIL));
@@ -550,7 +544,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_007, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(2);
@@ -584,7 +578,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_008, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -608,7 +602,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_009, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -632,7 +626,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_010, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, 50000);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -656,7 +650,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_011, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL1);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -708,7 +702,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_013, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     auto *tempCallback = static_cast<MockUserAuthCallback *>(testCallback.GetRefPtr());
@@ -740,7 +734,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_014, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, 50000);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     auto *tempCallback = static_cast<MockUserAuthCallback *>(testCallback.GetRefPtr());
@@ -765,7 +759,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_015, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     auto *tempCallback = static_cast<MockUserAuthCallback *>(testCallback.GetRefPtr());
@@ -809,7 +803,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_016, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     auto *tempCallback = static_cast<MockUserAuthCallback *>(testCallback.GetRefPtr());
@@ -858,7 +852,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_0017, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     auto *tempCallback = static_cast<MockUserAuthCallback *>(testCallback.GetRefPtr());
@@ -908,7 +902,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_0018, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     auto *tempCallback = static_cast<MockUserAuthCallback *>(testCallback.GetRefPtr());
@@ -959,7 +953,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_0019, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     auto *tempCallback = static_cast<MockUserAuthCallback *>(testCallback.GetRefPtr());
     EXPECT_NE(tempCallback, nullptr);
@@ -1010,7 +1004,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_0020, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1059,7 +1053,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_0021, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1108,7 +1102,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_022, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1160,7 +1154,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_023, TestSize.Level0)
     authParam.reuseUnlockResult.reuseMode = AUTH_TYPE_IRRELEVANT;
     authParam.reuseUnlockResult.reuseDuration = 5 * 60 *1000;
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1195,7 +1189,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_024, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "绾喖鐣?, WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "纭畾", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback);
     EXPECT_NE(testCallback, nullptr);
     EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
@@ -1229,7 +1223,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_025, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "绾喖鐣?, WindowModeType::UNKNOWN_WINDOW_MODE);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "纭畾", WindowModeType::UNKNOWN_WINDOW_MODE);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1262,7 +1256,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_026, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1297,7 +1291,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_027, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1332,7 +1326,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_028, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1368,7 +1362,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_029, TestSize.Level0)
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     authParam.isUserIdSpecified = true;
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1404,7 +1398,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_030, TestSize.Level0)
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     authParam.isUserIdSpecified = true;
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
@@ -1439,7 +1433,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_031, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1465,7 +1459,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_032, TestSize.Level0)
     IpcAuthParamInner authParam;
     InitIpcAuthParamInner(authParam, challenge, authTypes, ATL2);
     IpcWidgetParamInner widgetParam;
-    InitIpcWidgetParamInner(widgetParam, "娴ｈ法鏁ょ€靛棛鐖滄宀冪槈", "", WindowModeType::FULLSCREEN);
+    InitIpcWidgetParamInner(widgetParam, "浣跨敤瀵嗙爜楠岃瘉", "", WindowModeType::FULLSCREEN);
     sptr<IIamCallback> testCallback = new MockUserAuthCallback();
     EXPECT_NE(testCallback, nullptr);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -1746,32 +1740,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NaviBtnWithOnlyC
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-    IpcCommon::DeleteAllPermission();
-            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, SUCCESS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-    IpcCommon::DeleteAllPermission();
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1806,7 +1782,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_OnlyF
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
-            return SUCCESS;
+            return HDF_SUCCESS;
         });
     para.authTypeList = authParam.authTypes;
     para.atl = authParam.authTrustLevel;
@@ -1814,12 +1790,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_OnlyF
     para.credentialIdList = authParam.credentialIdList;
     para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
     int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-    IpcCommon::DeleteAllPermission();
-            return HDF_SUCCESS;
-        });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1854,32 +1824,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_OnlyF
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-    IpcCommon::DeleteAllPermission();
-            validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
-            return SUCCESS;
-        });
-    para.authTypeList = authParam.authTypes;
-    para.atl = authParam.authTrustLevel;
-    para.widgetParam = widgetParam;
-    para.credentialIdList = authParam.credentialIdList;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    int32_t ret = service.CheckValidSolution(para, validTypeList);
-    EXPECT_EQ(ret, INVALID_PARAMETERS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
-    IpcCommon::DeleteAllPermission();
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1916,7 +1868,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_OnlyC
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1954,7 +1911,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_FaceA
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -2042,7 +2004,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessPinExpired_002, TestSize.Lev
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_FAILURE));
 
-    int32_t result = service.ProcessPinExpired(ret, authParam, validType, para);
+    int32_t result = service.ProcessPinExpired(ret, validType, para);
     EXPECT_EQ(result, GENERAL_ERROR);
     EXPECT_TRUE(para.isPinExpired);
     ASSERT_EQ(validType.size(), 1);
