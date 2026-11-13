@@ -257,7 +257,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NotFullscreenSin
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// CheckAuthWidgetType 5 PIN+PRIVATE_PIN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinAndPrivatePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -266,7 +265,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinAndPrivatePi
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// CheckAuthWidgetType 8 PIN+PRIVATE_PIN+COMPANION_DEVICE
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinPrivatePinCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -275,7 +273,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinPrivatePinCo
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// CheckValidSolution 3 navBtn + validType FINGERPRINT FINGERPRINT FACE FINGER COMPANION INVALID
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprintWithNavBtn_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -313,8 +310,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprin
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// CheckValidSolution 8 navBtn + validType FACE COMPANION + FULLSCREEN
-// ACE+COMPANION FACE FINGER COMPANION COMPANION ULLSCREEN INVALID
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FaceCompanionFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -353,8 +348,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FaceCompanionFul
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// CheckValidSolution 10 navBtn + validType FACE FINGER COMPANION + FULLSCREEN
-// FACE FINGER COMPANION COMPANION ULLSCREEN INVALID
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_ThreeTypesFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -394,7 +387,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_ThreeTypesFullsc
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// CheckPrivatePinEnroll 2 validType FACE COMPANION size 2
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFaceCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -406,7 +398,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFaceCo
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// CheckPrivatePinEnroll 3 validType FINGERPRINT COMPANION size 2
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFingerCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -418,7 +409,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFinger
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// CheckPrivatePinEnroll 4 validType COMPANION PIN size 2
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoCompanionPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -430,7 +420,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoCompan
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// CheckAuthWidgetParam 3 authTypes FINGERPRINT PIN navBtn
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoFingerPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -446,7 +435,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoFingerP
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// CheckAuthWidgetParam 4 authTypes FACE COMPANION navBtn
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoFaceCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -462,7 +450,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoFaceCom
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// CheckAuthWidgetParam 7 authTypes FACE PIN COMPANION navBtn
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeFacePinCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -478,7 +465,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeFaceP
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// CheckAuthWidgetParam 8 authTypes FINGERPRINT PIN COMPANION navBtn
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeFingerPinCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -494,15 +480,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeFinge
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// CheckAuthWidgetType 1 IN PRIVATE_PIN COMPANION HWTEST_F UserAuthServiceTest UserAuthServiceCheckAuthWidgetType_BasicFaceOrFinger_001 TestSize Level0
-{
-    UserAuthService service;
-    std::vector<AuthType> authTypeList = {AuthType::FACE};
-    int32_t ret = service.CheckAuthWidgetType(authTypeList);
-    EXPECT_EQ(ret, SUCCESS);
-}
-
-// CheckAuthWidgetType 3 RIVATE_PIN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyPrivatePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -511,7 +488,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyPrivatePin_
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// CheckAuthWidgetType 4 IN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -520,7 +496,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyPin_001, Te
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// CheckPrivatePinEnroll 4 validType COMPANION PIN size 2 ACE FINGER
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoCompanionPin_002, TestSize.Level0)
 {
     UserAuthService service;
@@ -532,7 +507,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoCompan
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// CheckAuthWidgetParam authTypes PIN FACE FINGERPRINT
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeDifferentOrder_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -548,7 +522,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeDiffe
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// CheckValidSolution 15 navBtn empty true + validType FINGERPRINT + FULLSCREEN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFingerprintFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -586,7 +559,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFinge
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// CheckValidSolution 16 navBtn empty true + validType COMPANION + FULLSCREEN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyCompanionFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -624,51 +596,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyCompa
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// CheckAuthWidgetParam authTypes FACE FINGERPRINT PIN HWTEST_F UserAuthServiceTest UserAuthServiceCheckAuthWidgetParam_SizeThreeAllPermutations_001 TestSize Level0
-{
-    UserAuthService service;
-    AuthParamInner authParam = {};
-    // 娴嬭瘯鎵€鏈夊彲鑳界殑鎺掑垪椤哄簭
-    authParam.authTypes = {AuthType::FINGERPRINT, AuthType::PIN, AuthType::FACE};
-    WidgetParamInner widgetParam = {};
-    widgetParam.title = "test_title";
-    widgetParam.navigationButtonText = "";
-    ContextFactory::AuthWidgetContextPara para = {};
-    para.authTypeList = authParam.authTypes;
-    para.widgetParam = widgetParam;
-    int32_t ret = service.CheckAuthWidgetParam(para);
-    EXPECT_EQ(ret, SUCCESS);
-}
-
-// CheckAuthWidgetParam navBtn HWTEST_F UserAuthServiceTest UserAuthServiceCheckAuthWidgetParam_NavBtnNotEmpty_001 TestSize Level0
-{
-    UserAuthService service;
-    AuthParamInner authParam = {};
-    authParam.authTypes = {AuthType::FACE, AuthType::FINGERPRINT, AuthType::COMPANION_DEVICE};
-    WidgetParamInner widgetParam = {};
-    widgetParam.title = "test_title";
-    widgetParam.navigationButtonText = "nav_btn";
-    ContextFactory::AuthWidgetContextPara para = {};
-    para.authTypeList = authParam.authTypes;
-    para.widgetParam = widgetParam;
-    int32_t ret = service.CheckAuthWidgetParam(para);
-    EXPECT_EQ(ret, SUCCESS);
-}
-
-// CheckPrivatePinEnroll validType size 3 HWTEST_F UserAuthServiceTest UserAuthServiceCheckPrivatePinEnroll_SizeFour_001 TestSize Level0
-{
-    UserAuthService service;
-    std::vector<AuthType> authTypeList;
-    authTypeList.push_back(AuthType::PRIVATE_PIN);
-    std::vector<AuthType> validAuthTypeList;
-    validAuthTypeList.push_back(AuthType::FINGERPRINT);
-    validAuthTypeList.push_back(AuthType::FACE);
-    validAuthTypeList.push_back(AuthType::COMPANION_DEVICE);
-    validAuthTypeList.push_back(AuthType::PIN);
-    EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
-}
-
-// CheckValidSolution navBtn empty true + validType PIN IN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptySinglePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -706,7 +633,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptySingl
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// CheckValidSolution navBtn empty true + validType FACE FINGERPRINT + DIALOG
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFaceFingerDialog_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -745,7 +671,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFaceF
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 074 hasCompanionDevice true hasPrivatePin true hasPin false
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPrivatePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -754,7 +679,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPr
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// 074 hasCompanionDevice true hasPin true hasPrivatePin false
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -763,7 +687,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPi
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// 118 validType size 3 hasFace false
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoFace_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -776,7 +699,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoF
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 118 validType size 3 hasFinger false
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -789,7 +711,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoF
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 118 validType size 3 hasCompanionDevice false
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -802,7 +723,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoC
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 179 authTypes size 2 FACE+FINGERPRINT
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_OnlyFaceFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -820,7 +740,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_OnlyFaceFinger
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// 385 navigationButtonText validType CheckAuthTypeOnly
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFacePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -859,7 +778,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFacePi
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 385 navigationButtonText CheckAuthTypeOnly true COMPANION_DEVICE
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnOnlyCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -897,7 +815,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnOnlyCompan
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 391 windowMode FULLSCREEN CheckAuthTypeOnly false ACE+FINGERPRINT+COMPANION_DEVICE
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenWithPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -935,7 +852,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenWithPi
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 391 windowMode FULLSCREEN OMPANION_DEVICE CheckAuthTypeOnly true
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenOnlyCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -973,7 +889,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenOnlyCo
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 074 hasCompanionDevice true hasPin false hasPrivatePin false SUCCESS
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyCompanionDevice_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -982,7 +897,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyCompanionDe
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 179 authTypes size 2 CheckAuthTypeOnly false FACE+PIN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoNotOnlyFaceFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -1000,7 +914,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoNotOnly
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 184 authTypes size 3 CheckAuthTypeOnly false FACE+FINGERPRINT+PIN
 HWTEST_F(UserAuthServiceTest,
     UserAuthServiceCheckAuthWidgetParam_SizeThreeNotOnlyFaceFingerCompanion_001, TestSize.Level0)
 {
@@ -1019,7 +932,6 @@ HWTEST_F(UserAuthServiceTest,
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 385 navigationButtonText validType FACE FINGERPRINT SUCCESS
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFaceFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -1058,7 +970,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFaceFi
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 385 navigationButtonText
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmpty_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -1098,7 +1009,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmpty_001,
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 391 windowMode FULLSCREEN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NonFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
