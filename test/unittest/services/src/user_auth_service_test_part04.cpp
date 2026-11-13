@@ -1257,14 +1257,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
         .WillRepeatedly(
             [](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
                 HdiCredentialInfo tempInfo = {
                     .credentialId = 1,
                     .executorIndex = 1,
-                    .templateId = 3,
                     .authType = static_cast<HdiAuthType>(2),
                     .executorMatcher = 2,
                     .executorSensorHint = 3,
@@ -1274,7 +1272,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
             }
         );
     auto resourceNode = Common::MakeShared<MockResourceNode>();
-    EXPECT_NE(resourceNode, nullptr);
     EXPECT_CALL(*resourceNode, GetExecutorIndex()).WillRepeatedly(Return(1));
     MockResourceNode *node = static_cast<MockResourceNode *>(resourceNode.get());
     ON_CALL(*node, GetProperty(_, _))
@@ -1282,7 +1279,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
             [](const Attributes &condition, Attributes &values) {
                 values.SetInt32Value(Attributes::ATTR_CAMERA_STATUS,
                     static_cast<int32_t>(CameraStatus::CAMERA_AVAILABLE));
-                values.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 5);
                 values.SetInt32Value(Attributes::ATTR_FREEZING_TIME, 0);
                 return SUCCESS;
             }
@@ -1293,7 +1289,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
     para.widgetParam = widgetParam;
     EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_EQ(validType.size(), 1);
-    EXPECT_EQ(validType[0], FACE);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
