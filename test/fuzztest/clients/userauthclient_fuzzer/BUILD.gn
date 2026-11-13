@@ -36,8 +36,6 @@ ohos_fuzztest("UserAuthClientFuzzTest") {
                            [ "*client/src/callback_manager_impl.cpp" ]) +
             userauth_test_client_napi_sources +
             [
-              "../../../../frameworks/native/client/src/user_launch_service_callback_service.cpp",
-              "../../../../frameworks/native/client/src/user_launch_service_client_impl.cpp",
               "../../dummy/mock_callback_manager_impl.cpp",
               "user_auth_client_fuzzer.cpp",
             ]
