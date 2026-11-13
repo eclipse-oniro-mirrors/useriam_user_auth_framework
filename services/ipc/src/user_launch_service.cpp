@@ -433,7 +433,7 @@ int32_t UserAuthService::GetAuthToken(EngLaunchServiceType serviceType, int32_t 
     if (serviceType == EngLaunchServiceType::PRIVILEGED_DAEMON) {
         return AdminAuthForToken(uid, authToken);
     }
-    return AuthWidgetForToken(authPara, authToken);
+    return AuthWidgetForToken(para, authToken);
 }
 
 int32_t UserAuthService::SetLaunchServiceState(int32_t uid, const std::vector<uint8_t> &token,
