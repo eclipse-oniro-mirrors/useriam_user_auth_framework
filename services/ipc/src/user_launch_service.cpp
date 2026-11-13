@@ -323,7 +323,8 @@ int32_t UserAuthService::GetLaunchServiceList(bool hasUserId, int32_t userId,
     IF_FALSE_LOGE_AND_RETURN_VAL(launchServiceCallback != nullptr, INVALID_PARAMETERS);
     if (!IpcCommon::CheckPermission(*this, USE_USER_ACCESS_MANAGER)) {
         IAM_LOGE("failed to check permission");
-        launchServiceCallback->OnLaunchServiceListResult(CHECK_PERMISSION_FAILED, std::vector<IpcLaunchServiceFlatInfo>{});
+        launchServiceCallback->OnLaunchServiceListResult(CHECK_PERMISSION_FAILED,
+            std::vector<IpcLaunchServiceFlatInfo>{});
         return SUCCESS;
     }
     std::optional<int32_t> optUserId = hasUserId ? std::optional<int32_t>(userId) : std::nullopt;

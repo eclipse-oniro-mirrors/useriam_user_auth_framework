@@ -95,18 +95,6 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestCheckReuseUnlockResult001, Te
     para.userId = 1;
     Attributes extraInfo;
     ReuseUnlockResult reuseUnlockResult;
-    reuseUnlockResult.isReuse = true;
-    reuseUnlockResult.reuseDuration = 5 * 60 * 1000;
-    reuseUnlockResult.reuseMode = AUTH_TYPE_RELEVANT;
-
-    ReuseUnlockResult authParam;
-    authParam.isReuse = true;
-    authParam.reuseDuration = 5 * 60 * 1000;
-    authParam.reuseMode = AUTH_TYPE_RELEVANT;
-
-    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
-    ReuseUnlockResult reuseUnlockResult;
     reuseUnlockResult.isReuse = false;
     EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, reuseUnlockResult, extraInfo), INVALID_PARAMETERS);
 
@@ -231,7 +219,7 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile_CompanionD
     authParam.reuseDuration = 4 * 60 * 1000;
     authParam.reuseMode = CALLER_IRRELEVANT_AUTH_TYPE_IRRELEVANT;
     EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), SUCCESS);
-    MockUserAuthEngine::Holder::GetInstance().Reset();
+    MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
     ResourceNodePool::Instance().Insert(mockResourceNode);
 

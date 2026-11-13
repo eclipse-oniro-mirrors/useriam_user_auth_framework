@@ -147,6 +147,12 @@ private:
         AuthTrustLevel authTrustLevel);
     bool CheckAuthPermissionAndParam(AuthType authType, AuthTrustLevel authTrustLevel,
         const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
+    int32_t CheckSystemOnlyAuthParam(const IpcAuthParamInner &ipcAuthParamInner, bool hasRemoteAuthParam = false);
+    int32_t CheckAuthUserParam(const IpcAuthParamInner &ipcAuthParamInner, const AuthParamInner &authParam,
+        const std::optional<RemoteAuthParam> &remoteAuthParam,
+        const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
+    int32_t FillAuthenticationPara(const AuthParamInner &authParam, Authentication::AuthenticationPara &para,
+        const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
     int32_t CheckWindowMode(const WidgetParamInner &widgetParam);
     int32_t CheckAuthWidgetParam(const ContextFactory::AuthWidgetContextPara &para);
     int32_t CheckValidSolution(ContextFactory::AuthWidgetContextPara &para, std::vector<AuthType> &validType);
@@ -159,12 +165,6 @@ private:
     void FillGetPropertyKeys(AuthType authType, const std::vector<Attributes::AttributeKey> &keys,
         std::vector<uint32_t> &uint32Keys);
     void FillGetPropertyValue(AuthType authType, const std::vector<Attributes::AttributeKey> &keys, Attributes &values);
-    int32_t CheckSystemOnlyAuthParam(const IpcAuthParamInner &ipcAuthParamInner, bool hasRemoteAuthParam = false);
-    int32_t CheckAuthUserParam(const IpcAuthParamInner &ipcAuthParamInner, const AuthParamInner &authParam,
-        const std::optional<RemoteAuthParam> &remoteAuthParam,
-        const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
-    int32_t FillAuthenticationPara(const AuthParamInner &authParam, Authentication::AuthenticationPara &para,
-        const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
     bool CompleteRemoteAuthParam(RemoteAuthParam &remoteAuthParam, const std::string &localNetworkId);
     int32_t PrepareRemoteAuthInner(const std::string &networkId, const sptr<IIamCallback> &callback);
     int32_t DoPrepareRemoteAuth(const std::string &networkId);
