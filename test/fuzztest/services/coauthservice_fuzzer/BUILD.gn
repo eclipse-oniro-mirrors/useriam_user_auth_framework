@@ -41,7 +41,7 @@ ohos_fuzztest("CoAuthServiceFuzzTest") {
 
   sources = userauth_test_services_sources + [
               "../../dummy/mock_ipc_common.cpp",
-              "../../dummy/mock_iuser_auth_interface.cpp",
+              "../../dummy/dummy_user_auth_engine.cpp",
               "../../dummy/mock_system_ability_listener.cpp",
             ] + userauth_test_screenlock_sources +
             userauth_test_os_account_sources + [ "co_auth_service_fuzzer.cpp" ]

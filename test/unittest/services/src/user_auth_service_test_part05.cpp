@@ -475,7 +475,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolutionTest, TestSize.Le
     std::vector<AuthType> validType;
     validType.emplace_back(FACE);
     validType.emplace_back(PIN);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetValidSolution(_, _, _, _))
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,

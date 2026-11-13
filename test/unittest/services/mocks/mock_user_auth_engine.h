@@ -59,6 +59,7 @@ public:
     MockUserAuthEngine()
     {
         ON_CALL(*this, GetLatestEnrollmentTime).WillByDefault(::testing::Return(CAPABILITY_NOT_SUPPORTED));
+        ON_CALL(*this, RedeemScheduleToken).WillByDefault(::testing::Return(CAPABILITY_NOT_SUPPORTED));
         ON_CALL(*this, SetUserConfigParam).WillByDefault(::testing::Return(CAPABILITY_NOT_SUPPORTED));
         ON_CALL(*this, GetUserConfigParam).WillByDefault(::testing::Return(CAPABILITY_NOT_SUPPORTED));
         ON_CALL(*this, SetGlobalConfigParam).WillByDefault([](const EngGlobalConfigParam &param) {
@@ -124,8 +125,11 @@ public:
     MOCK_METHOD1(SetUserConfigParam, int32_t(const EngGlobalConfigParam &param));
     MOCK_METHOD4(GetUserConfigParam,
         int32_t(int32_t userId, int32_t authType, int32_t type, EngGlobalConfigValue &value));
-    MOCK_METHOD4(VerifyAuthToken, int32_t(const std::vector<uint8_t> &tokenIn, uint64_t allowableDuration,
-        EngUserAuthTokenPlain &tokenPlainOut, std::vector<uint8_t> &rootSecret));
+    MOCK_METHOD5(VerifyAuthToken, int32_t(int32_t userId, const std::vector<uint8_t> &tokenIn,
+        uint64_t allowableDuration, EngUserAuthTokenPlain &tokenPlainOut,
+        EngUserAuthTokenExtraInfo &extraInfoOut));
+    MOCK_METHOD3(RedeemScheduleToken, int32_t(const std::vector<uint8_t> &challenge,
+        const std::vector<uint8_t> &scheduleToken, std::vector<uint8_t> &authTokenOut));
     MOCK_METHOD1(RegisterMessageCallback, int32_t(const sptr<IMessageCallback> &messageCallback));
     MOCK_METHOD4(GetValidSolution, int32_t(int32_t userId, const std::vector<int32_t> &authTypes,
         uint32_t authTrustLevel, std::vector<int32_t> &validTypes));

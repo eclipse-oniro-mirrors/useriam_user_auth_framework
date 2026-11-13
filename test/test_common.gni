@@ -32,8 +32,6 @@ _userauth_test_services_base_sources = [
   "services/base/src/thread_handler_impl.cpp",
   "services/base/src/thread_handler_manager.cpp",
   "services/base/src/thread_handler_singleton_impl.cpp",
-  "services/engine/src/hdi_engine.cpp",
-  "services/engine/src/hdi_type_convert.cpp",
 ]
 
 _userauth_test_services_context_sources = [

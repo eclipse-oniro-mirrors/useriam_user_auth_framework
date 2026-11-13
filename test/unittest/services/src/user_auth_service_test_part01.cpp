@@ -1336,10 +1336,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser009, TestSize.Level0)
     };
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*testCallback, OnResult(static_cast<int32_t>(INVALID_PARAMETERS), _)).Times(1);
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _)).Times(0);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
     sptr<IIamCallback> callbackInterface = testCallback;
@@ -1364,10 +1364,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser010, TestSize.Level0)
     };
     sptr<MockUserAuthCallback> testCallback(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*testCallback, OnResult(static_cast<int32_t>(GENERAL_ERROR), _)).Times(1);
-    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _)).Times(0);
+    EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _)).Times(0);
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     IpcCommon::SetSkipUserFlag(true);
     sptr<IIamCallback> callbackInterface = testCallback;

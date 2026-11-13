@@ -84,7 +84,7 @@ ohos_source_set("userauth_service_base_fuzzer") {
   remove_configs = [ "//build/config/compiler:no_exceptions" ]
 
   sources = userauth_test_services_base_sources + [
-              "../dummy/mock_iuser_auth_interface.cpp",
+              "../dummy/dummy_user_auth_engine.cpp",
               "../dummy/mock_system_ability_listener.cpp",
             ]
 
