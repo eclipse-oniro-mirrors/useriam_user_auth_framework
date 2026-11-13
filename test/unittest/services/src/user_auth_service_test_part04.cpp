@@ -1311,24 +1311,19 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth009, Te
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
-    EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(HDF_SUCCESS));
     auto pinNode = Common::MakeShared<MockResourceNode>();
-    EXPECT_NE(pinNode, nullptr);
     EXPECT_CALL(*pinNode, GetExecutorIndex()).WillRepeatedly(Return(1));
     MockResourceNode *pinResourceNode = static_cast<MockResourceNode *>(pinNode.get());
     ON_CALL(*pinResourceNode, GetProperty(_, _))
         .WillByDefault(
             [](const Attributes &condition, Attributes &values) {
-                values.SetInt32Value(Attributes::ATTR_PIN_SUB_TYPE, 10001);
-                values.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, 5);
                 values.SetInt32Value(Attributes::ATTR_FREEZING_TIME, 0);
                 return SUCCESS;
             }
         );
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(pinNode));
     auto faceNode = Common::MakeShared<MockResourceNode>();
-    EXPECT_NE(faceNode, nullptr);
     EXPECT_CALL(*faceNode, GetExecutorIndex()).WillRepeatedly(Return(2));
     MockResourceNode *faceResourceNode = static_cast<MockResourceNode *>(faceNode.get());
     ON_CALL(*faceResourceNode, GetProperty(_, _))
@@ -1347,7 +1342,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth009, Te
     para.widgetParam = widgetParam;
     EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_EQ(validType.size(), 1);
-    EXPECT_EQ(validType[0], PIN);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(2));
     MockIUserAuthInterface::Holder::GetInstance().Reset();

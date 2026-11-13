@@ -673,8 +673,7 @@ void HdiEngineImpl::OnDriverState(bool running)
     }
 }
 
-int32_t HdiEngineImpl::RegisterLaunchService(
-    [[maybe_unused]] const std::vector<EngLaunchServiceRegisterInfo> &serviceList,
+int32_t HdiEngineImpl::RegisterLaunchService([[maybe_unused]] const std::vector<EngLaunchServiceRegisterInfo> &serviceList,
     [[maybe_unused]] std::vector<EngLaunchServiceFlatInfo> &serviceInfos)
 {
     return CAPABILITY_NOT_SUPPORTED;
