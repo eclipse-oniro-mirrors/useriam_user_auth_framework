@@ -36,7 +36,7 @@
 #include "xcollie_helper.h"
 
 #define LOG_TAG "USER_AUTH_SA"
-#define LOG_FILE_ID LOG_FILE_USER_AUTH_SERVICE
+#define LOG_FILE_ID LOG_FILE_USER_LAUNCH_SERVICE
 
 namespace OHOS {
 namespace UserIam {
