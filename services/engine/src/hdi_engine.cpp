@@ -672,6 +672,55 @@ void HdiEngineImpl::OnDriverState(bool running)
         cb(running);
     }
 }
+
+int32_t HdiEngineImpl::RegisterLaunchService(
+    [[maybe_unused]] const std::vector<EngLaunchServiceRegisterInfo> &serviceList,
+    [[maybe_unused]] std::vector<EngLaunchServiceFlatInfo> &serviceInfos)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
+int32_t HdiEngineImpl::UnRegisterLaunchService([[maybe_unused]] int32_t uid,
+    [[maybe_unused]] const std::optional<EngLaunchServiceKey> &key)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
+int32_t HdiEngineImpl::GetLaunchServiceInfo([[maybe_unused]] int32_t uid,
+    [[maybe_unused]] const std::optional<EngLaunchServiceKey> &key,
+    [[maybe_unused]] std::vector<EngLaunchServiceFlatInfo> &serviceList)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
+int32_t HdiEngineImpl::GetLaunchServiceList([[maybe_unused]] const std::vector<int32_t> &userIds,
+    [[maybe_unused]] std::vector<EngLaunchServiceFlatInfo> &serviceList)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
+int32_t HdiEngineImpl::GetAppLaunchServiceType([[maybe_unused]] int32_t uid,
+    [[maybe_unused]] EngLaunchServiceType &serviceType)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
+int32_t HdiEngineImpl::SetLaunchServiceState([[maybe_unused]] int32_t uid,
+    [[maybe_unused]] const std::vector<uint8_t> &token, [[maybe_unused]] EngLaunchServiceState activeState)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
+int32_t HdiEngineImpl::SetDaemonAllowedlist([[maybe_unused]] int32_t userId,
+    [[maybe_unused]] const std::vector<std::string> &appIdentifiers, [[maybe_unused]] bool isAdd)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
+
+int32_t HdiEngineImpl::SetDaemonForbiddenlist([[maybe_unused]] int32_t userId,
+    [[maybe_unused]] const std::vector<std::string> &appIdentifiers, [[maybe_unused]] bool isAdd)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

@@ -571,7 +571,6 @@ EngEnrollParamExt HdiToEng(const HdiEnrollParamExt &hdi)
     eng.additionalInfo = hdi.additionalInfo;
     return eng;
 }
-
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

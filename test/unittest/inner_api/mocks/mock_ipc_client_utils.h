@@ -15,6 +15,7 @@
 
 #ifndef MOCK_IPC_CLIENT_UTILS_H
 #define MOCK_IPC_CLIENT_UTILS_H
+#define IPC_CLIENT_UTILS_H  // Prevent real ipc_client_utils.h from redefining IpcClientUtils
 
 #include "iremote_object.h"
 

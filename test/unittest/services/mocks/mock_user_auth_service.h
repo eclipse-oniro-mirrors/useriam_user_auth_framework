@@ -89,6 +89,21 @@ public:
     MOCK_METHOD2(CallbackExit, int32_t(uint32_t code, int32_t result));
     MOCK_METHOD1(RegisterRemoteAuthCallback, int32_t(const sptr<IRemoteAuthCallback> &remoteAuthCallback));
     MOCK_METHOD0(UnregisterRemoteAuthCallback, int32_t());
+
+    MOCK_METHOD2(RegisterLaunchService, int32_t(const std::vector<IpcLaunchServiceRegisterInfo> &serviceList,
+        const sptr<ILaunchServiceListCallback> &launchServiceListCallback));
+    MOCK_METHOD4(UnRegisterLaunchService, int32_t(int32_t uid, bool hasKey, const IpcLaunchServiceKey &key,
+        const sptr<ILaunchServiceCallback> &launchServiceCallback));
+    MOCK_METHOD4(GetLaunchServiceInfo, int32_t(int32_t uid, bool hasKey, const IpcLaunchServiceKey &key,
+        const sptr<ILaunchServiceListCallback> &launchServiceListCallback));
+    MOCK_METHOD3(GetLaunchServiceList, int32_t(bool hasUserId, int32_t userId,
+        const sptr<ILaunchServiceListCallback> &launchServiceListCallback));
+    MOCK_METHOD4(SetLaunchServiceState, int32_t(int32_t uid, const std::vector<uint8_t> &token, int32_t activeState,
+        const sptr<ILaunchServiceCallback> &launchServiceCallback));
+    MOCK_METHOD4(SetDaemonAllowedlist, int32_t(int32_t userId, const std::vector<std::string> &appIdentifiers,
+        bool isAdd, int32_t &funcRet));
+    MOCK_METHOD4(SetDaemonForbiddenlist, int32_t(int32_t userId, const std::vector<std::string> &appIdentifiers,
+        bool isAdd, int32_t &funcRet));
 };
 } // namespace UserAuth
 } // namespace UserIam

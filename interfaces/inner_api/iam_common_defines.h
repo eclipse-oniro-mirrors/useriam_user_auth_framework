@@ -255,6 +255,8 @@ enum ResultCode : int32_t {
     CAPABILITY_NOT_SUPPORTED = 19,
     /** The result is fail, because the pin is match history pin. */
     HISTORY_PIN_MATCH = 20,
+    /** The result is fail, because the capability is not supported. */
+    REPLICATE_REGISTER = 21,
     /** The result is fail, because something wrong from system. */
     SYSTEM_ERROR_CODE_BEGIN = 1000,
     /** The result is fail, because something wrong from ipc. */

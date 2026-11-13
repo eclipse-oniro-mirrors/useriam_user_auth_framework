@@ -26,6 +26,7 @@
 #include "user_auth_callback_service.h"
 #include "user_auth_modal_inner_callback.h"
 #include "user_auth_napi_client_impl.h"
+#include "user_launch_service_client.h"
 
 #define LOG_TAG "USER_AUTH_SDK"
 #define LOG_FILE_ID LOG_FILE_USER_AUTH_CLIENT_IMPL
@@ -155,6 +156,25 @@ private:
         IAM_LOGI("start");
         static_cast<void>(contextId);
         static_cast<void>(cancelReason);
+    }
+};
+
+class DummyLaunchServiceCallback final : public LaunchServiceCallback {
+public:
+    void OnResult(int32_t result)
+    {
+        IAM_LOGI("start");
+        static_cast<void>(result);
+    }
+};
+
+class DummyLaunchServiceListCallback final : public LaunchServiceListCallback {
+public:
+    void OnResult(int32_t result, const std::vector<LaunchServiceFlatInfo> &serviceList)
+    {
+        IAM_LOGI("start");
+        static_cast<void>(result);
+        static_cast<void>(serviceList);
     }
 };
 
@@ -528,6 +548,140 @@ void FuzzQueryReusableAuthResult(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzClientRegisterLaunchService(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    std::vector<LaunchServiceRegisterInfo> serviceList;
+    uint32_t listLen = parcel.ReadUint32() % 5; // max 5 items
+    serviceList.reserve(listLen);
+    for (uint32_t i = 0; i < listLen; i++) {
+        LaunchServiceRegisterInfo info = {};
+        info.uid = parcel.ReadInt32();
+        info.serviceKey.serviceName = parcel.ReadString();
+        info.serviceKey.moduleName = parcel.ReadString();
+        info.bundleInfo.ownerBundleName = parcel.ReadString();
+        info.bundleInfo.appIndex = parcel.ReadInt32();
+        info.bundleInfo.appIdentifier = parcel.ReadString();
+        info.serviceInfo.serviceType = static_cast<LaunchServiceType>(parcel.ReadInt32());
+        info.serviceInfo.additionalInfo = parcel.ReadString();
+        serviceList.push_back(info);
+    }
+    if (parcel.ReadBool()) {
+        auto callback = Common::MakeShared<DummyLaunchServiceListCallback>();
+        UserLaunchServiceClient::GetInstance().RegisterLaunchService(serviceList, callback);
+    } else {
+        std::shared_ptr<LaunchServiceListCallback> nullCallback = nullptr;
+        UserLaunchServiceClient::GetInstance().RegisterLaunchService(serviceList, nullCallback);
+    }
+    IAM_LOGI("end");
+}
+
+void FuzzClientUnRegisterLaunchService(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    int32_t uid = parcel.ReadInt32();
+    std::optional<LaunchServiceKey> key = std::nullopt;
+    if (parcel.ReadBool()) {
+        LaunchServiceKey k;
+        k.serviceName = parcel.ReadString();
+        k.moduleName = parcel.ReadString();
+        key = k;
+    }
+    if (parcel.ReadBool()) {
+        auto callback = Common::MakeShared<DummyLaunchServiceCallback>();
+        UserLaunchServiceClient::GetInstance().UnRegisterLaunchService(uid, key, callback);
+    } else {
+        std::shared_ptr<LaunchServiceCallback> nullCallback = nullptr;
+        UserLaunchServiceClient::GetInstance().UnRegisterLaunchService(uid, key, nullCallback);
+    }
+    IAM_LOGI("end");
+}
+
+void FuzzClientGetLaunchServiceInfo(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    int32_t uid = parcel.ReadInt32();
+    std::optional<LaunchServiceKey> key = std::nullopt;
+    if (parcel.ReadBool()) {
+        LaunchServiceKey k;
+        k.serviceName = parcel.ReadString();
+        k.moduleName = parcel.ReadString();
+        key = k;
+    }
+    if (parcel.ReadBool()) {
+        auto callback = Common::MakeShared<DummyLaunchServiceListCallback>();
+        UserLaunchServiceClient::GetInstance().GetLaunchServiceInfo(uid, key, callback);
+    } else {
+        std::shared_ptr<LaunchServiceListCallback> nullCallback = nullptr;
+        UserLaunchServiceClient::GetInstance().GetLaunchServiceInfo(uid, key, nullCallback);
+    }
+    IAM_LOGI("end");
+}
+
+void FuzzClientGetLaunchServiceList(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    std::optional<int32_t> userId = std::nullopt;
+    if (parcel.ReadBool()) {
+        userId = parcel.ReadInt32();
+    }
+    if (parcel.ReadBool()) {
+        auto callback = Common::MakeShared<DummyLaunchServiceListCallback>();
+        UserLaunchServiceClient::GetInstance().GetLaunchServiceList(userId, callback);
+    } else {
+        std::shared_ptr<LaunchServiceListCallback> nullCallback = nullptr;
+        UserLaunchServiceClient::GetInstance().GetLaunchServiceList(userId, nullCallback);
+    }
+    IAM_LOGI("end");
+}
+
+void FuzzClientSetLaunchServiceState(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    int32_t uid = parcel.ReadInt32();
+    std::vector<uint8_t> token;
+    Common::FillFuzzUint8Vector(parcel, token);
+    auto activeState = static_cast<LaunchServiceState>(parcel.ReadInt32());
+    if (parcel.ReadBool()) {
+        auto callback = Common::MakeShared<DummyLaunchServiceCallback>();
+        UserLaunchServiceClient::GetInstance().SetLaunchServiceState(uid, token, activeState, callback);
+    } else {
+        std::shared_ptr<LaunchServiceCallback> nullCallback = nullptr;
+        UserLaunchServiceClient::GetInstance().SetLaunchServiceState(uid, token, activeState, nullCallback);
+    }
+    IAM_LOGI("end");
+}
+
+void FuzzClientSetDaemonAllowedlist(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    int32_t userId = parcel.ReadInt32();
+    std::vector<std::string> appIdentifiers;
+    uint32_t listLen = parcel.ReadUint32() % 5; // max 5 items
+    appIdentifiers.reserve(listLen);
+    for (uint32_t i = 0; i < listLen; i++) {
+        appIdentifiers.push_back(parcel.ReadString());
+    }
+    bool isAdd = parcel.ReadBool();
+    UserLaunchServiceClient::GetInstance().SetDaemonAllowedlist(userId, appIdentifiers, isAdd);
+    IAM_LOGI("end");
+}
+
+void FuzzClientSetDaemonForbiddenlist(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    int32_t userId = parcel.ReadInt32();
+    std::vector<std::string> appIdentifiers;
+    uint32_t listLen = parcel.ReadUint32() % 5; // max 5 items
+    appIdentifiers.reserve(listLen);
+    for (uint32_t i = 0; i < listLen; i++) {
+        appIdentifiers.push_back(parcel.ReadString());
+    }
+    bool isAdd = parcel.ReadBool();
+    UserLaunchServiceClient::GetInstance().SetDaemonForbiddenlist(userId, appIdentifiers, isAdd);
+    IAM_LOGI("end");
+}
+
 using FuzzFunc = decltype(FuzzClientGetAvailableStatus);
 FuzzFunc *g_fuzzFuncs[] = {
     FuzzClientGetAuthLockState,
@@ -560,6 +714,13 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzSetUserConfigParam,
     FuzzNapiBeginWidgetAuth,
     FuzzQueryReusableAuthResult,
+    FuzzClientRegisterLaunchService,
+    FuzzClientUnRegisterLaunchService,
+    FuzzClientGetLaunchServiceInfo,
+    FuzzClientGetLaunchServiceList,
+    FuzzClientSetLaunchServiceState,
+    FuzzClientSetDaemonAllowedlist,
+    FuzzClientSetDaemonForbiddenlist,
 };
 
 void UserAuthClientFuzzTest(const uint8_t *data, size_t size)

@@ -67,11 +67,43 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFaceFullsc
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
             return HDF_SUCCESS;
         });
     int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
+            }
+        );
+    EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), LOCKED);
+    EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprintFullscreen_001, TestSize.Level0)
@@ -99,6 +131,77 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprin
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_EQ(validTypeList.size(), 2);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+            validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
             return HDF_SUCCESS;
         });
     int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
@@ -162,7 +265,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_Size3NotOnlyFa
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -191,6 +297,41 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithPinAnd
         .WillOnce([](int32_t userId, const std::vector<int32_t> &authTypes,
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::PIN));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             return HDF_SUCCESS;
         });
@@ -234,7 +375,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NotFullscreenSin
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 补充CheckAuthWidgetType组合5: PIN+PRIVATE_PIN冲突场景
+// 鐞涖儱鍘朇heckAuthWidgetType缂佸嫬鎮?: PIN+PRIVATE_PIN閸愯尙鐛婇崷鐑樻珯
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinAndPrivatePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -243,7 +384,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinAndPrivatePi
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// 补充CheckAuthWidgetType组合8: PIN+PRIVATE_PIN+COMPANION_DEVICE三重冲突场景
+// 鐞涖儱鍘朇heckAuthWidgetType缂佸嫬鎮?: PIN+PRIVATE_PIN+COMPANION_DEVICE娑撳鍣搁崘鑼崐閸︾儤娅?
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinPrivatePinCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -252,8 +393,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_PinPrivatePinCo
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// 补充CheckValidSolution组合3: navBtn非空 + validType={FINGERPRINT}单类型
-// 业务逻辑：单类型FINGERPRINT属于{FACE,FINGER,COMPANION}，不返回INVALID
+// 鐞涖儱鍘朇heckValidSolution缂佸嫬鎮?: navBtn闂堢偟鈹?+ validType={FINGERPRINT}閸楁洜琚崹?
+// 娑撴艾濮熼柅鏄忕帆閿涙艾宕熺猾璇茬€稦INGERPRINT鐏炵偘绨瑊FACE,FINGER,COMPANION}閿涘奔绗夋潻鏂挎礀INVALID
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprintWithNavBtn_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -286,8 +427,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_SingleFingerprin
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 补充CheckValidSolution组合8: navBtn非空 + validType={FACE, COMPANION} + FULLSCREEN
-// 业务逻辑：FACE+COMPANION属于{FACE,FINGER,COMPANION}但不是仅COMPANION，FULLSCREEN模式返回INVALID
+// 鐞涖儱鍘朇heckValidSolution缂佸嫬鎮?: navBtn闂堢偟鈹?+ validType={FACE, COMPANION} + FULLSCREEN
+// 娑撴艾濮熼柅鏄忕帆閿涙ACE+COMPANION鐏炵偘绨瑊FACE,FINGER,COMPANION}娴ｅ棔绗夐弰顖欑矌COMPANION閿涘瓗ULLSCREEN濡€崇础鏉╂柨娲朓NVALID
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FaceCompanionFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -314,6 +455,89 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FaceCompanionFul
             uint32_t authTrustLevel, std::vector<int32_t> &validTypes) {
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+            validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
+            return SUCCESS;
+        });
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
+    EXPECT_EQ(ret, SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
             return HDF_SUCCESS;
         });
     int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
@@ -321,8 +545,8 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FaceCompanionFul
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 补充CheckValidSolution组合10: navBtn非空 + validType={FACE, FINGER, COMPANION} + FULLSCREEN
-// 业务逻辑：三类型属于{FACE,FINGER,COMPANION}但不是仅COMPANION，FULLSCREEN模式返回INVALID
+// 鐞涖儱鍘朇heckValidSolution缂佸嫬鎮?0: navBtn闂堢偟鈹?+ validType={FACE, FINGER, COMPANION} + FULLSCREEN
+// 娑撴艾濮熼柅鏄忕帆閿涙矮绗佺猾璇茬€风仦鐐扮艾{FACE,FINGER,COMPANION}娴ｅ棔绗夐弰顖欑矌COMPANION閿涘瓗ULLSCREEN濡€崇础鏉╂柨娲朓NVALID
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_ThreeTypesFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -357,7 +581,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_ThreeTypesFullsc
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 补充CheckPrivatePinEnroll组合2: validType={FACE, COMPANION} (size=2)
+// 鐞涖儱鍘朇heckPrivatePinEnroll缂佸嫬鎮?: validType={FACE, COMPANION} (size=2)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFaceCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -369,7 +593,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFaceCo
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 补充CheckPrivatePinEnroll组合3: validType={FINGERPRINT, COMPANION} (size=2)
+// 鐞涖儱鍘朇heckPrivatePinEnroll缂佸嫬鎮?: validType={FINGERPRINT, COMPANION} (size=2)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFingerCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -381,7 +605,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoFinger
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 补充CheckPrivatePinEnroll组合4: validType={COMPANION, PIN} (size=2)
+// 鐞涖儱鍘朇heckPrivatePinEnroll缂佸嫬鎮?: validType={COMPANION, PIN} (size=2)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoCompanionPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -393,7 +617,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoCompan
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 补充CheckAuthWidgetParam组合3: authTypes={FINGERPRINT, PIN}, navBtn=""
+// 鐞涖儱鍘朇heckAuthWidgetParam缂佸嫬鎮?: authTypes={FINGERPRINT, PIN}, navBtn=""
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoFingerPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -402,11 +626,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoFingerP
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckAuthWidgetParam组合4: authTypes={FACE, COMPANION}, navBtn=""
+// 鐞涖儱鍘朇heckAuthWidgetParam缂佸嫬鎮?: authTypes={FACE, COMPANION}, navBtn=""
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoFaceCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -415,11 +642,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoFaceCom
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckAuthWidgetParam组合7: authTypes={FACE, PIN, COMPANION}, navBtn=""
+// 鐞涖儱鍘朇heckAuthWidgetParam缂佸嫬鎮?: authTypes={FACE, PIN, COMPANION}, navBtn=""
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeFacePinCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -428,11 +658,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeFaceP
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckAuthWidgetParam组合8: authTypes={FINGERPRINT, PIN, COMPANION}, navBtn=""
+// 鐞涖儱鍘朇heckAuthWidgetParam缂佸嫬鎮?: authTypes={FINGERPRINT, PIN, COMPANION}, navBtn=""
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeFingerPinCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -441,11 +674,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeFinge
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckAuthWidgetType组合1: 无PIN、无PRIVATE_PIN、无COMPANION（基础场景）
+// 鐞涖儱鍘朇heckAuthWidgetType缂佸嫬鎮?: 閺冪嚛IN閵嗕焦妫RIVATE_PIN閵嗕焦妫OMPANION閿涘牆鐔€绾偓閸︾儤娅欓敍?
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_BasicFaceOrFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -454,7 +690,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_BasicFaceOrFing
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckAuthWidgetType组合3: 仅PRIVATE_PIN
+// 鐞涖儱鍘朇heckAuthWidgetType缂佸嫬鎮?: 娴犲尙RIVATE_PIN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyPrivatePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -463,7 +699,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyPrivatePin_
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckAuthWidgetType组合4: 仅PIN
+// 鐞涖儱鍘朇heckAuthWidgetType缂佸嫬鎮?: 娴犲尙IN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -472,7 +708,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyPin_001, Te
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckPrivatePinEnroll组合4: validType={COMPANION, PIN} (size=2, 无FACE/FINGER)
+// 鐞涖儱鍘朇heckPrivatePinEnroll缂佸嫬鎮?: validType={COMPANION, PIN} (size=2, 閺冪嚋ACE/FINGER)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoCompanionPin_002, TestSize.Level0)
 {
     UserAuthService service;
@@ -484,7 +720,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeTwoCompan
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 补充CheckAuthWidgetParam边界: authTypes={PIN, FACE, FINGERPRINT}顺序不同
+// 鐞涖儱鍘朇heckAuthWidgetParam鏉堝湱鏅? authTypes={PIN, FACE, FINGERPRINT}妞ゅ搫绨稉宥呮倱
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeDifferentOrder_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -493,11 +729,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeDiffe
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckValidSolution组合15: navBtn.empty=true + validType={FINGERPRINT} + FULLSCREEN
+// 鐞涖儱鍘朇heckValidSolution缂佸嫬鎮?5: navBtn.empty=true + validType={FINGERPRINT} + FULLSCREEN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFingerprintFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -530,7 +769,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFinge
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 补充CheckValidSolution组合16: navBtn.empty=true + validType={COMPANION} + FULLSCREEN
+// 鐞涖儱鍘朇heckValidSolution缂佸嫬鎮?6: navBtn.empty=true + validType={COMPANION} + FULLSCREEN
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyCompanionFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -563,21 +802,24 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyCompa
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 补充CheckAuthWidgetParam: authTypes={FACE, FINGERPRINT, PIN}的其他排列组合
+// 鐞涖儱鍘朇heckAuthWidgetParam: authTypes={FACE, FINGERPRINT, PIN}閻ㄥ嫬鍙炬禒鏍ㄥ笓閸掓绮嶉崥?
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeAllPermutations_001, TestSize.Level0)
 {
     UserAuthService service;
     AuthParamInner authParam = {};
-    // 测试所有可能的排列顺序
+    // 濞村鐦幍鈧張澶婂讲閼崇晫娈戦幒鎺戝灙妞ゅ搫绨?
     authParam.authTypes = {AuthType::FINGERPRINT, AuthType::PIN, AuthType::FACE};
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckAuthWidgetParam: navBtn非空场景的其他组合
+// 鐞涖儱鍘朇heckAuthWidgetParam: navBtn闂堢偟鈹栭崷鐑樻珯閻ㄥ嫬鍙炬禒鏍矋閸?
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_NavBtnNotEmpty_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -586,11 +828,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_NavBtnNotEmpty
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "nav_btn";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 补充CheckPrivatePinEnroll: validType.size > 3的情况
+// 鐞涖儱鍘朇heckPrivatePinEnroll: validType.size > 3閻ㄥ嫭鍎忛崘?
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeFour_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -604,7 +849,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_SizeFour_001,
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 补充CheckValidSolution: navBtn.empty=true + validType={PIN} (单类型PIN)
+// 鐞涖儱鍘朇heckValidSolution: navBtn.empty=true + validType={PIN} (閸楁洜琚崹濠窱N)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptySinglePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -637,7 +882,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptySingl
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 补充CheckValidSolution: navBtn.empty=true + validType={FACE, FINGERPRINT} + DIALOG
+// 鐞涖儱鍘朇heckValidSolution: navBtn.empty=true + validType={FACE, FINGERPRINT} + DIALOG
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFaceFingerDialog_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -671,7 +916,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmptyFaceF
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 覆盖第1074行：hasCompanionDevice=true && hasPrivatePin=true (hasPin=false)
+// 鐟曞棛娲婄粭?074鐞涘矉绱癶asCompanionDevice=true && hasPrivatePin=true (hasPin=false)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPrivatePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -680,7 +925,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPr
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// 覆盖第1074行：hasCompanionDevice=true && hasPin=true (hasPrivatePin=false)
+// 鐟曞棛娲婄粭?074鐞涘矉绱癶asCompanionDevice=true && hasPin=true (hasPrivatePin=false)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -689,7 +934,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_CompanionWithPi
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// 覆盖第1118行：validType.size==3 但 hasFace=false
+// 鐟曞棛娲婄粭?118鐞涘矉绱皏alidType.size==3 娴?hasFace=false
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoFace_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -702,7 +947,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoF
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 覆盖第1118行：validType.size==3 但 hasFinger=false
+// 鐟曞棛娲婄粭?118鐞涘矉绱皏alidType.size==3 娴?hasFinger=false
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -715,7 +960,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoF
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 覆盖第1118行：validType.size==3 但 hasCompanionDevice=false
+// 鐟曞棛娲婄粭?118鐞涘矉绱皏alidType.size==3 娴?hasCompanionDevice=false
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -728,7 +973,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckPrivatePinEnroll_ThreeTypesNoC
     EXPECT_EQ(service.CheckPrivatePinEnroll(authTypeList, validAuthTypeList), true);
 }
 
-// 覆盖第1179行：authTypes.size==2 且只包含FACE+FINGERPRINT
+// 鐟曞棛娲婄粭?179鐞涘矉绱癮uthTypes.size==2 娑撴柨褰ч崠鍛儓FACE+FINGERPRINT
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_OnlyFaceFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -739,11 +984,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_OnlyFaceFinger
         .title = "test",
         .navigationButtonText = "",
     };
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
 }
 
-// 覆盖第1385行：navigationButtonText非空 且 validType包含其他类型 (触发 !CheckAuthTypeOnly 分支)
+// 鐟曞棛娲婄粭?385鐞涘矉绱皀avigationButtonText闂堢偟鈹?娑?validType閸栧懎鎯堥崗鏈电铂缁鐎?(鐟欙箑褰?!CheckAuthTypeOnly 閸掑棙鏁?
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFacePin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -777,7 +1025,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFacePi
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 覆盖第1385行：navigationButtonText非空 且 CheckAuthTypeOnly返回true (只有COMPANION_DEVICE)
+// 鐟曞棛娲婄粭?385鐞涘矉绱皀avigationButtonText闂堢偟鈹?娑?CheckAuthTypeOnly鏉╂柨娲杢rue (閸欘亝婀丆OMPANION_DEVICE)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnOnlyCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -810,7 +1058,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnOnlyCompan
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 覆盖第1391行：windowMode=FULLSCREEN 且 CheckAuthTypeOnly返回false (不满足FACE+FINGERPRINT+COMPANION_DEVICE)
+// 鐟曞棛娲婄粭?391鐞涘矉绱皐indowMode=FULLSCREEN 娑?CheckAuthTypeOnly鏉╂柨娲杅alse (娑撳秵寮х搾鐭睞CE+FINGERPRINT+COMPANION_DEVICE)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenWithPin_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -843,7 +1091,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenWithPi
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 覆盖第1391行：windowMode=FULLSCREEN 且只有COMPANION_DEVICE (CheckAuthTypeOnly第二个条件为true)
+// 鐟曞棛娲婄粭?391鐞涘矉绱皐indowMode=FULLSCREEN 娑撴柨褰ч張濉丱MPANION_DEVICE (CheckAuthTypeOnly缁楊兛绨╂稉顏呮蒋娴犳湹璐焧rue)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenOnlyCompanion_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -876,7 +1124,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_FullscreenOnlyCo
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 覆盖第1074行：hasCompanionDevice=true 但 hasPin=false && hasPrivatePin=false (返回SUCCESS)
+// 鐟曞棛娲婄粭?074鐞涘矉绱癶asCompanionDevice=true 娴?hasPin=false && hasPrivatePin=false (鏉╂柨娲朣UCCESS)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyCompanionDevice_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -885,7 +1133,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetType_OnlyCompanionDe
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 覆盖第1179行：authTypes.size==2 但 CheckAuthTypeOnly返回false (例如FACE+PIN)
+// 鐟曞棛娲婄粭?179鐞涘矉绱癮uthTypes.size==2 娴?CheckAuthTypeOnly鏉╂柨娲杅alse (娓氬顩ACE+PIN)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoNotOnlyFaceFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -896,11 +1144,14 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeTwoNotOnly
         .title = "test",
         .navigationButtonText = "",
     };
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 覆盖第1184行：authTypes.size==3 但 CheckAuthTypeOnly返回false (例如FACE+FINGERPRINT+PIN)
+// 鐟曞棛娲婄粭?184鐞涘矉绱癮uthTypes.size==3 娴?CheckAuthTypeOnly鏉╂柨娲杅alse (娓氬顩ACE+FINGERPRINT+PIN)
 HWTEST_F(UserAuthServiceTest,
     UserAuthServiceCheckAuthWidgetParam_SizeThreeNotOnlyFaceFingerCompanion_001, TestSize.Level0)
 {
@@ -912,11 +1163,14 @@ HWTEST_F(UserAuthServiceTest,
         .title = "test",
         .navigationButtonText = "",
     };
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
-// 覆盖第1385行：navigationButtonText非空 且 validType={FACE, FINGERPRINT} (不满足条件，返回SUCCESS)
+// 鐟曞棛娲婄粭?385鐞涘矉绱皀avigationButtonText闂堢偟鈹?娑?validType={FACE, FINGERPRINT} (娑撳秵寮х搾铏蒋娴犺绱濇潻鏂挎礀SUCCESS)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFaceFinger_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -950,7 +1204,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnWithFaceFi
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 覆盖第1385行：navigationButtonText为空 (短路分支)
+// 鐟曞棛娲婄粭?385鐞涘矉绱皀avigationButtonText娑撹櫣鈹?(閻叀鐭鹃崚鍡樻暜)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmpty_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -985,7 +1239,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NavBtnEmpty_001,
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
-// 覆盖第1391行：windowMode != FULLSCREEN (短路分支)
+// 鐟曞棛娲婄粭?391鐞涘矉绱皐indowMode != FULLSCREEN (閻叀鐭鹃崚鍡樻暜)
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NonFullscreen_001, TestSize.Level0)
 {
     UserAuthService service;
@@ -1037,8 +1291,23 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth001, Te
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(1, PIN, COLLECTOR);
     EXPECT_NE(resourceNode, nullptr);
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), SUCCESS);
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
+    auto resourceNode = MockResourceNode::CreateWithExecuteIndex(1, PIN, COLLECTOR);
+    EXPECT_NE(resourceNode, nullptr);
+    EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
+    EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
     MockIUserAuthInterface::Holder::GetInstance().Reset();
 }
 
@@ -1052,7 +1321,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth002, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), TYPE_NOT_SUPPORT);
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), TYPE_NOT_SUPPORT);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth003, TestSize.Level0)
@@ -1089,7 +1361,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth004, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), CANCELED_FROM_WIDGET);
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), CANCELED_FROM_WIDGET);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth005, TestSize.Level0)
@@ -1104,7 +1379,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth005, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), LOCKED);
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), LOCKED);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth006, TestSize.Level0)
@@ -1202,7 +1480,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
             }
         );
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), SUCCESS);
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_EQ(validType.size(), 1);
     EXPECT_EQ(validType[0], FACE);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
@@ -1253,7 +1534,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth009, Te
             }
         );
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(faceNode));
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), SUCCESS);
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_EQ(validType.size(), 1);
     EXPECT_EQ(validType[0], PIN);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
@@ -1289,7 +1573,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth010, Te
             }
         );
     EXPECT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), SUCCESS);
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), SUCCESS);
     EXPECT_EQ(validType.size(), 1);
     EXPECT_EQ(validType[0], PRIVATE_PIN);
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(1));
@@ -1306,7 +1593,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth011, Te
     int32_t userId = 110;
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType), TYPE_NOT_SUPPORT);
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    para.widgetParam = widgetParam;
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), TYPE_NOT_SUPPORT);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceFilterFaceNotAvailable001, TestSize.Level0)
@@ -1352,3 +1642,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceFilterFaceNotAvailable003, TestSize
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
+
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillRepeatedly(Return(GENERAL_ERROR));
+    EXPECT_EQ(service->CheckSkipLockedBiometricAuth(para, validType), LOCKED);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}

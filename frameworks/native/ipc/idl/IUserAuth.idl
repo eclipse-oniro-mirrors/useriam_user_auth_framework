@@ -23,6 +23,8 @@ import IModalCallback;
 import IEventListenerCallback;
 import IUserRecognitionCallback;
 import IRemoteAuthCallback;
+import ILaunchServiceCallback;
+import ILaunchServiceListCallback;
 
 option_stub_hooks on;
 
@@ -94,7 +96,30 @@ interface OHOS.UserIam.UserAuth.IUserAuth {
 
     void CheckUserRecognitionCapability([out] int checkResult);
 
+    void UnregisterUserRecognitionEventListener([in] IUserRecognitionCallback listener);
+
+    void CheckUserRecognitionCapability([out] int checkResult);
+
     void RedeemScheduledAuthToken([in] unsigned char[] challenge,
         [in] unsigned char[] scheduleToken,
         [in] IVerifyTokenCallback verifyTokenCallback);
+
+    void RegisterLaunchService([in] IpcLaunchServiceRegisterInfo[] serviceList,
+        [in] ILaunchServiceListCallback launchServiceListCallback);
+
+    void UnRegisterLaunchService([in] int uid, [in] boolean hasKey, [in] IpcLaunchServiceKey key,
+        [in] ILaunchServiceCallback launchServiceCallback);
+
+    void GetLaunchServiceInfo([in] int uid, [in] boolean hasKey, [in] IpcLaunchServiceKey key,
+        [in] ILaunchServiceListCallback launchServiceListCallback);
+
+    void GetLaunchServiceList([in] boolean hasUserId, [in] int userId,
+        [in] ILaunchServiceListCallback launchServiceListCallback);
+
+    void SetLaunchServiceState([in] int uid, [in] unsigned char[] token, [in] int activeState,
+        [in] ILaunchServiceCallback launchServiceCallback);
+
+    int SetDaemonAllowedlist([in] int userId, [in] String[] appIdentifiers, [in] boolean isAdd);
+
+    int SetDaemonForbiddenlist([in] int userId, [in] String[] appIdentifiers, [in] boolean isAdd);
 }

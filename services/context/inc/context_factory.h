@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "singleton.h"
@@ -68,6 +69,7 @@ public:
         std::vector<uint64_t> credentialIdList {};
         std::string remoteCallerName {""};
         uint32_t callerPermissions {0};
+        std::optional<uint32_t> remoteTokenId {};
         std::optional<TokenSchedule> tokenSchedule;
     };
 

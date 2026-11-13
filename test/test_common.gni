@@ -109,6 +109,7 @@ _userauth_test_services_ipc_sources = [
   "services/ipc/src/user_auth_service.cpp",
   "services/ipc/src/user_auth_service_global_config.cpp",
   "services/ipc/src/user_auth_service_token.cpp",
+  "services/ipc/src/user_launch_service.cpp",
   "services/ipc/src/user_idm_service.cpp",
   "services/ipc/src/user_idm_service_restore.cpp",
 ]
@@ -153,6 +154,8 @@ _userauth_test_client_sources = [
   "frameworks/native/client/src/user_auth_modal_inner_callback.cpp",
   "frameworks/native/client/src/user_idm_callback_service.cpp",
   "frameworks/native/client/src/user_idm_client_impl.cpp",
+  "frameworks/native/client/src/user_launch_service_callback_service.cpp",
+  "frameworks/native/client/src/user_launch_service_client_impl.cpp",
   "frameworks/native/client/src/user_recognition_callback_service.cpp",
   "frameworks/native/client/src/widget_callback_service.cpp",
 ]
@@ -224,7 +227,10 @@ if (userauth_test_has_os_account_part) {
   _userauth_test_os_account_sources =
       [ "services/core/src/os_accounts_manager_impl.cpp" ]
   userauth_test_os_account_cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
-  userauth_test_os_account_external_deps = [ "os_account:os_account_innerkits" ]
+  userauth_test_os_account_external_deps = [
+    "os_account:os_account_innerkits",
+    "os_account:authorization_innerkits",
+  ]
 } else {
   _userauth_test_os_account_sources =
       [ "services/core/src/os_accounts_manager_mock.cpp" ]

@@ -27,6 +27,8 @@
 #include "user_auth_service.h"
 #include "user_auth_common_defines.h"
 #include "user_recognition_callback_stub.h"
+#include "ilaunch_service_callback.h"
+#include "ilaunch_service_list_callback.h"
 #include "dummy_iam_callback_interface.h"
 
 #undef private
@@ -180,6 +182,38 @@ public:
     {
         sptr<IRemoteObject> tmp(nullptr);
         return tmp;
+    }
+};
+
+class DummyLaunchServiceCallback : public IRemoteStub<ILaunchServiceCallback> {
+public:
+    int32_t OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t OnLaunchServiceResult(int32_t resultCode) override
+    {
+        IAM_LOGI("start");
+        static_cast<void>(resultCode);
+        return SUCCESS;
+    }
+};
+
+class DummyLaunchServiceListCallback : public IRemoteStub<ILaunchServiceListCallback> {
+public:
+    int32_t OnRemoteRequest(uint32_t code, MessageParcel &data, MessageParcel &reply, MessageOption &option) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t OnLaunchServiceListResult(int32_t resultCode,
+        const std::vector<IpcLaunchServiceFlatInfo> &serviceList) override
+    {
+        IAM_LOGI("start");
+        static_cast<void>(resultCode);
+        static_cast<void>(serviceList);
+        return SUCCESS;
     }
 };
 
@@ -462,7 +496,11 @@ void FuzzStartAuthWidget(Parcel &parcel)
     uint64_t contextId = 0;
     ContextFactory::AuthWidgetContextPara para;
     para.sdkVersion = apiVersion;
-    g_userAuthService.StartAuthWidget(authParam, widgetParam, para, contextCallback, testModalCallback, contextId);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.challenge = authParam.challenge;
+    para.widgetParam = widgetParam;
+    g_userAuthService.StartAuthWidget(para, contextCallback, testModalCallback, contextId);
     EnsureTask();
     IAM_LOGI("end");
 }
@@ -671,7 +709,11 @@ void FuzzCheckValidSolution(Parcel &parcel)
     }
     ContextFactory::AuthWidgetContextPara para;
     para.userId = userId;
-    g_userAuthService.CheckValidSolution(para, authParam, widgetParam, validType);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.challenge = authParam.challenge;
+    para.widgetParam = widgetParam;
+    g_userAuthService.CheckValidSolution(para, validType);
     EnsureTask();
     IAM_LOGI("end");
 }
@@ -697,15 +739,11 @@ void FuzzGetAuthContextCallback(Parcel &parcel)
 {
     IAM_LOGI("begin");
     int32_t apiVersion = parcel.ReadInt32();
-    AuthParamInner authParam = {};
-    WidgetParamInner widgetParam = {};
+    std::vector<uint8_t> challenge;
+    AuthType authType = static_cast<AuthType>(parcel.ReadInt32());
+    AuthTrustLevel authTrustLevel = static_cast<AuthTrustLevel>(parcel.ReadUint32());
     sptr<IIamCallback> callback = sptr<IIamCallback>(new (nothrow) DummyUserAuthCallback);
-    g_userAuthService.GetAuthContextCallback(apiVersion, authParam, widgetParam, callback);
-    authParam.authTypes = {PIN, FACE, FINGERPRINT};
-    ReuseUnlockResult reuseUnlockResult = {};
-    reuseUnlockResult.isReuse = true;
-    authParam.reuseUnlockResult = reuseUnlockResult;
-    g_userAuthService.GetAuthContextCallback(apiVersion, authParam, widgetParam, callback);
+    g_userAuthService.GetAuthContextCallback(apiVersion, challenge, authType, authTrustLevel, callback);
     EnsureTask();
     IAM_LOGI("end");
 }
@@ -723,17 +761,25 @@ void FuzzCheckAuthWidgetParam(Parcel &parcel)
     widgetParam.title = parcel.ReadString();
     widgetParam.navigationButtonText = parcel.ReadString();
     widgetParam.windowMode = static_cast<WindowModeType>(parcel.ReadInt32());
-    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    g_userAuthService.CheckAuthWidgetParam(para);
 
     authParam.authTypes = {FACE, FINGERPRINT};
     widgetParam.navigationButtonText = "";
-    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    g_userAuthService.CheckAuthWidgetParam(para);
     authParam.authTypes = {FACE, FINGERPRINT, COMPANION_DEVICE};
-    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    para.authTypeList = authParam.authTypes;
+    g_userAuthService.CheckAuthWidgetParam(para);
     widgetParam.navigationButtonText = "button";
-    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    para.widgetParam = widgetParam;
+    g_userAuthService.CheckAuthWidgetParam(para);
     widgetParam.title = "";
-    g_userAuthService.CheckAuthWidgetParam(authParam, widgetParam);
+    para.widgetParam = widgetParam;
+    g_userAuthService.CheckAuthWidgetParam(para);
     EnsureTask();
     IAM_LOGI("end");
 }
@@ -821,11 +867,9 @@ void FuzzStartWidgetContext(Parcel &parcel)
     IAM_LOGI("begin");
     sptr<IIamCallback> iamCallback = sptr<IIamCallback>(new (nothrow) DummyIamCallbackInterface);
     std::shared_ptr<ContextCallback> contextCallback = ContextCallback::NewInstance(iamCallback, TRACE_ADD_CREDENTIAL);
-    AuthParamInner authParam = {};
-    WidgetParamInner widgetParam = {};
-    std::vector<AuthType> validType = {PIN};
     ContextFactory::AuthWidgetContextPara para;
-    g_userAuthService.StartWidgetContext(contextCallback, authParam, widgetParam, validType, para, nullptr);
+    para.authTypeList = {PIN};
+    g_userAuthService.StartWidgetContext(contextCallback, para, nullptr);
     EnsureTask();
     IAM_LOGI("end");
 }
@@ -1049,14 +1093,163 @@ void FuzzProcessPinExpired(Parcel &parcel)
 {
     IAM_LOGI("FuzzProcessPinExpired begin");
     int32_t ret = parcel.ReadInt32();
-    AuthParamInner authParam = {};
     std::vector<AuthType> validType = {};
     ContextFactory::AuthWidgetContextPara para = {};
-    g_userAuthService.ProcessPinExpired(ret, authParam, validType, para);
-    authParam.authType = AuthType::PRIVATE_PIN;
-    g_userAuthService.ProcessPinExpired(PIN_EXPIRED, authParam, validType, para);
+    g_userAuthService.ProcessPinExpired(ret, validType, para);
+    para.authTypeList = {AuthType::PRIVATE_PIN};
+    g_userAuthService.ProcessPinExpired(PIN_EXPIRED, validType, para);
     EnsureTask();
     IAM_LOGI("FuzzProcessPinExpired end");
+}
+
+void FuzzRegisterLaunchService(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    std::vector<IpcLaunchServiceRegisterInfo> serviceList;
+    uint32_t listLen = parcel.ReadUint32() % 5; // max 5 items
+    serviceList.reserve(listLen);
+    for (uint32_t i = 0; i < listLen; i++) {
+        IpcLaunchServiceRegisterInfo info = {};
+        info.uid = parcel.ReadInt32();
+        info.serviceKey.serviceName = parcel.ReadString();
+        info.serviceKey.moduleName = parcel.ReadString();
+        info.bundleInfo.ownerBundleName = parcel.ReadString();
+        info.bundleInfo.appIndex = parcel.ReadInt32();
+        info.bundleInfo.appIdentifier = parcel.ReadString();
+        info.serviceInfo.serviceType = parcel.ReadInt32();
+        info.serviceInfo.additionalInfo = parcel.ReadString();
+        serviceList.push_back(info);
+    }
+    sptr<ILaunchServiceListCallback> callback(nullptr);
+    if (parcel.ReadBool()) {
+        callback = sptr<ILaunchServiceListCallback>(new (std::nothrow) DummyLaunchServiceListCallback());
+    }
+    g_userAuthService.RegisterLaunchService(serviceList, callback);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+    g_userAuthService.RegisterLaunchService(serviceList, callback);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzUnRegisterLaunchService(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t uid = parcel.ReadInt32();
+    bool hasKey = parcel.ReadBool();
+    IpcLaunchServiceKey key = {};
+    if (hasKey) {
+        key.serviceName = parcel.ReadString();
+        key.moduleName = parcel.ReadString();
+    }
+    sptr<ILaunchServiceCallback> callback(nullptr);
+    if (parcel.ReadBool()) {
+        callback = sptr<ILaunchServiceCallback>(new (std::nothrow) DummyLaunchServiceCallback());
+    }
+    g_userAuthService.UnRegisterLaunchService(uid, hasKey, key, callback);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+    g_userAuthService.UnRegisterLaunchService(uid, hasKey, key, callback);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzGetLaunchServiceInfo(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t uid = parcel.ReadInt32();
+    bool hasKey = parcel.ReadBool();
+    IpcLaunchServiceKey key = {};
+    if (hasKey) {
+        key.serviceName = parcel.ReadString();
+        key.moduleName = parcel.ReadString();
+    }
+    sptr<ILaunchServiceListCallback> callback(nullptr);
+    if (parcel.ReadBool()) {
+        callback = sptr<ILaunchServiceListCallback>(new (std::nothrow) DummyLaunchServiceListCallback());
+    }
+    g_userAuthService.GetLaunchServiceInfo(uid, hasKey, key, callback);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+    g_userAuthService.GetLaunchServiceInfo(uid, hasKey, key, callback);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzGetLaunchServiceList(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    bool hasUserId = parcel.ReadBool();
+    int32_t userId = parcel.ReadInt32();
+    sptr<ILaunchServiceListCallback> callback(nullptr);
+    if (parcel.ReadBool()) {
+        callback = sptr<ILaunchServiceListCallback>(new (std::nothrow) DummyLaunchServiceListCallback());
+    }
+    g_userAuthService.GetLaunchServiceList(hasUserId, userId, callback);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+    g_userAuthService.GetLaunchServiceList(hasUserId, userId, callback);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzSetLaunchServiceState(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t uid = parcel.ReadInt32();
+    std::vector<uint8_t> token;
+    FillFuzzUint8Vector(parcel, token);
+    int32_t activeState = parcel.ReadInt32();
+    sptr<ILaunchServiceCallback> callback(nullptr);
+    if (parcel.ReadBool()) {
+        callback = sptr<ILaunchServiceCallback>(new (std::nothrow) DummyLaunchServiceCallback());
+    }
+    g_userAuthService.SetLaunchServiceState(uid, token, activeState, callback);
+    IpcCommon::AddPermission(USE_USER_ACCESS_MANAGER);
+    g_userAuthService.SetLaunchServiceState(uid, token, activeState, callback);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzSetDaemonAllowedlist(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t userId = parcel.ReadInt32();
+    std::vector<std::string> appIdentifiers;
+    uint32_t listLen = parcel.ReadUint32() % 5; // max 5 items
+    appIdentifiers.reserve(listLen);
+    for (uint32_t i = 0; i < listLen; i++) {
+        appIdentifiers.push_back(parcel.ReadString());
+    }
+    bool isAdd = parcel.ReadBool();
+    int32_t funcRet = SUCCESS;
+    g_userAuthService.SetDaemonAllowedlist(userId, appIdentifiers, isAdd, funcRet);
+    IpcCommon::AddPermission(ENTERPRISE_DEVICE_MGR);
+    g_userAuthService.SetDaemonAllowedlist(userId, appIdentifiers, isAdd, funcRet);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
+void FuzzSetDaemonForbiddenlist(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t userId = parcel.ReadInt32();
+    std::vector<std::string> appIdentifiers;
+    uint32_t listLen = parcel.ReadUint32() % 5; // max 5 items
+    appIdentifiers.reserve(listLen);
+    for (uint32_t i = 0; i < listLen; i++) {
+        appIdentifiers.push_back(parcel.ReadString());
+    }
+    bool isAdd = parcel.ReadBool();
+    int32_t funcRet = SUCCESS;
+    g_userAuthService.SetDaemonForbiddenlist(userId, appIdentifiers, isAdd, funcRet);
+    IpcCommon::AddPermission(ENTERPRISE_DEVICE_MGR);
+    g_userAuthService.SetDaemonForbiddenlist(userId, appIdentifiers, isAdd, funcRet);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
 }
 
 using FuzzFunc = decltype(FuzzGetAvailableStatus);
@@ -1107,7 +1300,14 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzProcessPinExpired,
     FuzzProcessAuthParamForRemoteAuth,
     FuzzCheckAuthPermissionAndParam,
-    FuzzStartLocalRemoteAuthContext
+    FuzzStartLocalRemoteAuthContext,
+    FuzzRegisterLaunchService,
+    FuzzUnRegisterLaunchService,
+    FuzzGetLaunchServiceInfo,
+    FuzzGetLaunchServiceList,
+    FuzzSetLaunchServiceState,
+    FuzzSetDaemonAllowedlist,
+    FuzzSetDaemonForbiddenlist,
 };
 
 void UserAuthFuzzTest(const uint8_t *data, size_t size)

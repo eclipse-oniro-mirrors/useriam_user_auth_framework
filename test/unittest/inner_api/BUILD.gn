@@ -64,6 +64,7 @@ ohos_unittest("iam_inner_api_test") {
               "src/user_idm_client_test.cpp",
               "src/user_recognition_callback_service_test.cpp",
               "src/widget_callback_service_test.cpp",
+              "src/user_launch_service_client_test.cpp",
             ]
 
   configs = [

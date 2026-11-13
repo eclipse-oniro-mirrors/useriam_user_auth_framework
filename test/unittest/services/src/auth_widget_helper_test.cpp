@@ -59,104 +59,6 @@ void AuthWidgetHelperTest::TearDown()
 {
 }
 
-HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestInitWidgetContextParam001, TestSize.Level0)
-{
-    AuthParamInner authParam;
-    authParam.authTypes.push_back(FACE);
-    authParam.authTypes.push_back(ALL);
-    authParam.authTypes.push_back(PIN);
-    authParam.authTypes.push_back(FINGERPRINT);
-    authParam.authTrustLevel = ATL2;
-    WidgetParamInner widgetParam;
-    widgetParam.title = "使用密码验证";
-    widgetParam.navigationButtonText = "确定";
-    ContextFactory::AuthWidgetContextPara para;
-    para.userId = 1;
-    std::vector<AuthType> validType;
-    EXPECT_TRUE(AuthWidgetHelper::InitWidgetContextParam(authParam, validType, widgetParam, para));
-    AuthParamInner authParam1;
-    authParam1.authTypes.push_back(FACE);
-    authParam1.authTrustLevel = ATL2;
-    AuthWidgetHelper::InitWidgetContextParam(authParam1, validType, widgetParam, para);
-}
-
-HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestInitWidgetContextParam002, TestSize.Level0)
-{
-    AuthParamInner authParam;
-    authParam.authTypes.push_back(FACE);
-    authParam.authTypes.push_back(ALL);
-    authParam.authTypes.push_back(PIN);
-    authParam.authTypes.push_back(FINGERPRINT);
-    authParam.authTrustLevel = ATL2;
-    WidgetParamInner widgetParam;
-    widgetParam.title = "使用密码验证";
-    widgetParam.navigationButtonText = "确定";
-    ContextFactory::AuthWidgetContextPara para;
-    para.userId = 1;
-    std::vector<AuthType> validType = authParam.authTypes;
-    EXPECT_TRUE(AuthWidgetHelper::InitWidgetContextParam(authParam, validType, widgetParam, para));
-}
-
-HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestInitWidgetContextParam003, TestSize.Level0)
-{
-    AuthParamInner authParam;
-    authParam.authTypes.push_back(PIN);
-    authParam.authTrustLevel = ATL2;
-    WidgetParamInner widgetParam;
-    widgetParam.title = "使用密码验证";
-    widgetParam.navigationButtonText = "确定";
-    widgetParam.windowMode = WindowModeType::DIALOG_BOX;
-    ContextFactory::AuthWidgetContextPara para;
-    para.userId = 1;
-    std::vector<AuthType> validType = authParam.authTypes;
-    EXPECT_TRUE(AuthWidgetHelper::InitWidgetContextParam(authParam, validType, widgetParam, para));
-    EXPECT_EQ(para.widgetParam.windowMode, WindowModeType::DIALOG_BOX);
-}
-
-HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestInitWidgetContextParam004, TestSize.Level0)
-{
-    AuthParamInner authParam;
-    authParam.authTypes.push_back(PRIVATE_PIN);
-    authParam.authTrustLevel = ATL2;
-    WidgetParamInner widgetParam;
-    widgetParam.title = "使用密码验证";
-    widgetParam.navigationButtonText = "确定";
-    widgetParam.windowMode = WindowModeType::UNKNOWN_WINDOW_MODE;
-    ContextFactory::AuthWidgetContextPara para;
-    para.userId = 1;
-    std::vector<AuthType> validType = authParam.authTypes;
-    EXPECT_TRUE(AuthWidgetHelper::InitWidgetContextParam(authParam, validType, widgetParam, para));
-    EXPECT_EQ(para.widgetParam.windowMode, WindowModeType::DIALOG_BOX);
-}
-
-HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestInitWidgetContextParam005, TestSize.Level0)
-{
-    AuthParamInner authParam;
-    authParam.authTypes.push_back(FACE);
-    authParam.authTrustLevel = ATL2;
-    WidgetParamInner widgetParam;
-    widgetParam.title = "使用密码验证";
-    widgetParam.navigationButtonText = "确定";
-    ContextFactory::AuthWidgetContextPara para;
-    para.userId = 1;
-    std::vector<AuthType> validType = authParam.authTypes;
-    EXPECT_TRUE(AuthWidgetHelper::InitWidgetContextParam(authParam, validType, widgetParam, para));
-}
-
-HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestInitWidgetContextParam006, TestSize.Level0)
-{
-    AuthParamInner authParam;
-    authParam.authTypes.push_back(TUI_PIN);
-    authParam.authTrustLevel = ATL2;
-    WidgetParamInner widgetParam;
-    widgetParam.title = "使用密码验证";
-    widgetParam.navigationButtonText = "确定";
-    ContextFactory::AuthWidgetContextPara para;
-    para.userId = 1;
-    std::vector<AuthType> validType = authParam.authTypes;
-    EXPECT_TRUE(AuthWidgetHelper::InitWidgetContextParam(authParam, validType, widgetParam, para));
-}
-
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestCheckValidSolution001, TestSize.Level0)
 {
     int32_t userId = 1;
@@ -192,16 +94,28 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestCheckReuseUnlockResult001, Te
     ContextFactory::AuthWidgetContextPara para;
     para.userId = 1;
     Attributes extraInfo;
-    AuthParamInner authParam;
-    authParam.reuseUnlockResult.isReuse = false;
-    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), INVALID_PARAMETERS);
+    ReuseUnlockResult reuseUnlockResult;
+    reuseUnlockResult.isReuse = true;
+    reuseUnlockResult.reuseDuration = 5 * 60 * 1000;
+    reuseUnlockResult.reuseMode = AUTH_TYPE_RELEVANT;
 
-    authParam.reuseUnlockResult.isReuse = true;
-    authParam.reuseUnlockResult.reuseDuration = 0;
-    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), INVALID_PARAMETERS);
+    ReuseUnlockResult authParam;
+    authParam.isReuse = true;
+    authParam.reuseDuration = 5 * 60 * 1000;
+    authParam.reuseMode = AUTH_TYPE_RELEVANT;
 
-    authParam.reuseUnlockResult.reuseDuration = 6 * 60 * 1000;
-    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), INVALID_PARAMETERS);
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    ReuseUnlockResult reuseUnlockResult;
+    reuseUnlockResult.isReuse = false;
+    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, reuseUnlockResult, extraInfo), INVALID_PARAMETERS);
+
+    reuseUnlockResult.isReuse = true;
+    reuseUnlockResult.reuseDuration = 0;
+    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, reuseUnlockResult, extraInfo), INVALID_PARAMETERS);
+
+    reuseUnlockResult.reuseDuration = 6 * 60 * 1000;
+    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, reuseUnlockResult, extraInfo), INVALID_PARAMETERS);
 }
 
 HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestCheckReuseUnlockResult002, TestSize.Level0)
@@ -300,9 +214,25 @@ HWTEST_F(AuthWidgetHelperTest, AuthWidgetHelperTestGetUserAuthProfile_CompanionD
         [](const Attributes &condition, Attributes &values) {
             values.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, -1);
             values.SetInt32Value(Attributes::ATTR_FREEZING_TIME, 0);
-            return SUCCESS;
-        }
-    );
+                return SUCCESS;
+            }
+        );
+    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, reuseUnlockResult, extraInfo), SUCCESS);
+    ON_CALL(*mockHdi, CheckReuseUnlockResult)
+        .WillByDefault(Return(SUCCESS));
+    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), SUCCESS);
+
+    para.sdkVersion = 10001;
+    para.authTypeList.push_back(FINGERPRINT);
+    ON_CALL(*mockHdi, CheckReuseUnlockResult).WillByDefault(Return(SUCCESS));
+    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), SUCCESS);
+
+    authParam.isReuse = true;
+    authParam.reuseDuration = 4 * 60 * 1000;
+    authParam.reuseMode = CALLER_IRRELEVANT_AUTH_TYPE_IRRELEVANT;
+    EXPECT_EQ(AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo), SUCCESS);
+    MockUserAuthEngine::Holder::GetInstance().Reset();
+}
     ResourceNodePool::Instance().Insert(mockResourceNode);
 
     EXPECT_EQ(AuthWidgetHelper::GetUserAuthProfile(userId, authType, profile, credentialIdList),

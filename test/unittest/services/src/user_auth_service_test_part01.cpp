@@ -142,6 +142,43 @@ static void SetupPropertyCallbackWithSync(sptr<MockGetExecutorPropertyCallback> 
             sync.Notify();
             return SUCCESS;
         });
+    widgetParam.navigationButtonText = "face";
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    EXPECT_EQ(service->CheckValidSolution(para, validType),
+        INVALID_PARAMETERS);
+    widgetParam.navigationButtonText.clear();
+    authParam.authTypes.emplace_back(PRIVATE_PIN);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    EXPECT_EQ(service->CheckValidSolution(para, validType),
+        INVALID_PARAMETERS);
+    authParam.authTypes.clear();
+    IpcCommon::SetSkipAccountVerifiedFlag(true);
+    authParam.skipLockedBiometricAuth = false;
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    EXPECT_EQ(service->CheckValidSolution(para, validType), TYPE_NOT_SUPPORT);
+    IpcCommon::SetSkipAccountVerifiedFlag(false);
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetCallerInfoTest, TestSize.Level0)
+{
+    auto service = Common::MakeShared<UserAuthService>();
+    ASSERT_NE(service, nullptr);
+    IpcCommon::SetSkipUserFlag(true);
+    IpcCommon::SetSkipUserFlag(false);
+}
+
 }
 
 static void SetupPropertyCallbackWithTwoSyncs(sptr<MockGetExecutorPropertyCallback> &testCallback, SimpleSync &sync)
@@ -2119,3 +2156,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceQueryReusableAuthResultTest, TestSi
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckCallerPermissionForUserIdTest, TestSize.Level0)
+{
+    auto service = Common::MakeShared<UserAuthService>();
+    ContextFactory::AuthWidgetContextPara para = {};
+    IpcCommon::SetSkipUserFlag(true);
+    EXPECT_EQ(service->CheckCallerPermissionForUserId(para, true), GENERAL_ERROR);
+    IpcCommon::SetSkipUserFlag(false);
+}

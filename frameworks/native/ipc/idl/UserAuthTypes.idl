@@ -266,3 +266,69 @@ struct IpcUserRecognitionResult {
     /** Trust level of the underlying authentication. */
     unsigned int authTrustLevel;
 };
+
+/**
+ * @brief Key to identify a launch service.
+ */
+struct IpcLaunchServiceKey {
+    /** Launch service name. Maximum length: 128 bytes. */
+    String serviceName;
+    /** Module name. Maximum length: 128 bytes. */
+    String moduleName;
+};
+
+/**
+ * @brief Extension info of a service.
+ */
+struct IpcServiceExtInfo {
+    /** Service type. See LaunchServiceType. */
+    int serviceType;
+    /** Service info assigned by AMS. Maximum length: 1K. */
+    String additionalInfo;
+};
+
+/**
+ * @brief Extension info of the bundle that owns the launch service.
+ */
+struct IpcBundleExtInfo {
+    /** Bundle name of the application that owns the service. Maximum length: 128 bytes. */
+    String ownerBundleName;
+    /** Application index. */
+    int appIndex;
+    /** Application identifier. Maximum length: 128 bytes. */
+    String appIdentifier;
+};
+
+/**
+ * @brief Registration info of a launch service.
+ */
+struct IpcLaunchServiceRegisterInfo {
+    /** Caller uid. */
+    int uid;
+    /** Launch service key. */
+    IpcLaunchServiceKey serviceKey;
+    /** Bundle extension info. */
+    IpcBundleExtInfo bundleInfo;
+    /** Service extension info. */
+    IpcServiceExtInfo serviceInfo;
+};
+
+/**
+ * @brief Information of a registered launch service.
+ */
+struct IpcLaunchServiceFlatInfo {
+    /** bundle uid. */
+    int uid;
+    /** Launch service key. */
+    IpcLaunchServiceKey serviceKey;
+    /** Bundle extension info. */
+    IpcBundleExtInfo bundleInfo;
+    /** Service extension info. */
+    IpcServiceExtInfo serviceInfo;
+    /** Active state of the service. See LaunchServiceState. */
+    int activeState;
+    /** Whether the service is forbidden. */
+    boolean isForbidden;
+    /** The number of services registered by application. */
+    unsigned int launchServiceSize;
+};
