@@ -379,7 +379,7 @@ int32_t UserAuthService::AuthWidgetForToken(ContextFactory::AuthWidgetContextPar
     return SUCCESS;
 }
 
-int32_t UserAuthService::AdminAuthForToken(std::vector<uint8_t> &authToken)
+int32_t UserAuthService::AdminAuthForToken(int32_t uid, std::vector<uint8_t> &authToken)
 {
     IAM_LOGI("start launch service auth for token");
     auto promise = std::make_shared<std::promise<int32_t>>();
@@ -388,9 +388,15 @@ int32_t UserAuthService::AdminAuthForToken(std::vector<uint8_t> &authToken)
     auto callback = std::make_shared<AdminAuthResultCallback>(promise);
     IF_FALSE_LOGE_AND_RETURN_VAL(callback != nullptr, GENERAL_ERROR);
 
+    int32_t pid = 0;
+    if (!IpcCommon::GetRunningAppPid(uid, pid)) {
+        IAM_LOGE("failed to get running app pid, uid:%{public}d", uid);
+        return GENERAL_ERROR;
+    }
+
     AccountSA::SubjectInfo accountInfo = {};
-    accountInfo.pid = getpid();
-    accountInfo.uid = getuid();
+    accountInfo.pid = pid;
+    accountInfo.uid = uid;
     AccountSA::AcquireAuthorizationOptions options = {};
     options.challenge = {};
     options.isReuseNeeded = false;
@@ -418,6 +424,18 @@ int32_t UserAuthService::AdminAuthForToken(std::vector<uint8_t> &authToken)
     return SUCCESS;
 }
 
+int32_t UserAuthService::GetAuthToken(EngLaunchServiceType serviceType, int32_t uid,
+    ContextFactory::AuthWidgetContextPara &para, std::vector<uint8_t> &authToken)
+{
+    if (!authToken.empty()) {
+        return SUCCESS;
+    }
+    if (serviceType == EngLaunchServiceType::PRIVILEGED_DAEMON) {
+        return AdminAuthForToken(uid, authToken);
+    }
+    return AuthWidgetForToken(authPara, authToken);
+}
+
 int32_t UserAuthService::SetLaunchServiceState(int32_t uid, const std::vector<uint8_t> &token,
     int32_t activeState, const sptr<ILaunchServiceCallback> &launchServiceCallback)
 {
@@ -443,32 +461,20 @@ int32_t UserAuthService::SetLaunchServiceState(int32_t uid, const std::vector<ui
     para.tokenId = IpcCommon::GetAccessTokenId(*this);
     ThreadHandlerManager::GetInstance().PostTaskOnTemporaryThread("SetLaunchServiceState",
         [this, uid, token, activeState, launchServiceCallback, para]() {
-            ContextFactory::AuthWidgetContextPara authPara = std::move(para);
-            std::vector<uint8_t> authToken = std::move(token);
             EngLaunchServiceType serviceType = EngLaunchServiceType::INVALID;
             int32_t ret = GetUserAuthEngine().GetAppLaunchServiceType(uid, serviceType);
             if (ret != SUCCESS) {
                 launchServiceCallback->OnLaunchServiceResult(ret);
                 return;
             }
-            if (authToken.empty()) {
-                if (serviceType == EngLaunchServiceType::PRIVILEGED_DAEMON) {
-                    int32_t authRet = AdminAuthForToken(authToken);
-                    if (authRet != SUCCESS) {
-                        launchServiceCallback->OnLaunchServiceResult(authRet);
-                        return;
-                    }
-                } else {
-                    int32_t authRet = AuthWidgetForToken(authPara, authToken);
-                    if (authRet != SUCCESS) {
-                        launchServiceCallback->OnLaunchServiceResult(authRet);
-                        return;
-                    }
-                }
+            ret = GetAuthToken(serviceType, uid, para, authToken);
+            if (ret != SUCCESS) {
+                launchServiceCallback->OnLaunchServiceResult(ret);
+                return;
             }
             EngLaunchServiceState engineState = ConvertToEngLaunchServiceState(activeState, serviceType);
-            int32_t funcRet = GetUserAuthEngine().SetLaunchServiceState(uid, authToken, engineState);
-            launchServiceCallback->OnLaunchServiceResult(funcRet);
+            ret = GetUserAuthEngine().SetLaunchServiceState(uid, token, engineState);
+            launchServiceCallback->OnLaunchServiceResult(ret);
         });
     return SUCCESS;
 }

@@ -283,7 +283,7 @@ struct IpcLaunchServiceKey {
 struct IpcServiceExtInfo {
     /** Service type. See LaunchServiceType. */
     int serviceType;
-    /** Service info assigned by AMS. Maximum length: 1K. */
+    /** Additional info. Maximum length: 1K. */
     String additionalInfo;
 };
 

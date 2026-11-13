@@ -69,7 +69,7 @@ struct LaunchServiceKey {
 struct ServiceExtInfo {
     /** Service type. */
     LaunchServiceType serviceType {};
-    /** Service info assigned by AMS. Maximum length: 1K. */
+    /** Additional info. Maximum length: 1K. */
     std::string additionalInfo {};
 };
 

@@ -194,6 +194,33 @@ bool IpcCommon::CheckForegroundApplication(const std::string &bundleName)
     return true;
 }
 
+bool IpcCommon::GetRunningAppPid(int32_t uid, int32_t &pid)
+{
+    sptr<ISystemAbilityManager> samgrClient = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (samgrClient == nullptr) {
+        IAM_LOGI("Get system ability manager failed");
+        return false;
+    }
+    sptr<AppExecFwk::IAppMgr> iAppManager =
+        iface_cast<AppExecFwk::IAppMgr>(samgrClient->GetSystemAbility(APP_MGR_SERVICE_ID));
+    if (iAppManager == nullptr) {
+        IAM_LOGI("Failed to get ability manager service");
+        return false;
+    }
+    std::vector<AppExecFwk::RunningProcessInfo> runningProcesses = {};
+    iAppManager->GetAllRunningProcesses(runningProcesses);
+    auto it = std::find_if(runningProcesses.begin(), runningProcesses.end(), [uid] (const auto &process) {
+        return process.uid_ == uid;
+    });
+    if (it == runningProcesses.end()) {
+        IAM_LOGI("app with uid:%{public}d is not running", uid);
+        return false;
+    }
+    pid = it->pid_;
+    return true;
+}
+
+
 bool IpcCommon::CheckPermission(IPCObjectStub &stub, Permission permission)
 {
     switch (permission) {

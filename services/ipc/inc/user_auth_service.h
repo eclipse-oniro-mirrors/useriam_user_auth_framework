@@ -217,7 +217,9 @@ private:
     int32_t GetLaunchServiceListInner(std::optional<int32_t> optUserId,
         std::vector<IpcLaunchServiceFlatInfo> &serviceList);
     int32_t AuthWidgetForToken(ContextFactory::AuthWidgetContextPara &para, std::vector<uint8_t> &token);
-    int32_t AdminAuthForToken(std::vector<uint8_t> &authToken);
+    int32_t AdminAuthForToken(int32_t uid, std::vector<uint8_t> &authToken);
+    int32_t GetAuthToken(EngLaunchServiceType serviceType, int32_t uid, ContextFactory::AuthWidgetContextPara &para,
+        std::vector<uint8_t> &authToken);
     static std::mutex mutex_;
     static std::shared_ptr<UserAuthService> instance_;
 };
