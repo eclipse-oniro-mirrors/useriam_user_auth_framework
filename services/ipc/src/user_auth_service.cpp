@@ -703,10 +703,13 @@ int32_t UserAuthService::CheckSystemOnlyAuthParam(const IpcAuthParamInner &ipcAu
     bool hasSystemOnlyField = ipcAuthParamInner.hasAdditionalInfo || ipcAuthParamInner.hasTokenSchedule ||
         ipcAuthParamInner.authIntent >= AuthIntent::QUESTION_AUTH || !ipcAuthParamInner.credentialIdList.empty() ||
         hasRemoteAuthParam;
-    if (hasSystemOnlyField && !IpcCommon::IsSystemCaller(*this)) {
-        IAM_LOGE("system-only auth param used by non-system caller, hasAdditionalInfo:%{public}d, "
-            "hasTokenSchedule:%{public}d, authIntent:%{public}d, credentialIdCount:%{public}zu, "
-            "hasRemoteAuthParam:%{public}d", ipcAuthParamInner.hasAdditionalInfo,
+    bool isSudoNativeRootCaller = ipcAuthParamInner.authIntent == AuthIntent::SUDO_PIN_AUTH &&
+        IpcCommon::IsCallingNativeRoot();
+    if (hasSystemOnlyField && !IpcCommon::IsSystemCaller(*this) && !isSudoNativeRootCaller) {
+        IAM_LOGE("system-only auth param rejected: not system caller nor sudo native root, "
+            "hasAdditionalInfo:%{public}d, hasTokenSchedule:%{public}d, authIntent:%{public}d, "
+            "credentialIdCount:%{public}zu, hasRemoteAuthParam:%{public}d",
+            ipcAuthParamInner.hasAdditionalInfo,
             ipcAuthParamInner.hasTokenSchedule, ipcAuthParamInner.authIntent,
             ipcAuthParamInner.credentialIdList.size(), hasRemoteAuthParam);
         return CHECK_SYSTEM_APP_FAILED;
@@ -724,6 +727,13 @@ int32_t UserAuthService::CheckAuthUserParam(const IpcAuthParamInner &ipcAuthPara
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser CheckSystemOnlyAuthParam fail");
         contextCallback->OnResult(checkRet, extraInfo);
         return checkRet;
+    }
+    if (authParam.additionalInfo.has_value() &&
+        UserAuthHelper::GetUtf8CharCount(authParam.additionalInfo.value()) > static_cast<size_t>(ADDITIONAL_INFO_MAX)) {
+        IAM_LOGE("additionalInfo is longer than ADDITIONAL_INFO_MAX");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser additionalInfo too long");
+        contextCallback->OnResult(INVALID_PARAMETERS, extraInfo);
+        return INVALID_PARAMETERS;
     }
     checkRet = UserAuthHelper::CheckTokenSchedule(authParam.tokenSchedule);
     if (checkRet != SUCCESS) {
@@ -856,7 +866,7 @@ int32_t UserAuthService::StartSudoAuthUser(const AuthParamInner &authParam,
     const std::shared_ptr<ContextCallback> &contextCallback, uint64_t &contextId)
 {
     Attributes extraInfo;
-    if (!IpcCommon::IsSystemCaller(*this)) {
+    if (!IpcCommon::IsSystemCaller(*this) && !IpcCommon::IsCallingNativeRoot()) {
         IAM_LOGE("sudo auth is only allowed for system app or SA caller, callerType:%{public}d",
             IpcCommon::GetDirectCallerType(*this));
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser sudo caller check fail");
@@ -885,9 +895,8 @@ int32_t UserAuthService::CheckSudoAuthParam(const AuthParamInner &authParam,
         IAM_LOGE("sudo auth only supports pin, authType: %{public}d", static_cast<int32_t>(authParam.authType));
         return INVALID_PARAMETERS;
     }
-    if (!authParam.additionalInfo.has_value() || authParam.additionalInfo->empty() ||
-        UserAuthHelper::GetUtf8CharCount(authParam.additionalInfo.value()) > static_cast<size_t>(ADDITIONAL_INFO_MAX)) {
-        IAM_LOGE("sudo additionalInfo is empty or longer than ADDITIONAL_INFO_MAX");
+    if (!authParam.additionalInfo.has_value() || authParam.additionalInfo->empty()) {
+        IAM_LOGE("sudo additionalInfo is empty");
         return INVALID_PARAMETERS;
     }
     if (authParam.reuseUnlockResult.isReuse) {

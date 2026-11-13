@@ -207,6 +207,11 @@ bool IpcCommon::IsSystemCaller(IPCObjectStub &stub)
     return CheckPermission(stub, IS_SYSTEM_APP);
 }
 
+bool IpcCommon::IsCallingNativeRoot()
+{
+    return false;
+}
+
 std::optional<EngCallerType> IpcCommon::GetEngCallerType(int32_t callerType)
 {
     if (callerType == Security::AccessToken::TOKEN_HAP) {

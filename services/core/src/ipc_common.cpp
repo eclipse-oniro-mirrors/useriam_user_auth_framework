@@ -367,6 +367,12 @@ bool IpcCommon::IsSystemCaller(IPCObjectStub &stub)
     return CheckPermission(stub, IS_SYSTEM_APP);
 }
 
+bool IpcCommon::IsCallingNativeRoot()
+{
+    constexpr int32_t ROOT_UID = 0;
+    return IPCSkeleton::GetCallingUid() == ROOT_UID;
+}
+
 bool IpcCommon::GetCallerName(IPCObjectStub &stub, std::string &callerName, int32_t &callerType)
 {
     uint32_t tokenId = GetAccessTokenId(stub);

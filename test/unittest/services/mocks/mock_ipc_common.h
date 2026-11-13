@@ -69,6 +69,8 @@ public:
     static bool IsOsAccountVerified(int32_t userId);
     static int32_t GetDirectCallerType(IPCObjectStub &stub);
     static bool IsSystemCaller(IPCObjectStub &stub);
+    static bool IsCallingNativeRoot();
+    static void SetNativeRootFlag(bool isNativeRoot);
     static void SetSkipActiveUserIdCallerFlag(bool isSkip);
     static void ReportInterfaceCall(IPCObjectStub &stub, uint32_t code, const std::string &serviceName);
     static std::optional<EngCallerType> GetEngCallerType(int32_t callerType);
@@ -81,6 +83,7 @@ private:
     static bool skipCallerFlag_;
     static bool skipAccountVerifiedFlag_;
     static bool skipActiveUserIdFlag_;
+    static bool isNativeRootFlag_;
 };
 } // namespace UserAuth
 } // namespace UserIam

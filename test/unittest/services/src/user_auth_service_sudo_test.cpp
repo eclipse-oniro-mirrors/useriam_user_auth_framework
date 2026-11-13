@@ -93,6 +93,7 @@ public:
         ResourceNodePool::Instance().Delete(PIN_EXECUTOR_INDEX);
         MockUserAuthEngine::Holder::GetInstance().Reset();
         IpcCommon::DeleteAllPermission();
+        IpcCommon::SetNativeRootFlag(false);
     }
 };
 
@@ -190,6 +191,39 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthParamRejected, TestSize
     param = MakeSudoIpcParam("sudo title");
     param.hasTokenSchedule = true;
     expectRejected(param, remoteParam);
+}
+
+HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceAdditionalInfoTooLongRejectedForAllIntents, TestSize.Level0)
+{
+    // additionalInfo length validation applies to all auth intents, not only sudo
+    UserAuthService service;
+    IpcRemoteAuthParam ipcRemoteAuthParam = {};
+    auto expectRejected = [&service](IpcAuthParamInner &ipcAuthParamInner) {
+        auto testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
+        ASSERT_NE(testCallback, nullptr);
+        EXPECT_CALL(*testCallback, OnResult(ResultCode::INVALID_PARAMETERS, _)).Times(1);
+        sptr<IIamCallback> callbackInterface = testCallback;
+        uint64_t contextId = 0;
+        IpcRemoteAuthParam remoteParam = {};
+        int32_t ret = service.AuthUser(ipcAuthParamInner, remoteParam, callbackInterface, contextId);
+        EXPECT_EQ(ret, INVALID_PARAMETERS);
+        EXPECT_EQ(contextId, 0);
+        EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
+    };
+
+    // default intent: over ADDITIONAL_INFO_MAX ASCII characters
+    auto param = MakeSudoIpcParam(std::string(ADDITIONAL_INFO_MAX + 1, 'x'));
+    param.authIntent = static_cast<int32_t>(AuthIntent::DEFAULT);
+    expectRejected(param);
+
+    // multi-byte characters are counted as UTF-8 characters, not bytes
+    std::string multiByteInfo;
+    for (int32_t i = 0; i < ADDITIONAL_INFO_MAX + 1; ++i) {
+        multiByteInfo += "你";
+    }
+    param = MakeSudoIpcParam(multiByteInfo);
+    param.authIntent = static_cast<int32_t>(AuthIntent::DEFAULT);
+    expectRejected(param);
 }
 
 HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAcceptsTokenSchedule, TestSize.Level0)
@@ -320,6 +354,36 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthPermissionDenied, TestS
     DrainSerialThread();
     auto contexts = ContextPool::Instance().Select(SUDO_AUTH_CONTEXT);
     EXPECT_TRUE(contexts.empty());
+}
+
+HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthNativeRootAccepted, TestSize.Level0)
+{
+    // a native root caller (uid 0) holding ACCESS_USER_AUTH_INTERNAL passes the sudo
+    // system-caller gates without IS_SYSTEM_APP; only system permission is substituted
+    IpcCommon::DeleteAllPermission();
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    IpcCommon::SetNativeRootFlag(true);
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    // No credential -> NOT_ENROLLED terminal keeps the case self-contained.
+    ON_CALL(*mockHdi, GetCredential(_, _, _))
+        .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
+            return SUCCESS;
+        });
+
+    UserAuthService service;
+    auto testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
+    ASSERT_NE(testCallback, nullptr);
+    EXPECT_CALL(*testCallback, OnResult(ResultCode::NOT_ENROLLED, _)).Times(1);
+
+    IpcRemoteAuthParam ipcRemoteAuthParam = {};
+    sptr<IIamCallback> callbackInterface = testCallback;
+    uint64_t contextId = 0;
+    int32_t ret = service.AuthUser(MakeSudoIpcParam("sudo title"), ipcRemoteAuthParam, callbackInterface, contextId);
+    EXPECT_EQ(ret, SUCCESS);
+    EXPECT_NE(contextId, 0);
+    DrainSerialThread();
+    EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
 }
 
 HWTEST_F(UserAuthServiceSudoTest, UserAuthServicePublicAuthNotRoutedToSudo, TestSize.Level0)
