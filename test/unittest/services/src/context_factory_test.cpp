@@ -58,7 +58,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateSimpleAuth_001, TestSize.Level0
     std::vector<uint8_t> challenge;
     sptr<IIamCallback> callback(new (std::nothrow) MockUserAuthCallback());
     ASSERT_NE(callback, nullptr);
-    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_BEHAVIOR);
     Authentication::AuthenticationPara para = {};
     auto context = factory->CreateSimpleAuthContext(para, true, false, contextCallback);
     ASSERT_NE(context, nullptr);
@@ -73,7 +73,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateSimpleAuth_002, TestSize.Level0
     std::vector<uint8_t> challenge;
     // Error: callback is null
     sptr<IIamCallback> callback(nullptr);
-    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_BEHAVIOR);
     Authentication::AuthenticationPara para = {};
     auto context = factory->CreateSimpleAuthContext(para, true, false, contextCallback);
     ASSERT_EQ(context, nullptr);
@@ -206,7 +206,7 @@ HWTEST_F(ContextFactoryTest, CreateRemoteAuthContext_001, TestSize.Level0)
     RemoteAuthContextParam remoteAuthContextParam = {};
     sptr<IIamCallback> callback(new (std::nothrow) MockUserAuthCallback());
     ASSERT_NE(callback, nullptr);
-    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_BEHAVIOR);
     factory->CreateRemoteAuthContext(para, remoteAuthContextParam, false, contextCallback);
 }
 
@@ -219,7 +219,7 @@ HWTEST_F(ContextFactoryTest, CreateRemoteAuthContext_002, TestSize.Level0)
     remoteAuthContextParam.connectionName = "aaa";
     sptr<IIamCallback> callback(new (std::nothrow) MockUserAuthCallback());
     ASSERT_NE(callback, nullptr);
-    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_BEHAVIOR);
     factory->CreateRemoteAuthContext(para, remoteAuthContextParam, false, contextCallback);
 }
 } // namespace UserAuth

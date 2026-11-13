@@ -49,7 +49,6 @@ HWTEST_F(TraceTest, CopyMetaDataToTraceInfo_001, TestSize.Level0)
     Trace *trace = new Trace();
     EXPECT_NE(trace, nullptr);
     ContextCallbackNotifyListener::MetaData metaData;
-    TraceFlag flag = TRACE_FLAG_DEFAULT;
     UserAuthTrace info;
     metaData.remoteUdid = std::nullopt;
     metaData.localUdid = std::nullopt;
@@ -63,7 +62,6 @@ HWTEST_F(TraceTest, CopyMetaDataToTraceInfo_002, TestSize.Level0)
     Trace *trace = new Trace();
     EXPECT_NE(trace, nullptr);
     ContextCallbackNotifyListener::MetaData metaData;
-    TraceFlag flag = TRACE_FLAG_DEFAULT;
     UserAuthTrace info;
     metaData.remoteUdid = "1";
     metaData.localUdid = "1";
@@ -71,12 +69,12 @@ HWTEST_F(TraceTest, CopyMetaDataToTraceInfo_002, TestSize.Level0)
     trace->CopyMetaDataToTraceInfo(metaData, info);
 }
 
-HWTEST_F(TraceTest, ProcessUserAuthFwkEvent_001, TestSize.Level0)
+HWTEST_F(TraceTest, ProcessUserAuthEvent_001, TestSize.Level0)
 {
     Trace *trace = new Trace();
     EXPECT_NE(trace, nullptr);
     ContextCallbackNotifyListener::MetaData metaData;
-    metaData.operationType = TRACE_AUTH_USER_SECURITY;
+    metaData.operationType = TRACE_AUTH_USER_BEHAVIOR;
     metaData.callerName = "";
     metaData.atl = std::nullopt;
     metaData.authType = std::nullopt;
@@ -84,18 +82,19 @@ HWTEST_F(TraceTest, ProcessUserAuthFwkEvent_001, TestSize.Level0)
     metaData.localUdid = "";
     metaData.connectionName = "";
     metaData.authFinishReason = std::nullopt;
-    TraceFlag flag = TRACE_FLAG_DEFAULT;
-    trace->ProcessUserAuthFwkEvent(metaData, flag);
+    trace->ProcessUserAuthEvent(metaData);
 }
 
-HWTEST_F(TraceTest, ProcessUserAuthFwkEvent_002, TestSize.Level0)
+HWTEST_F(TraceTest, ProcessUserAuthEvent_002, TestSize.Level0)
 {
     Trace *trace = new Trace();
     EXPECT_NE(trace, nullptr);
     ContextCallbackNotifyListener::MetaData metaData;
-    TraceFlag flag = TRACE_FLAG_DEFAULT;
+    metaData.operationType = TRACE_AUTH_USER_SECURITY;
     metaData.callerName = "TEST";
-    trace->ProcessUserAuthFwkEvent(metaData, flag);
+    metaData.requestContextId = 1;
+    metaData.authContextId = 2;
+    trace->ProcessUserAuthEvent(metaData);
 }
 } // namespace UserAuth
 } // namespace UserIam

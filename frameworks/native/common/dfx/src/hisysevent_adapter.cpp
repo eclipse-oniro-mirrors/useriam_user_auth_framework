@@ -166,34 +166,9 @@ void ReportUserAuth(const UserAuthTrace &info)
         STR_TOTAL_TIME, info.timeTraceInfo.totalTime,
         STR_LOCAL_TIME, info.timeTraceInfo.localTime,
         STR_AUTH_SUCC_TIP_TIME, info.timeTraceInfo.authSuccTipTime,
-        STR_EXTRA_INFO, info.timeTraceInfo.extraInfo);
-    if (ret != 0) {
-        IAM_LOGE("hisysevent write failed! ret %{public}d", ret);
-    }
-}
-
-void ReportSecurityUserAuthFwk(const UserAuthFwkTrace &info)
-{
-    std::string operationTime = Common::GetNowTimeString();
-    int32_t ret = HiSysEventWrite(HiSysEvent::Domain::USERIAM_FWK, "USERIAM_USER_AUTH_FWK",
-        HiSysEvent::EventType::SECURITY,
-        STR_OPERATION_TIME, operationTime,
-        STR_CALLER_NAME, info.callerName,
+        STR_EXTRA_INFO, info.timeTraceInfo.extraInfo,
         STR_REQUEST_CONTEXTID, static_cast<uint16_t>(info.requestContextId),
-        STR_AUTH_CONTEXTID, static_cast<uint16_t>(info.authContextId),
-        STR_AUTH_TRUST_LEVEL, info.atl,
-        STR_AUTH_TYPE, info.authType,
-        STR_AUTH_RESULT, info.authResult,
-        STR_AUTH_TIME_SPAN, info.authtimeSpan,
-        STR_IS_REMOTE_AUTH, info.isRemoteAuth,
-        STR_LOCAL_UDID, MaskForStringId(info.localUdid),
-        STR_REMOTE_UDID, MaskForStringId(info.remoteUdid),
-        STR_CONNECTION_NAME, info.connectionName,
-        STR_AUTH_FINISH_REASON, info.authFinishReason,
-        STR_TOTAL_TIME, info.timeTraceInfo.totalTime,
-        STR_LOCAL_TIME, info.timeTraceInfo.localTime,
-        STR_AUTH_SUCC_TIP_TIME, info.timeTraceInfo.authSuccTipTime,
-        STR_EXTRA_INFO, info.timeTraceInfo.extraInfo);
+        STR_AUTH_CONTEXTID, static_cast<uint16_t>(info.authContextId));
     if (ret != 0) {
         IAM_LOGE("hisysevent write failed! ret %{public}d", ret);
     }

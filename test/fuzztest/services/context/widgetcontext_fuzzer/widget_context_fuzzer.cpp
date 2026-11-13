@@ -84,7 +84,7 @@ std::shared_ptr<WidgetContext> CreateWidgetContext(Parcel &parcel)
     para.isOsAccountVerified = parcel.ReadBool();
     para.isBackgroundApplication = parcel.ReadBool();
     auto contextCallback = MakeShared<ContextCallbackImpl>(new (std::nothrow) DummyIamCallbackInterface(),
-        static_cast<OperationType>(TRACE_AUTH_USER_ALL));
+        static_cast<OperationType>(TRACE_AUTH_USER_BEHAVIOR));
     return Common::MakeShared<WidgetContext>(contextId, para, false, contextCallback, nullptr, nullptr);
 }
 

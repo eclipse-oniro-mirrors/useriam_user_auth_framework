@@ -81,7 +81,7 @@ std::shared_ptr<SudoAuthContext> CreateSudoContext(Parcel &parcel)
     FillFuzzString(parcel, para.additionalInfo);
     para.isOsAccountVerified = parcel.ReadBool();
     auto contextCallback = MakeShared<ContextCallbackImpl>(new (std::nothrow) DummyUserAuthCallback(),
-        static_cast<OperationType>(TRACE_AUTH_USER_ALL));
+        static_cast<OperationType>(TRACE_AUTH_USER_BEHAVIOR));
     IF_FALSE_LOGE_AND_RETURN_VAL(contextCallback != nullptr, nullptr);
     auto context = Common::MakeShared<SudoAuthContext>(contextId, para, contextCallback);
     IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, nullptr);

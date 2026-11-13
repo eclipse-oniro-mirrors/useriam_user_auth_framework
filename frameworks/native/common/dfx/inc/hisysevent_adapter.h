@@ -48,22 +48,8 @@ struct UserAuthTrace {
     std::string authFinishReason;
     bool isBackgroundApplication = false;
     TimeTraceInfo timeTraceInfo;
-};
-
-struct UserAuthFwkTrace {
-    std::string callerName;
     uint64_t requestContextId = 0;
     uint64_t authContextId = 0;
-    uint32_t atl = 0;
-    int32_t authType = 0;
-    int32_t authResult = -1;
-    uint64_t authtimeSpan = 0;
-    bool isRemoteAuth = false;
-    std::string localUdid;
-    std::string remoteUdid;
-    std::string connectionName;
-    std::string authFinishReason;
-    TimeTraceInfo timeTraceInfo;
 };
 
 struct UserCredManagerTrace {
@@ -142,7 +128,6 @@ void ReportSecurityTemplateChange(const TemplateChangeTrace &info);
 void ReportBehaviorCredManager(const UserCredManagerTrace &info);
 void ReportSecurityCredChange(const UserCredChangeTrace &info);
 void ReportUserAuth(const UserAuthTrace &info);
-void ReportSecurityUserAuthFwk(const UserAuthFwkTrace &info);
 void ReportRemoteExecuteProc(const RemoteExecuteTrace &info);
 void ReportRemoteConnectOpen(const RemoteConnectOpenTrace &info);
 void ReportConnectFaultTrace(const RemoteConnectFaultTrace &info);
