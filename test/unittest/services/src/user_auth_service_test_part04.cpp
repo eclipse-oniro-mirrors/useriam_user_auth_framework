@@ -604,7 +604,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_SizeThreeAllPe
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 
@@ -616,7 +619,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetParam_NavBtnNotEmpty
     WidgetParamInner widgetParam = {};
     widgetParam.title = "test_title";
     widgetParam.navigationButtonText = "nav_btn";
-    int32_t ret = service.CheckAuthWidgetParam(authParam, widgetParam);
+    ContextFactory::AuthWidgetContextPara para;
+    para.authTypeList = authParam.authTypes;
+    para.widgetParam = widgetParam;
+    int32_t ret = service.CheckAuthWidgetParam(para);
     EXPECT_EQ(ret, SUCCESS);
 }
 

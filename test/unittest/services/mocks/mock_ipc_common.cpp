@@ -204,6 +204,13 @@ bool IpcCommon::CheckForegroundApplication(const std::string &bundleName)
     return true;
 }
 
+bool IpcCommon::GetRunningAppPid(int32_t uid, int32_t &pid)
+{
+    (void)uid;
+    pid = 0;
+    return false;
+}
+
 bool IpcCommon::IsOsAccountVerified(int32_t userId)
 {
     if (skipAccountVerifiedFlag_) {
