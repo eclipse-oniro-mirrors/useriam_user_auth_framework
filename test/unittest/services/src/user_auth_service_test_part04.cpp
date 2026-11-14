@@ -1283,6 +1283,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckSkipLockedBiometricAuth008, Te
     ON_CALL(*node, GetProperty(_, _))
         .WillByDefault(
             [](const Attributes &condition, Attributes &values) {
+                values.SetInt32Value(Attributes::ATTR_REMAIN_TIMES, -1);
                 values.SetInt32Value(Attributes::ATTR_CAMERA_STATUS,
                     static_cast<int32_t>(CameraStatus::CAMERA_AVAILABLE));
                 values.SetInt32Value(Attributes::ATTR_FREEZING_TIME, 0);

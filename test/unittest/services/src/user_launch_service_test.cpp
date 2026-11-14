@@ -19,6 +19,7 @@
 #include <mutex>
 
 #include "iam_common_defines.h"
+#include "user_launch_service_client_defines.h"
 
 #include "mock_ipc_common.h"
 #include "mock_launch_service_callback.h"
@@ -396,7 +397,7 @@ HWTEST_F(UserAuthServiceTest, UserLaunchServiceConvertToIpcLaunchServiceFlatInfo
     EXPECT_EQ(ipcInfo.bundleInfo.appIdentifier, info.bundleInfo.appIdentifier);
     EXPECT_EQ(ipcInfo.serviceInfo.serviceType, static_cast<int32_t>(info.serviceInfo.serviceType));
     EXPECT_EQ(ipcInfo.serviceInfo.additionalInfo, info.serviceInfo.additionalInfo);
-    EXPECT_EQ(ipcInfo.activeState, static_cast<int32_t>(info.activeState));
+    EXPECT_EQ(ipcInfo.activeState, static_cast<int32_t>(LaunchServiceState::ACTIVATE));
     EXPECT_EQ(ipcInfo.isForbidden, info.isForbidden);
     EXPECT_EQ(ipcInfo.launchServiceSize, info.launchServiceSize);
 }

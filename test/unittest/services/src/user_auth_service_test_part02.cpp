@@ -73,7 +73,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_001, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthWidget(apiVersion, authParam, widgetParam, testUserAuthCallback, testModalCallback,
         contextId);
-    EXPECT_EQ(ret, GENERAL_ERROR);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
     EXPECT_EQ(contextId, (uint64_t)0);
 }
 
@@ -1970,6 +1970,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessPinExpired_001, TestSize.Lev
         .userId = 100,
         .isPinExpired = true
     };
+    para.authTypeList = authParam.authTypes;
     constexpr uint64_t executorIndex = 61;
     MockForPinExpiredProfile(executorIndex);
 
@@ -1999,6 +2000,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessPinExpired_002, TestSize.Lev
         .userId = 100,
         .isPinExpired = true
     };
+    para.authTypeList = authParam.authTypes;
 
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
