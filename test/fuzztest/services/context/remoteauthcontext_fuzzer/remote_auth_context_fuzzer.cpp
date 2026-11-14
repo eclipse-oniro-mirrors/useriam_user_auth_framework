@@ -240,8 +240,12 @@ void FuzzAuthWidgetHelper(Parcel &parcel)
     widgetParam.navigationButtonText = "确定";
     ContextFactory::AuthWidgetContextPara para;
     para.userId = MAIN_USER_ID;
+    para.widgetParam = widgetParam;
     std::vector<AuthType> validType = {PIN, FACE, FINGERPRINT};
-    AuthWidgetHelper::InitWidgetContextParam(authParam, validType, widgetParam, para);
+    para.authTypeList = std::move(validType);
+    if (para.widgetParam.windowMode == WindowModeType::UNKNOWN_WINDOW_MODE) {
+        para.widgetParam.windowMode = WindowModeType::DIALOG_BOX;
+    }
 }
 
 void FuzzGetUserAuthProfile(Parcel &parcel)
@@ -287,19 +291,15 @@ void FuzzCheckReuseUnlockResult(Parcel &parcel)
     para.userId = MAIN_USER_ID;
     std::vector<uint8_t> challenge;
     FillFuzzUint8Vector(parcel, challenge);
+    para.challenge = challenge;
     ReuseUnlockResult reuseUnlockResult = {};
     reuseUnlockResult.isReuse = parcel.ReadBool();
     reuseUnlockResult.reuseDuration = parcel.ReadUint64();
-    AuthParamInner authParam = {
-        .userId = parcel.ReadInt32(),
-        .challenge = challenge,
-        .authType = static_cast<AuthType>(parcel.ReadInt32()),
-        .authTrustLevel = static_cast<AuthTrustLevel>(parcel.ReadInt32()),
-        .reuseUnlockResult = reuseUnlockResult,
-    };
+    para.userId = parcel.ReadInt32();
+    para.atl = static_cast<AuthTrustLevel>(parcel.ReadInt32());
     Attributes extraInfo;
     FillIAttributes(parcel, extraInfo);
-    AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo);
+    AuthWidgetHelper::CheckReuseUnlockResult(para, reuseUnlockResult, extraInfo);
 }
 
 using FuzzFunc = decltype(ContextAppStateObserverFuzzTest);

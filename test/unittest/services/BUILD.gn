@@ -137,6 +137,7 @@ ohos_unittest("iam_services_test") {
               "src/user_idm_service_restore_test.cpp",
               "src/user_idm_service_test.cpp",
               "src/user_info_test.cpp",
+              "src/user_launch_service_test.cpp",
               "src/user_recognition_state_manager_test.cpp",
               "src/widget_client_test.cpp",
               "src/widget_context_callback_impl_test.cpp",
@@ -184,6 +185,7 @@ ohos_unittest("iam_services_test") {
     "napi:ace_napi",
     "node:node_header_notice",
     "os_account:os_account_innerkits",
+    "os_account:authorization_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]

@@ -98,6 +98,7 @@ userauth_services_sources = [
   "ipc/src/template_cache_manager.cpp",
   "ipc/src/user_auth_service.cpp",
   "ipc/src/user_auth_service_global_config.cpp",
+  "ipc/src/user_launch_service.cpp",
   "ipc/src/user_auth_service_token.cpp",
   "ipc/src/user_idm_service.cpp",
   "ipc/src/user_idm_service_restore.cpp",
@@ -191,7 +192,10 @@ userauth_services_has_os_account_part = !defined(global_parts_info) ||
 
 if (userauth_services_has_os_account_part) {
   userauth_services_sources += [ "core/src/os_accounts_manager_impl.cpp" ]
-  userauth_services_external_deps += [ "os_account:os_account_innerkits" ]
+  userauth_services_external_deps += [
+    "os_account:os_account_innerkits",
+    "os_account:authorization_innerkits",
+  ]
 } else {
   userauth_services_sources += [ "core/src/os_accounts_manager_mock.cpp" ]
 }

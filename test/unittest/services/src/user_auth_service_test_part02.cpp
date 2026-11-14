@@ -73,7 +73,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_001, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthWidget(apiVersion, authParam, widgetParam, testUserAuthCallback, testModalCallback,
         contextId);
-    EXPECT_EQ(ret, GENERAL_ERROR);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
     EXPECT_EQ(contextId, (uint64_t)0);
 }
 
@@ -1742,7 +1742,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_NaviBtnWithOnlyC
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1779,7 +1784,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_OnlyF
             validTypes.push_back(static_cast<int32_t>(AuthType::FACE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1816,7 +1826,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_OnlyF
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1853,7 +1868,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_OnlyC
             validTypes.push_back(static_cast<int32_t>(AuthType::COMPANION_DEVICE));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, SUCCESS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1891,7 +1911,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolution_Fullscreen_FaceA
             validTypes.push_back(static_cast<int32_t>(AuthType::FINGERPRINT));
             return HDF_SUCCESS;
         });
-    int32_t ret = service.CheckValidSolution(para, authParam, widgetParam, validTypeList);
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.credentialIdList = authParam.credentialIdList;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    int32_t ret = service.CheckValidSolution(para, validTypeList);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
     MockIUserAuthInterface::Holder::GetInstance().Reset();
     IpcCommon::DeleteAllPermission();
@@ -1945,10 +1970,11 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessPinExpired_001, TestSize.Lev
         .userId = 100,
         .isPinExpired = true
     };
+    para.authTypeList = authParam.authTypes;
     constexpr uint64_t executorIndex = 61;
     MockForPinExpiredProfile(executorIndex);
 
-    int32_t result = service.ProcessPinExpired(ret, authParam, validType, para);
+    int32_t result = service.ProcessPinExpired(ret, validType, para);
     EXPECT_EQ(result, SUCCESS);
     EXPECT_TRUE(para.isPinExpired);
     ASSERT_EQ(validType.size(), 1);
@@ -1974,12 +2000,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceProcessPinExpired_002, TestSize.Lev
         .userId = 100,
         .isPinExpired = true
     };
+    para.authTypeList = authParam.authTypes;
 
     auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetCredential(_, _, _)).WillOnce(Return(HDF_FAILURE));
 
-    int32_t result = service.ProcessPinExpired(ret, authParam, validType, para);
+    int32_t result = service.ProcessPinExpired(ret, validType, para);
     EXPECT_EQ(result, GENERAL_ERROR);
     EXPECT_TRUE(para.isPinExpired);
     ASSERT_EQ(validType.size(), 1);

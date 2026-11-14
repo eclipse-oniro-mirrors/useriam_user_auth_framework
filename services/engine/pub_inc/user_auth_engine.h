@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -124,6 +125,44 @@ public:
     virtual uint32_t GetCapability() const
     {
         return 0;
+    }
+    virtual int32_t RegisterLaunchService(const std::vector<EngLaunchServiceRegisterInfo> &serviceList,
+        std::vector<EngLaunchServiceFlatInfo> &serviceInfos)
+    {
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+    virtual int32_t UnRegisterLaunchService(int32_t uid, const std::optional<EngLaunchServiceKey> &key)
+    {
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+    virtual int32_t GetLaunchServiceInfo(int32_t uid, const std::optional<EngLaunchServiceKey> &key,
+        std::vector<EngLaunchServiceFlatInfo> &serviceList)
+    {
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+    virtual int32_t GetLaunchServiceList(const std::vector<int32_t> &userIds,
+        std::vector<EngLaunchServiceFlatInfo> &serviceList)
+    {
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+    virtual int32_t GetAppLaunchServiceType(int32_t uid, EngLaunchServiceType &serviceType)
+    {
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+    virtual int32_t SetLaunchServiceState(int32_t uid, const std::vector<uint8_t> &token,
+        EngLaunchServiceState activeState)
+    {
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+    virtual int32_t SetDaemonAllowedlist(int32_t userId, const std::vector<std::string> &appIdentifiers,
+        bool isAdd)
+    {
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
+    }
+    virtual int32_t SetDaemonForbiddenlist(int32_t userId, const std::vector<std::string> &appIdentifiers,
+        bool isAdd)
+    {
+        return DEVICE_CAPABILITY_NOT_SUPPORT;
     }
 };
 

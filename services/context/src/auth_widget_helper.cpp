@@ -32,21 +32,6 @@ namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 
-bool AuthWidgetHelper::InitWidgetContextParam(const AuthParamInner &authParam, std::vector<AuthType> &validType,
-    const WidgetParamInner &widgetParam, ContextFactory::AuthWidgetContextPara &para)
-{
-    para.challenge = std::move(authParam.challenge);
-    para.authTypeList = std::move(validType);
-    para.atl = authParam.authTrustLevel;
-    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
-    para.widgetParam = widgetParam;
-    if (widgetParam.windowMode == WindowModeType::UNKNOWN_WINDOW_MODE) {
-        para.widgetParam.windowMode = WindowModeType::DIALOG_BOX;
-    }
-    para.credentialIdList = authParam.credentialIdList;
-    return true;
-}
-
 bool AuthWidgetHelper::GetAuthCredentialList(int32_t userId, const AuthType &authType,
     const std::vector<uint64_t> &credentialIdList,
     std::vector<std::shared_ptr<CredentialInfoInterface>> &credentialInfos)
@@ -240,10 +225,16 @@ int32_t AuthWidgetHelper::QueryReusableAuthResult(const int32_t userId, const Au
 }
 
 int32_t AuthWidgetHelper::CheckReuseUnlockResult(const ContextFactory::AuthWidgetContextPara &para,
-    const AuthParamInner &authParam, Attributes &extraInfo)
+    const ReuseUnlockResult &reuseUnlockResult, Attributes &extraInfo)
 {
     IAM_LOGI("start userId:%{public}d, reuseMode:%{public}u, reuseDuration: %{public}" PRIu64 ".",
-        para.userId, authParam.reuseUnlockResult.reuseMode, authParam.reuseUnlockResult.reuseDuration);
+        para.userId, reuseUnlockResult.reuseMode, reuseUnlockResult.reuseDuration);
+    AuthParamInner authParam = {};
+    authParam.userId = para.userId;
+    authParam.authTrustLevel = para.atl;
+    authParam.authTypes = para.authTypeList;
+    authParam.challenge = para.challenge;
+    authParam.reuseUnlockResult = reuseUnlockResult;
     EngReuseUnlockInfo reuseResultInfo = {};
     int32_t result = QueryReusableAuthResult(para.userId, authParam, reuseResultInfo);
     if (result != SUCCESS) {

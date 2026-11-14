@@ -23,6 +23,7 @@ namespace UserIam {
 namespace UserAuth {
 const int32_t INNER_API_VERSION_10000 = 10000;
 const int32_t INNER_API_VERSION_20000 = 20000;
+const uint32_t CONVERT_UID_TO_USERID = 200000;
 
 enum OperationType : uint32_t {
     TRACE_ADD_CREDENTIAL = 0,

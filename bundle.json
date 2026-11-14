@@ -105,7 +105,10 @@
               "user_auth_client_defines.h",
               "user_idm_client.h",
               "user_idm_client_callback.h",
-              "user_idm_client_defines.h"
+              "user_idm_client_defines.h",
+              "user_launch_service_client_callback.h",
+              "user_launch_service_client_defines.h",
+              "user_launch_service_client.h"
             ],
             "header_base": "//base/useriam/user_auth_framework/interfaces/inner_api/"
           }

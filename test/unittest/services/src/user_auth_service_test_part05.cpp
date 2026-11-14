@@ -459,10 +459,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceDoPrepareRemoteAuthTest_003, TestSi
 HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckCallerPermissionForUserIdTest, TestSize.Level0)
 {
     auto service = Common::MakeShared<UserAuthService>();
-    AuthParamInner paramInner = {};
-    paramInner.isUserIdSpecified = true;
+    ContextFactory::AuthWidgetContextPara para = {};
+    bool isUserIdSpecified = true;
     IpcCommon::SetSkipUserFlag(true);
-    EXPECT_EQ(service->CheckCallerPermissionForUserId(paramInner), GENERAL_ERROR);
+    EXPECT_EQ(service->CheckCallerPermissionForUserId(para, isUserIdSpecified), GENERAL_ERROR);
     IpcCommon::SetSkipUserFlag(false);
 }
 
@@ -494,37 +494,22 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckValidSolutionTest, TestSize.Le
             return SUCCESS;
         });
     widgetParam.navigationButtonText = "face";
-    EXPECT_EQ(service->CheckValidSolution(para, authParam, widgetParam, validType),
-        INVALID_PARAMETERS);
+    para.widgetParam = widgetParam;
+    para.authTypeList = authParam.authTypes;
+    EXPECT_EQ(service->CheckValidSolution(para, validType), INVALID_PARAMETERS);
     widgetParam.navigationButtonText.clear();
     authParam.authTypes.emplace_back(PRIVATE_PIN);
-    EXPECT_EQ(service->CheckValidSolution(para, authParam, widgetParam, validType),
-        INVALID_PARAMETERS);
+    para.widgetParam = widgetParam;
+    para.authTypeList = authParam.authTypes;
+    EXPECT_EQ(service->CheckValidSolution(para, validType), INVALID_PARAMETERS);
     authParam.authTypes.clear();
     IpcCommon::SetSkipAccountVerifiedFlag(true);
     authParam.skipLockedBiometricAuth = false;
-    EXPECT_EQ(service->CheckValidSolution(para, authParam, widgetParam, validType), TYPE_NOT_SUPPORT);
+    para.widgetParam = widgetParam;
+    para.authTypeList = authParam.authTypes;
+    para.skipLockedBiometricAuth = authParam.skipLockedBiometricAuth;
+    EXPECT_EQ(service->CheckValidSolution(para, validType), TYPE_NOT_SUPPORT);
     IpcCommon::SetSkipAccountVerifiedFlag(false);
-}
-
-HWTEST_F(UserAuthServiceTest, UserAuthServiceGetCallerInfoTest, TestSize.Level0)
-{
-    auto service = Common::MakeShared<UserAuthService>();
-    bool isUserIdSpecified = false;
-    int32_t userId = 110;
-    ContextFactory::AuthWidgetContextPara para = {};
-    std::shared_ptr<ContextCallback> contextCallback = Common::MakeShared<MockContextCallback>();
-    ASSERT_NE(contextCallback, nullptr);
-    IpcCommon::SetSkipUserFlag(true);
-    EXPECT_EQ(service->GetCallerInfo(isUserIdSpecified, userId, para, contextCallback), GENERAL_ERROR);
-    para.sdkVersion = 300000;
-    EXPECT_EQ(service->GetCallerInfo(isUserIdSpecified, userId, para, contextCallback), GENERAL_ERROR);
-    para.sdkVersion = 2;
-    para.callerType = Security::AccessToken::TOKEN_INVALID;
-    EXPECT_EQ(service->GetCallerInfo(isUserIdSpecified, userId, para, contextCallback), GENERAL_ERROR);
-    para.callerType = Security::AccessToken::TOKEN_HAP;
-    EXPECT_EQ(service->GetCallerInfo(isUserIdSpecified, userId, para, contextCallback), GENERAL_ERROR);
-    IpcCommon::SetSkipUserFlag(false);
 }
 
 } // namespace UserAuth

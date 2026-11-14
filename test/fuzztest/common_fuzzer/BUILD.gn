@@ -363,7 +363,10 @@ ohos_source_set("userauth_services_ipc_fuzzer") {
 
   if (has_os_account_part) {
     cflags_cc = [ "-DHAS_OS_ACCOUNT_PART" ]
-    external_deps += [ "os_account:os_account_innerkits" ]
+    external_deps += [
+      "os_account:os_account_innerkits",
+      "os_account:authorization_innerkits",
+    ]
   }
 
   configs = [

@@ -56,6 +56,8 @@ ohos_shared_library("userauth_client") {
     "src/user_access_ctrl_client_impl.cpp",
     "src/user_auth_callback_service.cpp",
     "src/user_auth_client_impl.cpp",
+    "src/user_launch_service_client_impl.cpp",
+    "src/user_launch_service_callback_service.cpp",
     "src/user_auth_modal_inner_callback.cpp",
     "src/user_auth_napi_client_impl.cpp",
     "src/user_idm_callback_service.cpp",

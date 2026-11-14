@@ -253,6 +253,51 @@ struct EngCredentialOperateResult {
     std::vector<EngCredentialInfo> credentialInfos;
 };
 
+enum class EngLaunchServiceType {
+    INVALID = 0,
+    NORMAL_AGENT = 1,
+    PRIVILEGED_DAEMON = 2,
+};
+
+enum class EngLaunchServiceState : uint32_t {
+    INVALID = 0,
+    AGENT_ACTIVE = 1,
+    DAEMON_ACTIVE = 2,
+};
+
+struct EngLaunchServiceKey {
+    std::string serviceName {};
+    std::string moduleName {};
+};
+
+struct EngServiceExtInfo {
+    EngLaunchServiceType serviceType {};
+    std::string additionalInfo {};
+};
+
+struct EngBundleExtInfo {
+    std::string ownerBundleName {};
+    int32_t appIndex {};
+    std::string appIdentifier {};
+};
+
+struct EngLaunchServiceRegisterInfo {
+    int32_t uid {};
+    EngLaunchServiceKey serviceKey {};
+    EngBundleExtInfo bundleInfo {};
+    EngServiceExtInfo serviceInfo {};
+};
+
+struct EngLaunchServiceFlatInfo {
+    int32_t uid {};
+    EngLaunchServiceKey serviceKey {};
+    EngBundleExtInfo bundleInfo {};
+    EngServiceExtInfo serviceInfo {};
+    EngLaunchServiceState activeState {};
+    bool isForbidden {};
+    uint32_t launchServiceSize {};
+};
+
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

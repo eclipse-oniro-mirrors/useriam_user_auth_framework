@@ -216,6 +216,16 @@ bool UserAuthService::CheckAuthTrustLevel(AuthTrustLevel authTrustLevel, int32_t
     return true;
 }
 
+bool UserAuthService::CheckAuthTrustLevel(AuthTrustLevel authTrustLevel, const std::vector<AuthType> &authTypes)
+{
+    for (auto &authType : authTypes) {
+        if (!CheckAuthTrustLevel(authTrustLevel, static_cast<int32_t>(authType))) {
+            return false;
+        }
+    }
+    return true;
+}
+
 int32_t UserAuthService::GetAvailableStatus(int32_t apiVersion, int32_t userId, int32_t authType,
     uint32_t authTrustLevel, int32_t &funcResult)
 {
@@ -1246,10 +1256,10 @@ bool UserAuthService::CheckPrivatePinEnroll(const std::vector<AuthType> &authTyp
     return true;
 }
 
-int32_t UserAuthService::CheckCallerPermissionForPrivatePin(const AuthParamInner &authParam)
+int32_t UserAuthService::CheckCallerPermissionForPrivatePin(const ContextFactory::AuthWidgetContextPara &para)
 {
     bool hasPrivatePin = false;
-    for (auto &iter : authParam.authTypes) {
+    for (auto &iter : para.authTypeList) {
         if (iter == AuthType::PRIVATE_PIN) {
             hasPrivatePin = true;
             break;
@@ -1268,9 +1278,10 @@ int32_t UserAuthService::CheckCallerPermissionForPrivatePin(const AuthParamInner
     return CHECK_PERMISSION_FAILED;
 }
 
-int32_t UserAuthService::CheckCallerPermissionForUserId(const AuthParamInner &authParam)
+int32_t UserAuthService::CheckCallerPermissionForUserId(const ContextFactory::AuthWidgetContextPara &para,
+    bool isUserIdSpecified)
 {
-    if (!authParam.isUserIdSpecified) {
+    if (!isUserIdSpecified) {
         if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
             IAM_LOGE("CheckPermission failed");
             return CHECK_PERMISSION_FAILED;
@@ -1289,70 +1300,70 @@ int32_t UserAuthService::CheckCallerPermissionForUserId(const AuthParamInner &au
         return GENERAL_ERROR;
     }
     if (IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION) &&
-        (IpcCommon::CheckPermission(*this, IS_SYSTEM_APP) || authParam.userId == userId)) {
+        (IpcCommon::CheckPermission(*this, IS_SYSTEM_APP) || para.userId == userId)) {
         return SUCCESS;
     }
     IAM_LOGE("CheckPermission failed");
     return CHECK_PERMISSION_FAILED;
 }
 
-int32_t UserAuthService::CheckAuthWidgetParam(const AuthParamInner &authParam, const WidgetParamInner &widgetParam)
+int32_t UserAuthService::CheckAuthWidgetParam(const ContextFactory::AuthWidgetContextPara &para)
 {
-    if (widgetParam.navigationButtonText.empty()) {
+    if (para.widgetParam.navigationButtonText.empty()) {
         static const size_t authTypeTwo = 2;
-        if ((authParam.authTypes.size() == authTypeTwo) &&
-            CheckAuthTypeOnly(authParam.authTypes, {AuthType::FACE, AuthType::FINGERPRINT})) {
+        if ((para.authTypeList.size() == authTypeTwo) &&
+            CheckAuthTypeOnly(para.authTypeList, {AuthType::FACE, AuthType::FINGERPRINT})) {
             IAM_LOGE("only face+finger not support");
             return INVALID_PARAMETERS;
         }
     }
     const size_t buttonTextMax = 60;
-    if (UserAuthHelper::GetUtf8CharCount(widgetParam.navigationButtonText) > buttonTextMax) {
+    if (UserAuthHelper::GetUtf8CharCount(para.widgetParam.navigationButtonText) > buttonTextMax) {
         IAM_LOGE("navigation button text is invalid");
         return INVALID_PARAMETERS;
     }
-    if (widgetParam.title.empty() || UserAuthHelper::GetUtf8CharCount(widgetParam.title) > TITLE_MAX) {
+    if (para.widgetParam.title.empty() || UserAuthHelper::GetUtf8CharCount(para.widgetParam.title) > TITLE_MAX) {
         IAM_LOGE("title is invalid");
         return INVALID_PARAMETERS;
     }
     return SUCCESS;
 }
 
-int32_t UserAuthService::CheckAuthPermissionAndParam(const AuthParamInner &authParam,
-    const WidgetParamInner &widgetParam, bool isBackgroundApplication)
+int32_t UserAuthService::CheckAuthPermissionAndParam(const ContextFactory::AuthWidgetContextPara &para,
+    bool isUserIdSpecified)
 {
-    if (authParam.credentialIdList.size() > MAX_USER_CREDENTIAL_SIZE) {
-        IAM_LOGE("bad credentialIdList size:%{public}zu", authParam.credentialIdList.size());
+    if (para.credentialIdList.size() > MAX_USER_CREDENTIAL_SIZE) {
+        IAM_LOGE("bad credentialIdList size:%{public}zu", para.credentialIdList.size());
         return INVALID_PARAMETERS;
     }
-    int32_t checkRet = CheckWindowMode(widgetParam);
+    int32_t checkRet = CheckWindowMode(para.widgetParam);
     if (checkRet != SUCCESS) {
         IAM_LOGE("CheckWindowMode failed");
         return checkRet;
     }
-    if (CheckCallerPermissionForPrivatePin(authParam) != SUCCESS) {
+    if (CheckCallerPermissionForPrivatePin(para) != SUCCESS) {
         IAM_LOGE("CheckCallerPermissionForPrivatePin failed");
         return CHECK_PERMISSION_FAILED;
     }
-    if (CheckCallerPermissionForUserId(authParam) != SUCCESS) {
+    if (CheckCallerPermissionForUserId(para, isUserIdSpecified) != SUCCESS) {
         IAM_LOGE("CheckPermission failed");
         return CHECK_PERMISSION_FAILED;
     }
-    if (isBackgroundApplication && (!IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND))) {
+    if (para.isBackgroundApplication && (!IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND))) {
         IAM_LOGE("failed to check foreground application");
         return CHECK_PERMISSION_FAILED;
     }
-    int32_t ret = CheckAuthWidgetType(authParam.authTypes);
+    int32_t ret = CheckAuthWidgetType(para.authTypeList);
     if (ret != SUCCESS) {
         IAM_LOGE("CheckAuthWidgetType fail.");
         return ret;
     }
-    if (!CheckAuthTrustLevel(authParam.authTrustLevel, authParam.authType)) {
+    if (!CheckAuthTrustLevel(para.atl, para.authTypeList)) {
         IAM_LOGE("authTrustLevel is not in correct range");
         return ResultCode::TRUST_LEVEL_NOT_SUPPORT;
     }
 
-    return CheckAuthWidgetParam(authParam, widgetParam);
+    return CheckAuthWidgetParam(para);
 }
 
 int32_t UserAuthService::CheckWindowMode(const WidgetParamInner &widgetParam)
@@ -1371,26 +1382,20 @@ int32_t UserAuthService::CheckWindowMode(const WidgetParamInner &widgetParam)
 }
 
 uint64_t UserAuthService::StartWidgetContext(const std::shared_ptr<ContextCallback> &contextCallback,
-    const AuthParamInner &authParam, const WidgetParamInner &widgetParam, std::vector<AuthType> &validType,
     ContextFactory::AuthWidgetContextPara &para, const sptr<IModalCallback> &modalCallback)
 {
-    HILOG_COMM_INFO("auth service start context useId: %{public}d, authType: %{public}d,"
-        " atl: %{public}d, callerName: %{public}s, isBackgroundApplication %{public}d",
-        authParam.userId, authParam.authType, authParam.authTrustLevel,
-        para.callerName.c_str(), para.isBackgroundApplication);
+    HILOG_COMM_INFO("auth service start context useId: %{public}d,"
+        "atl: %{public}d, callerName: %{public}s, isBackgroundApplication %{public}d",
+        para.userId, para.atl, para.callerName.c_str(), para.isBackgroundApplication);
     Attributes extraInfo;
-    para.tokenId = IpcCommon::GetAccessTokenId(*this);
     para.isOsAccountVerified = IpcCommon::IsOsAccountVerified(para.userId);
-    if (!AuthWidgetHelper::InitWidgetContextParam(authParam, validType, widgetParam, para)) {
-        IAM_LOGE("init widgetContext failed");
-        contextCallback->SetTraceAuthFinishReason("UserAuthService InitWidgetContextParam fail");
-        contextCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo);
-        return BAD_CONTEXT_ID;
+    if (para.widgetParam.windowMode == WindowModeType::UNKNOWN_WINDOW_MODE) {
+        para.widgetParam.windowMode = WindowModeType::DIALOG_BOX;
     }
     sptr<IRemoteAuthCallback> remoteAuthCallback = nullptr;
-    if (authParam.remoteTokenId.has_value()) {
+    if (para.remoteTokenId.has_value()) {
         remoteAuthCallback =
-            RemoteAuthCallbackManager::GetInstance().GetRemoteAuthCallback(authParam.remoteTokenId.value());
+            RemoteAuthCallbackManager::GetInstance().GetRemoteAuthCallback(para.remoteTokenId.value());
         if (remoteAuthCallback == nullptr) {
             IAM_LOGE("get remoteAuthCallback failed");
             contextCallback->SetTraceAuthFinishReason("UserAuthService GetRemoteAuthCallback fail");
@@ -1398,7 +1403,7 @@ uint64_t UserAuthService::StartWidgetContext(const std::shared_ptr<ContextCallba
             return BAD_CONTEXT_ID;
         }
         std::string callerName =
-            RemoteAuthCallbackManager::GetInstance().GetRemoteAuthCallerName(authParam.remoteTokenId.value());
+            RemoteAuthCallbackManager::GetInstance().GetRemoteAuthCallerName(para.remoteTokenId.value());
         if (!callerName.empty()) {
             para.remoteCallerName = callerName;
         }
@@ -1419,7 +1424,7 @@ uint64_t UserAuthService::StartWidgetContext(const std::shared_ptr<ContextCallba
 }
 
 int32_t UserAuthService::CheckSkipLockedBiometricAuth(ContextFactory::AuthWidgetContextPara &para,
-    const AuthParamInner &authParam, const WidgetParamInner &widgetParam, std::vector<AuthType> &validType)
+    std::vector<AuthType> &validType)
 {
     if (validType.empty()) {
         IAM_LOGE("validType size is 0");
@@ -1429,14 +1434,14 @@ int32_t UserAuthService::CheckSkipLockedBiometricAuth(ContextFactory::AuthWidget
         AuthType type = *iter;
         ContextFactory::AuthProfile profile = {};
         int32_t ret = AuthWidgetHelper::GetUserAuthProfile(para.userId, type, profile,
-            authParam.credentialIdList);
+            para.credentialIdList);
         if (ret != SUCCESS && ret != NOT_ENROLLED) {
             IAM_LOGE("get user auth profile failed, ret:%{public}d", ret);
             iter = validType.erase(iter);
             continue;
         }
         para.authProfileMap[type] = profile;
-        if (authParam.skipLockedBiometricAuth && profile.remainTimes == 0 && type != AuthType::PIN &&
+        if (para.skipLockedBiometricAuth && profile.remainTimes == 0 && type != AuthType::PIN &&
             type != AuthType::PRIVATE_PIN) {
             iter = validType.erase(iter);
             para.authProfileMap.erase(type);
@@ -1444,7 +1449,7 @@ int32_t UserAuthService::CheckSkipLockedBiometricAuth(ContextFactory::AuthWidget
             ++iter;
         }
     }
-    if (!widgetParam.navigationButtonText.empty()) {
+    if (!para.widgetParam.navigationButtonText.empty()) {
         if (validType.empty()) {
             IAM_LOGE("validType size:%{public}zu, return cancel from widget", validType.size());
             return CANCELED_FROM_WIDGET;
@@ -1458,16 +1463,16 @@ int32_t UserAuthService::CheckSkipLockedBiometricAuth(ContextFactory::AuthWidget
     return SUCCESS;
 }
 
-std::vector<AuthType> UserAuthService::GetAuthTypesFromCredentialIds(const AuthParamInner &authParam)
+std::vector<AuthType> UserAuthService::GetAuthTypesFromCredentialIds(const ContextFactory::AuthWidgetContextPara &para)
 {
-    if (authParam.credentialIdList.empty()) {
-        return authParam.authTypes;
+    if (para.credentialIdList.empty()) {
+        return para.authTypeList;
     }
 
-    auto credList = authParam.credentialIdList;
+    auto credList = para.credentialIdList;
     std::sort(credList.begin(), credList.end());
     credList.erase(std::unique(credList.begin(), credList.end()), credList.end());
- 
+
     std::vector<AuthType> authTypeList = {};
     for (auto credId : credList) {
         std::shared_ptr<CredentialInfoInterface> credInfo;
@@ -1495,26 +1500,26 @@ void UserAuthService::FilterFaceNotAvailable(ContextFactory::AuthWidgetContextPa
 }
 
 int32_t UserAuthService::CheckValidSolution(ContextFactory::AuthWidgetContextPara &para,
-    const AuthParamInner &authParam, const WidgetParamInner &widgetParam, std::vector<AuthType> &validType)
+    std::vector<AuthType> &validType)
 {
-    std::vector<AuthType> authTypes = GetAuthTypesFromCredentialIds(authParam);
+    std::vector<AuthType> authTypes = GetAuthTypesFromCredentialIds(para);
     int32_t ret = AuthWidgetHelper::CheckValidSolution(
-        para.userId, authTypes, authParam.authTrustLevel, validType);
+        para.userId, authTypes, para.atl, validType);
     if (ret != SUCCESS) {
         IAM_LOGE("CheckValidSolution fail %{public}d", ret);
         return ret;
     }
-    if (!widgetParam.navigationButtonText.empty() &&
+    if (!para.widgetParam.navigationButtonText.empty() &&
         !CheckAuthTypeOnly(validType, {AuthType::FACE, AuthType::FINGERPRINT})) {
         IAM_LOGE("navigationButtonText check fail, validType.size:%{public}zu", validType.size());
         return INVALID_PARAMETERS;
     }
-    if (widgetParam.windowMode == FULLSCREEN &&
+    if (para.widgetParam.windowMode == FULLSCREEN &&
         (CheckAuthTypeOnly(validType, {AuthType::FACE, AuthType::FINGERPRINT}))) {
         IAM_LOGE("Single fingerprint or single face does not support full screen");
         return INVALID_PARAMETERS;
     }
-    if (!CheckPrivatePinEnroll(authParam.authTypes, validType)) {
+    if (!CheckPrivatePinEnroll(para.authTypeList, validType)) {
         IAM_LOGE("check privatePin enroll error");
         return INVALID_PARAMETERS;
     }
@@ -1525,45 +1530,103 @@ int32_t UserAuthService::CheckValidSolution(ContextFactory::AuthWidgetContextPar
                 authType != AuthType::ENTERPRISE_ACCOUNT;
             }), validType.end());
     }
-    return CheckSkipLockedBiometricAuth(para, authParam, widgetParam, validType);
+    return CheckSkipLockedBiometricAuth(para, validType);
 }
 
-int32_t UserAuthService::GetCallerInfo(bool isUserIdSpecified, int32_t userId,
-    ContextFactory::AuthWidgetContextPara &para, std::shared_ptr<ContextCallback> &contextCallback)
+int32_t UserAuthService::InitAuthWidgetContextPara(const IpcAuthParamInner &ipcAuthParam,
+    const IpcWidgetParamInner &ipcWidgetParam,
+    ContextFactory::AuthWidgetContextPara &para, ReuseUnlockResult &reuseUnlockResult,
+    bool &isUserIdSpecified)
 {
+    para.tokenId = IpcCommon::GetAccessTokenId(*this);
     static_cast<void>(IpcCommon::GetCallerName(*this, para.callerName, para.callerType));
-    contextCallback->SetTraceCallerName(para.callerName);
-    contextCallback->SetTraceCallerType(para.callerType);
     static_cast<void>(IpcCommon::GetCallingAppID(*this, para.callingAppID, para.callingAppIdentifier));
+    isUserIdSpecified = ipcAuthParam.isUserIdSpecified;
+
+    para.authTypeList.resize(ipcAuthParam.authTypes.size());
+    std::transform(ipcAuthParam.authTypes.begin(), ipcAuthParam.authTypes.end(),
+        para.authTypeList.begin(), [](int32_t authType) {
+        return static_cast<AuthType>(authType);
+    });
+    para.atl = static_cast<AuthTrustLevel>(ipcAuthParam.authTrustLevel);
+    para.challenge = ipcAuthParam.challenge;
+    para.skipLockedBiometricAuth = ipcAuthParam.skipLockedBiometricAuth;
+    para.credentialIdList = ipcAuthParam.credentialIdList;
+    if (ipcAuthParam.isHasRemoteTokenId) {
+        para.remoteTokenId = ipcAuthParam.remoteTokenId;
+    }
+    para.widgetParam.title = ipcWidgetParam.title;
+    para.widgetParam.navigationButtonText = ipcWidgetParam.navigationButtonText;
+    para.widgetParam.windowMode = static_cast<WindowModeType>(ipcWidgetParam.windowMode);
+    para.widgetParam.hasContext = ipcWidgetParam.hasContext;
+
+    reuseUnlockResult.isReuse = ipcAuthParam.reuseUnlockResult.isReuse;
+    reuseUnlockResult.reuseMode = static_cast<ReuseMode>(ipcAuthParam.reuseUnlockResult.reuseMode);
+    reuseUnlockResult.reuseDuration = ipcAuthParam.reuseUnlockResult.reuseDuration;
 
     if (para.sdkVersion < INNER_API_VERSION_10000 && para.callerType == Security::AccessToken::TOKEN_HAP &&
         (!IpcCommon::CheckForegroundApplication(para.callerName))) {
         para.isBackgroundApplication = true;
     }
-    contextCallback->SetTraceIsBackgroundApplication(para.isBackgroundApplication);
 
-    if (isUserIdSpecified) {
-        para.userId = userId;
-        contextCallback->SetTraceUserId(para.userId);
-        return SUCCESS;
+    if (IpcCommon::CheckPermission(*this, ENTERPRISE_MANAGE_SECURITY)) {
+        IAM_LOGI("caller has enterprise manage security permission");
+        para.callerPermissions |= ENG_CALLER_PERM_ENTERPRISE_MANAGE_SECURITY;
     }
-    if (IpcCommon::GetCallingUserId(*this, para.userId) != SUCCESS) {
-        IAM_LOGE("get callingUserId failed");
-        return GENERAL_ERROR;
+
+    if (ipcAuthParam.isUserIdSpecified) {
+        para.userId = ipcAuthParam.userId;
+    } else {
+        if (IpcCommon::GetCallingUserId(*this, para.userId) != SUCCESS) {
+            IAM_LOGE("get callingUserId failed");
+            return GENERAL_ERROR;
+        }
     }
-    contextCallback->SetTraceUserId(para.userId);
     return SUCCESS;
 }
 
-int32_t UserAuthService::ProcessPinExpired(int32_t ret, const AuthParamInner &authParam,
-    std::vector<AuthType> &validType, ContextFactory::AuthWidgetContextPara &para)
+void UserAuthService::SetAuthWidgetContextTrace(const ContextFactory::AuthWidgetContextPara &para,
+    const ReuseUnlockResult &reuseUnlockResult, const std::shared_ptr<ContextCallback> &contextCallback)
+{
+    contextCallback->SetTraceUserId(para.userId);
+    contextCallback->SetTraceCallerName(para.callerName);
+    contextCallback->SetTraceCallerType(para.callerType);
+    contextCallback->SetTraceSdkVersion(para.sdkVersion);
+    contextCallback->SetTraceAuthTrustLevel(para.atl);
+    uint32_t authWidgetType = 0;
+    for (const auto authType : para.authTypeList) {
+        authWidgetType |= static_cast<uint32_t>(authType);
+    }
+    static const uint32_t bitWindowMode = 0x40000000;
+    if (para.widgetParam.windowMode == FULLSCREEN) {
+        authWidgetType |= bitWindowMode;
+    }
+    static const uint32_t bitNavigation = 0x80000000;
+    if (!para.widgetParam.navigationButtonText.empty()) {
+        authWidgetType |= bitNavigation;
+    }
+    IAM_LOGI("SetTraceAuthWidgetType %{public}08x", authWidgetType);
+    contextCallback->SetTraceAuthWidgetType(authWidgetType);
+    uint32_t traceReuseMode = 0;
+    uint64_t traceReuseDuration = 0;
+    if (reuseUnlockResult.isReuse) {
+        traceReuseMode = reuseUnlockResult.reuseMode;
+        traceReuseDuration = reuseUnlockResult.reuseDuration;
+    }
+    contextCallback->SetTraceReuseUnlockResultMode(traceReuseMode);
+    contextCallback->SetTraceReuseUnlockResultDuration(traceReuseDuration);
+    contextCallback->SetTraceIsBackgroundApplication(para.isBackgroundApplication);
+}
+
+int32_t UserAuthService::ProcessPinExpired(int32_t ret, std::vector<AuthType> &validType,
+    ContextFactory::AuthWidgetContextPara &para)
 {
     if (ret != PIN_EXPIRED) {
         return SUCCESS;
     }
     para.isPinExpired = true;
     bool hasPrivatePin = false;
-    for (auto &iter : authParam.authTypes) {
+    for (auto &iter : para.authTypeList) {
         if (iter == AuthType::PRIVATE_PIN) {
             hasPrivatePin = true;
             break;
@@ -1582,7 +1645,7 @@ int32_t UserAuthService::ProcessPinExpired(int32_t ret, const AuthParamInner &au
     }
     ContextFactory::AuthProfile profile = {};
     int32_t queryRet = AuthWidgetHelper::GetUserAuthProfile(para.userId, pinType, profile,
-        authParam.credentialIdList);
+        para.credentialIdList);
     if (queryRet != SUCCESS && queryRet != NOT_ENROLLED) {
         IAM_LOGE("ProcessPinExpired get user auth profile failed, pinType:%{public}d, ret:%{public}d",
             static_cast<int32_t>(pinType), queryRet);
@@ -1592,21 +1655,21 @@ int32_t UserAuthService::ProcessPinExpired(int32_t ret, const AuthParamInner &au
     return SUCCESS;
 }
 
-int32_t UserAuthService::StartAuthWidget(AuthParamInner &authParam, WidgetParamInner &widgetParam,
-    ContextFactory::AuthWidgetContextPara &para, std::shared_ptr<ContextCallback> &contextCallback,
-    const sptr<IModalCallback> &modalCallback, uint64_t &contextId)
+int32_t UserAuthService::StartAuthWidget(ContextFactory::AuthWidgetContextPara &para,
+    std::shared_ptr<ContextCallback> &contextCallback, const sptr<IModalCallback> &modalCallback,
+    uint64_t &contextId)
 {
     IAM_LOGI("start");
     Attributes extraInfo;
     std::vector<AuthType> validType;
-    int32_t checkRet = CheckValidSolution(para, authParam, widgetParam, validType);
+    int32_t checkRet = CheckValidSolution(para, validType);
     if (checkRet != SUCCESS && checkRet != PIN_EXPIRED) {
         IAM_LOGE("check valid solution failed");
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget CheckValidSolution fail");
         contextCallback->OnResult(checkRet, extraInfo);
         return checkRet;
     }
-    int32_t pinExpiredRet = ProcessPinExpired(checkRet, authParam, validType, para);
+    int32_t pinExpiredRet = ProcessPinExpired(checkRet, validType, para);
     if (pinExpiredRet != SUCCESS) {
         IAM_LOGE("process pin expired failed");
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget ProcessPinExpired fail");
@@ -1615,7 +1678,7 @@ int32_t UserAuthService::StartAuthWidget(AuthParamInner &authParam, WidgetParamI
     }
     FilterFaceNotAvailable(para, validType);
 
-    contextId = StartWidgetContext(contextCallback, authParam, widgetParam, validType, para, modalCallback);
+    contextId = StartWidgetContext(contextCallback, para, modalCallback);
     if (contextId == BAD_CONTEXT_ID) {
         IAM_LOGE("StartWidgetContext fail");
         return GENERAL_ERROR;
@@ -1623,48 +1686,54 @@ int32_t UserAuthService::StartAuthWidget(AuthParamInner &authParam, WidgetParamI
     return SUCCESS;
 }
 
-int32_t UserAuthService::AuthWidget(int32_t apiVersion, const IpcAuthParamInner &ipcAuthParamInner,
-    const IpcWidgetParamInner &ipcWidgetParamInner, const sptr<IIamCallback> &userAuthCallback,
+int32_t UserAuthService::AuthWidget(int32_t apiVersion, const IpcAuthParamInner &ipcAuthParam,
+    const IpcWidgetParamInner &ipcWidgetParam, const sptr<IIamCallback> &userAuthCallback,
     const sptr<IModalCallback> &modalCallback, uint64_t &contextId)
 {
-    IAM_LOGI("start %{public}d authTrustLevel:%{public}u", apiVersion, ipcAuthParamInner.authTrustLevel);
-    AuthParamInner authParam = {};
-    WidgetParamInner widgetParam = {};
-    InitAuthParam(ipcAuthParamInner, authParam);
-    InitWidgetParam(ipcWidgetParamInner, widgetParam);
-    auto contextCallback = GetAuthContextCallback(apiVersion, authParam, widgetParam, userAuthCallback);
+    IAM_LOGI("start %{public}d authTrustLevel:%{public}u", apiVersion, ipcAuthParam.authTrustLevel);
+    IF_FALSE_LOGE_AND_RETURN_VAL(userAuthCallback != nullptr, INVALID_PARAMETERS);
+    Attributes extraInfo = {};
+    auto contextCallback = ContextCallback::NewInstance(userAuthCallback, TRACE_AUTH_USER_BEHAVIOR);
     if (contextCallback == nullptr) {
-        IAM_LOGE("contextCallback is nullptr");
+        IAM_LOGE("failed to construct context callback");
+        userAuthCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
-    ContextFactory::AuthWidgetContextPara para;
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
+
+    ContextFactory::AuthWidgetContextPara para = {};
     para.sdkVersion = apiVersion;
-    Attributes extraInfo;
-    int32_t checkRet = CheckSystemOnlyAuthParam(ipcAuthParamInner);
+    ReuseUnlockResult reuseUnlockResult = {};
+    bool isUserIdSpecified = false;
+    int32_t checkRet = InitAuthWidgetContextPara(ipcAuthParam, ipcWidgetParam, para, reuseUnlockResult,
+        isUserIdSpecified);
+    SetAuthWidgetContextTrace(para, reuseUnlockResult, contextCallback);
+    if (checkRet != SUCCESS) {
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget InitAuthWidgetContextPara fail");
+        contextCallback->OnResult(checkRet, extraInfo);
+        return checkRet;
+    }
+
+    checkRet = CheckSystemOnlyAuthParam(ipcAuthParam);
     if (checkRet != SUCCESS) {
         IAM_LOGE("CheckSystemOnlyAuthParam fail");
         return NotifyAuthFail(contextCallback, checkRet, "UserAuthService AuthWidget CheckSystemOnlyAuthParam fail");
     }
-    if (ipcAuthParamInner.hasTokenSchedule) {
+    if (ipcAuthParam.hasTokenSchedule) {
         IAM_LOGE("token schedule is not supported by widget auth");
         return NotifyAuthFail(contextCallback, INVALID_PARAMETERS,
             "UserAuthService AuthWidget tokenSchedule not supported");
     }
-    checkRet = GetCallerInfo(authParam.isUserIdSpecified, authParam.userId, para, contextCallback);
-    if (checkRet != SUCCESS) {
-        return NotifyAuthFail(contextCallback, checkRet, "UserAuthService AuthWidget GetCallerInfo fail");
-    }
-    checkRet = CheckAuthPermissionAndParam(authParam, widgetParam, para.isBackgroundApplication);
+
+    checkRet = CheckAuthPermissionAndParam(para, isUserIdSpecified);
     if (checkRet != SUCCESS) {
         IAM_LOGE("check permission and auth widget param failed");
-        return NotifyAuthFail(contextCallback, checkRet, "UserAuthService AuthWidget CheckAuthPermissionAndParam fail");
-    }
-    if (IpcCommon::CheckPermission(*this, ENTERPRISE_MANAGE_SECURITY)) {
-        IAM_LOGI("caller has enterprise manage security permission");
-        para.callerPermissions |= ENG_CALLER_PERM_ENTERPRISE_MANAGE_SECURITY;
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget CheckAuthPermissionAndParam fail");
+        contextCallback->OnResult(checkRet, extraInfo);
+        return checkRet;
     }
 
-    if (AuthWidgetHelper::CheckReuseUnlockResult(para, authParam, extraInfo) == SUCCESS) {
+    if (AuthWidgetHelper::CheckReuseUnlockResult(para, reuseUnlockResult, extraInfo) == SUCCESS) {
         IAM_LOGE("check reuse unlock result success");
         contextCallback->SetTraceAuthFinishReason("UserAuthService AuthWidget CheckReuseUnlockResult success");
         contextCallback->OnResult(SUCCESS, extraInfo);
@@ -1672,51 +1741,7 @@ int32_t UserAuthService::AuthWidget(int32_t apiVersion, const IpcAuthParamInner 
         return SUCCESS;
     }
 
-    return StartAuthWidget(authParam, widgetParam, para, contextCallback, modalCallback, contextId);
-}
-
-std::shared_ptr<ContextCallback> UserAuthService::GetAuthContextCallback(int32_t apiVersion,
-    const AuthParamInner &authParam, const WidgetParamInner &widgetParam,
-    const sptr<IIamCallback> &callback)
-{
-    if (callback == nullptr) {
-        IAM_LOGE("callback is nullptr");
-        return nullptr;
-    }
-    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_BEHAVIOR);
-    if (contextCallback == nullptr) {
-        IAM_LOGE("failed to construct context callback");
-        Attributes extraInfo;
-        callback->OnResult(ResultCode::GENERAL_ERROR, extraInfo.Serialize());
-        return nullptr;
-    }
-    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
-    contextCallback->SetTraceSdkVersion(apiVersion);
-    contextCallback->SetTraceAuthTrustLevel(authParam.authTrustLevel);
-
-    uint32_t authWidgetType = 0;
-    for (const auto authType : authParam.authTypes) {
-        authWidgetType |= static_cast<uint32_t>(authType);
-    }
-    static const uint32_t bitWindowMode = 0x40000000;
-    if (widgetParam.windowMode == FULLSCREEN) {
-        authWidgetType |= bitWindowMode;
-    }
-    static const uint32_t bitNavigation = 0x80000000;
-    if (!widgetParam.navigationButtonText.empty()) {
-        authWidgetType |= bitNavigation;
-    }
-    IAM_LOGI("SetTraceAuthWidgetType %{public}08x", authWidgetType);
-    contextCallback->SetTraceAuthWidgetType(authWidgetType);
-    uint32_t traceReuseMode = 0;
-    uint64_t traceReuseDuration = 0;
-    if (authParam.reuseUnlockResult.isReuse) {
-        traceReuseMode = authParam.reuseUnlockResult.reuseMode;
-        traceReuseDuration = authParam.reuseUnlockResult.reuseDuration;
-    }
-    contextCallback->SetTraceReuseUnlockResultMode(traceReuseMode);
-    contextCallback->SetTraceReuseUnlockResultDuration(traceReuseDuration);
-    return contextCallback;
+    return StartAuthWidget(para, contextCallback, modalCallback, contextId);
 }
 
 int32_t UserAuthService::Notice(int32_t noticeType, const std::string &eventData)

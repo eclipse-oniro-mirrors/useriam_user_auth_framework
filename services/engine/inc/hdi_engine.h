@@ -110,6 +110,20 @@ public:
     int32_t GetAuthResultFromMessage(const std::string &remoteUdid, const std::vector<uint8_t> &message,
         EngAuthResultInfo &authResultInfo) override;
     int32_t GetLatestEnrollmentTime(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime) override;
+    int32_t RegisterLaunchService(const std::vector<EngLaunchServiceRegisterInfo> &serviceList,
+        std::vector<EngLaunchServiceFlatInfo> &serviceInfos) override;
+    int32_t UnRegisterLaunchService(int32_t uid, const std::optional<EngLaunchServiceKey> &key) override;
+    int32_t GetLaunchServiceInfo(int32_t uid, const std::optional<EngLaunchServiceKey> &key,
+        std::vector<EngLaunchServiceFlatInfo> &serviceList) override;
+    int32_t GetLaunchServiceList(const std::vector<int32_t> &userIds,
+        std::vector<EngLaunchServiceFlatInfo> &serviceList) override;
+    int32_t GetAppLaunchServiceType(int32_t uid, EngLaunchServiceType &serviceType) override;
+    int32_t SetLaunchServiceState(int32_t uid, const std::vector<uint8_t> &token,
+        EngLaunchServiceState activeState) override;
+    int32_t SetDaemonAllowedlist(int32_t userId, const std::vector<std::string> &appIdentifiers,
+        bool isAdd) override;
+    int32_t SetDaemonForbiddenlist(int32_t userId, const std::vector<std::string> &appIdentifiers,
+        bool isAdd) override;
     bool SetStatusCallback(const StateCallback &callback) override;
     int32_t Load() override;
     int32_t Unload() override;

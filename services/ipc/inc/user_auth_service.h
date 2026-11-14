@@ -71,6 +71,20 @@ public:
     int32_t RegisterUserRecognitionEventListener(const sptr<IUserRecognitionCallback> &listener) override;
     int32_t UnregisterUserRecognitionEventListener(const sptr<IUserRecognitionCallback> &listener) override;
     int32_t CheckUserRecognitionCapability(int32_t &checkResult) override;
+    int32_t RegisterLaunchService(const std::vector<IpcLaunchServiceRegisterInfo> &serviceList,
+        const sptr<ILaunchServiceListCallback> &launchServiceListCallback) override;
+    int32_t UnRegisterLaunchService(int32_t uid, bool hasKey, const IpcLaunchServiceKey &key,
+        const sptr<ILaunchServiceCallback> &launchServiceCallback) override;
+    int32_t GetLaunchServiceInfo(int32_t uid, bool hasKey, const IpcLaunchServiceKey &key,
+        const sptr<ILaunchServiceListCallback> &launchServiceListCallback) override;
+    int32_t GetLaunchServiceList(bool hasUserId, int32_t userId,
+        const sptr<ILaunchServiceListCallback> &launchServiceListCallback) override;
+    int32_t SetLaunchServiceState(int32_t uid, const std::vector<uint8_t> &token, int32_t activeState,
+        const sptr<ILaunchServiceCallback> &launchServiceCallback) override;
+    int32_t SetDaemonAllowedlist(int32_t userId, const std::vector<std::string> &appIdentifiers, bool isAdd,
+        int32_t &funcRet) override;
+    int32_t SetDaemonForbiddenlist(int32_t userId, const std::vector<std::string> &appIdentifiers, bool isAdd,
+        int32_t &funcRet) override;
     int32_t SetGlobalConfigParam(const IpcGlobalConfigParam &ipcGlobalConfigParam) override;
     int32_t SetUserConfigParam(const IpcGlobalConfigParam &ipcUserConfigParam) override;
     int32_t GetUserConfigParam(int32_t userId, int32_t authType, int32_t type,
@@ -107,17 +121,15 @@ private:
     std::shared_ptr<ContextCallback> GetAuthContextCallback(int32_t apiVersion,
         const std::vector<uint8_t> &challenge, AuthType authType, AuthTrustLevel authTrustLevel,
         const sptr<IIamCallback> &callback);
-    std::shared_ptr<ContextCallback> GetAuthContextCallback(int32_t apiVersion, const AuthParamInner &authParam,
-        const WidgetParamInner &widgetParam, const sptr<IIamCallback> &callback);
     bool CheckAuthTrustLevel(AuthTrustLevel authTrustLevel, int32_t authType);
+    bool CheckAuthTrustLevel(AuthTrustLevel authTrustLevel, const std::vector<AuthType> &authTypes);
     bool CheckAuthTypeOnly(const std::vector<AuthType> &checkedTypes, const std::set<AuthType> &onlyContainTypes);
     bool CheckPrivatePinEnroll(const std::vector<AuthType> &authType, std::vector<AuthType> &validType);
     int32_t CheckAuthWidgetType(const std::vector<AuthType> &authType);
-    int32_t CheckCallerPermissionForUserId(const AuthParamInner &authParam);
-    int32_t CheckAuthPermissionAndParam(const AuthParamInner &authParam, const WidgetParamInner &widgetParam,
-        bool isBackgroundApplication);
+    int32_t CheckCallerPermissionForUserId(const ContextFactory::AuthWidgetContextPara &para,
+        bool isUserIdSpecified);
+    int32_t CheckAuthPermissionAndParam(const ContextFactory::AuthWidgetContextPara &para, bool isUserIdSpecified);
     uint64_t StartWidgetContext(const std::shared_ptr<ContextCallback> &contextCallback,
-        const AuthParamInner &authParam, const WidgetParamInner &widgetParam, std::vector<AuthType> &validType,
         ContextFactory::AuthWidgetContextPara &para, const sptr<IModalCallback> &modalCallback);
     uint64_t StartAuthContext(int32_t apiVersion, Authentication::AuthenticationPara para,
         const std::shared_ptr<ContextCallback> &contextCallback, bool needSubscribeAppState);
@@ -142,12 +154,14 @@ private:
     int32_t FillAuthenticationPara(const AuthParamInner &authParam, Authentication::AuthenticationPara &para,
         const std::shared_ptr<ContextCallback> &contextCallback, Attributes &extraInfo);
     int32_t CheckWindowMode(const WidgetParamInner &widgetParam);
-    int32_t CheckAuthWidgetParam(const AuthParamInner &authParam, const WidgetParamInner &widgetParam);
-    int32_t CheckValidSolution(ContextFactory::AuthWidgetContextPara &para, const AuthParamInner &authParam,
-        const WidgetParamInner &widgetParam, std::vector<AuthType> &validType);
-    int32_t GetCallerInfo(bool isUserIdSpecified, int32_t userId, ContextFactory::AuthWidgetContextPara &para,
-        std::shared_ptr<ContextCallback> &contextCallback);
-    int32_t CheckCallerPermissionForPrivatePin(const AuthParamInner &authParam);
+    int32_t CheckAuthWidgetParam(const ContextFactory::AuthWidgetContextPara &para);
+    int32_t CheckValidSolution(ContextFactory::AuthWidgetContextPara &para, std::vector<AuthType> &validType);
+    int32_t InitAuthWidgetContextPara(const IpcAuthParamInner &ipcAuthParam, const IpcWidgetParamInner &ipcWidgetParam,
+        ContextFactory::AuthWidgetContextPara &para, ReuseUnlockResult &reuseUnlockResult,
+        bool &isUserIdSpecified);
+    void SetAuthWidgetContextTrace(const ContextFactory::AuthWidgetContextPara &para,
+        const ReuseUnlockResult &reuseUnlockResult, const std::shared_ptr<ContextCallback> &contextCallback);
+    int32_t CheckCallerPermissionForPrivatePin(const ContextFactory::AuthWidgetContextPara &para);
     void FillGetPropertyKeys(AuthType authType, const std::vector<Attributes::AttributeKey> &keys,
         std::vector<uint32_t> &uint32Keys);
     void FillGetPropertyValue(AuthType authType, const std::vector<Attributes::AttributeKey> &keys, Attributes &values);
@@ -162,7 +176,7 @@ private:
     bool GetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain, const EngUserAuthTokenExtraInfo &extraInfo,
         Attributes &attributes);
     std::shared_ptr<ResourceNode> GetResourseNode(AuthType authType);
-    int32_t ProcessPinExpired(int32_t ret, const AuthParamInner &authParam, std::vector<AuthType> &validType,
+    int32_t ProcessPinExpired(int32_t ret, std::vector<AuthType> &validType,
         ContextFactory::AuthWidgetContextPara &para);
     int32_t GetPropertyHelper(int32_t userId, int32_t authType,
         const std::vector<Attributes::AttributeKey> &keys,
@@ -181,17 +195,31 @@ private:
         uint64_t &contextId);
     uint64_t StartSudoAuthContext(const AuthParamInner &authParam,
         const Authentication::AuthenticationPara &para, const std::shared_ptr<ContextCallback> &contextCallback);
-    int32_t StartAuthWidget(AuthParamInner &authParam, WidgetParamInner &widgetParam,
-        ContextFactory::AuthWidgetContextPara &para, std::shared_ptr<ContextCallback> &contextCallback,
-        const sptr<IModalCallback> &modalCallback, uint64_t &contextId);
+    int32_t StartAuthWidget(ContextFactory::AuthWidgetContextPara &para,
+        std::shared_ptr<ContextCallback> &contextCallback, const sptr<IModalCallback> &modalCallback,
+        uint64_t &contextId);
     void InitAuthParam(const IpcAuthParamInner &ipcAuthParam, AuthParamInner &authParam);
     void InitRemoteAuthParam(const IpcRemoteAuthParam &ipcRemoteAuthParam,
         std::optional<RemoteAuthParam> &remoteAuthParam);
     void InitWidgetParam(const IpcWidgetParamInner &ipcWidgetParam, WidgetParamInner &widgetParam);
-    int32_t CheckSkipLockedBiometricAuth(ContextFactory::AuthWidgetContextPara &para, const AuthParamInner &authParam,
-        const WidgetParamInner &widgetParam, std::vector<AuthType> &validType);
-    std::vector<AuthType> GetAuthTypesFromCredentialIds(const AuthParamInner &authParam);
+    int32_t CheckSkipLockedBiometricAuth(ContextFactory::AuthWidgetContextPara &para,
+        std::vector<AuthType> &validType);
+    std::vector<AuthType> GetAuthTypesFromCredentialIds(const ContextFactory::AuthWidgetContextPara &para);
     void FilterFaceNotAvailable(ContextFactory::AuthWidgetContextPara &para, std::vector<AuthType> &validType);
+    static IpcLaunchServiceFlatInfo ConvertToIpcLaunchServiceFlatInfo(const EngLaunchServiceFlatInfo &info);
+    static EngLaunchServiceRegisterInfo ConvertFromIpcLaunchServiceRegisterInfo(
+        const IpcLaunchServiceRegisterInfo &ipcInfo);
+    int32_t RegisterLaunchServiceInner(const std::vector<IpcLaunchServiceRegisterInfo> &serviceList,
+        std::vector<IpcLaunchServiceFlatInfo> &serviceInfos);
+    int32_t UnRegisterLaunchServiceInner(int32_t uid, const std::optional<IpcLaunchServiceKey> &key);
+    int32_t GetLaunchServiceInfoInner(int32_t uid, const std::optional<IpcLaunchServiceKey> &key,
+        std::vector<IpcLaunchServiceFlatInfo> &serviceList);
+    int32_t GetLaunchServiceListInner(std::optional<int32_t> optUserId,
+        std::vector<IpcLaunchServiceFlatInfo> &serviceList);
+    int32_t AuthWidgetForToken(ContextFactory::AuthWidgetContextPara &para, std::vector<uint8_t> &token);
+    int32_t AdminAuthForToken(int32_t uid, std::vector<uint8_t> &authToken);
+    int32_t GetAuthToken(EngLaunchServiceType serviceType, int32_t uid, ContextFactory::AuthWidgetContextPara &para,
+        std::vector<uint8_t> &authToken);
     static std::mutex mutex_;
     static std::shared_ptr<UserAuthService> instance_;
 };

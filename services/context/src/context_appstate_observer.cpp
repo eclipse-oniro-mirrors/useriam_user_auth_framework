@@ -32,9 +32,6 @@ namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
 using namespace OHOS::AppExecFwk;
-namespace {
-    constexpr std::uint32_t CONVERT_UID_TO_USERID = 200000;
-}
 
 sptr<IAppMgr> ContextAppStateObserverManager::GetAppManagerInstance()
 {

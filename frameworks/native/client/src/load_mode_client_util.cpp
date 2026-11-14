@@ -40,7 +40,7 @@ bool CheckSelfPermission(const std::string &permission)
     return true;
 }
 
-bool IsUserIamDeamonProcess()
+bool IsUserIamDaemonProcess()
 {
     constexpr uint32_t MAX_VALUE_LEN = 128;
     const char *IS_PIN_ENROLLED_KEY = "persist.useriam.isPinEnrolled";
@@ -67,8 +67,8 @@ bool HasAnyPermission(const std::vector<std::string> &permissions)
 int32_t LoadModeUtil::GetProxyNullResultCode(const char *funcName, const std::vector<std::string> &permissions)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(funcName != nullptr, GENERAL_ERROR);
-    if (IsUserIamDeamonProcess()) {
-        IAM_LOGE("%{public}s, user iam is deamon process, proxy should not be null", funcName);
+    if (IsUserIamDaemonProcess()) {
+        IAM_LOGE("%{public}s, user iam is daemon process, proxy should not be null", funcName);
         return GENERAL_ERROR;
     }
 
@@ -77,7 +77,7 @@ int32_t LoadModeUtil::GetProxyNullResultCode(const char *funcName, const std::ve
         return CHECK_PERMISSION_FAILED;
     }
 
-    IAM_LOGE("%{public}s, useriam is not deamon process and pin is not enrolled", funcName);
+    IAM_LOGE("%{public}s, useriam is not daemon process and pin is not enrolled", funcName);
     return NOT_ENROLLED;
 }
 #else
