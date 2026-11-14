@@ -374,7 +374,8 @@ UserAuthResultCode UserAuthImpl::ParseReusableAuthResultParam(napi_env env, napi
         .userId = INVALID_USER_ID,
         .authTrustLevel = AuthTrustLevel::ATL1,
     };
-    UserAuthResultCode errCode = UserAuthParamUtils::InitAuthParam(env, argv[PARAM0], authParamInner);
+    UserAuthParamUtils paramUtils(AuthApiContract::QUERY_REUSABLE_RESULT);
+    UserAuthResultCode errCode = paramUtils.InitAuthParam(env, argv[PARAM0], authParamInner);
     if (errCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("authParamInner type error, errorCode: %{public}d", errCode);
         return errCode;

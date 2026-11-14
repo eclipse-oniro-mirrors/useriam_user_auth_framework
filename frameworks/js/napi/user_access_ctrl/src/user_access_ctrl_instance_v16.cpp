@@ -118,7 +118,7 @@ napi_value UserAccessCtrlInstanceV16::RedeemScheduledAuthToken(napi_env env, nap
         IAM_LOGE("challenge is empty or invalid");
         std::string msgStr = "Parameter error. \"challenge\" must be non-empty and cannot exceed 32 bytes.";
         napi_throw(env, UserAuth::UserAuthNapiHelper::GenerateErrorMsg(env,
-        UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM, msgStr));
+        UserAuth::UserAuthResultCode::PARAM_VERIFIED_FAILED, msgStr));
         return nullptr;
     }
     std::vector<uint8_t> scheduleToken;
@@ -128,7 +128,7 @@ napi_value UserAccessCtrlInstanceV16::RedeemScheduledAuthToken(napi_env env, nap
         IAM_LOGE("GetUint8ArrayValue fail");
         std::string msgStr = "Parameter error. The length of \"scheduledAuthToken\" cannot exceed 1024.";
         napi_throw(env, UserAuth::UserAuthNapiHelper::GenerateErrorMsg(env,
-        UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM, msgStr));
+        UserAuth::UserAuthResultCode::PARAM_VERIFIED_FAILED, msgStr));
         return nullptr;
     }
     napi_value retPromise = nullptr;

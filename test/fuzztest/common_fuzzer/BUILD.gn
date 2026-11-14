@@ -384,6 +384,9 @@ ohos_source_set("iam_utils_fuzzer") {
     "../../../common/utils/xcollie_helper.cpp",
   ]
 
+  # 本 source set 仅进入 fuzz 二进制；开启测试门控（如 RelativeTimer::Stop）
+  defines = [ "IAM_TEST_ENABLE" ]
+
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",

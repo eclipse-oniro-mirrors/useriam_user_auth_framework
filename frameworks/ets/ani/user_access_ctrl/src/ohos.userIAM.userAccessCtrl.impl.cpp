@@ -18,6 +18,7 @@
 #include "taihe/runtime.hpp"
 
 #include <cinttypes>
+#include <cmath>
 #include <future>
 #include <map>
 #include <mutex>
@@ -78,11 +79,12 @@ private:
     bool resultSet_ = false;
 };
 
-bool ConvertAllowableDuration(int32_t allowableDuration, uint64_t &outAllowableDurationUint64)
+bool ConvertAllowableDuration(double allowableDuration, uint64_t &outAllowableDurationUint64)
 {
     constexpr const double maxAllowableDuration = 24 * 60 * 60 * 1000;
-    if (allowableDuration <= 0 || allowableDuration > maxAllowableDuration) {
-        IAM_LOGE("allowableDuration check fail:%{public}d", allowableDuration);
+    if (std::isnan(allowableDuration) || std::isinf(allowableDuration) || allowableDuration <= 0 ||
+        allowableDuration > maxAllowableDuration) {
+        IAM_LOGE("allowableDuration check fail:%{public}f", allowableDuration);
         return false;
     }
     outAllowableDurationUint64 = static_cast<uint64_t>(allowableDuration);
@@ -252,7 +254,7 @@ bool FillAniTokenSchedule(const std::vector<uint8_t> &extraInfo, userAuth::Token
     return true;
 }
 
-ResultCode VerifyAuthTokenSyncInner(array_view<uint8_t> authToken, int32_t allowableDuration,
+ResultCode VerifyAuthTokenSyncInner(array_view<uint8_t> authToken, double allowableDuration,
     userAccessCtrl::AuthToken &authTokenOut)
 {
     int32_t maxWaitTime = 10000; // 10 seconds
@@ -271,7 +273,7 @@ ResultCode VerifyAuthTokenSyncInner(array_view<uint8_t> authToken, int32_t allow
     auto result = future.wait_for(std::chrono::milliseconds(maxWaitTime));
     if (result == std::future_status::timeout) {
         IAM_LOGE("verifyAuthToken timeout");
-        return ResultCode::TIMEOUT;
+        return ResultCode::GENERAL_ERROR;
     }
 
     VerifyAuthTokenResult verifyAuthTokenResult = future.get();
@@ -353,7 +355,7 @@ ResultCode RedeemScheduledAuthTokenInner(array_view<uint8_t> scheduleToken, arra
     auto result = future.wait_for(std::chrono::milliseconds(maxWaitTime));
     if (result == std::future_status::timeout) {
         IAM_LOGE("redeemScheduledAuthToken timeout");
-        return ResultCode::TIMEOUT;
+        return ResultCode::GENERAL_ERROR;
     }
 
     VerifyAuthTokenResult verifyResult = future.get();

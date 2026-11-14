@@ -38,6 +38,12 @@ RelativeTimer::~RelativeTimer()
 
 uint32_t RelativeTimer::Register(const TimerCallback &callback, uint32_t ms, bool once)
 {
+#ifdef IAM_TEST_ENABLE
+    if (stopFlag_.load()) {
+        IAM_LOGD("relative timer stopped, drop task");
+        return 0;
+    }
+#endif
     return timer_.Register(callback, ms, once);
 }
 
@@ -45,6 +51,15 @@ void RelativeTimer::Unregister(uint32_t timerId)
 {
     return timer_.Unregister(timerId);
 }
+
+#ifdef IAM_TEST_ENABLE
+void RelativeTimer::Stop()
+{
+    stopFlag_.store(true);
+    timer_.Shutdown();
+    IAM_LOGI("relative timer stopped");
+}
+#endif
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
