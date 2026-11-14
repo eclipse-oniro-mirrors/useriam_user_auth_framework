@@ -55,10 +55,11 @@ ohos_unittest("iam_services_test") {
   ]
 
   sources = userauth_test_services_sources +
-            userauth_test_remote_connect_default_sources +
+            userauth_test_remote_connect_without_device_manager_sources +
             [
               "../../../services/core/src/os_accounts_manager_impl.cpp",
               "../../../services/load_mode/src/service_unload_manager.cpp",
+              "mocks/mock_device_manager_util.cpp",
               "mocks/mock_ipc_common.cpp",
               "mocks/mock_user_auth_engine.cpp",
               "mocks/mock_screenlock_manager.cpp",
