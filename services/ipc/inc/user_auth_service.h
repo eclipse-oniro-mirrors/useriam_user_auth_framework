@@ -126,8 +126,8 @@ private:
     bool CheckAuthTypeOnly(const std::vector<AuthType> &checkedTypes, const std::set<AuthType> &onlyContainTypes);
     bool CheckPrivatePinEnroll(const std::vector<AuthType> &authType, std::vector<AuthType> &validType);
     int32_t CheckAuthWidgetType(const std::vector<AuthType> &authType);
-    int32_t CheckCallerPermissionForUserId(const ContextFactory::AuthWidgetContextPara &para,
-        bool isUserIdSpecified);
+    bool CheckAuthWidgetInnerPermission(const ContextFactory::AuthWidgetContextPara &para);
+    bool CheckAuthWidgetNorthPermission(const ContextFactory::AuthWidgetContextPara &para, bool isUserIdSpecified);
     int32_t CheckAuthPermissionAndParam(const ContextFactory::AuthWidgetContextPara &para, bool isUserIdSpecified);
     uint64_t StartWidgetContext(const std::shared_ptr<ContextCallback> &contextCallback,
         ContextFactory::AuthWidgetContextPara &para, const sptr<IModalCallback> &modalCallback);
@@ -161,7 +161,6 @@ private:
         bool &isUserIdSpecified);
     void SetAuthWidgetContextTrace(const ContextFactory::AuthWidgetContextPara &para,
         const ReuseUnlockResult &reuseUnlockResult, const std::shared_ptr<ContextCallback> &contextCallback);
-    int32_t CheckCallerPermissionForPrivatePin(const ContextFactory::AuthWidgetContextPara &para);
     void FillGetPropertyKeys(AuthType authType, const std::vector<Attributes::AttributeKey> &keys,
         std::vector<uint32_t> &uint32Keys);
     void FillGetPropertyValue(AuthType authType, const std::vector<Attributes::AttributeKey> &keys, Attributes &values);

@@ -912,6 +912,41 @@ void FuzzCheckAuthPermissionAndParam(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzCheckAuthWidgetPermission(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.sdkVersion = parcel.ReadInt32();
+    para.userId = parcel.ReadInt32();
+    para.isBackgroundApplication = parcel.ReadBool();
+    bool isUserIdSpecified = parcel.ReadBool();
+    std::vector<int32_t> authTypes;
+    parcel.ReadInt32Vector(&authTypes);
+    for (const auto &iter : authTypes) {
+        para.authTypeList.push_back(static_cast<AuthType>(iter));
+    }
+    WidgetParamInner widgetParam;
+    widgetParam.title = parcel.ReadString();
+    widgetParam.navigationButtonText = parcel.ReadString();
+    widgetParam.windowMode = static_cast<WindowModeType>(parcel.ReadInt32());
+    para.widgetParam = widgetParam;
+
+    g_userAuthService.CheckAuthWidgetInnerPermission(para);
+    g_userAuthService.CheckAuthWidgetNorthPermission(para, isUserIdSpecified);
+    g_userAuthService.CheckAuthPermissionAndParam(para, isUserIdSpecified);
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    g_userAuthService.CheckAuthWidgetInnerPermission(para);
+    g_userAuthService.CheckAuthPermissionAndParam(para, isUserIdSpecified);
+    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    IpcCommon::AddPermission(USER_AUTH_FROM_BACKGROUND);
+    g_userAuthService.CheckAuthWidgetNorthPermission(para, isUserIdSpecified);
+    g_userAuthService.CheckAuthPermissionAndParam(para, isUserIdSpecified);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
 void FuzzStartLocalRemoteAuthContext(Parcel &parcel)
 {
     IAM_LOGI("begin");
@@ -1300,6 +1335,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzProcessPinExpired,
     FuzzProcessAuthParamForRemoteAuth,
     FuzzCheckAuthPermissionAndParam,
+    FuzzCheckAuthWidgetPermission,
     FuzzStartLocalRemoteAuthContext,
     FuzzRegisterLaunchService,
     FuzzUnRegisterLaunchService,
