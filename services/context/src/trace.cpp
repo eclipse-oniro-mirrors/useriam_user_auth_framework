@@ -35,16 +35,14 @@ Trace::Trace()
     ContextCallbackNotifyListener::GetInstance().AddNotifier(ProcessCredChangeEvent);
     ContextCallbackNotifyListener::GetInstance().AddNotifier(ProcessCredManagerEvent);
     ContextCallbackNotifyListener::GetInstance().AddNotifier(ProcessUserAuthEvent);
-    ContextCallbackNotifyListener::GetInstance().AddNotifier(ProcessUserAuthFwkEvent);
 }
 
 Trace::~Trace()
 {
 }
 
-void Trace::ProcessCredChangeEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag)
+void Trace::ProcessCredChangeEvent(const ContextCallbackNotifyListener::MetaData &metaData)
 {
-    static_cast<void>(flag);
     if (!(metaData.operationType == TRACE_ADD_CREDENTIAL ||
         metaData.operationType == TRACE_DELETE_CREDENTIAL ||
         metaData.operationType == TRACE_UPDATE_CREDENTIAL ||
@@ -75,9 +73,8 @@ void Trace::ProcessCredChangeEvent(const ContextCallbackNotifyListener::MetaData
     IAM_LOGI("start to process cred change event");
 }
 
-void Trace::ProcessCredManagerEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag)
+void Trace::ProcessCredManagerEvent(const ContextCallbackNotifyListener::MetaData &metaData)
 {
-    static_cast<void>(flag);
     if (!(metaData.operationType == TRACE_ADD_CREDENTIAL ||
         metaData.operationType == TRACE_DELETE_CREDENTIAL ||
         metaData.operationType == TRACE_UPDATE_CREDENTIAL ||
@@ -143,69 +140,20 @@ void Trace::CopyMetaDataToTraceInfo(const ContextCallbackNotifyListener::MetaDat
     CopyOptionalValue(metaData.localTime, info.timeTraceInfo.localTime);
     CopyOptionalValue(metaData.authSuccTipTime, info.timeTraceInfo.authSuccTipTime);
     CopyOptionalValue(metaData.extraInfo, info.timeTraceInfo.extraInfo);
+    CopyOptionalValue(metaData.requestContextId, info.requestContextId);
+    CopyOptionalValue(metaData.authContextId, info.authContextId);
 }
 
-void Trace::ProcessUserAuthEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag)
+void Trace::ProcessUserAuthEvent(const ContextCallbackNotifyListener::MetaData &metaData)
 {
-    if (!(metaData.operationType == TRACE_AUTH_USER_ALL ||
-        metaData.operationType == TRACE_AUTH_USER_BEHAVIOR) ||
-        (flag == TRACE_FLAG_NO_NEED_BEHAVIOR)) {
+    if (!(metaData.operationType == TRACE_AUTH_USER_BEHAVIOR ||
+        metaData.operationType == TRACE_AUTH_USER_SECURITY)) {
         return;
     }
     UserAuthTrace info = {};
     CopyMetaDataToTraceInfo(metaData, info);
     ReportUserAuth(info);
     IAM_LOGD("start to process user auth event");
-}
-
-void Trace::ProcessUserAuthFwkEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag)
-{
-    static_cast<void>(flag);
-    if (!(metaData.operationType == TRACE_AUTH_USER_ALL ||
-        metaData.operationType == TRACE_AUTH_USER_SECURITY)) {
-        return;
-    }
-    UserAuthFwkTrace securityInfo = {};
-    if (metaData.callerName.has_value()) {
-        securityInfo.callerName = metaData.callerName.value();
-    }
-    if (metaData.requestContextId.has_value()) {
-        securityInfo.requestContextId = metaData.requestContextId.value();
-    }
-    if (metaData.authContextId.has_value()) {
-        securityInfo.authContextId = metaData.authContextId.value();
-    }
-    if (metaData.atl.has_value()) {
-        securityInfo.atl = metaData.atl.value();
-    }
-    if (metaData.authType.has_value()) {
-        securityInfo.authType = metaData.authType.value();
-    }
-    if (metaData.isRemoteAuth.has_value()) {
-        securityInfo.isRemoteAuth = metaData.isRemoteAuth.value();
-    }
-    if (metaData.remoteUdid.has_value()) {
-        securityInfo.remoteUdid = metaData.remoteUdid.value();
-    }
-    if (metaData.localUdid.has_value()) {
-        securityInfo.localUdid = metaData.localUdid.value();
-    }
-    if (metaData.connectionName.has_value()) {
-        securityInfo.connectionName = metaData.connectionName.value();
-    }
-    if (metaData.authFinishReason.has_value()) {
-        securityInfo.authFinishReason = metaData.authFinishReason.value();
-    }
-    CopyOptionalValue(metaData.totalTime, securityInfo.timeTraceInfo.totalTime);
-    CopyOptionalValue(metaData.localTime, securityInfo.timeTraceInfo.localTime);
-    CopyOptionalValue(metaData.authSuccTipTime, securityInfo.timeTraceInfo.authSuccTipTime);
-    CopyOptionalValue(metaData.extraInfo, securityInfo.timeTraceInfo.extraInfo);
-    securityInfo.authResult = metaData.operationResult;
-    uint64_t timeSpan = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(metaData.endTime -
-        metaData.startTime).count());
-    securityInfo.authtimeSpan = timeSpan;
-    ReportSecurityUserAuthFwk(securityInfo);
-    IAM_LOGD("start to process user auth fwk event");
 }
 } // namespace UserAuth
 } // namespace UserIam

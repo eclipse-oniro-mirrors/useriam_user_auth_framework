@@ -131,10 +131,7 @@ void ContextCallbackImpl::ProcessAuthResult(int32_t tip, const std::vector<uint8
         IAM_LOGI("authResult is success");
         return;
     }
-    metaData_.operationResult = authResult;
-    metaData_.endTime = std::chrono::steady_clock::now();
     IAM_LOGI("fingerprint single auth result, tip: %{public}d, result: %{public}d", tip, authResult);
-    ContextCallbackNotifyListener::GetInstance().Process(metaData_, TRACE_FLAG_NO_NEED_BEHAVIOR);
     return;
 }
 
@@ -165,7 +162,7 @@ void ContextCallbackImpl::OnResult(int32_t resultCode, const Attributes &finalRe
 
     HandleAuthSuccessResult(resultCode, finalResult);
 
-    ContextCallbackNotifyListener::GetInstance().Process(metaData_, TRACE_FLAG_DEFAULT);
+    ContextCallbackNotifyListener::GetInstance().Process(metaData_);
     if (stopCallback_ != nullptr) {
         stopCallback_();
     }
@@ -204,8 +201,7 @@ std::vector<uint8_t> ContextCallbackImpl::FilterSystemApiOnlyKeys(const Attribut
 
 void ContextCallbackImpl::HandleAuthSuccessResult(int32_t resultCode, const Attributes &finalResult)
 {
-    if (resultCode != SUCCESS || (metaData_.operationType != TRACE_AUTH_USER_ALL &&
-        metaData_.operationType != TRACE_AUTH_USER_BEHAVIOR)) {
+    if (resultCode != SUCCESS || metaData_.operationType != TRACE_AUTH_USER_BEHAVIOR) {
         return;
     }
     if (!metaData_.authType.has_value() || !metaData_.callerType.has_value() || !metaData_.callerName.has_value()) {
@@ -374,11 +370,11 @@ void ContextCallbackNotifyListener::AddNotifier(const Notify &notify)
     notifierList_.emplace_back(notify);
 }
 
-void ContextCallbackNotifyListener::Process(const MetaData &metaData, TraceFlag flag)
+void ContextCallbackNotifyListener::Process(const MetaData &metaData)
 {
     for (const auto &notify : notifierList_) {
         if (notify != nullptr) {
-            notify(metaData, flag);
+            notify(metaData);
         }
     }
 }

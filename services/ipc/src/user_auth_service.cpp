@@ -518,7 +518,7 @@ std::shared_ptr<ContextCallback> UserAuthService::GetAuthContextCallback(int32_t
         IAM_LOGE("callback is nullptr");
         return nullptr;
     }
-    auto contextCallback = ContextCallback::NewInstance(userAuthCallback, TRACE_AUTH_USER_ALL);
+    auto contextCallback = ContextCallback::NewInstance(userAuthCallback, TRACE_AUTH_USER_BEHAVIOR);
     if (contextCallback == nullptr) {
         IAM_LOGE("failed to construct context callback");
         Attributes extraInfo;

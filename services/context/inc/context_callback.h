@@ -64,10 +64,10 @@ public:
         std::optional<uint32_t> authSuccTipTime;
         std::optional<std::string> extraInfo;
     };
-    using Notify = std::function<void(const MetaData &metaData, TraceFlag flag)>;
+    using Notify = std::function<void(const MetaData &metaData)>;
     static ContextCallbackNotifyListener &GetInstance();
     void AddNotifier(const Notify &notify);
-    void Process(const MetaData &metaData, TraceFlag flag);
+    void Process(const MetaData &metaData);
 
 private:
     std::vector<Notify> notifierList_;

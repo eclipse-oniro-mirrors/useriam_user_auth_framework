@@ -27,11 +27,10 @@ namespace UserAuth {
 class Trace final : public NoCopyable {
 private:
     static Trace trace;
-    static void ProcessCredChangeEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag);
-    static void ProcessCredManagerEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag);
+    static void ProcessCredChangeEvent(const ContextCallbackNotifyListener::MetaData &metaData);
+    static void ProcessCredManagerEvent(const ContextCallbackNotifyListener::MetaData &metaData);
     static void CopyMetaDataToTraceInfo(const ContextCallbackNotifyListener::MetaData &metaData, UserAuthTrace &info);
-    static void ProcessUserAuthEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag);
-    static void ProcessUserAuthFwkEvent(const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag);
+    static void ProcessUserAuthEvent(const ContextCallbackNotifyListener::MetaData &metaData);
     Trace();
     ~Trace() override;
 };

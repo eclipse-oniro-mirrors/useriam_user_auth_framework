@@ -68,26 +68,8 @@ USERIAM_USER_AUTH:
   LOCAL_TIME: {type: UINT32, desc: local processing duration ms}
   AUTH_SUCC_TIP_TIME: {type: UINT32, desc: auth succ tip duration ms}
   EXTRA_INFO: {type: STRING, desc: extra info includes timing trace}
-
-USERIAM_USER_AUTH_FWK:
-  __BASE: {type: SECURITY, level: CRITICAL, tag: UserAuth, desc: user auth security message}
-  OPERATION_TIME: {type: STRING, desc: operation time}
-  CALLER_NAME: {type: STRING, desc: caller name}
   REQUEST_CONTEXTID: {type: UINT64, desc: request context id}
   AUTH_CONTEXTID: {type: UINT64, desc: auth context id}
-  AUTH_TRUST_LEVEL: {type: UINT32, desc: auth trust level}
-  AUTH_TYPE: {type: INT32, desc: auth type}
-  AUTH_RESULT: {type: INT32, desc: auth result}
-  AUTH_TIME_SPAN: {type: UINT64, desc: auth time span}
-  IS_REMOTE_AUTH: {type: BOOL, desc: is remote auth}
-  LOCAL_UDID: {type: STRING, desc: local udid mask}
-  REMOTE_UDID: {type: STRING, desc: remote udid mask}
-  CONNECTION_NAME: {type: STRING, desc: connection name}
-  AUTH_FINISH_REASON: {type: STRING, desc: auth finish reason}
-  TOTAL_TIME: {type: UINT32, desc: total wall-clock duration ms}
-  LOCAL_TIME: {type: UINT32, desc: local processing duration ms}
-  AUTH_SUCC_TIP_TIME: {type: UINT32, desc: auth succ tip duration ms}
-  EXTRA_INFO: {type: STRING, desc: extra info includes timing trace}
 
 USERIAM_REMOTE_EXECUTE:
   __BASE: {type: SECURITY, level: CRITICAL, tag: UserAuth, desc: user auth remote execute message}

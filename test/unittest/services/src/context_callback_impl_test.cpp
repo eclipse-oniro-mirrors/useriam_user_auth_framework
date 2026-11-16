@@ -103,7 +103,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserIdmOnResult, TestSize.L
     EXPECT_TRUE(testAttr->SetInt32Value(Attributes::ATTR_FREEZING_TIME, 40));
     auto testMsg = testAttr->Serialize();
 
-    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag) { return; };
+    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData) { return; };
     ContextCallbackNotifyListener::GetInstance().AddNotifier(notify);
     ContextCallbackNotifyListener::GetInstance().AddNotifier(nullptr);
 
@@ -148,7 +148,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplStripSystemApiOnlyAttrsForN
             return SUCCESS;
         });
     sptr<IIamCallback> callback = mockCallback;
-    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_BEHAVIOR);
     ASSERT_NE(contextCallback, nullptr);
     contextCallback->SetSystemApiCaller(false);
     contextCallback->OnResult(SUCCESS, *testAttr);
@@ -184,7 +184,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplStripV10SystemApiOnlyAttrsF
             return SUCCESS;
         });
     sptr<IIamCallback> callback = mockCallback;
-    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_BEHAVIOR);
     ASSERT_NE(contextCallback, nullptr);
     contextCallback->SetSystemApiCaller(false);
     contextCallback->SetTraceSdkVersion(INNER_API_VERSION_10000);
@@ -212,7 +212,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplKeepSystemApiOnlyAttrsForSy
             return SUCCESS;
         });
     sptr<IIamCallback> callback = mockCallback;
-    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_ALL);
+    auto contextCallback = ContextCallback::NewInstance(callback, TRACE_AUTH_USER_BEHAVIOR);
     ASSERT_NE(contextCallback, nullptr);
     contextCallback->SetSystemApiCaller(true);
     contextCallback->OnResult(SUCCESS, *testAttr);
@@ -234,7 +234,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserAuthOnAcquireInfo_001, 
     EXPECT_TRUE(testAttr->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo));
     auto testMsg = testAttr->Serialize();
 
-    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag) { return; };
+    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData) { return; };
     ContextCallbackNotifyListener::GetInstance().AddNotifier(notify);
 
     sptr<MockIdmCallback> mockCallback(new (nothrow) MockIdmCallback());
@@ -262,7 +262,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserAuthOnAcquireInfo_002, 
     EXPECT_TRUE(testAttr->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo));
     auto testMsg = testAttr->Serialize();
 
-    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag) { return; };
+    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData) { return; };
     ContextCallbackNotifyListener::GetInstance().AddNotifier(notify);
 
     sptr<MockIdmCallback> mockCallback(new (nothrow) MockIdmCallback());
@@ -290,7 +290,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserAuthOnAcquireInfo_003, 
     EXPECT_TRUE(testAttr->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo));
     auto testMsg = testAttr->Serialize();
 
-    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag) { return; };
+    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData) { return; };
     ContextCallbackNotifyListener::GetInstance().AddNotifier(notify);
 
     sptr<MockIdmCallback> mockCallback(new (nothrow) MockIdmCallback());
@@ -315,7 +315,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserAuthOnAcquireInfo_004, 
     EXPECT_TRUE(testAttr->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo));
     auto testMsg = testAttr->Serialize();
 
-    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag) { return; };
+    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData) { return; };
     ContextCallbackNotifyListener::GetInstance().AddNotifier(notify);
 
     sptr<MockIdmCallback> mockCallback(new (nothrow) MockIdmCallback());
@@ -343,7 +343,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserAuthOnAcquireInfo_005, 
     EXPECT_TRUE(testAttr->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo));
     auto testMsg = testAttr->Serialize();
 
-    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag) { return; };
+    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData) { return; };
     ContextCallbackNotifyListener::GetInstance().AddNotifier(notify);
 
     sptr<MockIdmCallback> mockCallback(new (nothrow) MockIdmCallback());
@@ -371,7 +371,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserAuthOnAcquireInfo_006, 
     EXPECT_TRUE(testAttr->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo));
     auto testMsg = testAttr->Serialize();
 
-    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag) { return; };
+    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData) { return; };
     ContextCallbackNotifyListener::GetInstance().AddNotifier(notify);
 
     sptr<MockIdmCallback> mockCallback(new (nothrow) MockIdmCallback());
@@ -399,7 +399,7 @@ HWTEST_F(ContextCallbackImplTest, ContextCallbackImplUserAuthOnAcquireInfo_007, 
     EXPECT_TRUE(testAttr->SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, extraInfo));
     auto testMsg = testAttr->Serialize();
 
-    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData, TraceFlag flag) { return; };
+    auto notify = [](const ContextCallbackNotifyListener::MetaData &metaData) { return; };
     ContextCallbackNotifyListener::GetInstance().AddNotifier(notify);
 
     sptr<MockIdmCallback> mockCallback(new (nothrow) MockIdmCallback());
