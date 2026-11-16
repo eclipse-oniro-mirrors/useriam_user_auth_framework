@@ -64,6 +64,7 @@ public:
     static bool IsOsAccountVerified(int32_t userId);
     static int32_t GetDirectCallerType(IPCObjectStub &stub);
     static bool IsSystemCaller(IPCObjectStub &stub);
+    static bool IsCallingNativeRoot();
     static void ReportInterfaceCall(IPCObjectStub &stub, uint32_t code, const std::string &serviceName);
     class PeerDeathRecipient final : public IPCObjectProxy::DeathRecipient {
     public:

@@ -37,6 +37,7 @@ bool IpcCommon::skipFlag_ = false;
 bool IpcCommon::skipCallerFlag_ = false;
 bool IpcCommon::skipAccountVerifiedFlag_ = false;
 bool IpcCommon::skipActiveUserIdFlag_ = false;
+bool IpcCommon::isNativeRootFlag_ = false;
 
 int32_t IpcCommon::GetCallingUserId(IPCObjectStub &stub, int32_t &userId)
 {
@@ -230,6 +231,16 @@ bool IpcCommon::IsSystemCaller(IPCObjectStub &stub)
         return true;
     }
     return CheckPermission(stub, IS_SYSTEM_APP);
+}
+
+bool IpcCommon::IsCallingNativeRoot()
+{
+    return isNativeRootFlag_;
+}
+
+void IpcCommon::SetNativeRootFlag(bool isNativeRoot)
+{
+    isNativeRootFlag_ = isNativeRoot;
 }
 
 std::optional<EngCallerType> IpcCommon::GetEngCallerType(int32_t callerType)
