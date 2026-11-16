@@ -18,6 +18,7 @@
 #include <future>
 
 #include "iam_common_defines.h"
+#include "iam_defines.h"
 #include "iam_ptr.h"
 
 #include "executor_messenger_service.h"
@@ -157,6 +158,78 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_004, Te
     para.isBackgroundApplication = true;
     int32_t ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_005, TestSize.Level0)
+{
+    UserAuthService service;
+    std::vector<uint8_t> challenge = {1};
+    const AuthParamInner authParam = {
+        .challenge = challenge,
+        .authTypes = {PIN, RECOVERY_KEY},
+        .authTrustLevel = ATL2,
+        .isUserIdSpecified = false,
+    };
+    const WidgetParamInner widgetParam = {
+        .title = "使用密码验证",
+        .navigationButtonText = "navigationButtonText",
+        .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
+    };
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.sdkVersion = INNER_API_VERSION_10000;
+    para.challenge = authParam.challenge;
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.isBackgroundApplication = true;
+    // inner path requires ACCESS_USER_AUTH_INTERNAL_PERMISSION even with all north permissions
+    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    IpcCommon::AddPermission(IS_SYSTEM_APP);
+    IpcCommon::AddPermission(USER_AUTH_FROM_BACKGROUND);
+    int32_t ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
+    EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
+    // inner path passes with ACCESS_USER_AUTH_INTERNAL_PERMISSION, background is not checked
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
+    EXPECT_EQ(ret, TYPE_NOT_SUPPORT);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_006, TestSize.Level0)
+{
+    UserAuthService service;
+    std::vector<uint8_t> challenge = {1};
+    const AuthParamInner authParam = {
+        .challenge = challenge,
+        .authTypes = {PIN, RECOVERY_KEY},
+        .authTrustLevel = ATL2,
+        .isUserIdSpecified = false,
+    };
+    const WidgetParamInner widgetParam = {
+        .title = "使用密码验证",
+        .navigationButtonText = "navigationButtonText",
+        .windowMode = WindowModeType::UNKNOWN_WINDOW_MODE,
+    };
+    ContextFactory::AuthWidgetContextPara para = {};
+    para.sdkVersion = INNER_API_VERSION_10000 - 1;
+    para.challenge = authParam.challenge;
+    para.authTypeList = authParam.authTypes;
+    para.atl = authParam.authTrustLevel;
+    para.widgetParam = widgetParam;
+    para.isBackgroundApplication = false;
+    // north path requires ACCESS_BIOMETRIC_PERMISSION even with ACCESS_USER_AUTH_INTERNAL_PERMISSION
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    int32_t ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
+    EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
+    // north path passes with ACCESS_BIOMETRIC_PERMISSION
+    IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
+    EXPECT_EQ(ret, TYPE_NOT_SUPPORT);
+    // background application without USER_AUTH_FROM_BACKGROUND
+    para.isBackgroundApplication = true;
+    ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
+    EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
     IpcCommon::DeleteAllPermission();
 }
 
