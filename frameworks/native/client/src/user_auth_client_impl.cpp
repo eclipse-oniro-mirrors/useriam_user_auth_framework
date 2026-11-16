@@ -416,8 +416,8 @@ uint64_t UserAuthClientImpl::BeginAuthenticationInner(const AuthParam &authParam
         .authTrustLevel = static_cast<int32_t>(authParam.authTrustLevel),
         .authIntent = static_cast<int32_t>(authParam.authIntent),
         .credentialIdList = std::vector<uint64_t>{},
-        .additionalInfo = authParam.additionalInfo.value_or(""),
         .hasAdditionalInfo = authParam.additionalInfo.has_value(),
+        .additionalInfo = authParam.additionalInfo.value_or(""),
     };
     IpcRemoteAuthParam ipcRemoteAuthParam = {};
     InitIpcRemoteAuthParam(authParam.remoteAuthParam, ipcRemoteAuthParam);
