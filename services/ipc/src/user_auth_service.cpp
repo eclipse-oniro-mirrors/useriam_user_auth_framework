@@ -1329,6 +1329,25 @@ int32_t UserAuthService::CheckAuthWidgetParam(const ContextFactory::AuthWidgetCo
     return SUCCESS;
 }
 
+int32_t UserAuthService::CheckBackgroundAuthPermission(const ContextFactory::AuthWidgetContextPara &para)
+{
+    if (!para.isBackgroundApplication) {
+        return SUCCESS;
+    }
+    if (para.sdkVersion < INNER_API_VERSION_10000) {
+        if (!IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND)) {
+            IAM_LOGE("failed to check USER_AUTH_FROM_BACKGROUND permission");
+            return CHECK_PERMISSION_FAILED;
+        }
+        return SUCCESS;
+    }
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
+        IAM_LOGE("failed to check ACCESS_USER_AUTH_INTERNAL_PERMISSION permission");
+        return CHECK_PERMISSION_FAILED;
+    }
+    return SUCCESS;
+}
+
 int32_t UserAuthService::CheckAuthPermissionAndParam(const ContextFactory::AuthWidgetContextPara &para,
     bool isUserIdSpecified)
 {
@@ -1349,8 +1368,8 @@ int32_t UserAuthService::CheckAuthPermissionAndParam(const ContextFactory::AuthW
         IAM_LOGE("CheckPermission failed");
         return CHECK_PERMISSION_FAILED;
     }
-    if (para.isBackgroundApplication && (!IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND))) {
-        IAM_LOGE("failed to check foreground application");
+    if (CheckBackgroundAuthPermission(para) != SUCCESS) {
+        IAM_LOGE("CheckBackgroundAuthPermission failed");
         return CHECK_PERMISSION_FAILED;
     }
     int32_t ret = CheckAuthWidgetType(para.authTypeList);

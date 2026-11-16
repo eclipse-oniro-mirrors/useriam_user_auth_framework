@@ -129,6 +129,7 @@ private:
     int32_t CheckCallerPermissionForUserId(const ContextFactory::AuthWidgetContextPara &para,
         bool isUserIdSpecified);
     int32_t CheckAuthPermissionAndParam(const ContextFactory::AuthWidgetContextPara &para, bool isUserIdSpecified);
+    int32_t CheckBackgroundAuthPermission(const ContextFactory::AuthWidgetContextPara &para);
     uint64_t StartWidgetContext(const std::shared_ptr<ContextCallback> &contextCallback,
         ContextFactory::AuthWidgetContextPara &para, const sptr<IModalCallback> &modalCallback);
     uint64_t StartAuthContext(int32_t apiVersion, Authentication::AuthenticationPara para,
