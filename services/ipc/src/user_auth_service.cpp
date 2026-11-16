@@ -1256,8 +1256,23 @@ bool UserAuthService::CheckPrivatePinEnroll(const std::vector<AuthType> &authTyp
     return true;
 }
 
-int32_t UserAuthService::CheckCallerPermissionForPrivatePin(const ContextFactory::AuthWidgetContextPara &para)
+bool UserAuthService::CheckAuthWidgetInnerPermission(const ContextFactory::AuthWidgetContextPara &para)
 {
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
+        IAM_LOGE("failed to check ACCESS_USER_AUTH_INTERNAL_PERMISSION permission");
+        return false;
+    }
+    return true;
+}
+
+bool UserAuthService::CheckAuthWidgetNorthPermission(const ContextFactory::AuthWidgetContextPara &para,
+    bool isUserIdSpecified)
+{
+    if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
+        IAM_LOGE("failed to check ACCESS_BIOMETRIC_PERMISSION permission");
+        return false;
+    }
+    bool isSystemApp = IpcCommon::CheckPermission(*this, IS_SYSTEM_APP);
     bool hasPrivatePin = false;
     for (auto &iter : para.authTypeList) {
         if (iter == AuthType::PRIVATE_PIN) {
@@ -1265,46 +1280,26 @@ int32_t UserAuthService::CheckCallerPermissionForPrivatePin(const ContextFactory
             break;
         }
     }
-    if (!hasPrivatePin) {
-        return SUCCESS;
+    if (hasPrivatePin && !isSystemApp) {
+        IAM_LOGE("failed to check private pin permission");
+        return false;
     }
-    if (IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
-        return SUCCESS;
-    }
-    if (IpcCommon::CheckPermission(*this, IS_SYSTEM_APP)) {
-        return SUCCESS;
-    }
-    IAM_LOGE("CheckPermission failed");
-    return CHECK_PERMISSION_FAILED;
-}
-
-int32_t UserAuthService::CheckCallerPermissionForUserId(const ContextFactory::AuthWidgetContextPara &para,
-    bool isUserIdSpecified)
-{
-    if (!isUserIdSpecified) {
-        if (!IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION)) {
-            IAM_LOGE("CheckPermission failed");
-            return CHECK_PERMISSION_FAILED;
+    if (isUserIdSpecified && !isSystemApp) {
+        int32_t userId = INVALID_USER_ID;
+        if (IpcCommon::GetCallingUserId(*this, userId) != SUCCESS) {
+            IAM_LOGE("failed to get callingUserId");
+            return false;
         }
-        return SUCCESS;
+        if (para.userId != userId) {
+            IAM_LOGE("failed to check caller userId");
+            return false;
+        }
     }
-
-    // inner api caller
-    if (IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
-        return SUCCESS;
+    if (para.isBackgroundApplication && (!IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND))) {
+        IAM_LOGE("failed to check USER_AUTH_FROM_BACKGROUND permission");
+        return false;
     }
-    // native api caller
-    int32_t userId = INVALID_USER_ID;
-    if (IpcCommon::GetCallingUserId(*this, userId) != SUCCESS) {
-        IAM_LOGE("failed to get callingUserId");
-        return GENERAL_ERROR;
-    }
-    if (IpcCommon::CheckPermission(*this, ACCESS_BIOMETRIC_PERMISSION) &&
-        (IpcCommon::CheckPermission(*this, IS_SYSTEM_APP) || para.userId == userId)) {
-        return SUCCESS;
-    }
-    IAM_LOGE("CheckPermission failed");
-    return CHECK_PERMISSION_FAILED;
+    return true;
 }
 
 int32_t UserAuthService::CheckAuthWidgetParam(const ContextFactory::AuthWidgetContextPara &para)
@@ -1329,25 +1324,6 @@ int32_t UserAuthService::CheckAuthWidgetParam(const ContextFactory::AuthWidgetCo
     return SUCCESS;
 }
 
-int32_t UserAuthService::CheckBackgroundAuthPermission(const ContextFactory::AuthWidgetContextPara &para)
-{
-    if (!para.isBackgroundApplication) {
-        return SUCCESS;
-    }
-    if (para.sdkVersion < INNER_API_VERSION_10000) {
-        if (!IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND)) {
-            IAM_LOGE("failed to check USER_AUTH_FROM_BACKGROUND permission");
-            return CHECK_PERMISSION_FAILED;
-        }
-        return SUCCESS;
-    }
-    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
-        IAM_LOGE("failed to check ACCESS_USER_AUTH_INTERNAL_PERMISSION permission");
-        return CHECK_PERMISSION_FAILED;
-    }
-    return SUCCESS;
-}
-
 int32_t UserAuthService::CheckAuthPermissionAndParam(const ContextFactory::AuthWidgetContextPara &para,
     bool isUserIdSpecified)
 {
@@ -1360,16 +1336,14 @@ int32_t UserAuthService::CheckAuthPermissionAndParam(const ContextFactory::AuthW
         IAM_LOGE("CheckWindowMode failed");
         return checkRet;
     }
-    if (CheckCallerPermissionForPrivatePin(para) != SUCCESS) {
-        IAM_LOGE("CheckCallerPermissionForPrivatePin failed");
-        return CHECK_PERMISSION_FAILED;
+    bool permissionRet = false;
+    if (para.sdkVersion >= INNER_API_VERSION_10000) {
+        permissionRet = CheckAuthWidgetInnerPermission(para);
+    } else {
+        permissionRet = CheckAuthWidgetNorthPermission(para, isUserIdSpecified);
     }
-    if (CheckCallerPermissionForUserId(para, isUserIdSpecified) != SUCCESS) {
-        IAM_LOGE("CheckPermission failed");
-        return CHECK_PERMISSION_FAILED;
-    }
-    if (CheckBackgroundAuthPermission(para) != SUCCESS) {
-        IAM_LOGE("CheckBackgroundAuthPermission failed");
+    if (!permissionRet) {
+        IAM_LOGE("CheckCallerPermission failed");
         return CHECK_PERMISSION_FAILED;
     }
     int32_t ret = CheckAuthWidgetType(para.authTypeList);
