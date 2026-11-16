@@ -13,11 +13,15 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
+import("../../../../user_auth_framework.gni")
 
 group("iam_engine_fuzztest") {
   testonly = true
-  deps = [
-    "hdiengine_fuzzer:HdiEngineFuzzTest",
-    "hdiwrapper_fuzzer:HdiWrapperFuzzTest",
-  ]
+  deps = []
+  if (!user_auth_framework_has_ext) {
+    deps += [
+      "hdiengine_fuzzer:HdiEngineFuzzTest",
+      "hdiwrapper_fuzzer:HdiWrapperFuzzTest",
+    ]
+  }
 }

@@ -25,7 +25,7 @@
 #include "iam_defines.h"
 #include "iam_ptr.h"
 #include "mock_context.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "mock_resource_node.h"
 #include "resource_node_pool.h"
 #include "simple_auth_context.h"
@@ -115,16 +115,16 @@ struct ProfileStub {
 
 void PrimePinCredential(ProfileStub &stub)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential(_, _, _))
         .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
             infos.push_back({.credentialId = 1, .executorIndex = PIN_EXECUTOR_INDEX, .templateId = 9,
                 .authType = static_cast<HdiAuthType>(AuthType::PIN), .executorMatcher = 1,
                 .executorSensorHint = 1, .authSubType = static_cast<uint64_t>(PinSubType::PIN_SIX)});
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
-    ON_CALL(*mockHdi, GetCredentialById(_, _)).WillByDefault(Return(HDF_FAILURE));
+    ON_CALL(*mockHdi, GetCredentialById(_, _)).WillByDefault(Return(GENERAL_ERROR));
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(PIN_EXECUTOR_INDEX, PIN, ALL_IN_ONE);
     ASSERT_TRUE(ResourceNodePool::Instance().Insert(resourceNode));
     auto *node = static_cast<MockResourceNode *>(resourceNode.get());
@@ -210,7 +210,7 @@ public:
         // Deletes can post arbitration tasks; flush them before fixture state dies.
         DrainSerialThread();
         ResourceNodePool::Instance().Delete(PIN_EXECUTOR_INDEX);
-        MockIUserAuthInterface::Holder::GetInstance().Reset();
+        MockUserAuthEngine::Holder::GetInstance().Reset();
     }
 };
 
@@ -335,11 +335,11 @@ HWTEST_F(SudoAuthContextTest, SudoAuthDialogCancelTransparent, TestSize.Level0)
 
 HWTEST_F(SudoAuthContextTest, SudoAuthNotEnrolled, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential(_, _, _))
         .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     std::shared_ptr<MockContextCallback> cb;
     auto sudo = MakeSudo(cb);
@@ -351,14 +351,14 @@ HWTEST_F(SudoAuthContextTest, SudoAuthNotEnrolled, TestSize.Level0)
 
 HWTEST_F(SudoAuthContextTest, SudoAuthQueryFailClosed, TestSize.Level0)
 {
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     ON_CALL(*mockHdi, GetCredential(_, _, _))
         .WillByDefault([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
             infos.push_back({.credentialId = 1, .executorIndex = PIN_EXECUTOR_INDEX, .templateId = 9,
                 .authType = static_cast<HdiAuthType>(AuthType::PIN), .executorMatcher = 1,
                 .executorSensorHint = 1, .authSubType = 0});
-            return HDF_SUCCESS;
+            return SUCCESS;
         });
     // No resource node registered for the credential's executor.
     std::shared_ptr<MockContextCallback> cb;

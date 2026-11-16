@@ -18,8 +18,7 @@
 #include "credential_info_impl.h"
 #include "enrollment_impl.h"
 #include "resource_node_pool.h"
-#include "hdi_type_aliases.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
 #include "mock_resource_node.h"
 #include "mock_schedule_node_callback.h"
 
@@ -49,12 +48,12 @@ void EnrollmentImplTest::TearDownTestCase()
 
 void EnrollmentImplTest::SetUp()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 void EnrollmentImplTest::TearDown()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(EnrollmentImplTest, EnrollmentHdiError, TestSize.Level0)
@@ -64,7 +63,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentHdiError, TestSize.Level0)
     para.callerName = "com.ohos.test";
     para.sdkVersion = 11;
     para.authType = FACE;
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, BeginEnrollmentExt(_, _, _)).WillRepeatedly(Return(1));
 
     auto enrollment = std::make_shared<EnrollmentImpl>(para);
@@ -80,7 +79,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentHdiEmpty, TestSize.Level0)
     para.sdkVersion = 11;
     para.authType = FACE;
 
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, BeginEnrollmentExt(_, _, _)).WillRepeatedly(Return(0));
 
     auto enroll = std::make_shared<EnrollmentImpl>(para);
@@ -102,7 +101,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentUpdateHdiError, TestSize.Level0)
     para.sdkVersion = 11;
     para.authType = FACE;
 
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, UpdateEnrollmentResult(para.userId, _, _)).WillRepeatedly(Return(1));
 
     auto enroll = std::make_shared<EnrollmentImpl>(para);
@@ -123,7 +122,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentUpdateHdiSuccessful_001, TestSize.Level0)
     para.authType = FACE;
     constexpr uint64_t credentialIdRet = 0x12;
     std::vector<uint8_t> scheduleResult = {1, 2, 3};
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     auto fillUpInfos = [](HdiEnrollResultInfo &infoRet) {
         HdiCredentialInfo oldInfo = {
             .credentialId = 1,
@@ -169,7 +168,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentUpdateHdiSuccessful_002, TestSize.Level0)
     para.callerName = "com.ohos.test";
     para.sdkVersion = 11;
     para.authType = PIN;
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, UpdateEnrollmentResult(_, _, _)).WillRepeatedly(Return(0));
     auto enroll = std::make_shared<EnrollmentImpl>(para);
     enroll->SetIsUpdate(false);
@@ -195,12 +194,12 @@ HWTEST_F(EnrollmentImplTest, EnrollmentImplTestStart_001, TestSize.Level0)
     para.authType = FACE;
     constexpr uint64_t executorIndex = 60;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, CancelEnrollment(_))
         .Times(2)
-        .WillOnce(Return(HDF_SUCCESS))
-        .WillOnce(Return(HDF_FAILURE));
+        .WillOnce(Return(SUCCESS))
+        .WillOnce(Return(GENERAL_ERROR));
     EXPECT_CALL(*mockHdi, BeginEnrollmentExt(_, _, _))
         .WillRepeatedly(
             [](const std::vector<uint8_t> &authToken, const HdiEnrollParamExt &param,
@@ -214,7 +213,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentImplTestStart_001, TestSize.Level0)
                 info.scheduleId = 20;
                 info.scheduleMode = ScheduleMode::IDENTIFY;
                 info.templateIds.push_back(30);
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(executorIndex, FACE, ALL_IN_ONE);
@@ -241,7 +240,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentImplTestStart_002, TestSize.Level0)
     para.callerName = "com.ohos.test";
     para.sdkVersion = 11;
     para.authType = PIN;
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, BeginEnrollmentExt(_, _, _)).WillRepeatedly(Return(1));
     EXPECT_CALL(*mock, GetUserInfo(_, _, _, _))
         .WillOnce(Return(1))
@@ -327,7 +326,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentStartWithAdditionalInfoTest, TestSize.Lev
     para.additionalInfo = "additional_info_for_start_test";
     constexpr uint64_t executorIndex = 61;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, BeginEnrollmentExt(_, _, _))
         .WillRepeatedly(
@@ -343,7 +342,7 @@ HWTEST_F(EnrollmentImplTest, EnrollmentStartWithAdditionalInfoTest, TestSize.Lev
                 info.scheduleId = 21;
                 info.scheduleMode = ScheduleMode::ENROLL;
                 info.templateIds.push_back(31);
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     auto resourceNode = MockResourceNode::CreateWithExecuteIndex(executorIndex, FACE, ALL_IN_ONE);

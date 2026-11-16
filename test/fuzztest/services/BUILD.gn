@@ -13,6 +13,7 @@
 
 import("//build/ohos.gni")
 import("//build/test.gni")
+import("../../../user_auth_framework.gni")
 
 group("iam_services_fuzztest") {
   testonly = true
@@ -26,12 +27,16 @@ group("iam_services_fuzztest") {
     "context/widgetcontext_fuzzer:WidgetContextFuzzTest",
     "core/remoteauthcallbackmanager_fuzzer:RemoteAuthCallbackManagerFuzzTest",
     "core/remoteexecutorstub_fuzzer:RemoteExecutorStubFuzzTest",
-    "hditypeconvert_fuzzer:HdiTypeConvertFuzzTest",
     "servicecore_fuzzer:ServiceCoreFuzzTest",
     "softbus_fuzzer:SoftBusFuzzTest",
     "templatecachemanager_fuzzer:TemplateCacheManagerFuzzTest",
-    "engine:iam_engine_fuzztest",
     "userauthservice_fuzzer:UserAuthServiceFuzzTest",
     "useridmservice_fuzzer:UserIdmServiceFuzzTest",
   ]
+  if (!user_auth_framework_has_ext) {
+    deps += [
+      "hditypeconvert_fuzzer:HdiTypeConvertFuzzTest",
+      "engine:iam_engine_fuzztest",
+    ]
+  }
 }

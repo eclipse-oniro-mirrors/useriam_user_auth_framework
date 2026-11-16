@@ -14,8 +14,7 @@
  */
 #include "user_idm_database_test.h"
 
-#include "mock_iuser_auth_interface.h"
-#include "hdi_type_aliases.h"
+#include "mock_user_auth_engine.h"
 #include "user_auth_engine.h"
 #include "user_idm_database_impl.h"
 namespace OHOS {
@@ -33,17 +32,17 @@ void UserIdmDatabaseTest::TearDownTestCase()
 
 void UserIdmDatabaseTest::SetUp()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 void UserIdmDatabaseTest::TearDown()
 {
-    MockIUserAuthInterface::Holder::GetInstance().Reset();
+    MockUserAuthEngine::Holder::GetInstance().Reset();
 }
 
 HWTEST_F(UserIdmDatabaseTest, FailedGetSecUserInfo, TestSize.Level0)
 {
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_CALL(*mock, GetUserInfo(_, _, _, _)).WillRepeatedly(Return(1));
     auto &database = UserIdmDatabase::Instance();
     constexpr int32_t USER_ID = 100;
@@ -54,7 +53,7 @@ HWTEST_F(UserIdmDatabaseTest, FailedGetSecUserInfo, TestSize.Level0)
 
 HWTEST_F(UserIdmDatabaseTest, FailedGetSecUserInfoNoPin, TestSize.Level0)
 {
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     constexpr int32_t USER_ID = 100;
     constexpr uint64_t SECURE_UID = 200;
     auto fillUpInfos = [](std::vector<HdiEnrolledInfo> &list) {
@@ -79,7 +78,7 @@ HWTEST_F(UserIdmDatabaseTest, FailedGetSecUserInfoNoPin, TestSize.Level0)
 
 HWTEST_F(UserIdmDatabaseTest, FailedGetSecUserInfoNoEnrolledInfo, TestSize.Level0)
 {
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     constexpr int32_t USER_ID = 100;
     constexpr uint64_t SECURE_UID = 200;
     auto fillUpInfos = [](std::vector<HdiEnrolledInfo> &list) {
@@ -99,7 +98,7 @@ HWTEST_F(UserIdmDatabaseTest, FailedGetSecUserInfoNoEnrolledInfo, TestSize.Level
 
 HWTEST_F(UserIdmDatabaseTest, SuccessfulGetSecUserInfo, TestSize.Level0)
 {
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     constexpr int32_t USER_ID = 100;
     constexpr uint64_t SECURE_UID = 200;
     constexpr PinSubType PIN_SUB_TYPE = PIN_NUMBER;
@@ -133,7 +132,7 @@ HWTEST_F(UserIdmDatabaseTest, SuccessfulGetSecUserInfo, TestSize.Level0)
 
 HWTEST_F(UserIdmDatabaseTest, FailedGetCredentialInfoVector, TestSize.Level0)
 {
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     // mock hdi interface return 1
     constexpr int32_t USER_ID = 100;
     AuthType authType = PIN;
@@ -146,7 +145,7 @@ HWTEST_F(UserIdmDatabaseTest, FailedGetCredentialInfoVector, TestSize.Level0)
 
 HWTEST_F(UserIdmDatabaseTest, SuccessfulGetCredentialInfoVector, TestSize.Level0)
 {
-    auto mock = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mock = MockUserAuthEngine::Holder::GetInstance().Get();
     constexpr int32_t USER_ID = 100;
     AuthType authType = AuthType::PIN;
     // mock hdi interface return 0
@@ -207,7 +206,7 @@ HWTEST_F(UserIdmDatabaseTest, DeleteUser001, TestSize.Level0)
     std::vector<std::shared_ptr<CredentialInfoInterface>> testCredInfos;
     std::vector<uint8_t> rootSecret;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, DeleteUser(_, _, _, _)).WillRepeatedly(Return(1));
     int32_t result = UserIdmDatabase::Instance().DeleteUser(testUserId, testAuthToken, testCredInfos, rootSecret);
@@ -221,7 +220,7 @@ HWTEST_F(UserIdmDatabaseTest, DeleteUser002, TestSize.Level0)
     std::vector<std::shared_ptr<CredentialInfoInterface>> testCredInfos;
     std::vector<uint8_t> testRootSecret;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, DeleteUser(_, _, _, _)).Times(1);
     ON_CALL(*mockHdi, DeleteUser)
@@ -236,7 +235,7 @@ HWTEST_F(UserIdmDatabaseTest, DeleteUser002, TestSize.Level0)
                 info.templateId = 50;
                 deletedInfos.emplace_back(info);
                 rootSecret = {1, 2, 3};
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     int32_t result = UserIdmDatabase::Instance().DeleteUser(testUserId, testAuthToken, testCredInfos, testRootSecret);
@@ -258,7 +257,7 @@ HWTEST_F(UserIdmDatabaseTest, DeleteUserEnforce001, TestSize.Level0)
     int32_t testUserId = 4501;
     std::vector<std::shared_ptr<CredentialInfoInterface>> testCredInfos;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, EnforceDeleteUser(_, _)).WillRepeatedly(Return(1));
     int32_t result = UserIdmDatabase::Instance().DeleteUserEnforce(testUserId, testCredInfos);
@@ -270,7 +269,7 @@ HWTEST_F(UserIdmDatabaseTest, DeleteUserEnforce002, TestSize.Level0)
     int32_t testUserId = 4501;
     std::vector<std::shared_ptr<CredentialInfoInterface>> testCredInfos;
 
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, EnforceDeleteUser(_, _)).Times(1);
     ON_CALL(*mockHdi, EnforceDeleteUser)
@@ -284,7 +283,7 @@ HWTEST_F(UserIdmDatabaseTest, DeleteUserEnforce002, TestSize.Level0)
                 info.executorSensorHint = 40;
                 info.templateId = 50;
                 deletedInfos.emplace_back(info);
-                return HDF_SUCCESS;
+                return SUCCESS;
             }
         );
     int32_t result = UserIdmDatabase::Instance().DeleteUserEnforce(testUserId, testCredInfos);

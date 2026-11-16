@@ -30,8 +30,7 @@
 #include "auth_widget_helper.h"
 #include "remote_auth_service.h"
 #include "mock_context.h"
-#include "hdi_type_aliases.h"
-#include "mock_iuser_auth_interface.h"
+#include "mock_user_auth_engine.h"
  
 #define LOG_TAG "USER_AUTH_SA"
 #define LOG_FILE_ID LOG_FILE_REMOTE_AUTH_INVOKER_CONTEXT
@@ -132,7 +131,7 @@ HWTEST_F(RemoteAuthInvokerContextTest, ProcAuthResultMsgInnerTest, TestSize.Leve
     message->SetInt32Value(Attributes::ATTR_SIGNED_AUTH_RESULT, true);
     int32_t resultCode;
     Attributes attr;
-    auto mockHdi = MockIUserAuthInterface::Holder::GetInstance().Get();
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, GetAuthResultFromMessage(_, _, _))
         .WillOnce([](const std::string &remoteUdid, const std::vector<uint8_t> &message,

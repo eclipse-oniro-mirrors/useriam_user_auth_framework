@@ -1246,6 +1246,9 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestIsSupportFollowCallerUi_001, 
     para.remoteCallerName = "test_caller";
     auto widgetContext = CreateWidgetContextPart02(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
+    widgetContext->jsonBuf_ = nlohmann::json::array({
+        nlohmann::json{{"always_support_follow_caller_ui", std::vector<std::string>{"test_caller"}}}
+    });
     bool ret = false;
     EXPECT_NO_THROW(ret = widgetContext->IsSupportFollowCallerUi());
     EXPECT_TRUE(ret);
@@ -1259,6 +1262,9 @@ HWTEST_F(WidgetContextTestPart02, WidgetContextTestIsSupportFollowCallerUi_Empty
     ContextFactory::AuthWidgetContextPara para;
     auto widgetContext = CreateWidgetContextPart02(contextId, para);
     EXPECT_NE(widgetContext, nullptr);
+    widgetContext->jsonBuf_ = nlohmann::json::array({
+        nlohmann::json{{"always_support_follow_caller_ui", std::vector<std::string>{""}}}
+    });
     bool ret = false;
     EXPECT_NO_THROW(ret = widgetContext->IsSupportFollowCallerUi());
     EXPECT_TRUE(ret);
