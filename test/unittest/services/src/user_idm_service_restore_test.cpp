@@ -580,18 +580,19 @@ HWTEST_F(UserIdmServiceRestoreTest, OnRestoreInvalidCloneData, TestSize.Level0)
     close(fd);
 }
 
-// StartRestoreEnroll with OpenSession failure returns GENERAL_ERROR.
+// OnRestoreInner with OpenSession failure returns GENERAL_ERROR.
 HWTEST_F(UserIdmServiceRestoreTest, StartRestoreEnrollOpenSessionFail, TestSize.Level0)
 {
     UserIdmService service(123123, true);
     const int32_t testUserId = 100;
+    std::vector<uint8_t> peerUdid(64, 'a');
+    Attributes innerAttr = {};
+    innerAttr.SetUint8ArrayValue(Attributes::ATTR_EXTRA_INFO, std::vector<uint8_t>{0x10, 0x20});
     auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     ASSERT_NE(mockHdi, nullptr);
     EXPECT_CALL(*mockHdi, OpenSession(_, _)).WillOnce(Return(GENERAL_ERROR));
     IpcCommon::AddPermission(MANAGE_USER_IDM_PERMISSION);
-    auto promise = std::make_shared<std::promise<int32_t>>();
-    std::vector<uint8_t> restoreData = {1, 2, 3};
-    int32_t ret = service.StartRestoreEnroll(testUserId, PRIVATE_PIN, restoreData, promise);
+    int32_t ret = service.OnRestoreInner(testUserId, PRIVATE_PIN, peerUdid, innerAttr.Serialize());
     EXPECT_EQ(ret, GENERAL_ERROR);
     IpcCommon::DeleteAllPermission();
 }
