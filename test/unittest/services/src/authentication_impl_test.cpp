@@ -282,7 +282,8 @@ HWTEST_F(AuthenticationImplTest, AuthenticationImplTestStart, TestSize.Level0)
     EXPECT_CALL(*mockHdi, CancelAuthentication(_)).Times(0);
     EXPECT_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _))
         .WillRepeatedly(
-            [](uint64_t contextId, const HdiAuthParamExt &param, std::vector<HdiScheduleInfo> &scheduleInfos, AcquireInfoCallback &) {
+            [](uint64_t contextId, const HdiAuthParamExt &param,
+                std::vector<HdiScheduleInfo> &scheduleInfos, AcquireInfoCallback &) {
                 HdiScheduleInfo scheduleInfo = {};
                 scheduleInfo.authType = HdiAuthType::FACE;
                 scheduleInfo.executorMatcher = 10;
