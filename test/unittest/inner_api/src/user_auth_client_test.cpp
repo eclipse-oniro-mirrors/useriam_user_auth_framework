@@ -15,6 +15,7 @@
 
 #include "user_auth_client_test.h"
 
+#include "accesstoken_kit.h"
 #include "iam_ptr.h"
 #include "iuser_auth.h"
 #include "modal_callback_service.h"
@@ -163,6 +164,62 @@ HWTEST_F(UserAuthClientTest, UserAuthClientCheckUserRecognitionCapability002, Te
         });
     EXPECT_EQ(UserAuthClientImpl::Instance().CheckUserRecognitionCapability(), DEVICE_CAPABILITY_NOT_SUPPORT);
 
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientNotifyEnterpriseAccountAuthSuccess001, TestSize.Level0)
+{
+    UserAuthClientImpl::Instance().CleanUpResource();
+    IpcClientUtils::ResetObj();
+    EXPECT_EQ(UserAuthClientImpl::Instance().NotifyEnterpriseAccountAuthSuccess(100, "com.example.enterprise",
+        Security::AccessToken::TOKEN_HAP), GENERAL_ERROR);
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientNotifyEnterpriseAccountAuthSuccess002, TestSize.Level0)
+{
+    UserAuthClientImpl::Instance().CleanUpResource();
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, NotifyEnterpriseAccountAuthSuccess(_, _, _, _)).Times(1);
+    ON_CALL(*service, NotifyEnterpriseAccountAuthSuccess)
+        .WillByDefault(Invoke([](int32_t userId, const std::string &callerName, int32_t callerType,
+            int32_t &funcResult) -> int32_t {
+            EXPECT_EQ(userId, 100);
+            EXPECT_EQ(callerName, "com.example.enterprise");
+            EXPECT_EQ(callerType, Security::AccessToken::TOKEN_HAP);
+            funcResult = SUCCESS;
+            return SUCCESS;
+        }));
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+
+    EXPECT_EQ(UserAuthClientImpl::Instance().NotifyEnterpriseAccountAuthSuccess(100, "com.example.enterprise",
+        Security::AccessToken::TOKEN_HAP), SUCCESS);
+    EXPECT_NE(dr, nullptr);
+    dr->OnRemoteDied(obj);
+    IpcClientUtils::ResetObj();
+}
+
+HWTEST_F(UserAuthClientTest, UserAuthClientNotifyEnterpriseAccountAuthSuccess003, TestSize.Level0)
+{
+    UserAuthClientImpl::Instance().CleanUpResource();
+    auto service = Common::MakeShared<MockUserAuthService>();
+    EXPECT_NE(service, nullptr);
+    EXPECT_CALL(*service, NotifyEnterpriseAccountAuthSuccess(_, _, _, _)).Times(1);
+    ON_CALL(*service, NotifyEnterpriseAccountAuthSuccess)
+        .WillByDefault(Invoke([](int32_t, const std::string &, int32_t, int32_t &funcResult) -> int32_t {
+            funcResult = CHECK_PERMISSION_FAILED;
+            return SUCCESS;
+        }));
+    sptr<MockRemoteObject> obj(new (std::nothrow) MockRemoteObject());
+    sptr<IRemoteObject::DeathRecipient> dr(nullptr);
+    CallRemoteObject(service, obj, dr);
+
+    EXPECT_EQ(UserAuthClientImpl::Instance().NotifyEnterpriseAccountAuthSuccess(100, "com.example.enterprise",
+        Security::AccessToken::TOKEN_HAP), CHECK_PERMISSION_FAILED);
     EXPECT_NE(dr, nullptr);
     dr->OnRemoteDied(obj);
     IpcClientUtils::ResetObj();

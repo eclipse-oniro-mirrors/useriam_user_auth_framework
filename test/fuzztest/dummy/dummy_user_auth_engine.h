@@ -294,6 +294,11 @@ public:
         return SUCCESS;
     }
 
+    int32_t CheckEnterpriseAccountAuthCaller(int32_t, const std::string &) override
+    {
+        return Result();
+    }
+
     bool SetStatusCallback(const StateCallback &) override
     {
         return true;

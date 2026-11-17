@@ -93,6 +93,9 @@ public:
     int32_t RegisterRemoteAuthCallback(const std::shared_ptr<RemoteAuthClientCallback> &remoteAuthCallback);
     int32_t UnregisterRemoteAuthCallback();
 
+    int32_t NotifyEnterpriseAccountAuthSuccess(int32_t userId, const std::string &callerName,
+        int32_t callerType) override;
+
     void CleanUpResource();
 
 private:

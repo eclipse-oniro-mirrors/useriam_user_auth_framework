@@ -104,6 +104,8 @@ public:
         bool isAdd, int32_t &funcRet));
     MOCK_METHOD4(SetDaemonForbiddenlist, int32_t(int32_t userId, const std::vector<std::string> &appIdentifiers,
         bool isAdd, int32_t &funcRet));
+    MOCK_METHOD4(NotifyEnterpriseAccountAuthSuccess, int32_t(int32_t userId, const std::string &callerName,
+        int32_t callerType, int32_t &funcResult));
 };
 } // namespace UserAuth
 } // namespace UserIam

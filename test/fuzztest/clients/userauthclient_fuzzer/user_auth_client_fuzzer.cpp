@@ -352,6 +352,16 @@ void FuzzClientUnRegistUserAuthSuccessEventListener(Parcel &Parcel)
     IAM_LOGI("end");
 }
 
+void FuzzClientNotifyEnterpriseAccountAuthSuccess(Parcel &parcel)
+{
+    IAM_LOGI("start");
+    int32_t userId = parcel.ReadInt32();
+    std::string callerName = parcel.ReadString();
+    int32_t callerType = parcel.ReadInt32();
+    UserAuthClientImpl::Instance().NotifyEnterpriseAccountAuthSuccess(userId, callerName, callerType);
+    IAM_LOGI("end");
+}
+
 void FuzzClientSetGlobalConfigParam(Parcel &parcel)
 {
     IAM_LOGI("start");
@@ -698,6 +708,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzClientBeginIdentification,
     FuzzClientRegistUserAuthSuccessEventListener,
     FuzzClientUnRegistUserAuthSuccessEventListener,
+    FuzzClientNotifyEnterpriseAccountAuthSuccess,
     FuzzClientSetGlobalConfigParam,
     FuzzClientPrepareRemoteAuth,
     FuzzCancelIdentification,

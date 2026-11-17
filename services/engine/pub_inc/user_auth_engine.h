@@ -122,6 +122,7 @@ public:
         bool isAdd) = 0;
     virtual int32_t SetDaemonForbiddenlist(int32_t userId, const std::vector<std::string> &appIdentifiers,
         bool isAdd) = 0;
+    virtual int32_t CheckEnterpriseAccountAuthCaller(int32_t processUid, const std::string &processName) = 0;
 
     using StateCallback = std::function<void(bool running)>;
     virtual bool SetStatusCallback(const StateCallback &callback) = 0;

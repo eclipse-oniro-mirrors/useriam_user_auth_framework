@@ -2034,6 +2034,40 @@ int32_t UserAuthService::UnregisterRemoteAuthCallback()
     return SUCCESS;
 }
 
+int32_t UserAuthService::NotifyEnterpriseAccountAuthSuccess(int32_t userId, const std::string &callerName,
+    int32_t callerType, int32_t &funcResult)
+{
+    IAM_LOGI("start, userId:%{public}d, callerName:%{public}s, callerType:%{public}d", userId,
+        callerName.c_str(), callerType);
+    Common::XCollieHelper xcollie(__FUNCTION__, Common::API_CALL_TIMEOUT);
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
+        IAM_LOGE("failed to check permission");
+        funcResult = CHECK_PERMISSION_FAILED;
+        return SUCCESS;
+    }
+    uint32_t tokenId = IpcCommon::GetTokenId(*this);
+    std::string processName;
+    int32_t processType = 0;
+    if (!IpcCommon::GetCallerNameByTokenId(tokenId, processName, processType)) {
+        IAM_LOGE("failed to get caller process info");
+        funcResult = CHECK_PERMISSION_FAILED;
+        return SUCCESS;
+    }
+    int32_t checkRet = GetUserAuthEngine().CheckEnterpriseAccountAuthCaller(GetCallingUid(), processName);
+    if (checkRet != SUCCESS) {
+        IAM_LOGE("check caller failed, ret:%{public}d", checkRet);
+        funcResult = checkRet;
+        return SUCCESS;
+    }
+
+    AuthSuccessEventInfo eventInfo = {callerName, callerType, false};
+    AuthEventListenerManager::GetInstance().OnNotifyAuthSuccessEvent(userId,
+        AuthType::ENTERPRISE_ACCOUNT, eventInfo);
+    funcResult = SUCCESS;
+    IAM_LOGI("notify end, userId:%{public}d, result:%{public}d", userId, funcResult);
+    return SUCCESS;
+}
+
 void UserAuthService::InitAuthParam(const IpcAuthParamInner &ipcAuthParam, AuthParamInner &authParam)
 {
     authParam.userId = ipcAuthParam.userId;
