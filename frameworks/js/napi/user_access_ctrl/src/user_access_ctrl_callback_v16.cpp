@@ -106,12 +106,12 @@ napi_status UserAccessCtrlCallbackV16::ProcessAuthTokenResult(napi_env env, napi
     IF_FALSE_LOGE_AND_RETURN_VAL(ret == napi_ok, ret);
     ret = UserAccessCtrlNapiHelper::SetUint64Property(env, value, "timeInterval", authToken.timeInterval);
     IF_FALSE_LOGE_AND_RETURN_VAL(ret == napi_ok, ret);
-    ret = UserAccessCtrlNapiHelper::SetUint64Property(env, value, "secureUid", authToken.secureUid);
-    IF_FALSE_LOGE_AND_RETURN_VAL(ret == napi_ok, ret);
-    ret = UserAccessCtrlNapiHelper::SetUint64Property(env, value, "enrolledId", authToken.enrolledId);
-    IF_FALSE_LOGE_AND_RETURN_VAL(ret == napi_ok, ret);
-    ret = UserAccessCtrlNapiHelper::SetUint64Property(env, value, "credentialId", authToken.credentialId);
-    IF_FALSE_LOGE_AND_RETURN_VAL(ret == napi_ok, ret);
+        ret = UserAccessCtrlNapiHelper::SetUint64Property(env, value, "secureUid", authToken.secureUid);
+        IF_FALSE_LOGE_AND_RETURN_VAL(ret == napi_ok, ret);
+        ret = UserAccessCtrlNapiHelper::SetUint64Property(env, value, "enrolledId", authToken.enrolledId);
+        IF_FALSE_LOGE_AND_RETURN_VAL(ret == napi_ok, ret);
+        ret = UserAccessCtrlNapiHelper::SetUint64Property(env, value, "credentialId", authToken.credentialId);
+        IF_FALSE_LOGE_AND_RETURN_VAL(ret == napi_ok, ret);
     return ret;
 }
 
@@ -198,6 +198,10 @@ napi_status UserAccessCtrlCallbackV16::DoResultPromise(int32_t result, AuthToken
     ret = ProcessAuthTokenResult(env_, eventInfo, authToken);
     if (ret != napi_ok) {
         IAM_LOGE("ProcessAuthTokenResult failed %{public}d", ret);
+        return RejectWithGeneralError();
+    }
+    if (!hasSchedule && authToken.tokenType == AuthTokenType::TOKEN_TYPE_SCHEDULED_AUTH) {
+        IAM_LOGE("schedule attribute is absent for scheduled auth token");
         return RejectWithGeneralError();
     }
     if (hasSchedule) {

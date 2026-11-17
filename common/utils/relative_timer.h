@@ -16,6 +16,8 @@
 #ifndef IAM_RELATIVE_TIMER_H
 #define IAM_RELATIVE_TIMER_H
 
+#include <atomic>
+
 #include "singleton.h"
 #include "timer.h"
 
@@ -29,9 +31,15 @@ public:
     using TimerCallback = std::function<void()>;
     uint32_t Register(const TimerCallback &callback, uint32_t ms, bool once = true);
     void Unregister(uint32_t timerId);
+#ifdef IAM_TEST_ENABLE
+    void Stop();
+#endif
 
 private:
     Utils::Timer timer_;
+#ifdef IAM_TEST_ENABLE
+    std::atomic<bool> stopFlag_ { false };
+#endif
 };
 } // namespace UserAuth
 } // namespace UserIam

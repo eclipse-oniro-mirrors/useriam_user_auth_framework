@@ -21,10 +21,12 @@
 #include "context_callback_impl.h"
 #include "context_factory.h"
 #include "context_pool.h"
+#include "extension_manager_client.h"
 #include "iam_check.h"
 #include "iam_fuzz_test.h"
 #include "iam_logger.h"
 #include "iam_ptr.h"
+#include "relative_timer.h"
 #include "sudo_auth_context.h"
 #include "thread_handler.h"
 
@@ -121,6 +123,35 @@ void DrainSingletonThread()
     SyncSerialThread();
 }
 
+// Drain alone cannot close the exit race: the widget teardown chain (FSM stop
+// event -> EndAuthAsCancel -> ... -> DisconnectExtension) may still be in
+// flight on the timer thread while exit() is running. ExtensionManagerClient
+// is a Meyers singleton whose __cxa_atexit destructor registers at FIRST USE
+// (mid-run), i.e. AFTER our guard below -- and reverse destruction order then
+// runs its destructor BEFORE our guard, destroying mutex_/proxy_ under the
+// in-flight chain (SEGV in GetExtensionManager, 2026-11-16 rerun faultlog;
+// first run SEGV'd in RefBase::IncStrongRef on the already-released proxy).
+// So: force construction of every racing lazy singleton BEFORE constructing
+// our guard, so their destructors register EARLIER and run AFTER us; our
+// guard then drains the timer thread and stops it entirely, and no teardown
+// code can touch half-destroyed singletons. G.FUU.04 forbids atexit(), so the
+// hook is a function-local static guard whose destructor runs at exit instead.
+struct SingletonThreadStopGuard {
+    ~SingletonThreadStopGuard()
+    {
+        DrainSingletonThread();
+        RelativeTimer::GetInstance().Stop();
+    }
+};
+
+void InstallSingletonThreadStopHook()
+{
+    RelativeTimer::GetInstance(); // leaky DelayedRefSingleton; constructed here for clarity
+    AAFwk::ExtensionManagerClient::GetInstance(); // Meyers static; construct early, see above
+    static const SingletonThreadStopGuard guard;
+    (void)guard;
+}
+
 // schedule/start through the real profile query (no HDI mock, so it fail-closes),
 // a direct fuzz-profile Route and a child terminal, then a pool cancel; the
 // FAIL-to-LOCKED synthesis in OnChildResult is unreachable without a profile mock
@@ -205,6 +236,7 @@ FuzzFunc *g_fuzzFuncs[] = {
 
 void SudoAuthContextFuzzTest(const uint8_t *data, size_t size)
 {
+    InstallSingletonThreadStopHook();
     {
         Parcel parcel;
         parcel.WriteBuffer(data, size);

@@ -65,6 +65,7 @@ bool UserAuthService::GetAuthTokenAttr(const EngUserAuthTokenPlain &tokenPlain,
         IF_FALSE_LOGE_AND_RETURN_VAL(setRootSecret == true, false);
     }
     if (tokenPlain.tokenType == TOKEN_TYPE_SCHEDULED_AUTH) {
+        IF_FALSE_LOGE_AND_RETURN_VAL(tokenPlain.tokenSchedule.has_value(), false);
         return UserAuthHelper::SetTokenScheduleAttr(tokenPlain.tokenSchedule, attributes);
     }
     return true;

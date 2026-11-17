@@ -61,7 +61,8 @@ UserAuthResultCode SystemUserAuthInstanceNapi::Init(napi_env env, napi_callback_
         return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
     }
 
-    UserAuthResultCode errCode = UserAuthParamUtils::InitAuthParam(env, argv[PARAM0], authParam_);
+    UserAuthParamUtils paramUtils(AuthApiContract::SYSTEM_USER_AUTH);
+    UserAuthResultCode errCode = paramUtils.InitAuthParam(env, argv[PARAM0], authParam_);
     if (errCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("AuthParamInner type error, errorCode: %{public}d", errCode);
         return errCode;
@@ -70,13 +71,13 @@ UserAuthResultCode SystemUserAuthInstanceNapi::Init(napi_env env, napi_callback_
         IAM_LOGE("authType must contain exactly one authentication type, typeCount:%{public}zu",
             authParam_.authTypes.size());
         std::string msgStr = "Parameter error. \"authType\" must contain exactly one authentication type.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::PARAM_VERIFIED_FAILED, msgStr);
     }
     if (authParam_.remoteAuthParam.has_value() && authParam_.tokenSchedule.has_value()) {
         IAM_LOGE("remoteAuthOptions cannot be specified together with scheduledAuthTokenOptions");
         std::string msgStr = "Parameter error. \"remoteAuthOptions\" and \"scheduledAuthTokenOptions\""
             " cannot be specified together.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::PARAM_VERIFIED_FAILED, msgStr);
     }
 
     IAM_LOGI("Init SUCCESS");

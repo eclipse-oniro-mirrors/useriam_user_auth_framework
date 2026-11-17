@@ -378,7 +378,7 @@ UserAuthResultCode UserAuthParamUtils::InitCredentialIdList(userAuth::AuthParam 
         uint64_t dest = 0;
         if (memcpy_s(&dest, sizeof(uint64_t), credentialId.data(), sizeof(uint64_t)) != EOK) {
             IAM_LOGE("memcpy_s fail");
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
+            return UserAuthResultCode::GENERAL_ERROR;
         }
         authParamInner.credentialIdList.push_back(dest);
     }

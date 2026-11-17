@@ -739,6 +739,10 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAuthTokenAttrSchedule001, TestSi
     EXPECT_TRUE(UserAuthHelper::GetTokenScheduleAttr(scheduledTokenAttr, schedule));
     EXPECT_TRUE(schedule.hasValidStartTime);
     EXPECT_EQ(schedule.validStartTime, 1000);
+
+    tokenPlain.tokenSchedule.reset();
+    Attributes noScheduleTokenAttr;
+    EXPECT_FALSE(service.GetAuthTokenAttr(tokenPlain, {}, noScheduleTokenAttr));
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceRedeemScheduledAuthToken001, TestSize.Level0)

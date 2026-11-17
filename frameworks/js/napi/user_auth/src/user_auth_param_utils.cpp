@@ -83,6 +83,18 @@ bool IsNullOrUndefined(napi_env env, napi_value value)
         UserAuthNapiHelper::CheckNapiType(env, value, napi_undefined) == napi_ok;
 }
 
+UserAuthParamUtils::UserAuthParamUtils(AuthApiContract contract) : contract_(contract)
+{
+}
+
+UserAuthResultCode UserAuthParamUtils::ParamVerifyFailedCode() const
+{
+    if (contract_ != AuthApiContract::USER_AUTH_INSTANCE) {
+        return UserAuthResultCode::PARAM_VERIFIED_FAILED;
+    }
+    return UserAuthResultCode::OHOS_INVALID_PARAM;
+}
+
 UserAuthResultCode UserAuthParamUtils::InitChallenge(napi_env env, napi_value value, AuthParamInner &authParam)
 {
     authParam.challenge.clear();
@@ -96,7 +108,7 @@ UserAuthResultCode UserAuthParamUtils::InitChallenge(napi_env env, napi_value va
     if (ret != napi_ok) {
         IAM_LOGE("GetUint8ArrayValue fail:%{public}d", ret);
         std::string msgStr = "Parameter error. The length of \"challenge\" connot exceed 32.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, ParamVerifyFailedCode(), msgStr);
     }
     IAM_LOGI("challenge size:%{public}zu", authParam.challenge.size());
     return UserAuthResultCode::SUCCESS;
@@ -143,7 +155,7 @@ UserAuthResultCode UserAuthParamUtils::InitAuthType(napi_env env, napi_value val
         if (iter != authParam.authTypes.end()) {
             IAM_LOGE("napi authType:%{public}d exist", value);
             std::string msgStr = "Parameter error. The type of \"authType\" must be AuthType.";
-            return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+            return UserAuthNapiHelper::ThrowErrorMsg(env, ParamVerifyFailedCode(), msgStr);
         }
         authParam.authTypes.push_back(static_cast<AuthType>(value));
     }
@@ -209,7 +221,7 @@ UserAuthResultCode UserAuthParamUtils::InitReuseUnlockResult(napi_env env, napi_
     if (!UserAuthHelper::CheckReuseUnlockResult(authParam.reuseUnlockResult)) {
         IAM_LOGE("ReuseUnlockResult fail");
         std::string msgStr = "Parameter error. The type of \"reuseUnlockResult\" must be ReuseUnlockResult.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, ParamVerifyFailedCode(), msgStr);
     }
     authParam.reuseUnlockResult.isReuse = true;
     IAM_LOGI("reuseMode: %{public}u, reuseDuration: %{public}" PRIu64, authParam.reuseUnlockResult.reuseMode,
@@ -228,7 +240,7 @@ UserAuthResultCode UserAuthParamUtils::InitUserId(napi_env env, napi_value value
     if (authParam.userId < 0) {
         IAM_LOGE("GetInt32Value fail:%{public}d", ret);
         std::string msgStr = "Parameter error. The \"userId\" must be greater than or equal to 0";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, ParamVerifyFailedCode(), msgStr);
     }
     authParam.isUserIdSpecified = true;
     IAM_LOGI("InitUserId userId: %{public}d", authParam.userId);
@@ -279,7 +291,7 @@ UserAuthResultCode UserAuthParamUtils::InitMandatoryAuthParam(napi_env env, napi
     UserAuthResultCode errorCode = InitChallenge(env, napi_challenge, authParam);
     if (errorCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("InitChallenge fail:%{public}d", errorCode);
-        return UserAuthResultCode::OHOS_INVALID_PARAM;
+        return errorCode;
     }
 
     if (!UserAuthNapiHelper::HasNamedProperty(env, value, AUTH_PARAM_AUTHTYPE)) {
@@ -567,13 +579,13 @@ UserAuthResultCode UserAuthParamUtils::ProcessCredentialIdList(napi_env env, nap
         uint32_t outSize = 0;
         if (!UserAuthNapiHelper::ConvertSizeToUint32(MAX_CREDENTIAL_ID_LIST_SIZE, outSize)) {
             IAM_LOGE("ConvertSizeToUint32 fail");
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
+            return ParamVerifyFailedCode();
         }
         napi_status ret = UserAuthNapiHelper::GetUint64VectorFromUint8ArrayArrayValue(env, credentialIdList,
             outSize, authParam.credentialIdList);
         if (ret != napi_ok) {
             IAM_LOGE("GetUint64VectorFromUint8ArrayArrayValue fail:%{public}d", ret);
-            return UserAuthResultCode::OHOS_INVALID_PARAM;
+            return ParamVerifyFailedCode();
         }
         IAM_LOGI("Init credentialIdList.size(): %{public}zu", authParam.credentialIdList.size());
     }
@@ -597,7 +609,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessAuthIntent(napi_env env, napi_valu
         intent > static_cast<int32_t>(AuthIntent::SUDO_PIN_AUTH)) {
         IAM_LOGE("invalid authIntent:%{public}d", intent);
         std::string msgStr = "Parameter error. The value of \"authIntent\" is out of range.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, ParamVerifyFailedCode(), msgStr);
     }
     authParam.authIntent = static_cast<AuthIntent>(intent);
     IAM_LOGI("Init authIntent: %{public}d", intent);
@@ -623,7 +635,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessRemoteNetworkId(napi_env env, napi
     if (networkIdStr.size() > RemoteLimit::MAX_NETWORK_ID_LEN) {
         IAM_LOGE("%{public}s len:%{public}zu", propertyName.c_str(), networkIdStr.size());
         std::string msgStr = "Parameter error. The value of \"" + propertyName + "\" is invalid.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, ParamVerifyFailedCode(), msgStr);
     }
     networkId = networkIdStr;
     return UserAuthResultCode::SUCCESS;
@@ -647,7 +659,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessCollectorTokenId(napi_env env, nap
         std::string msgStr = "Parameter error. The value of \"collectorTokenId\" is invalid.";
         return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
     }
-    remoteAuthParam.collectorTokenId = static_cast<uint32_t>(tokenId);
+        remoteAuthParam.collectorTokenId = static_cast<uint32_t>(tokenId);
     return UserAuthResultCode::SUCCESS;
 }
 
@@ -718,7 +730,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessAdditionalInfo(napi_env env, napi_
     if (UserAuthHelper::GetUtf8CharCount(additionalInfo) > static_cast<size_t>(ADDITIONAL_INFO_MAX)) {
         IAM_LOGE("additionalInfo len:%{public}zu", additionalInfo.size());
         std::string msgStr = "Parameter error. The length of \"additionalInfo\" cannot exceed 10000.";
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, ParamVerifyFailedCode(), msgStr);
     }
     authParam.additionalInfo = additionalInfo;
     IAM_LOGI("Init additionalInfo, len:%{public}zu", additionalInfo.size());
@@ -832,7 +844,7 @@ UserAuthResultCode UserAuthParamUtils::ProcessScheduledAuthTokenOptions(napi_env
     }
     std::string scheduleErrorDesc;
     if (UserAuthHelper::CheckTokenSchedule(schedule, scheduleErrorDesc) != SUCCESS) {
-        return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, scheduleErrorDesc);
+        return UserAuthNapiHelper::ThrowErrorMsg(env, ParamVerifyFailedCode(), scheduleErrorDesc);
     }
     authParam.tokenSchedule = schedule;
     IAM_LOGI("Init scheduledAuthTokenOptions: %{public}s",

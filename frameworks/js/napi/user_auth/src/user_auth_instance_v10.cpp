@@ -78,7 +78,8 @@ UserAuthResultCode UserAuthInstanceV10::Init(napi_env env, napi_callback_info in
         return UserAuthNapiHelper::ThrowErrorMsg(env, UserAuthResultCode::OHOS_INVALID_PARAM, msgStr);
     }
 
-    UserAuthResultCode errCode = UserAuthParamUtils::InitAuthParam(env, argv[PARAM0], authParam_);
+    UserAuthParamUtils paramUtils(AuthApiContract::USER_AUTH_INSTANCE);
+    UserAuthResultCode errCode = paramUtils.InitAuthParam(env, argv[PARAM0], authParam_);
     if (errCode != UserAuthResultCode::SUCCESS) {
         IAM_LOGE("AuthParamInner type error, errorCode: %{public}d", errCode);
         return errCode;

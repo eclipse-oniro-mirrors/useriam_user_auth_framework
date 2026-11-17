@@ -648,15 +648,15 @@ static UserAuth::UserAuthResultCode ValidateSystemAuthParamInner(const UserAuth:
     if (authParamInner.authTypes.size() != 1) {
         IAM_LOGE("authType must contain exactly one authentication type, typeCount:%{public}zu",
             authParamInner.authTypes.size());
-        return UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+        return UserAuth::UserAuthResultCode::PARAM_VERIFIED_FAILED;
     }
     if (authParamInner.remoteAuthParam.has_value() && authParamInner.tokenSchedule.has_value()) {
         IAM_LOGE("remoteAuthOptions cannot be specified together with scheduledAuthTokenOptions");
-        return UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+        return UserAuth::UserAuthResultCode::PARAM_VERIFIED_FAILED;
     }
     if (UserAuth::UserAuthHelper::CheckTokenSchedule(authParamInner.tokenSchedule, initErrorMsg) !=
         UserAuth::SUCCESS) {
-        return UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM;
+        return UserAuth::UserAuthResultCode::PARAM_VERIFIED_FAILED;
     }
     return UserAuth::UserAuthResultCode::SUCCESS;
 }
@@ -682,6 +682,9 @@ public:
             return;
         }
         initResult_ = UserAuth::UserAuthParamUtils::InitAuthParam(authParam, authParamInner_);
+        if (initResult_ == UserAuth::UserAuthResultCode::OHOS_INVALID_PARAM) {
+            initResult_ = UserAuth::UserAuthResultCode::PARAM_VERIFIED_FAILED;
+        }
         if (initResult_ == UserAuth::UserAuthResultCode::SUCCESS) {
             initResult_ = ValidateSystemAuthParamInner(authParamInner_, initErrorMsg_);
         }
