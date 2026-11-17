@@ -934,12 +934,15 @@ void FuzzCheckAuthWidgetPermission(Parcel &parcel)
     g_userAuthService.CheckAuthWidgetInnerPermission(para);
     g_userAuthService.CheckAuthWidgetNorthPermission(para, isUserIdSpecified);
     g_userAuthService.CheckAuthPermissionAndParam(para, isUserIdSpecified);
-    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
-    g_userAuthService.CheckAuthWidgetInnerPermission(para);
-    g_userAuthService.CheckAuthPermissionAndParam(para, isUserIdSpecified);
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    g_userAuthService.CheckAuthWidgetNorthPermission(para, isUserIdSpecified);
+    g_userAuthService.CheckAuthPermissionAndParam(para, isUserIdSpecified);
     IpcCommon::AddPermission(IS_SYSTEM_APP);
     IpcCommon::AddPermission(USER_AUTH_FROM_BACKGROUND);
+    g_userAuthService.CheckAuthWidgetNorthPermission(para, isUserIdSpecified);
+    g_userAuthService.CheckAuthPermissionAndParam(para, isUserIdSpecified);
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    g_userAuthService.CheckAuthWidgetInnerPermission(para);
     g_userAuthService.CheckAuthWidgetNorthPermission(para, isUserIdSpecified);
     g_userAuthService.CheckAuthPermissionAndParam(para, isUserIdSpecified);
     IpcCommon::DeleteAllPermission();

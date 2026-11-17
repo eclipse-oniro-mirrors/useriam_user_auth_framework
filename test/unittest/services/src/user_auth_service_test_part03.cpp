@@ -94,7 +94,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_002, Te
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     para.credentialIdList = authParam.credentialIdList;
     ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
-    EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -217,12 +217,16 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthPermissionAndParam_006, Te
     para.atl = authParam.authTrustLevel;
     para.widgetParam = widgetParam;
     para.isBackgroundApplication = false;
-    // north path requires ACCESS_BIOMETRIC_PERMISSION even with ACCESS_USER_AUTH_INTERNAL_PERMISSION
-    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     int32_t ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
-    // north path passes with ACCESS_BIOMETRIC_PERMISSION
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
+    EXPECT_EQ(ret, TYPE_NOT_SUPPORT);
+    IpcCommon::DeleteAllPermission();
+    ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
+    EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
+    para.userId = 548781;
     ret = service.CheckAuthPermissionAndParam(para, authParam.isUserIdSpecified);
     EXPECT_EQ(ret, TYPE_NOT_SUPPORT);
     // background application without USER_AUTH_FROM_BACKGROUND
