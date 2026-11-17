@@ -239,6 +239,8 @@ public:
         HAL_ATTR_FWK_MSG = 900002,
         /* Schedule ID for private pin restore, the value type is uint64_t. */
         HAL_ATTR_SCHEDULE_ID = 900003,
+        /* Pin abandon flag, the value type is bool */
+        HAL_ATTR_ABANDON_FLAG = 900004,
     };
 
     /**
