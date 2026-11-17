@@ -479,7 +479,6 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetNorthPermissionTest,
     // non-system app with private pin
     para.authTypeList = {PIN, PRIVATE_PIN};
     EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, false), false);
-    // non-system app specifies mismatched userId
     para.authTypeList = {PIN, FACE};
     para.userId = 200;
     EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, true), false);
@@ -487,17 +486,21 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceCheckAuthWidgetNorthPermissionTest,
     IpcCommon::SetSkipUserFlag(true);
     EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, true), false);
     IpcCommon::SetSkipUserFlag(false);
+    EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, false), false);
     // background application without USER_AUTH_FROM_BACKGROUND
     para.userId = 548781;
     para.isBackgroundApplication = true;
-    EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, true), false);
+    EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, false), false);
     // all north permissions satisfied
     IpcCommon::AddPermission(USER_AUTH_FROM_BACKGROUND);
-    EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, true), true);
+    EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, false), true);
     // system app with private pin
     IpcCommon::AddPermission(IS_SYSTEM_APP);
     para.authTypeList = {PIN, PRIVATE_PIN};
     para.isBackgroundApplication = false;
+    EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, true), true);
+    IpcCommon::DeleteAllPermission();
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     EXPECT_EQ(service->CheckAuthWidgetNorthPermission(para, true), true);
     IpcCommon::DeleteAllPermission();
 }
