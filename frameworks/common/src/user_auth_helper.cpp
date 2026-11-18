@@ -46,7 +46,8 @@ int32_t CheckRedemptionWindow(const RedemptionWindow &window, bool hasSpan, int6
 {
     constexpr int64_t minRepeatIntervalMs = 24LL * 60 * 60 * 1000; // 24h
     constexpr int64_t maxWindowDurationMs = 10LL * 60 * 1000; // 10min
-    constexpr double windowRatio = 0.05; // 5% of the schedule span
+    constexpr double windowRatio = 0.05; // 5% of repeatInterval (cap = min(R*5%, 10min);
+                                         // with R >= 24h the ratio leg is shadowed by 10min)
     if (window.repeatInterval < minRepeatIntervalMs) {
         errorDesc = LogScheduleErrorDesc("Parameter error. \"repeatInterval\" must not be less than 86400000.");
         return INVALID_PARAMETERS;
@@ -59,17 +60,11 @@ int32_t CheckRedemptionWindow(const RedemptionWindow &window, bool hasSpan, int6
         errorDesc = LogScheduleErrorDesc("Parameter error. \"windowDuration\" must be less than \"repeatInterval\".");
         return INVALID_PARAMETERS;
     }
-    int64_t windowUpperBound = maxWindowDurationMs;
-    if (hasSpan) {
-        windowUpperBound = std::min(windowUpperBound, static_cast<int64_t>(span * windowRatio));
-    }
+    int64_t windowUpperBound = std::min(maxWindowDurationMs,
+        static_cast<int64_t>(window.repeatInterval * windowRatio));
     if (window.windowDuration > windowUpperBound) {
-        if (hasSpan) {
-            errorDesc = LogScheduleErrorDesc("Parameter error. \"windowDuration\" must not exceed the smaller of"
-                " 600000 and 5% of the difference between \"validEndTime\" and " + startDesc + ".");
-        } else {
-            errorDesc = LogScheduleErrorDesc("Parameter error. \"windowDuration\" must not exceed 600000.");
-        }
+        errorDesc = LogScheduleErrorDesc("Parameter error. \"windowDuration\" must not exceed the smaller of"
+            " 600000 and 5% of \"repeatInterval\".");
         return INVALID_PARAMETERS;
     }
     if (hasSpan && window.repeatInterval < span) {
