@@ -300,8 +300,9 @@ ResultCode FrameworkExecutorCallback::ProcessDeleteTemplateCommand(const Attribu
     bool hasAbandonFlag = properties.GetBoolValue(Attributes::ATTR_ABANDON_FLAG, abandonFlag);
     ResultCode ret;
     if (hasAbandonFlag && executor->GetAuthType() == AuthType::PIN) {
-        std::vector<uint8_t> extraInfo = { static_cast<uint8_t>(abandonFlag ? 1 : 0) };
-        ret = hdi->DeleteExt(templateIdList, extraInfo);
+        Attributes attr;
+        attr.SetUint32Value(Attributes::HAL_ATTR_ABANDON_FLAG, (abandonFlag ? 1 : 0));
+        ret = hdi->DeleteExt(templateIdList, attr.Serialize());
     } else {
         ret = hdi->Delete(templateIdList);
     }
