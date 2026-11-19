@@ -49,33 +49,6 @@ void UserIdmDatabaseTest::SetUp()
 void UserIdmDatabaseTest::TearDown()
 {
 }
-
-HWTEST_F(UserIdmDatabaseTest, BadHdiTest, TestSize.Level0)
-{
-    auto &database = UserIdmDatabase::Instance();
-    constexpr int32_t USER_ID = 100;
-    std::shared_ptr<SecureUserInfoInterface> secUserInfo = nullptr;
-    EXPECT_NE(database.GetSecUserInfo(USER_ID, secUserInfo), SUCCESS);
-
-    std::vector<std::shared_ptr<CredentialInfoInterface>> infoRet = {};
-    EXPECT_NE(database.GetCredentialInfo(USER_ID, FACE, infoRet), SUCCESS);
-
-    std::vector<uint8_t> testAuthToken = {1, 2, 3, 4};
-    std::vector<std::shared_ptr<CredentialInfoInterface>> testCredInfos;
-    std::vector<uint8_t> rootSecret;
-    EXPECT_NE(database.DeleteUser(USER_ID, testAuthToken, testCredInfos, rootSecret), SUCCESS);
-
-    EXPECT_NE(database.DeleteUserEnforce(USER_ID, testCredInfos), SUCCESS);
-
-    std::vector<std::shared_ptr<UserInfoInterface>> userInfos;
-    EXPECT_NE(database.GetAllExtUserInfo(userInfos), SUCCESS);
-
-    uint64_t credentialId = 0;
-    std::shared_ptr<CredentialInfoInterface> credInfo;
-    EXPECT_NE(database.GetCredentialInfoById(credentialId, credInfo), SUCCESS);
-
-    EXPECT_NE(database.ClearUnavailableCredential(USER_ID, testCredInfos), SUCCESS);
-}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

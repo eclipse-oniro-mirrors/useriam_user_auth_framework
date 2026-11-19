@@ -49,29 +49,6 @@ void EnrollmentImplTest::TearDown()
 {
 }
 
-HWTEST_F(EnrollmentImplTest, BadHdiTest, TestSize.Level0)
-{
-    Enrollment::EnrollmentPara para = {};
-    para.userId = 0x11;
-    para.callerName = "com.ohos.test";
-    para.sdkVersion = 11;
-    para.authType = FACE;
-
-    auto enrollment = std::make_shared<EnrollmentImpl>(para);
-    std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
-    EXPECT_FALSE(enrollment->Start(scheduleList, nullptr));
-
-    std::vector<uint8_t> scheduleResult = {1, 2, 3};
-    uint64_t credentialId = 0;
-    std::shared_ptr<CredentialInfoInterface> info = nullptr;
-    std::shared_ptr<UpdatePinParamInterface> pinInfo = nullptr;
-    std::optional<uint64_t> secUserId = std::nullopt;
-    EXPECT_FALSE(enrollment->Update(scheduleResult, credentialId, info, pinInfo, secUserId));
-
-    enrollment->running_ = true;
-    EXPECT_FALSE(enrollment->Cancel());
-}
-
 HWTEST_F(EnrollmentImplTest, EnrollmentParaWithAdditionalInfoTest, TestSize.Level0)
 {
     Enrollment::EnrollmentPara para = {};

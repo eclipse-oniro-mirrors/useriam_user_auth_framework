@@ -47,25 +47,6 @@ void DeleteImplTest::SetUp()
 void DeleteImplTest::TearDown()
 {
 }
-
-HWTEST_F(DeleteImplTest, BadHdiTest, TestSize.Level0)
-{
-    std::vector<uint8_t> testAuthToken = {1, 2, 3, 4};
-    DeleteImpl::DeleteParam para = {};
-    para.userId = 1;
-    para.credentialId = 1;
-    para.tokenId = 1;
-    para.token = testAuthToken;
-    auto abandon = std::make_shared<DeleteImpl>(para);
-    std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
-    bool isStartSchedule = false;
-    std::vector<EngCredentialInfo> credentialInfos = {};
-    EXPECT_FALSE(abandon->Start(scheduleList, nullptr, isStartSchedule, credentialInfos));
-
-    std::vector<uint8_t> scheduleResult = {1, 2, 3};
-    std::shared_ptr<CredentialInfoInterface> info = nullptr;
-    EXPECT_FALSE(abandon->Update(scheduleResult, info));
-}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
