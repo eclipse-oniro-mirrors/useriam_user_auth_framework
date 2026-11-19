@@ -51,7 +51,7 @@ public:
 namespace {
 constexpr int64_t MIN_REPEAT_INTERVAL_MS = 24LL * 60 * 60 * 1000; // 24h
 constexpr int64_t MAX_WINDOW_DURATION_MS = 10LL * 60 * 1000; // 10min
-constexpr int64_t TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT = 5; // 5% of the schedule span
+constexpr int64_t TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT = 5; // 5% of repeatInterval
 }
 
 HWTEST_F(FrameworkCommonTest, UserAuthHelperGetUtf8CharCount, TestSize.Level0)
@@ -324,7 +324,7 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_001, TestSize.Lev
     singleWindow.hasValidStartTime = true;
     singleWindow.validStartTime = 1000;
     singleWindow.hasValidEndTime = true;
-    singleWindow.validEndTime = 1000 + 2LL * 60 * 60 * 1000; // 2h span: 5% = 6min covers the windows below
+    singleWindow.validEndTime = 1000 + 2LL * 60 * 60 * 1000; // 2h span; windows below are under the 10min bound
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(singleWindow), SUCCESS);
 
     TokenSchedule windowed = singleWindow;
@@ -418,16 +418,17 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_004, TestSize.Lev
     schedule.windowConfig = window;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
 
-    // span here is 1s, so 5% of the span (50ms) is the smaller bound and caps windowDuration
+    // span does not cap windowDuration: the bound is min(10min, 5% of repeatInterval),
+    // and 5% of the 24h minimum interval already exceeds 10min
     window.windowDuration = 1000 * TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT / 100;
     schedule.windowConfig = window;
     EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
 
     window.windowDuration = 1000 * TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT / 100 + 1;
     schedule.windowConfig = window;
-    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
 
-    // when 5% of the span is the smaller bound (2h span * 5% = 6min < 10min), it caps windowDuration
+    // with a 2h span, 6min + 1 still passes: only repeatInterval and 10min bound the window
     schedule.validEndTime = 1000 + 2LL * 60 * 60 * 1000;
     window.windowDuration = 2LL * 60 * 60 * 1000 * TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT / 100;
     schedule.windowConfig = window;
@@ -435,9 +436,10 @@ HWTEST_F(FrameworkCommonTest, UserAuthHelperCheckTokenSchedule_004, TestSize.Lev
 
     window.windowDuration = 2LL * 60 * 60 * 1000 * TOKEN_SCHEDULE_WINDOW_RATIO_PERCENT / 100 + 1;
     schedule.windowConfig = window;
-    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), INVALID_PARAMETERS);
+    EXPECT_EQ(UserAuthHelper::CheckTokenSchedule(schedule), SUCCESS);
 
-    // when 10 minutes is the smaller bound (4h span * 5% = 12min > 10min), it caps windowDuration
+    // 10min is the effective bound regardless of span
+    schedule.validEndTime = 1000 + 4LL * 60 * 60 * 1000;
     schedule.validEndTime = 1000 + 4LL * 60 * 60 * 1000;
     window.repeatInterval = MIN_REPEAT_INTERVAL_MS;
     window.windowDuration = MAX_WINDOW_DURATION_MS;
