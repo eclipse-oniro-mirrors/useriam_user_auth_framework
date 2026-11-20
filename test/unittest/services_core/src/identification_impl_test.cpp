@@ -49,7 +49,7 @@ void IdentificationImplTest::TearDown()
 {
 }
 
-HWTEST_F(IdentificationImplTest, BadHdiTest, TestSize.Level0)
+HWTEST_F(IdentificationImplTest, EngineUnavailableTest, TestSize.Level0)
 {
     constexpr uint64_t contextId = 0x1234567;
     auto identification = std::make_shared<IdentificationImpl>(contextId, FACE);

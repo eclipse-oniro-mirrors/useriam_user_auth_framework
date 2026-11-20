@@ -50,7 +50,7 @@ void AuthWidgetHelperTest::TearDown()
 {
 }
 
-HWTEST_F(AuthWidgetHelperTest, BadHdiTest, TestSize.Level0)
+HWTEST_F(AuthWidgetHelperTest, EngineUnavailableTest, TestSize.Level0)
 {
     int32_t userId = 1;
     std::vector<AuthType> authTypeList;

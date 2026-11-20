@@ -50,7 +50,7 @@ void UserIdmDatabaseTest::TearDown()
 {
 }
 
-HWTEST_F(UserIdmDatabaseTest, BadHdiTest, TestSize.Level0)
+HWTEST_F(UserIdmDatabaseTest, EngineUnavailableTest, TestSize.Level0)
 {
     auto &database = UserIdmDatabase::Instance();
     constexpr int32_t USER_ID = 100;

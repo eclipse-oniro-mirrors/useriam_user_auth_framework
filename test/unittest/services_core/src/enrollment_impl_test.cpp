@@ -49,7 +49,7 @@ void EnrollmentImplTest::TearDown()
 {
 }
 
-HWTEST_F(EnrollmentImplTest, BadHdiTest, TestSize.Level0)
+HWTEST_F(EnrollmentImplTest, EngineUnavailableTest, TestSize.Level0)
 {
     Enrollment::EnrollmentPara para = {};
     para.userId = 0x11;

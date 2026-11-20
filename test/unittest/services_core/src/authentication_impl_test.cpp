@@ -49,7 +49,7 @@ void AuthenticationImplTest::TearDown()
 {
 }
 
-HWTEST_F(AuthenticationImplTest, BadHdiTest, TestSize.Level0)
+HWTEST_F(AuthenticationImplTest, EngineUnavailableTest, TestSize.Level0)
 {
     constexpr uint64_t contextId = 0x1234567;
     Authentication::AuthenticationPara para = {};

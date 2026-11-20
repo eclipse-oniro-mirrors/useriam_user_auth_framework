@@ -48,7 +48,7 @@ void DeleteImplTest::TearDown()
 {
 }
 
-HWTEST_F(DeleteImplTest, BadHdiTest, TestSize.Level0)
+HWTEST_F(DeleteImplTest, EngineUnavailableTest, TestSize.Level0)
 {
     std::vector<uint8_t> testAuthToken = {1, 2, 3, 4};
     DeleteImpl::DeleteParam para = {};

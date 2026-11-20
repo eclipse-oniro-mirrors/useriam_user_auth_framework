@@ -152,10 +152,10 @@ ohos_shared_library("userauthservice") {
   # always pairing the base service with the in-tree HDI engine. When the ext part
   # is present it owns the final .so and supplies its own non-HDI engine, so MAIN
   # never links the ext engine here (this is what breaks the component cycle).
-  deps = [
-    ":userauthservice_static",
-    "engine:userauth_engine",
-  ]
+  deps = [ ":userauthservice_static" ]
+  if (!user_auth_framework_has_ext) {
+    deps += [ "engine:userauth_engine" ]
+  }
   external_deps = [
     "hilog:libhilog"
   ]
