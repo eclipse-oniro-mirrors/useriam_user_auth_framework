@@ -46,7 +46,11 @@ ohos_unittest("iam_services_core_test") {
     project_path + "services/remote_connect/inc",
   ]
 
-  include_dirs += [ "../mocks/inc" ]
+  include_dirs += [
+    "mocks",
+    "../../fuzztest/dummy",
+    "../mocks/inc",
+  ]
 
   sources = [
     project_path + "services/base/src/iam_event_dispatcher.cpp",
@@ -92,7 +96,7 @@ ohos_unittest("iam_services_core_test") {
   ]
 
   sources += [
-    "../../fuzztest/dummy/dummy_user_auth_engine.cpp",
+    "mocks/failing_user_auth_engine.cpp",
     "../../fuzztest/dummy/mock_system_ability_listener.cpp",
     "../services/mocks/mock_ipc_common.cpp",
   ]

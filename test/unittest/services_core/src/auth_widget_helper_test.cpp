@@ -49,6 +49,26 @@ void AuthWidgetHelperTest::SetUp()
 void AuthWidgetHelperTest::TearDown()
 {
 }
+
+HWTEST_F(AuthWidgetHelperTest, EngineUnavailableTest, TestSize.Level0)
+{
+    int32_t userId = 1;
+    std::vector<AuthType> authTypeList;
+    authTypeList.push_back(FACE);
+    authTypeList.push_back(ALL);
+    authTypeList.push_back(PIN);
+    authTypeList.push_back(FINGERPRINT);
+    AuthTrustLevel atl = ATL3;
+    std::vector<AuthType> validTypeList;
+    EXPECT_NE(AuthWidgetHelper::CheckValidSolution(userId, authTypeList, atl, validTypeList), SUCCESS);
+
+    AuthParamInner authParam = {};
+    authParam.reuseUnlockResult.isReuse = true;
+    authParam.reuseUnlockResult.reuseDuration = 1;
+    authParam.reuseUnlockResult.reuseMode = AUTH_TYPE_RELEVANT;
+    EngReuseUnlockInfo reuseResultInfo = {};
+    EXPECT_NE(AuthWidgetHelper::QueryReusableAuthResult(userId, authParam, reuseResultInfo), SUCCESS);
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

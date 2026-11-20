@@ -48,6 +48,21 @@ void IdentificationImplTest::SetUp()
 void IdentificationImplTest::TearDown()
 {
 }
+
+HWTEST_F(IdentificationImplTest, EngineUnavailableTest, TestSize.Level0)
+{
+    constexpr uint64_t contextId = 0x1234567;
+    auto identification = std::make_shared<IdentificationImpl>(contextId, FACE);
+    std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
+    EXPECT_FALSE(identification->Start(scheduleList, nullptr));
+
+    Identification::IdentifyResultInfo retInfo = {};
+    std::vector<uint8_t> scheduleResult = {1, 2, 3};
+    EXPECT_FALSE(identification->Update(scheduleResult, retInfo));
+
+    identification->running_ = true;
+    EXPECT_FALSE(identification->Cancel());
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

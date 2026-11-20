@@ -48,6 +48,31 @@ void AuthenticationImplTest::SetUp()
 void AuthenticationImplTest::TearDown()
 {
 }
+
+HWTEST_F(AuthenticationImplTest, EngineUnavailableTest, TestSize.Level0)
+{
+    constexpr uint64_t contextId = 0x1234567;
+    Authentication::AuthenticationPara para = {};
+    para.userId = 0x11;
+    para.callerName = "com.ohos.test";
+    para.sdkVersion = 11;
+    para.authType = FACE;
+    para.atl = ATL3;
+
+    auto authentication = std::make_shared<AuthenticationImpl>(contextId, para);
+
+    std::vector<std::shared_ptr<ScheduleNode>> scheduleList;
+    AcquireInfoCallback acquireInfoCallback = [](ExecutorRole src, int32_t moduleType,
+        const std::vector<uint8_t> &acquireMsg) {};
+    EXPECT_FALSE(authentication->Start(scheduleList, acquireInfoCallback, nullptr));
+
+    std::vector<uint8_t> scheduleResult;
+    Authentication::AuthResultInfo info = {};
+    EXPECT_FALSE(authentication->Update(scheduleResult, info, acquireInfoCallback));
+
+    authentication->running_ = true;
+    EXPECT_FALSE(authentication->Cancel());
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
