@@ -246,6 +246,48 @@ public:
         return SUCCESS;
     }
 
+    int32_t RegisterLaunchService(const std::vector<EngLaunchServiceRegisterInfo> &,
+        std::vector<EngLaunchServiceFlatInfo> &) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t UnRegisterLaunchService(int32_t, const std::optional<EngLaunchServiceKey> &) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t GetLaunchServiceInfo(int32_t, const std::optional<EngLaunchServiceKey> &,
+        std::vector<EngLaunchServiceFlatInfo> &) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t GetLaunchServiceList(const std::vector<int32_t> &, std::vector<EngLaunchServiceFlatInfo> &) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t GetAppLaunchServiceType(int32_t, EngLaunchServiceType &) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t SetLaunchServiceState(int32_t, const std::vector<uint8_t> &, EngLaunchServiceState) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t SetDaemonAllowedlist(int32_t, const std::vector<std::string> &, bool) override
+    {
+        return SUCCESS;
+    }
+
+    int32_t SetDaemonForbiddenlist(int32_t, const std::vector<std::string> &, bool) override
+    {
+        return SUCCESS;
+    }
+
     bool SetStatusCallback(const StateCallback &) override
     {
         return true;

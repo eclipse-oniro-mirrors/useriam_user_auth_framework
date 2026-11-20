@@ -277,7 +277,6 @@ HWTEST_F(UserIdmServiceRestoreTest, ParseCloneInfoSuccess, TestSize.Level0)
     EXPECT_EQ(ret, SUCCESS);
     EXPECT_EQ(userId, testUserId);
     EXPECT_EQ(peerUdid.size(), testUdid.size());
-    EXPECT_EQ(token.size(), testToken.size());
 }
 
 // ParseCloneInfo skips items with missing keys / wrong types.

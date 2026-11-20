@@ -115,6 +115,7 @@ private:
     bool GetNeedSubscribeAppState(std::string jsonText, const char *key);
     int32_t ConvertGetCredentialResult(int32_t resultCode, bool isNotEnrollReturnSuccess);
     std::string GetSessionInfoMasked(std::vector<uint8_t> &challenge);
+    bool ParseByteStringToVector(const std::string &byteStr, std::vector<uint8_t> &bytes);
     std::mutex mutex_;
     std::optional<uint32_t> sessionTokenId_;
 };
