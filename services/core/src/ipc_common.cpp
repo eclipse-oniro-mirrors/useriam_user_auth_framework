@@ -203,8 +203,8 @@ bool IpcCommon::GetRunningAppPid(int32_t uid, int32_t &pid)
     }
     sptr<AppExecFwk::IAppMgr> iAppManager =
         iface_cast<AppExecFwk::IAppMgr>(samgrClient->GetSystemAbility(APP_MGR_SERVICE_ID));
-    if (iAppManager == nullptr) {
-        IAM_LOGI("Failed to get ability manager service");
+    if (iAppManager == nullptr || iAppManager->AsObject() == nullptr) {
+        IAM_LOGE("Failed to get ability manager service or remote object is null");
         return false;
     }
     std::vector<AppExecFwk::RunningProcessInfo> runningProcesses = {};

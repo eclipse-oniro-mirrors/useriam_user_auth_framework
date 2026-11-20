@@ -16,6 +16,7 @@
 #include "user_idm_service.h"
 
 #include <fcntl.h>
+#include <cstdint>
 #include <future>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -42,11 +43,11 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-const std::string CLONE_DATA_TEMP_PATH = "/data/local/tmp";
+const std::string CLONE_DATA_TEMP_PATH = "/data/service/el1/public/useriam/";
 const std::string JSON_KEY_TYPE = "type";
 const std::string JSON_KEY_DETAIL = "detail";
 const std::string JSON_VALUE_USER_ID = "userId";
-const std::string JSON_VALUE_TOKEN = "token";
+const std::string JSON_VALUE_TOKEN = "authToken";
 const std::string JSON_VALUE_UDID = "udid";
 const std::string EXTENSION_BACKUP = "backup";
 const std::string EXTENSION_RESTORE = "restore";
@@ -198,6 +199,34 @@ Attributes UserIdmService::BuildBackupExtraIn(int32_t userId, const std::vector<
     return backupAttr;
 }
 
+
+bool UserIdmService::ParseByteStringToVector(const std::string &byteStr, std::vector<uint8_t> &bytes)
+{
+    bytes.clear();
+    if (byteStr.empty()) {
+        IAM_LOGW("byte string is empty");
+        return true;
+    }
+    size_t pos = 0;
+    while (pos < byteStr.size()) {
+        size_t comma = byteStr.find(',', pos);
+        if (comma == std::string::npos) {
+            comma = byteStr.size();
+        }
+        int32_t value = 0;
+        try {
+            value = std::stoi(byteStr.substr(pos, comma - pos));
+        } catch (const std::exception &e) {
+            IAM_LOGE("convert byte failed: %{public}s", e.what());
+            return false;
+        }
+        IF_FALSE_LOGE_AND_RETURN_VAL(value >= 0 && value <= UINT8_MAX, false);
+        bytes.push_back(static_cast<uint8_t>(value));
+        pos = comma + 1;
+    }
+    return true;
+}
+
 int32_t UserIdmService::ParseCloneInfo(MessageParcel &data, int32_t &userId,
     std::vector<uint8_t> &peerUdid, std::vector<uint8_t> &token)
 {
@@ -214,29 +243,24 @@ int32_t UserIdmService::ParseCloneInfo(MessageParcel &data, int32_t &userId,
         if (item.find(JSON_KEY_TYPE) == item.end() || item.find(JSON_KEY_DETAIL) == item.end()) {
             continue;
         }
-        if (!item[JSON_KEY_TYPE].is_string() || !item[JSON_KEY_DETAIL].is_string()) {
+        if (!item[JSON_KEY_TYPE].is_string()) {
             continue;
         }
-        std::string type = {};
-        std::string detail = {};
+        const nlohmann::json &detail = item[JSON_KEY_DETAIL];
         try {
-            type = item[JSON_KEY_TYPE].get<std::string>();
-            detail = item[JSON_KEY_DETAIL].get<std::string>();
-        } catch (const std::exception &e) {
-            IAM_LOGE("get json string failed: %{public}s", e.what());
-            continue;
-        }
-        if (type == JSON_VALUE_USER_ID) {
-            try {
-                userId = std::stoi(detail);
-            } catch (const std::exception &e) {
-                IAM_LOGE("convert userId failed: %{public}s", e.what());
-                return GENERAL_ERROR;
+            std::string type = item[JSON_KEY_TYPE].get<std::string>();
+            if (type == JSON_VALUE_USER_ID) {
+                userId = detail.is_number() ? detail.get<int32_t>() : std::stoi(detail.get<std::string>());
+            } else if (type == JSON_VALUE_UDID) {
+                const std::string udid = detail.get<std::string>();
+                peerUdid.assign(udid.begin(), udid.end());
+            } else if (type == JSON_VALUE_TOKEN) {
+                IF_FALSE_LOGE_AND_RETURN_VAL(
+                    ParseByteStringToVector(detail.get_ref<const std::string &>(), token), GENERAL_ERROR);
             }
-        } else if (type == JSON_VALUE_UDID) {
-            peerUdid.assign(detail.begin(), detail.end());
-        } else if (type == JSON_VALUE_TOKEN) {
-            token.assign(detail.begin(), detail.end());
+        } catch (const std::exception &e) {
+            IAM_LOGE("parse clone info failed, type item skipped: %{public}s", e.what());
+            return GENERAL_ERROR;
         }
     }
     const uint32_t DEVICE_UDID_LEN = 64;

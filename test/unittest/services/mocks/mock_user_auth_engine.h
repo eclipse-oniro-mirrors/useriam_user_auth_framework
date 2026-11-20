@@ -139,6 +139,20 @@ public:
     MOCK_METHOD3(GetAuthResultFromMessage, int32_t(
         const std::string &remoteUdid, const std::vector<uint8_t> &message, EngAuthResultInfo &authResultInfo));
     MOCK_METHOD3(GetLatestEnrollmentTime, int32_t(int32_t userId, int32_t authType, uint64_t &latestEnrollmentTime));
+    MOCK_METHOD2(RegisterLaunchService, int32_t(const std::vector<EngLaunchServiceRegisterInfo> &serviceList,
+        std::vector<EngLaunchServiceFlatInfo> &serviceInfos));
+    MOCK_METHOD2(UnRegisterLaunchService, int32_t(int32_t uid, const std::optional<EngLaunchServiceKey> &key));
+    MOCK_METHOD3(GetLaunchServiceInfo, int32_t(int32_t uid, const std::optional<EngLaunchServiceKey> &key,
+        std::vector<EngLaunchServiceFlatInfo> &serviceList));
+    MOCK_METHOD2(GetLaunchServiceList, int32_t(const std::vector<int32_t> &userIds,
+        std::vector<EngLaunchServiceFlatInfo> &serviceList));
+    MOCK_METHOD2(GetAppLaunchServiceType, int32_t(int32_t uid, EngLaunchServiceType &serviceType));
+    MOCK_METHOD3(SetLaunchServiceState, int32_t(int32_t uid, const std::vector<uint8_t> &token,
+        EngLaunchServiceState activeState));
+    MOCK_METHOD3(SetDaemonAllowedlist, int32_t(int32_t userId, const std::vector<std::string> &appIdentifiers,
+        bool isAdd));
+    MOCK_METHOD3(SetDaemonForbiddenlist, int32_t(int32_t userId, const std::vector<std::string> &appIdentifiers,
+        bool isAdd));
     MOCK_METHOD1(SetStatusCallback, bool(const StateCallback &callback));
     MOCK_METHOD0(Load, int32_t());
     MOCK_METHOD0(Unload, int32_t());

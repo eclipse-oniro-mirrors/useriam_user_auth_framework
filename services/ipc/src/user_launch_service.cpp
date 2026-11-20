@@ -403,7 +403,7 @@ int32_t UserAuthService::AdminAuthForToken(int32_t uid, std::vector<uint8_t> &au
     options.isInteractionAllowed = true;
     options.subjectInfo = std::make_optional(accountInfo);
 
-    std::string privilege = "ohos.privilege.manage_enterprise_device_management_applications";
+    std::string privilege = "ohos.privilege.manage_launch_service_status";
     ErrCode errRet = AccountSA::AuthorizationClient::GetInstance().AcquireAuthorization(
         privilege, options, callback);
     if (errRet != 0) {
@@ -446,7 +446,6 @@ int32_t UserAuthService::SetLaunchServiceState(int32_t uid, const std::vector<ui
         launchServiceCallback->OnLaunchServiceResult(CHECK_PERMISSION_FAILED);
         return SUCCESS;
     }
-
     ContextFactory::AuthWidgetContextPara para = {};
     static_cast<void>(IpcCommon::GetCallerName(*this, para.callerName, para.callerType));
     if (para.callerType == Security::AccessToken::TOKEN_HAP &&
@@ -466,11 +465,13 @@ int32_t UserAuthService::SetLaunchServiceState(int32_t uid, const std::vector<ui
             EngLaunchServiceType serviceType = EngLaunchServiceType::INVALID;
             int32_t ret = GetUserAuthEngine().GetAppLaunchServiceType(uid, serviceType);
             if (ret != SUCCESS) {
+                IAM_LOGE("failed to GetAppLaunchServiceType, ret:%{public}d", ret);
                 launchServiceCallback->OnLaunchServiceResult(ret);
                 return;
             }
             ret = GetAuthToken(serviceType, uid, authPara, authToken);
             if (ret != SUCCESS) {
+                IAM_LOGE("failed to GetAuthToken, ret:%{public}d", ret);
                 launchServiceCallback->OnLaunchServiceResult(ret);
                 return;
             }
