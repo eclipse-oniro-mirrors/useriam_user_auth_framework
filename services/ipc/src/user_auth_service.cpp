@@ -373,7 +373,8 @@ int32_t UserAuthService::GetProperty(int32_t userId, int32_t authType,
     IF_FALSE_LOGE_AND_RETURN_VAL(getExecutorPropertyCallback != nullptr, INVALID_PARAMETERS);
     Attributes values;
 
-    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION)) {
+    if (!IpcCommon::CheckPermission(*this, ACCESS_USER_AUTH_INTERNAL_PERMISSION) &&
+        !IpcCommon::IsCallingNativeRoot()) {
         IAM_LOGE("failed to check permission");
         getExecutorPropertyCallback->OnGetExecutorPropertyResult(CHECK_PERMISSION_FAILED, values.Serialize());
         return SUCCESS;
@@ -525,7 +526,7 @@ std::shared_ptr<ContextCallback> UserAuthService::GetAuthContextCallback(int32_t
         userAuthCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return nullptr;
     }
-    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this) || IpcCommon::IsCallingNativeRoot());
     contextCallback->SetTraceAuthType(authType);
     contextCallback->SetTraceAuthWidgetType(authType);
     contextCallback->SetTraceAuthTrustLevel(authTrustLevel);
@@ -1111,7 +1112,7 @@ int32_t UserAuthService::Identify(const std::vector<uint8_t> &challenge, int32_t
         userAuthCallback->OnResult(GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
-    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this) || IpcCommon::IsCallingNativeRoot());
     if (static_cast<AuthType>(authType) == PIN) {
         IAM_LOGE("type not support %{public}d", authType);
         contextCallback->SetTraceAuthFinishReason("UserAuthService Identify IsAuthTypeEnable fail");
@@ -1703,7 +1704,7 @@ int32_t UserAuthService::AuthWidget(int32_t apiVersion, const IpcAuthParamInner 
         userAuthCallback->OnResult(ResultCode::GENERAL_ERROR, extraInfo.Serialize());
         return GENERAL_ERROR;
     }
-    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this));
+    contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this) || IpcCommon::IsCallingNativeRoot());
 
     ContextFactory::AuthWidgetContextPara para = {};
     para.sdkVersion = apiVersion;
