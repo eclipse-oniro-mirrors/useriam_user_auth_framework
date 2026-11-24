@@ -45,6 +45,8 @@ public:
         std::optional<uint64_t> authContextId;
         std::optional<AuthTrustLevel> atl;
         std::optional<int32_t> authType;
+        std::optional<int32_t> authIntent;
+        std::optional<TokenSchedule> tokenSchedule;
         std::optional<uint32_t> authWidgetType;
         std::optional<std::string> callerName;
         std::optional<int32_t> callerType;
@@ -90,6 +92,8 @@ public:
     virtual void SetTraceFreezingTime(int32_t freezingTime) = 0;
     virtual void SetTraceSdkVersion(int32_t version) = 0;
     virtual void SetTraceAuthType(int32_t authType) = 0;
+    virtual void SetTraceAuthIntent(int32_t authIntent) = 0;
+    virtual void SetTraceTokenSchedule(const TokenSchedule &schedule) = 0;
     virtual void SetTraceAuthWidgetType(uint32_t authWidgetType) = 0;
     virtual void SetTraceAuthTrustLevel(AuthTrustLevel atl) = 0;
     virtual void SetTraceReuseUnlockResultMode(uint32_t reuseUnlockResultMode) = 0;

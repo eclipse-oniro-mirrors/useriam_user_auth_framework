@@ -226,11 +226,10 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceAdditionalInfoTooLongRejectedFo
     expectRejected(param);
 }
 
-HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAcceptsTokenSchedule, TestSize.Level0)
+HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthRejectsTokenSchedule, TestSize.Level0)
 {
-    // sudo supports scheduled auth token: a valid schedule passes the sudo param gate and
-    // the sudo context is created (param plumbing only; no credential pinned so the child
-    // ends with NOT_ENROLLED, engine schedule binding is out of scope here)
+    // sudo auth and scheduled auth token are mutually exclusive: a schedule with the sudo
+    // intent is rejected at the AuthUser param gate, no sudo context is created
     // sudo auth and tokenSchedule are both system-api-only, so the caller must be a system caller
     IpcCommon::DeleteAllPermission();
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
@@ -239,7 +238,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAcceptsTokenSchedule, T
     UserAuthService service;
     auto testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
     ASSERT_NE(testCallback, nullptr);
-    EXPECT_CALL(*testCallback, OnResult(_, _)).Times(1);
+    EXPECT_CALL(*testCallback, OnResult(ResultCode::INVALID_PARAMETERS, _)).Times(1);
 
     IpcAuthParamInner param = MakeSudoIpcParam("sudo title");
     param.hasTokenSchedule = true;
@@ -254,9 +253,10 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAcceptsTokenSchedule, T
     sptr<IIamCallback> callbackInterface = testCallback;
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(param, ipcRemoteAuthParam, callbackInterface, contextId);
-    EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, BAD_CONTEXT_ID);
-    DrainSerialThread();
+    EXPECT_EQ(ret, INVALID_PARAMETERS);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
+    auto contexts = ContextPool::Instance().Select(SUDO_AUTH_CONTEXT);
+    EXPECT_TRUE(contexts.empty());
 }
 
 // pins a last-attempt pin credential behind the mock executor so the SUDO routes
@@ -317,6 +317,9 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthDialogBranch, TestSize.
     auto dialogChild = std::static_pointer_cast<WidgetContext>(widgetChildren.front().lock());
     ASSERT_NE(dialogChild, nullptr);
     EXPECT_EQ(dialogChild->para_.widgetParam.title, "last chance");
+    // the dialog child carries the sudo intent so its inner auth events are traced as sudo,
+    // not as a plain default-intent PIN auth
+    EXPECT_EQ(dialogChild->para_.authIntent, AuthIntent::SUDO_PIN_AUTH);
 
     auto cancelHandler = ThreadHandler::GetSingleThreadInstance();
     ASSERT_NE(cancelHandler, nullptr);

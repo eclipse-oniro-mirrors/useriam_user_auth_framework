@@ -30,6 +30,7 @@ private:
     static void ProcessCredChangeEvent(const ContextCallbackNotifyListener::MetaData &metaData);
     static void ProcessCredManagerEvent(const ContextCallbackNotifyListener::MetaData &metaData);
     static void CopyMetaDataToTraceInfo(const ContextCallbackNotifyListener::MetaData &metaData, UserAuthTrace &info);
+    static void BuildExtraInfo(const ContextCallbackNotifyListener::MetaData &metaData, UserAuthTrace &info);
     static void ProcessUserAuthEvent(const ContextCallbackNotifyListener::MetaData &metaData);
     Trace();
     ~Trace() override;
