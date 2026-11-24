@@ -44,6 +44,7 @@
 #include "remote_auth_callback_manager.h"
 #include "thread_handler_manager.h"
 #include "user_auth_helper.h"
+#include "user_auth_service_helper.h"
 #include "user_recognition_state_manager.h"
 #include "device_manager_util.h"
 #include "xcollie_helper.h"
@@ -54,37 +55,7 @@
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
-int32_t GetTemplatesByAuthType(int32_t userId, AuthType authType, std::vector<uint64_t> &templateIds)
-{
-    templateIds.clear();
-    std::vector<std::shared_ptr<CredentialInfoInterface>> credentialInfos;
-    int32_t ret = UserIdmDatabase::Instance().GetCredentialInfo(userId, authType, credentialInfos);
-    if (ret != SUCCESS) {
-        IAM_LOGE("get credential fail, ret:%{public}d, userId:%{public}d, authType:%{public}d", ret,
-            userId, authType);
-        return GENERAL_ERROR;
-    }
-
-    if (credentialInfos.empty()) {
-        IAM_LOGE("user %{public}d has no credential type %{public}d", userId, authType);
-        return SUCCESS;
-    }
-
-    templateIds.reserve(credentialInfos.size());
-    for (auto &info : credentialInfos) {
-        if (info == nullptr) {
-            IAM_LOGE("info is nullptr");
-            continue;
-        }
-        templateIds.push_back(info->GetTemplateId());
-    }
-
-    return SUCCESS;
-}
-
-#ifndef IAM_TEST_ENABLE
 namespace {
-#endif
 const int32_t MINIMUM_VERSION = 0;
 const int32_t CURRENT_VERSION = 1;
 const int32_t USERIAM_IPC_THREAD_NUM = 4;
@@ -138,33 +109,8 @@ int32_t NotifyAuthFail(const std::shared_ptr<ContextCallback> &contextCallback, 
 }
 
 const bool REGISTER_RESULT = SystemAbility::MakeAndRegisterAbility(UserAuthService::GetInstance().get());
-#ifndef IAM_TEST_ENABLE
 } // namespace
-#endif
 
-std::string GetAuthParamStr(const AuthParamInner &authParam, std::optional<RemoteAuthParam> &remoteAuthParam)
-{
-    std::ostringstream authParamString;
-    authParamString << "userId:" << authParam.userId << " authType:" << authParam.authType
-                    << " authIntent:" << authParam.authIntent << " atl:" << authParam.authTrustLevel
-                    << " tokenSchedule:" << UserAuthHelper::TokenScheduleToString(authParam.tokenSchedule);
-    if (remoteAuthParam.has_value()) {
-        const uint32_t networkIdPrintLen = 4;
-        const uint32_t tokenIdMinLen = 2;
-        auto verifierNetworkIdStr = remoteAuthParam->verifierNetworkId.value_or("").substr(0, networkIdPrintLen);
-        auto collectorNetworkIdStr = remoteAuthParam->collectorNetworkId.value_or("").substr(0, networkIdPrintLen);
-        auto tokenIdStr = std::to_string(remoteAuthParam->collectorTokenId.value_or(0));
-        if (tokenIdStr.size() > tokenIdMinLen) {
-            tokenIdStr = std::string(1, tokenIdStr[0]) + "****" + std::string(1, tokenIdStr[tokenIdStr.size() - 1]);
-        } else {
-            tokenIdStr = "";
-        }
-
-        authParamString << " isRemoteAuth:true" << " verifierNetworkId:" << verifierNetworkIdStr << "****"
-            " collectorNetworkId:" << collectorNetworkIdStr << "****" << " collectorTokenId:" << tokenIdStr;
-    }
-    return authParamString.str();
-}
 std::mutex UserAuthService::mutex_;
 std::shared_ptr<UserAuthService> UserAuthService::instance_ = nullptr;
 
@@ -655,7 +601,9 @@ uint64_t UserAuthService::StartRemoteAuthInvokerContext(AuthParamInner authParam
     contextCallback->SetCleaner(ContextPool::Cleaner(context));
     contextCallback->SetTraceRequestContextId(context->GetContextId());
     contextCallback->SetTraceAuthContextId(context->GetContextId());
-    IF_FALSE_LOGE_AND_RETURN_VAL(ContextPool::Instance().Schedule(context), BAD_CONTEXT_ID);
+
+    bool ret = ContextPool::Instance().Schedule(context);
+    IF_FALSE_LOGE_AND_RETURN_VAL(ret, BAD_CONTEXT_ID);
     failGuard.Cancel();
     return context->GetContextId();
 }

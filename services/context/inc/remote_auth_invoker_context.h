@@ -59,9 +59,7 @@ protected:
     void OnResult(int32_t resultCode, const std::shared_ptr<Attributes> &scheduleResultAttr) override;
     bool OnStop() override;
 
-#ifndef IAM_TEST_ENABLE
 private:
-#endif
     int32_t ProcAuthTipMsg(Attributes &message);
     int32_t ProcAuthResultMsg(Attributes &message);
     int32_t ProcAuthResultMsgInner(Attributes &message, int32_t &resultCode, Attributes &attr);

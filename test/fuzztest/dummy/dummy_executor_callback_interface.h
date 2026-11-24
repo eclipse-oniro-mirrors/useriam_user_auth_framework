@@ -18,7 +18,6 @@
 
 #include "iexecutor_callback.h"
 
-#undef private
 
 namespace OHOS {
 namespace UserIam {

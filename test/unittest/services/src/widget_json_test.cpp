@@ -376,7 +376,7 @@ HWTEST_F(WidgetJsonTest, WidgetJsonto_json_006, TestSize.Level0)
 {
     auto root = nlohmann::json::parse("", nullptr, false);
     WidgetNotice notice = root.get<WidgetNotice>();
-    EXPECT_EQ(notice.widgetContextId, static_cast<uint64_t>(0));
+    EXPECT_EQ(notice.widgetContextId, BAD_CONTEXT_ID);
 }
 
 HWTEST_F(WidgetJsonTest, WidgetJsonto_json_007, TestSize.Level0)
@@ -384,7 +384,7 @@ HWTEST_F(WidgetJsonTest, WidgetJsonto_json_007, TestSize.Level0)
     const std::string data = "{\"widgetContextId\":\"1\", \"event\":1, \"version\":1}";
     auto root = nlohmann::json::parse(data, nullptr, false);
     WidgetNotice notice = root.get<WidgetNotice>();
-    EXPECT_EQ(notice.widgetContextId, static_cast<uint64_t>(0));
+    EXPECT_EQ(notice.widgetContextId, BAD_CONTEXT_ID);
 }
 
 HWTEST_F(WidgetJsonTest, WidgetJsonto_json_008, TestSize.Level0)

@@ -823,7 +823,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth001, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     ASSERT_NE(handler, nullptr);
     // drain in passes: EnsureTask only waits out tasks posted before it, not their nested posts
@@ -847,7 +847,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth002, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
@@ -855,13 +855,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth002, TestSize.Level0)
     callbackInterface = testCallback;
     ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, TRUST_LEVEL_NOT_SUPPORT);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     ipcAuthParamInner.authType = PIN;
     ipcAuthParamInner.authTrustLevel = ATL1;
     ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, TYPE_NOT_SUPPORT);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     ASSERT_NE(handler, nullptr);
     handler->EnsureTask([]() {});
@@ -883,12 +883,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth003, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     ipcAuthParamInner.authType = FACE;
     ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     IpcCommon::AddPermission(ACCESS_BIOMETRIC_PERMISSION);
     auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
@@ -896,12 +896,12 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth003, TestSize.Level0)
     ON_CALL(*mockHdi, BeginAuthenticationExt(_, _, _, _)).WillByDefault(Return(NOT_ENROLLED));
     ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
 
     testApiVersion = 8;
     ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
 
     auto handler = ThreadHandler::GetSingleThreadInstance();
     ASSERT_NE(handler, nullptr);
@@ -999,7 +999,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuth004, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.Auth(testApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     promise.get_future().get();
     // drop the last context ref: breaks the mock->action->box->context->callback
     // cycle for gmock leak detection
@@ -1056,7 +1056,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser001, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1078,7 +1078,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser002, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
@@ -1086,7 +1086,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser002, TestSize.Level0)
     callbackInterface = testCallback;
     ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1134,7 +1134,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser003, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     std::promise<void> promise;
@@ -1148,7 +1148,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser003, TestSize.Level0)
 
     ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     promise.get_future().get();
     // drop the last context ref: breaks the mock->action->box->context->callback
     // cycle for gmock leak detection
@@ -1184,7 +1184,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser004, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1214,7 +1214,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser005, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t  ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1246,7 +1246,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser006, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1279,7 +1279,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser007, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1346,7 +1346,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser009, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1374,7 +1374,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUser010, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::SetSkipUserFlag(false);
     IpcCommon::DeleteAllPermission();
 }
@@ -1425,7 +1425,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify001, TestSize.Level0)
     int32_t ret = service.Identify(testChallenge, testAuthType, callbackInterface, contextId);
     // Schedule posts the start: acceptance is synchronous, the terminal lands via the callback
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0U);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     DrainSerialThread();
     ContextPool::Instance().Delete(contextId);
     DrainSerialThread();
@@ -1443,7 +1443,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify002, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.Identify(testChallenge, testAuthType, callbackInterface, contextId);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     testCallback = sptr<MockUserAuthCallback>(new (std::nothrow) MockUserAuthCallback());
     EXPECT_NE(testCallback, nullptr);
@@ -1452,7 +1452,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify002, TestSize.Level0)
     callbackInterface = testCallback;
     ret =  service.Identify(testChallenge, testAuthType, callbackInterface, contextId);
     EXPECT_EQ(ret, GENERAL_ERROR);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -1516,7 +1516,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentify003, TestSize.Level0)
     uint64_t contextId = 0;
     int32_t ret = service.Identify(testChallenge, testAuthType, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_PERMISSION_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     std::promise<void> promise;
@@ -1564,7 +1564,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceIdentifyFastFailLeavesPool, TestSiz
     uint64_t contextId = 0;
     int32_t ret = service.Identify(testChallenge, testAuthType, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
 
     auto handler = ThreadHandler::GetSingleThreadInstance();
     ASSERT_NE(handler, nullptr);

@@ -18,7 +18,6 @@
 
 #include "iam_executor_iexecute_callback.h"
 
-#undef private
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {

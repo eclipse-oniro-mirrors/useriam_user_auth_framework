@@ -42,9 +42,7 @@ public:
 protected:
     bool OnStart() override;
 
-#ifndef IAM_TEST_ENABLE
 private:
-#endif
     std::recursive_mutex mutex_;
     std::string collectorNetworkId_;
     std::optional<uint32_t> cancelTimerId_ = std::nullopt;

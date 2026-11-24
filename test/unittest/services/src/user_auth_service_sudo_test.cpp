@@ -117,7 +117,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAccepted, TestSize.Leve
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(MakeSudoIpcParam("sudo title"), ipcRemoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     DrainSerialThread();
     EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
 }
@@ -139,7 +139,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthNonSystemCallerRejected
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(MakeSudoIpcParam("sudo title"), ipcRemoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_SYSTEM_APP_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     DrainSerialThread();
 }
 
@@ -156,7 +156,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthParamRejected, TestSize
         uint64_t contextId = SEEDED_CONTEXT_ID;
         int32_t ret = service.AuthUser(ipcAuthParamInner, remoteParam, callbackInterface, contextId);
         EXPECT_EQ(ret, INVALID_PARAMETERS);
-        EXPECT_EQ(contextId, 0);
+        EXPECT_EQ(contextId, BAD_CONTEXT_ID);
         auto contexts = ContextPool::Instance().Select(SUDO_AUTH_CONTEXT);
         EXPECT_TRUE(contexts.empty());
     };
@@ -207,7 +207,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceAdditionalInfoTooLongRejectedFo
         IpcRemoteAuthParam remoteParam = {};
         int32_t ret = service.AuthUser(ipcAuthParamInner, remoteParam, callbackInterface, contextId);
         EXPECT_EQ(ret, INVALID_PARAMETERS);
-        EXPECT_EQ(contextId, 0);
+        EXPECT_EQ(contextId, BAD_CONTEXT_ID);
         EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
     };
 
@@ -255,7 +255,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthAcceptsTokenSchedule, T
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(param, ipcRemoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     DrainSerialThread();
 }
 
@@ -302,7 +302,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthDialogBranch, TestSize.
     int32_t ret = service.AuthUser(MakeSudoIpcParam(R"({"title":"last chance"})"), ipcRemoteAuthParam,
         callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     DrainSerialThread();
 
     // SUDO orchestrator entered the pool and routed to the dialog branch.
@@ -350,7 +350,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthPermissionDenied, TestS
     uint64_t contextId = SEEDED_CONTEXT_ID;
     int32_t ret = service.AuthUser(MakeSudoIpcParam("sudo title"), ipcRemoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_SYSTEM_APP_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     DrainSerialThread();
     auto contexts = ContextPool::Instance().Select(SUDO_AUTH_CONTEXT);
     EXPECT_TRUE(contexts.empty());
@@ -381,7 +381,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServiceSudoAuthNativeRootAccepted, Tes
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(MakeSudoIpcParam("sudo title"), ipcRemoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     DrainSerialThread();
     EXPECT_EQ(ContextPool::Instance().Select(contextId).lock(), nullptr);
 }
@@ -432,7 +432,7 @@ HWTEST_F(UserAuthServiceSudoTest, UserAuthServicePublicAuthNotRoutedToSudo, Test
     constexpr int32_t legacyApiVersion = 9;
     int32_t ret = service.Auth(legacyApiVersion, ipcAuthParamInner, callbackInterface, contextId);
     EXPECT_EQ(ret, SUCCESS);
-    EXPECT_NE(contextId, 0);
+    EXPECT_NE(contextId, BAD_CONTEXT_ID);
     DrainSerialThread();
 
     auto sudoContexts = ContextPool::Instance().Select(SUDO_AUTH_CONTEXT);

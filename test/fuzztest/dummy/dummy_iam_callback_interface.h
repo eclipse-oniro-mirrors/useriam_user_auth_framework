@@ -18,7 +18,6 @@
 
 #include "iiam_callback.h"
 
-#undef private
 
 namespace OHOS {
 namespace UserIam {

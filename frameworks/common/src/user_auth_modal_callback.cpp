@@ -49,7 +49,7 @@ void UserAuthModalCallback::SendCommand(uint64_t contextId, const std::string &c
         return;
     }
     IAM_LOGI("widgetParam context not null, process as modal application");
-    if (contextId == 0 || cmdData.empty()) {
+    if (contextId == BAD_CONTEXT_ID || cmdData.empty()) {
         IAM_LOGI("stop modal for invalid request");
         isInitError_ = true;
         CancelAuthentication(contextId, CancelReason::MODAL_CREATE_ERROR);

@@ -19,7 +19,7 @@
 
 #include "attributes.h"
 #include "context_pool.h"
-#include "context_arbitration_policy.h"
+#include "context_admission_policy.h"
 #include "iam_common_defines.h"
 #include "delete_context.h"
 #include "enroll_context.h"

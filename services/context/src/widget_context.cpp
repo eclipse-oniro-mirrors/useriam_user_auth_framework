@@ -25,7 +25,7 @@
 #include "ability_connect_callback.h"
 #include "accesstoken_kit.h"
 #include "auth_widget_helper.h"
-#include "context_arbitration_policy.h"
+#include "context_admission_policy.h"
 #include "context_pool.h"
 #include "context_death_recipient.h"
 #include "hisysevent_adapter.h"

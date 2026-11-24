@@ -25,7 +25,7 @@
 #include "iam_logger.h"
 #include "iam_para2str.h"
 #include "iam_ptr.h"
-#include "context_arbitration_policy.h"
+#include "context_admission_policy.h"
 #include "publish_event_adapter.h"
 #include "resource_node.h"
 #include "resource_node_utils.h"

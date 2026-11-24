@@ -312,6 +312,7 @@ std::shared_ptr<FiniteStateMachine> ScheduleNodeImpl::MakeFiniteStateMachine()
         MakeAction(&ScheduleNodeImpl::OnScheduleProcessing));
     builder->MakeOnStateEnter(S_END,
         MakeAction(&ScheduleNodeImpl::OnScheduleFinished));
+    builder->SetOwnerLifetime(weak_from_this());
     return builder->Build();
 }
 
@@ -346,7 +347,6 @@ bool ScheduleNodeImpl::TryKickMachine(Event event)
     if (machine == nullptr) {
         return false;
     }
-    machine->AttachOwnerLifetime(weak_from_this());
     machine->Schedule(event);
     return true;
 }

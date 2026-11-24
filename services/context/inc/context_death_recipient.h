@@ -41,7 +41,7 @@ class ContextDeathRecipient : public IRemoteObject::DeathRecipient, public NoCop
         ~ContextDeathRecipient() override = default;
         void OnRemoteDied(const wptr<IRemoteObject> &remote) override;
     protected:
-        uint64_t contextId_ = INVALID_CONTEXT_ID;
+        uint64_t contextId_ = BAD_CONTEXT_ID;
 };
 } // namespace UserAuth
 } // namespace UserIam

@@ -222,9 +222,6 @@ private:
     static std::mutex mutex_;
     static std::shared_ptr<UserAuthService> instance_;
 };
-
-int32_t GetTemplatesByAuthType(int32_t userId, AuthType authType, std::vector<uint64_t> &templateIds);
-std::string GetAuthParamStr(const AuthParamInner &authParam, std::optional<RemoteAuthParam> &remoteAuthParam);
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
