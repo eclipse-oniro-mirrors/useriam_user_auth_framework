@@ -19,6 +19,7 @@
 #include <future>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cstdlib>
 
 #include "attributes.h"
 #include "iam_common_defines.h"
@@ -116,6 +117,7 @@ int WriteDataToTmpFile(const std::vector<uint8_t> &data)
 
 void UserIdmServiceRestoreTest::SetUpTestCase()
 {
+    system("mkdir -p /data/service/el1/public/useriam/");
 }
 
 void UserIdmServiceRestoreTest::TearDownTestCase()
