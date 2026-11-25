@@ -107,7 +107,6 @@ bool DeleteImpl::HandlePinUpdate()
         CredentialUpdatedManager::GetInstance().ProcessCredentialDeleted(deletePara_, deletePara_.credentialId, PIN);
         return true;
     }
-    CredentialUpdatedManager::GetInstance().ProcessCredentialDeleted(deletePara_, deletePara_.credentialId, PIN);
     return DeleteCredential(deletePara_.userId, hdiResult.credentialInfos);
 }
 
