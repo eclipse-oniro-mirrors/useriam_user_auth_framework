@@ -71,6 +71,7 @@ public:
         uint32_t callerPermissions {0};
         std::optional<uint32_t> remoteTokenId {};
         std::optional<TokenSchedule> tokenSchedule;
+        AuthIntent authIntent {AuthIntent::DEFAULT};
     };
 
     struct SudoAuthContextPara {
@@ -84,7 +85,6 @@ public:
         std::string additionalInfo {""};
         bool isOsAccountVerified {false};
         bool needSubscribeAppState {true};
-        std::optional<TokenSchedule> tokenSchedule;
     };
 
     static std::shared_ptr<Context> CreateSimpleAuthContext(const Authentication::AuthenticationPara &para,

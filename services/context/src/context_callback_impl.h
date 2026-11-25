@@ -40,6 +40,8 @@ public:
     void SetTraceFreezingTime(int32_t freezingTime) override;
     void SetTraceSdkVersion(int32_t version) override;
     void SetTraceAuthType(int32_t authType) override;
+    void SetTraceAuthIntent(int32_t authIntent) override;
+    void SetTraceTokenSchedule(const TokenSchedule &schedule) override;
     void SetTraceAuthWidgetType(uint32_t authWidgetType) override;
     void SetTraceAuthTrustLevel(AuthTrustLevel atl) override;
     void SetTraceReuseUnlockResultMode(uint32_t reuseUnlockResultMode) override;

@@ -114,6 +114,34 @@ void CopyOptionalValue(const std::optional<T> &src, T &dst)
     }
 }
 
+// EXTRA_INFO is uniform "key:value" pairs joined with ";"; entries omitted when absent
+void Trace::BuildExtraInfo(const ContextCallbackNotifyListener::MetaData &metaData, UserAuthTrace &info)
+{
+    std::ostringstream oss;
+    std::string timingTrace;
+    CopyOptionalValue(metaData.extraInfo, timingTrace);
+    if (!timingTrace.empty()) {
+        oss << ";timeTrace:" << timingTrace;
+    }
+    if (metaData.tokenSchedule.has_value()) {
+        const TokenSchedule &schedule = metaData.tokenSchedule.value();
+        if (schedule.windowConfig.has_value()) {
+            info.tokenScheduleWindow = schedule.windowConfig->windowDuration;
+            info.tokenSchedulePeriod = schedule.windowConfig->repeatInterval;
+        }
+        if (schedule.hasValidStartTime) {
+            oss << ";startTime:" << schedule.validStartTime;
+        }
+        if (schedule.hasValidEndTime) {
+            oss << ";endTime:" << schedule.validEndTime;
+        }
+    }
+    std::string extraInfo = oss.str();
+    if (!extraInfo.empty()) {
+        info.timeTraceInfo.extraInfo = extraInfo.substr(1); // strip leading ";"
+    }
+}
+
 void Trace::CopyMetaDataToTraceInfo(const ContextCallbackNotifyListener::MetaData &metaData, UserAuthTrace &info)
 {
     CopyOptionalValue(metaData.callerName, info.callerName);
@@ -122,6 +150,7 @@ void Trace::CopyMetaDataToTraceInfo(const ContextCallbackNotifyListener::MetaDat
     if (metaData.operationResult == SUCCESS) {
         CopyOptionalValue(metaData.authType, info.authType);
     }
+    CopyOptionalValue(metaData.authIntent, info.authIntent);
     CopyOptionalValue(metaData.userId, info.userId);
     CopyOptionalValue(metaData.callerType, info.callerType);
     info.authResult = metaData.operationResult;
@@ -139,7 +168,7 @@ void Trace::CopyMetaDataToTraceInfo(const ContextCallbackNotifyListener::MetaDat
     CopyOptionalValue(metaData.totalTime, info.timeTraceInfo.totalTime);
     CopyOptionalValue(metaData.localTime, info.timeTraceInfo.localTime);
     CopyOptionalValue(metaData.authSuccTipTime, info.timeTraceInfo.authSuccTipTime);
-    CopyOptionalValue(metaData.extraInfo, info.timeTraceInfo.extraInfo);
+    BuildExtraInfo(metaData, info);
     CopyOptionalValue(metaData.requestContextId, info.requestContextId);
     CopyOptionalValue(metaData.authContextId, info.authContextId);
 }

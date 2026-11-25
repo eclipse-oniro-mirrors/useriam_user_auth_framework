@@ -147,6 +147,7 @@ std::shared_ptr<ContextCallback> SudoAuthContext::BuildChildCallback()
     childCallback->SetTraceRequestContextId(GetContextId());
     childCallback->SetTraceAuthTrustLevel(para_.atl);
     childCallback->SetTraceAuthType(AuthType::PIN);
+    childCallback->SetTraceAuthIntent(AuthIntent::SUDO_PIN_AUTH);
     return childCallback;
 }
 
@@ -223,7 +224,6 @@ bool SudoAuthContext::StartSilentChild(const ContextFactory::AuthProfile &profil
     para.callerType = para_.callerType;
     para.sdkVersion = para_.sdkVersion;
     para.authIntent = AuthIntent::DEFAULT;
-    para.tokenSchedule = para_.tokenSchedule;
     para.isOsAccountVerified = para_.isOsAccountVerified;
     auto child = ContextFactory::CreateSimpleAuthContext(para, false, false, childCallback);
     IF_FALSE_LOGE_AND_RETURN_VAL(child != nullptr, false);
@@ -264,7 +264,7 @@ bool SudoAuthContext::StartWidgetChild(const ContextFactory::AuthProfile &profil
     para.challenge = para_.challenge;
     para.authTypeList = {AuthType::PIN};
     para.atl = para_.atl;
-    para.tokenSchedule = para_.tokenSchedule;
+    para.authIntent = AuthIntent::SUDO_PIN_AUTH;
     para.widgetParam.title = ResolveWidgetTitle(para_.additionalInfo);
     para.widgetParam.windowMode = WindowModeType::DIALOG_BOX;
     para.authProfileMap[AuthType::PIN] = profile;

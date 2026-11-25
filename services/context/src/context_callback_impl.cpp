@@ -266,6 +266,16 @@ void ContextCallbackImpl::SetTraceAuthType(int32_t authType)
     metaData_.authType = authType;
 }
 
+void ContextCallbackImpl::SetTraceAuthIntent(int32_t authIntent)
+{
+    metaData_.authIntent = authIntent;
+}
+
+void ContextCallbackImpl::SetTraceTokenSchedule(const TokenSchedule &schedule)
+{
+    metaData_.tokenSchedule = schedule;
+}
+
 void ContextCallbackImpl::SetTraceAuthWidgetType(uint32_t authWidgetType)
 {
     metaData_.authWidgetType = authWidgetType;

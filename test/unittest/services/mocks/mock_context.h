@@ -46,6 +46,8 @@ public:
     MOCK_METHOD1(SetTraceFreezingTime, void(int32_t freezingTime));
     MOCK_METHOD1(SetTraceSdkVersion, void(int32_t version));
     MOCK_METHOD1(SetTraceAuthType, void(int32_t authType));
+    MOCK_METHOD1(SetTraceAuthIntent, void(int32_t authIntent));
+    MOCK_METHOD1(SetTraceTokenSchedule, void(const TokenSchedule &schedule));
     MOCK_METHOD1(SetTraceAuthWidgetType, void(uint32_t authWidgetType));
     MOCK_METHOD1(SetTraceAuthTrustLevel, void(AuthTrustLevel atl));
     MOCK_METHOD1(SetTraceReuseUnlockResultMode, void(uint32_t reuseUnlockResultMode));

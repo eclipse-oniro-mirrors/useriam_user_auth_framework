@@ -16,6 +16,7 @@
 #ifndef OHOS_USERIAM_DFX_HISYSEVENT_ADAPTER_H
 #define OHOS_USERIAM_DFX_HISYSEVENT_ADAPTER_H
 
+#include <cstdint>
 #include <string>
 
 namespace OHOS {
@@ -34,6 +35,9 @@ struct UserAuthTrace {
     uint32_t sdkVersion = 0;
     uint32_t atl = 0;
     int32_t authType = 0;
+    int32_t authIntent = 0;
+    int64_t tokenScheduleWindow = 0;
+    int64_t tokenSchedulePeriod = 0;
     int32_t authResult = -1;
     uint64_t authtimeSpan = 0;
     uint32_t authWidgetType = 0;

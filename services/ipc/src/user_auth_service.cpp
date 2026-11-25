@@ -697,6 +697,12 @@ int32_t UserAuthService::CheckAuthUserParam(const IpcAuthParamInner &ipcAuthPara
         contextCallback->OnResult(INVALID_PARAMETERS, extraInfo);
         return INVALID_PARAMETERS;
     }
+    if (authParam.tokenSchedule.has_value() && authParam.authIntent == AuthIntent::SUDO_PIN_AUTH) {
+        IAM_LOGE("token schedule with sudo pin auth is not supported");
+        contextCallback->SetTraceAuthFinishReason("UserAuthService AuthUser schedule with sudo not supported");
+        contextCallback->OnResult(INVALID_PARAMETERS, extraInfo);
+        return INVALID_PARAMETERS;
+    }
     if (!authParam.authTypes.empty()) {
         IAM_LOGE("authTypes must be empty for system user auth, typeCount:%{public}zu",
             authParam.authTypes.size());
@@ -752,6 +758,10 @@ int32_t UserAuthService::AuthUser(const IpcAuthParamInner &ipcAuthParamInner,
     }
     contextCallback->SetTraceIsRemoteAuth(remoteAuthParam.has_value());
     contextCallback->SetTraceUserId(authParam.userId);
+    contextCallback->SetTraceAuthIntent(authParam.authIntent);
+    if (authParam.tokenSchedule.has_value()) {
+        contextCallback->SetTraceTokenSchedule(authParam.tokenSchedule.value());
+    }
     Attributes extraInfo;
     int32_t checkRet = CheckAuthUserParam(ipcAuthParamInner, authParam, remoteAuthParam, contextCallback, extraInfo);
     if (checkRet != SUCCESS) {
@@ -868,7 +878,6 @@ uint64_t UserAuthService::StartSudoAuthContext(const AuthParamInner &authParam,
     sudoPara.challenge = para.challenge;
     sudoPara.atl = para.atl;
     sudoPara.additionalInfo = authParam.additionalInfo.value_or("");
-    sudoPara.tokenSchedule = para.tokenSchedule;
     sudoPara.isOsAccountVerified = para.isOsAccountVerified;
     sudoPara.needSubscribeAppState = !IpcCommon::CheckPermission(*this, USER_AUTH_FROM_BACKGROUND);
     auto context = ContextFactory::CreateSudoAuthContext(sudoPara, contextCallback);
@@ -1505,6 +1514,7 @@ int32_t UserAuthService::InitAuthWidgetContextPara(const IpcAuthParamInner &ipcA
     para.challenge = ipcAuthParam.challenge;
     para.skipLockedBiometricAuth = ipcAuthParam.skipLockedBiometricAuth;
     para.credentialIdList = ipcAuthParam.credentialIdList;
+    para.authIntent = static_cast<AuthIntent>(ipcAuthParam.authIntent);
     if (ipcAuthParam.isHasRemoteTokenId) {
         para.remoteTokenId = ipcAuthParam.remoteTokenId;
     }
@@ -1654,6 +1664,7 @@ int32_t UserAuthService::AuthWidget(int32_t apiVersion, const IpcAuthParamInner 
         return GENERAL_ERROR;
     }
     contextCallback->SetSystemApiCaller(IpcCommon::IsSystemCaller(*this) || IpcCommon::IsCallingNativeRoot());
+    contextCallback->SetTraceAuthIntent(ipcAuthParam.authIntent);
 
     ContextFactory::AuthWidgetContextPara para = {};
     para.sdkVersion = apiVersion;

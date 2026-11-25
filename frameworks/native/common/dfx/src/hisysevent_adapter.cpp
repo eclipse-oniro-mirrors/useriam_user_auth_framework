@@ -32,6 +32,9 @@ using HiSysEvent = OHOS::HiviewDFX::HiSysEvent;
 
 constexpr char STR_USER_ID[] = "USER_ID";
 constexpr char STR_AUTH_TYPE[] = "AUTH_TYPE";
+constexpr char STR_AUTH_INTENT[] = "AUTH_INTENT";
+constexpr char STR_TOKEN_SCHEDULE_WINDOW[] = "TOKEN_SCHEDULE_WINDOW";
+constexpr char STR_TOKEN_SCHEDULE_PERIOD[] = "TOKEN_SCHEDULE_PERIOD";
 constexpr char STR_OPERATION_TYPE[] = "OPERATION_TYPE";
 constexpr char STR_OPERATION_RESULT[] = "OPERATION_RESULT";
 constexpr char STR_AUTH_RESULT[] = "AUTH_RESULT";
@@ -152,6 +155,9 @@ void ReportUserAuth(const UserAuthTrace &info)
         STR_SDK_VERSION, info.sdkVersion,
         STR_AUTH_TRUST_LEVEL, info.atl,
         STR_AUTH_TYPE, info.authType,
+        STR_AUTH_INTENT, info.authIntent,
+        STR_TOKEN_SCHEDULE_WINDOW, info.tokenScheduleWindow,
+        STR_TOKEN_SCHEDULE_PERIOD, info.tokenSchedulePeriod,
         STR_AUTH_RESULT, info.authResult,
         STR_AUTH_TIME_SPAN, info.authtimeSpan,
         STR_AUTH_WIDGET_TYPE, info.authWidgetType,

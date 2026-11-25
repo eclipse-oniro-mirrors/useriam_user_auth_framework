@@ -53,6 +53,9 @@ USERIAM_USER_AUTH:
   SDK_VERSION: {type: UINT32, desc: sdk version}
   AUTH_TRUST_LEVEL: {type: UINT32, desc: auth trust level}
   AUTH_TYPE: {type: INT32, desc: auth type}
+  AUTH_INTENT: {type: INT32, desc: auth intent defined by AuthIntent}
+  TOKEN_SCHEDULE_WINDOW: {type: INT64, desc: token schedule redemption window duration ms (0 means single window)}
+  TOKEN_SCHEDULE_PERIOD: {type: INT64, desc: token schedule redemption repeat interval ms}
   AUTH_RESULT: {type: INT32, desc: auth result}
   AUTH_TIME_SPAN: {type: UINT64, desc: auth time span}
   AUTH_WIDGET_TYPE: {type: UINT32, desc: auth widget auth type and window mode}
@@ -67,7 +70,7 @@ USERIAM_USER_AUTH:
   TOTAL_TIME: {type: UINT32, desc: total wall-clock duration ms}
   LOCAL_TIME: {type: UINT32, desc: local processing duration ms}
   AUTH_SUCC_TIP_TIME: {type: UINT32, desc: auth succ tip duration ms}
-  EXTRA_INFO: {type: STRING, desc: extra info includes timing trace}
+  EXTRA_INFO: {type: STRING, desc: key:value pairs of timing trace and token schedule times}
   REQUEST_CONTEXTID: {type: UINT64, desc: request context id}
   AUTH_CONTEXTID: {type: UINT64, desc: auth context id}
 
