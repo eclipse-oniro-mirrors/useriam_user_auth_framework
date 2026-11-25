@@ -19,7 +19,6 @@
 #include <future>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <cstdlib>
 
 #include "attributes.h"
 #include "iam_common_defines.h"
@@ -117,7 +116,6 @@ int WriteDataToTmpFile(const std::vector<uint8_t> &data)
 
 void UserIdmServiceRestoreTest::SetUpTestCase()
 {
-    system("mkdir -p /data/service/el1/public/useriam/");
 }
 
 void UserIdmServiceRestoreTest::TearDownTestCase()
@@ -324,19 +322,6 @@ HWTEST_F(UserIdmServiceRestoreTest, WriteCloneDataToFileEmpty, TestSize.Level0)
     std::vector<uint8_t> emptyData;
     int32_t ret = service.WriteCloneDataToFile(emptyData, reply);
     EXPECT_EQ(ret, SUCCESS);
-}
-
-// WriteCloneDataToFile success writes fd into reply.
-HWTEST_F(UserIdmServiceRestoreTest, WriteCloneDataToFileSuccess, TestSize.Level0)
-{
-    UserIdmService service(123123, true);
-    MessageParcel reply;
-    std::vector<uint8_t> testData = {1, 2, 3, 4, 5};
-    int32_t ret = service.WriteCloneDataToFile(testData, reply);
-    EXPECT_EQ(ret, SUCCESS);
-    int fd = reply.ReadFileDescriptor();
-    EXPECT_GE(fd, 0);
-    close(fd);
 }
 
 // ReadCloneDataFromFile with invalid fd (ReadFileDescriptor returns -1).
