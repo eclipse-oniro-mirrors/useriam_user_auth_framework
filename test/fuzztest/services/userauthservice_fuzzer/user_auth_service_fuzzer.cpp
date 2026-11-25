@@ -552,6 +552,21 @@ void FuzzRegistUserAuthSuccessEventListener(Parcel &parcel)
     IAM_LOGI("end");
 }
 
+void FuzzNotifyEnterpriseAccountAuthSuccess(Parcel &parcel)
+{
+    IAM_LOGI("begin");
+    int32_t userId = parcel.ReadInt32();
+    std::string callerName = parcel.ReadString();
+    int32_t callerType = parcel.ReadInt32();
+    int32_t funcResult = GENERAL_ERROR;
+    g_userAuthService.NotifyEnterpriseAccountAuthSuccess(userId, callerName, callerType, funcResult);
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    g_userAuthService.NotifyEnterpriseAccountAuthSuccess(userId, callerName, callerType, funcResult);
+    IpcCommon::DeleteAllPermission();
+    EnsureTask();
+    IAM_LOGI("end");
+}
+
 void FuzzCheckUserRecognitionCapability(Parcel &parcel)
 {
     IAM_LOGI("begin");
@@ -1308,6 +1323,7 @@ FuzzFunc *g_fuzzFuncs[] = {
     FuzzNotice,
     FuzzRegisterWidgetCallback,
     FuzzRegistUserAuthSuccessEventListener,
+    FuzzNotifyEnterpriseAccountAuthSuccess,
     FuzzCheckUserRecognitionCapability,
     FuzzGetUserRecognitionResult,
     FuzzRegisterUserRecognitionEventListener,

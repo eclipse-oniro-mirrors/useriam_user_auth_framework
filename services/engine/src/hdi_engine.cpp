@@ -720,6 +720,12 @@ int32_t HdiEngineImpl::SetDaemonForbiddenlist([[maybe_unused]] int32_t userId,
 {
     return CAPABILITY_NOT_SUPPORTED;
 }
+
+int32_t HdiEngineImpl::CheckEnterpriseAccountAuthCaller([[maybe_unused]] int32_t processUid,
+    [[maybe_unused]] const std::string &processName)
+{
+    return CAPABILITY_NOT_SUPPORTED;
+}
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS

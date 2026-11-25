@@ -153,6 +153,7 @@ public:
         bool isAdd));
     MOCK_METHOD3(SetDaemonForbiddenlist, int32_t(int32_t userId, const std::vector<std::string> &appIdentifiers,
         bool isAdd));
+    MOCK_METHOD2(CheckEnterpriseAccountAuthCaller, int32_t(int32_t processUid, const std::string &processName));
     MOCK_METHOD1(SetStatusCallback, bool(const StateCallback &callback));
     MOCK_METHOD0(Load, int32_t());
     MOCK_METHOD0(Unload, int32_t());

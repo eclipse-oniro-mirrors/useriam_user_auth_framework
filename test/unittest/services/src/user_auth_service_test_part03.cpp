@@ -17,6 +17,7 @@
 
 #include <future>
 
+#include "accesstoken_kit.h"
 #include "iam_common_defines.h"
 #include "iam_defines.h"
 #include "iam_ptr.h"
@@ -459,6 +460,61 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceUnRegistEventListerner_004, TestSiz
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     EXPECT_EQ(service.RegistUserAuthSuccessEventListener(testCallback), ResultCode::GENERAL_ERROR);
     EXPECT_EQ(service.UnRegistUserAuthSuccessEventListener(testCallback), ResultCode::GENERAL_ERROR);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceNotifyEnterpriseAccountAuthSuccess001, TestSize.Level0)
+{
+    UserAuthService service;
+    int32_t funcResult = SUCCESS;
+    IpcCommon::DeleteAllPermission();
+    EXPECT_EQ(service.NotifyEnterpriseAccountAuthSuccess(100, "com.example.enterprise",
+        Security::AccessToken::TOKEN_HAP, funcResult), ResultCode::SUCCESS);
+    EXPECT_EQ(funcResult, ResultCode::CHECK_PERMISSION_FAILED);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceNotifyEnterpriseAccountAuthSuccess002, TestSize.Level0)
+{
+    UserAuthService service;
+    int32_t funcResult = GENERAL_ERROR;
+    sptr<MockEventListenerService> listener = new (std::nothrow) MockEventListenerService();
+    ASSERT_NE(listener, nullptr);
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    ON_CALL(*mockHdi, CheckEnterpriseAccountAuthCaller(_, _)).WillByDefault(Return(SUCCESS));
+    ASSERT_EQ(service.RegistUserAuthSuccessEventListener(listener), ResultCode::SUCCESS);
+    EXPECT_CALL(*listener, OnNotifyAuthSuccessEvent(100,
+        static_cast<int32_t>(AuthType::ENTERPRISE_ACCOUNT),
+        Truly([](const IpcAuthSuccessEventInfo &eventInfo) {
+            return eventInfo.callerName == "com.example.enterprise" &&
+                eventInfo.callerType == static_cast<int32_t>(Security::AccessToken::TOKEN_HAP) &&
+                !eventInfo.isWidgetAuth;
+        }))).Times(1);
+    EXPECT_EQ(service.NotifyEnterpriseAccountAuthSuccess(100, "com.example.enterprise",
+        Security::AccessToken::TOKEN_HAP, funcResult), ResultCode::SUCCESS);
+    EXPECT_EQ(funcResult, ResultCode::SUCCESS);
+    EXPECT_EQ(service.UnRegistUserAuthSuccessEventListener(listener), ResultCode::SUCCESS);
+    IpcCommon::DeleteAllPermission();
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceNotifyEnterpriseAccountAuthSuccess003, TestSize.Level0)
+{
+    UserAuthService service;
+    int32_t funcResult = GENERAL_ERROR;
+    sptr<MockEventListenerService> listener = new (std::nothrow) MockEventListenerService();
+    ASSERT_NE(listener, nullptr);
+    IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    ASSERT_NE(mockHdi, nullptr);
+    ON_CALL(*mockHdi, CheckEnterpriseAccountAuthCaller(_, _)).WillByDefault(Return(CHECK_PERMISSION_FAILED));
+    ASSERT_EQ(service.RegistUserAuthSuccessEventListener(listener), ResultCode::SUCCESS);
+    EXPECT_CALL(*listener, OnNotifyAuthSuccessEvent(_, _, _)).Times(0);
+    EXPECT_EQ(service.NotifyEnterpriseAccountAuthSuccess(100, "com.example.enterprise",
+        Security::AccessToken::TOKEN_HAP, funcResult), ResultCode::SUCCESS);
+    EXPECT_EQ(funcResult, ResultCode::CHECK_PERMISSION_FAILED);
+    EXPECT_EQ(service.UnRegistUserAuthSuccessEventListener(listener), ResultCode::SUCCESS);
     IpcCommon::DeleteAllPermission();
 }
 

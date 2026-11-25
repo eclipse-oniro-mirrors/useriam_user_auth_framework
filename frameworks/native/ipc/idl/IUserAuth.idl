@@ -118,4 +118,6 @@ interface OHOS.UserIam.UserAuth.IUserAuth {
     int SetDaemonAllowedlist([in] int userId, [in] String[] appIdentifiers, [in] boolean isAdd);
 
     int SetDaemonForbiddenlist([in] int userId, [in] String[] appIdentifiers, [in] boolean isAdd);
+
+    int NotifyEnterpriseAccountAuthSuccess([in] int userId, [in] String callerName, [in] int callerType);
 }

@@ -124,6 +124,7 @@ public:
         bool isAdd) override;
     int32_t SetDaemonForbiddenlist(int32_t userId, const std::vector<std::string> &appIdentifiers,
         bool isAdd) override;
+    int32_t CheckEnterpriseAccountAuthCaller(int32_t processUid, const std::string &processName) override;
     bool SetStatusCallback(const StateCallback &callback) override;
     int32_t Load() override;
     int32_t Unload() override;

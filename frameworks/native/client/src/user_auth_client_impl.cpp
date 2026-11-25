@@ -1163,6 +1163,22 @@ int32_t UserAuthClientImpl::UnregisterRemoteAuthCallback()
     return proxy->UnregisterRemoteAuthCallback();
 }
 
+int32_t UserAuthClientImpl::NotifyEnterpriseAccountAuthSuccess(int32_t userId, const std::string &callerName,
+    int32_t callerType)
+{
+    IAM_LOGI("start, userId:%{public}d, callerName:%{public}s, callerType:%{public}d", userId,
+        callerName.c_str(), callerType);
+    auto proxy = GetProxy();
+    IF_FALSE_LOGE_AND_RETURN_VAL(proxy != nullptr, GENERAL_ERROR);
+    int32_t funcResult = GENERAL_ERROR;
+    int32_t ret = proxy->NotifyEnterpriseAccountAuthSuccess(userId, callerName, callerType, funcResult);
+    if (ret != SUCCESS) {
+        IAM_LOGE("ipc call return fail, ret:%{public}d", ret);
+        return GENERAL_ERROR;
+    }
+    return funcResult;
+}
+
 void UserAuthClientImpl::InitIpcRemoteAuthParam(const std::optional<RemoteAuthParam> &remoteAuthParam,
     IpcRemoteAuthParam &ipcRemoteAuthParam)
 {

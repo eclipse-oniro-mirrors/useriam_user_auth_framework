@@ -103,6 +103,8 @@ public:
 
     int32_t RegisterRemoteAuthCallback(const sptr<IRemoteAuthCallback> &remoteAuthCallback) override;
     int32_t UnregisterRemoteAuthCallback() override;
+    int32_t NotifyEnterpriseAccountAuthSuccess(int32_t userId, const std::string &callerName, int32_t callerType,
+        int32_t &funcResult) override;
 
     int32_t CallbackEnter(uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
