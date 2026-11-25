@@ -1682,6 +1682,7 @@ int32_t UserAuthService::StartAuthWidget(ContextFactory::AuthWidgetContextPara &
         return pinExpiredRet;
     }
     FilterFaceNotAvailable(para, validType);
+    para.authTypeList = std::move(validType);
 
     contextId = StartWidgetContext(contextCallback, para, modalCallback);
     if (contextId == BAD_CONTEXT_ID) {
