@@ -28,7 +28,7 @@
 #include "context.h"
 #include "context_pool.h"
 #include "context_callback_impl.h"
-#include "context_arbitration_policy.h"
+#include "context_admission_policy.h"
 #include "iam_check.h"
 #include "iam_event_dispatcher.h"
 #include "simple_auth_context.h"

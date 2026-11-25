@@ -32,7 +32,7 @@ public:
         void operator()();
 
     private:
-        uint64_t contextId_ = INVALID_CONTEXT_ID;
+        uint64_t contextId_ = BAD_CONTEXT_ID;
     };
 
     static uint64_t GetNewContextId();

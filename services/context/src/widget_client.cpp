@@ -89,7 +89,7 @@ ResultCode WidgetClient::OnNotice(NoticeType type, const std::string &eventData)
         IAM_LOGE("parse WidgetNotice failed: %{public}s", e.what());
         return ResultCode::INVALID_PARAMETERS;
     }
-    if (notice.widgetContextId == 0) {
+    if (notice.widgetContextId == BAD_CONTEXT_ID) {
         IAM_LOGE("Invalid widget context id");
         return ResultCode::INVALID_PARAMETERS;
     }
@@ -270,7 +270,7 @@ void WidgetClient::Reset()
     widgetParam_.title.clear();
     widgetParam_.navigationButtonText.clear();
     widgetParam_.windowMode = WindowModeType::DIALOG_BOX;
-    widgetContextId_ = 0;
+    widgetContextId_ = BAD_CONTEXT_ID;
     authTokenId_ = 0;
     schedule_ = nullptr;
     widgetCallback_ = nullptr;

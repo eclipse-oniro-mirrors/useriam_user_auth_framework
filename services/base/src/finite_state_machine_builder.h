@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 
 #include "nocopyable.h"
@@ -39,12 +40,14 @@ public:
         uint32_t nextState) override;
     std::shared_ptr<Builder> MakeOnStateEnter(uint32_t state, const FiniteStateMachine::Action &action) override;
     std::shared_ptr<Builder> MakeOnStateLeave(uint32_t state, const FiniteStateMachine::Action &action) override;
+    std::shared_ptr<Builder> SetOwnerLifetime(const std::weak_ptr<void> &ownerLifetime) override;
     std::shared_ptr<FiniteStateMachine> Build() override;
 
 private:
     std::string name_;
     uint32_t initstate_{0};
     bool valid_{false};
+    std::optional<std::weak_ptr<void>> ownerLifetime_ {};
     FiniteStateMachineImpl::TransitionMap transitionMap_;
     FiniteStateMachineImpl::EnterMap enterMap_;
     FiniteStateMachineImpl::LeaveMap leaveMap_;

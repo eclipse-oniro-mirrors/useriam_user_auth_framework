@@ -53,6 +53,8 @@ public:
 
     virtual std::shared_ptr<Builder> MakeOnStateLeave(uint32_t state, const FiniteStateMachine::Action &action) = 0;
 
+    virtual std::shared_ptr<Builder> SetOwnerLifetime(const std::weak_ptr<void> &ownerLifetime) = 0;
+
     virtual std::shared_ptr<FiniteStateMachine> Build() = 0;
 };
 } // namespace UserAuth

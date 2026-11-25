@@ -24,8 +24,6 @@
 #include "iam_ptr.h"
 
 
-#undef private
-
 namespace OHOS {
 namespace UserIam {
 namespace UserAuth {
@@ -34,7 +32,7 @@ class DummyContextPool : public ContextPool {
 public:
     static uint64_t GetNewContextId()
     {
-        return 0;
+        return BAD_CONTEXT_ID;
     };
     static ContextPool &Instance();
     bool Schedule(const std::shared_ptr<Context> &context)

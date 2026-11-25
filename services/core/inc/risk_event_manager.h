@@ -32,9 +32,7 @@ public:
     void SyncRiskEvents();
     void OnScreenLock();
 
-#ifndef IAM_TEST_ENABLE
 private:
-#endif
     enum EventType : uint32_t {
         UNKNOWN = 0,
         SCREENLOCK_STRONG_AUTH = 1

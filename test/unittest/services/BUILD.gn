@@ -69,7 +69,7 @@ ohos_unittest("iam_services_test") {
               "src/authentication_impl_test.cpp",
               "src/co_auth_service_test.cpp",
               "src/context_appstate_observer_test.cpp",
-              "src/context_arbitration_test.cpp",
+              "src/context_admission_policy_test.cpp",
               "src/context_callback_impl_test.cpp",
               "src/context_factory_test.cpp",
               "src/context_pool_test.cpp",

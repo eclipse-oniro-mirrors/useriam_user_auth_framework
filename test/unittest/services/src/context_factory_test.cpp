@@ -62,7 +62,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateSimpleAuth_001, TestSize.Level0
     Authentication::AuthenticationPara para = {};
     auto context = factory->CreateSimpleAuthContext(para, true, false, contextCallback);
     ASSERT_NE(context, nullptr);
-    EXPECT_NE(context->GetContextId(), 0U);
+    EXPECT_NE(context->GetContextId(), BAD_CONTEXT_ID);
     ASSERT_EQ(context->GetContextType(), CONTEXT_SIMPLE_AUTH);
 }
 
@@ -90,7 +90,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateIdentify_001, TestSize.Level0)
     Identification::IdentificationPara para = {};
     auto context = factory->CreateIdentifyContext(para, contextCallback);
     ASSERT_NE(context, nullptr);
-    EXPECT_NE(context->GetContextId(), 0U);
+    EXPECT_NE(context->GetContextId(), BAD_CONTEXT_ID);
     ASSERT_EQ(context->GetContextType(), CONTEXT_IDENTIFY);
 }
 
@@ -118,7 +118,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateEnrollContext_001, TestSize.Lev
     Enrollment::EnrollmentPara para = {};
     auto context = factory->CreateEnrollContext(para, true, contextCallback);
     ASSERT_NE(context, nullptr);
-    EXPECT_NE(context->GetContextId(), 0U);
+    EXPECT_NE(context->GetContextId(), BAD_CONTEXT_ID);
     ASSERT_EQ(context->GetContextType(), CONTEXT_ENROLL);
 }
 
@@ -181,7 +181,7 @@ HWTEST_F(ContextFactoryTest, ContextFactoryCreateDeleteContext_001, TestSize.Lev
     Deletion::DeleteParam para = {};
     auto context = factory->CreateDeleteContext(para, contextCallback);
     ASSERT_NE(context, nullptr);
-    EXPECT_NE(context->GetContextId(), 0U);
+    EXPECT_NE(context->GetContextId(), BAD_CONTEXT_ID);
     ASSERT_EQ(context->GetContextType(), CONTEXT_DELETE);
 }
 

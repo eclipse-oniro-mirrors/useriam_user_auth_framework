@@ -79,6 +79,13 @@ std::shared_ptr<FiniteStateMachine::Builder> FiniteStateMachineBuilder::MakeOnSt
     return shared_from_this();
 }
 
+std::shared_ptr<FiniteStateMachine::Builder> FiniteStateMachineBuilder::SetOwnerLifetime(
+    const std::weak_ptr<void> &ownerLifetime)
+{
+    ownerLifetime_ = ownerLifetime;
+    return shared_from_this();
+}
+
 std::shared_ptr<FiniteStateMachine> FiniteStateMachineBuilder::Build()
 {
     if (!valid_) {
@@ -86,7 +93,15 @@ std::shared_ptr<FiniteStateMachine> FiniteStateMachineBuilder::Build()
         return nullptr;
     }
     valid_ = false;
-    return Common::MakeShared<FiniteStateMachineImpl>(name_, initstate_, transitionMap_, enterMap_, leaveMap_);
+    auto machine = Common::MakeShared<FiniteStateMachineImpl>(name_, initstate_, transitionMap_, enterMap_, leaveMap_);
+    if (machine == nullptr) {
+        IAM_LOGE("machine %{public}s build failed", name_.c_str());
+        return nullptr;
+    }
+    if (ownerLifetime_.has_value()) {
+        machine->AttachOwnerLifetime(ownerLifetime_.value());
+    }
+    return machine;
 }
 
 std::shared_ptr<FiniteStateMachine::Builder> FiniteStateMachine::Builder::New(const std::string &name,

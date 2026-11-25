@@ -52,9 +52,7 @@ protected:
     bool OnStop() override;
     void OnResult(int32_t resultCode, const std::shared_ptr<Attributes> &scheduleResultAttr) override;
 
-#ifndef IAM_TEST_ENABLE
 private:
-#endif
     friend class SudoChildCallbackImpl;
 
     enum SudoPhase {

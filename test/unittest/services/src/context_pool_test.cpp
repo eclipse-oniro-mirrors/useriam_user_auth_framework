@@ -160,7 +160,7 @@ HWTEST_F(ContextPoolTest, ContextPoolRandomId, TestSize.Level0)
 
     for (int i = 0; i < 1000; i++) {
         auto contextId = ContextPool::GetNewContextId();
-        EXPECT_NE(contextId, 0U);
+        EXPECT_NE(contextId, BAD_CONTEXT_ID);
         EXPECT_TRUE(generated.find(contextId) == generated.end());
         generated.emplace(contextId);
     }
@@ -671,12 +671,38 @@ HWTEST_F(ContextPoolTest, ContextPoolCancelWaitingContextReportsCanceledWithoutS
     EXPECT_EQ(pool.Select(WAITING_ID).lock(), nullptr);
 }
 
+// Schedule refuses a context carrying BAD_CONTEXT_ID: pooled, it could never
+// leave on its own, because its cleaner reads that id as nothing to delete
+HWTEST_F(ContextPoolTest, ContextPoolScheduleRefusesBadContextId, TestSize.Level0)
+{
+    const uint64_t CONTEXT_ID = 663;
+    auto pooled = MockContext::CreateWithContextId(CONTEXT_ID);
+    ASSERT_NE(pooled, nullptr);
+    auto &pool = ContextPool::Instance();
+    EXPECT_EQ(pool.Schedule(pooled), true);
+    DrainSerialThread();
+    EXPECT_NE(pool.Select(CONTEXT_ID).lock(), nullptr);
+
+    auto idless = MockContext::CreateWithContextId(BAD_CONTEXT_ID);
+    ASSERT_NE(idless, nullptr);
+    // refused up front: nothing is queued under the bad id, so nothing starts
+    EXPECT_EQ(pool.Schedule(idless), false);
+    DrainSerialThread();
+    EXPECT_EQ(pool.Select(BAD_CONTEXT_ID).lock(), nullptr);
+    // the refusal leaves the pool as it was
+    EXPECT_NE(pool.Select(CONTEXT_ID).lock(), nullptr);
+
+    EXPECT_EQ(pool.Delete(CONTEXT_ID), true);
+    DrainSerialThread();
+}
+
 // a cleaner built from a null context must not delete anything: the old form
 // collapsed it to id 0 and still called Delete, evicting an unrelated pooled
-// context holding that id
+// context holding that id. Schedule now refuses that id, so any pooled context
+// serves as the witness
 HWTEST_F(ContextPoolTest, ContextPoolCleanerNullContextDeletesNothing, TestSize.Level0)
 {
-    const uint64_t CONTEXT_ID = 0;
+    const uint64_t CONTEXT_ID = 664;
     auto context = MockContext::CreateWithContextId(CONTEXT_ID);
     ASSERT_NE(context, nullptr);
     auto &pool = ContextPool::Instance();
@@ -693,12 +719,11 @@ HWTEST_F(ContextPoolTest, ContextPoolCleanerNullContextDeletesNothing, TestSize.
     DrainSerialThread();
 }
 
-// a context whose id was never allocated (still INVALID_CONTEXT_ID) must not
-// be deleted by id either: the delete would land on any pooled context
-// holding that id
+// a cleaner built from a context whose id was never allocated (still
+// BAD_CONTEXT_ID) must not reach Delete either: nothing legitimate holds that id
 HWTEST_F(ContextPoolTest, ContextPoolCleanerInvalidContextIdDeletesNothing, TestSize.Level0)
 {
-    const uint64_t CONTEXT_ID = INVALID_CONTEXT_ID;
+    const uint64_t CONTEXT_ID = 665;
     auto pooled = MockContext::CreateWithContextId(CONTEXT_ID);
     ASSERT_NE(pooled, nullptr);
     auto &pool = ContextPool::Instance();
@@ -706,15 +731,34 @@ HWTEST_F(ContextPoolTest, ContextPoolCleanerInvalidContextIdDeletesNothing, Test
     DrainSerialThread();
     EXPECT_NE(pool.Select(CONTEXT_ID).lock(), nullptr);
 
-    // model an id-less context: GetContextId still reports the invalid id
-    auto idless = MockContext::CreateWithContextId(INVALID_CONTEXT_ID);
+    // model an id-less context: GetContextId still reports the bad id
+    auto idless = MockContext::CreateWithContextId(BAD_CONTEXT_ID);
     ASSERT_NE(idless, nullptr);
     ContextPool::Cleaner cleaner(idless);
     cleaner();
-    // the pooled context is untouched: an invalid id deletes nothing
+    // the pooled context is untouched: the bad id deletes nothing
     EXPECT_NE(pool.Select(CONTEXT_ID).lock(), nullptr);
 
     EXPECT_EQ(pool.Delete(CONTEXT_ID), true);
+    DrainSerialThread();
+}
+
+// the error code INVALID_CONTEXT_ID is an ordinary context id: a cleaner must
+// delete a context holding it like any other. The sentinel used to be this
+// error code, which stranded such a context in the pool.
+HWTEST_F(ContextPoolTest, ContextPoolCleanerDeletesContextHoldingErrorCodeValuedId, TestSize.Level0)
+{
+    const uint64_t CONTEXT_ID = INVALID_CONTEXT_ID;
+    auto context = MockContext::CreateWithContextId(CONTEXT_ID);
+    ASSERT_NE(context, nullptr);
+    auto &pool = ContextPool::Instance();
+    EXPECT_EQ(pool.Schedule(context), true);
+    DrainSerialThread();
+    EXPECT_NE(pool.Select(CONTEXT_ID).lock(), nullptr);
+
+    ContextPool::Cleaner cleaner(context);
+    cleaner();
+    EXPECT_EQ(pool.Select(CONTEXT_ID).lock(), nullptr);
     DrainSerialThread();
 }
 } // namespace UserAuth

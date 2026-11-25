@@ -18,7 +18,6 @@
 
 #include "resource_node.h"
 
-#undef private
 
 namespace OHOS {
 namespace UserIam {

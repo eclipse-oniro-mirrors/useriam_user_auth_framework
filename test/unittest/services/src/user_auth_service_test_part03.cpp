@@ -35,6 +35,7 @@
 #include "mock_widget_callback_interface.h"
 #include "resource_node_pool.h"
 #include "user_auth_service.h"
+#include "user_auth_service_helper.h"
 #include "user_auth_helper.h"
 
 namespace OHOS {

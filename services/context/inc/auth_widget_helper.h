@@ -34,9 +34,7 @@ public:
     static int32_t QueryReusableAuthResult(const int32_t userId, const AuthParamInner &authParam,
         EngReuseUnlockInfo &reuseResultInfo);
 
-#ifndef IAM_TEST_ENABLE
 private:
-#endif
     static bool ParseAttributes(const Attributes &values, const AuthType &authType,
         ContextFactory::AuthProfile &profile);
     static int32_t SetReuseUnlockResult(int32_t apiVersion, const EngReuseUnlockInfo &info,

@@ -50,9 +50,7 @@ public:
 protected:
     bool OnStart() override;
 
-#ifndef IAM_TEST_ENABLE
 private:
-#endif
     bool StartAuth();
     void StartAuthDelayed();
     bool SetupConnection();

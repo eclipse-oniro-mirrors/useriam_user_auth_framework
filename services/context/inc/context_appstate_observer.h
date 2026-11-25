@@ -58,7 +58,7 @@ class ContextAppStateObserver : public ApplicationStateObserverStub {
 
     protected:
         void ProcAppStateChanged(int32_t userId);
-        const uint64_t contextId_ = INVALID_CONTEXT_ID;
+        const uint64_t contextId_ = BAD_CONTEXT_ID;
         const std::string bundleName_;
 };
 } // namespace UserAuth

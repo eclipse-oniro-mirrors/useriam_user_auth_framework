@@ -55,21 +55,33 @@ class Context {
 public:
     using ContextStopCallback = std::function<void()>;
     virtual ~Context() = default;
+    virtual uint64_t GetContextId() const = 0;
+    virtual ContextType GetContextType() const = 0;
+    virtual uint32_t GetTokenId() const = 0;
+    virtual int32_t GetUserId() const = 0;
+    virtual bool IsPrimaryContext() const
+    {
+        return false;
+    }
+
+protected:
+    virtual void OnStartFailed(int32_t errorCode) = 0;
+    virtual int32_t GetLatestError() const = 0;
+    virtual void SetLatestError(int32_t error) = 0;
+    virtual int32_t GetAuthType() const = 0;
+
+private:
+    friend class ContextPoolImpl;
+    friend class ContextAdmissionPolicy;
+    friend class RemoteAuthServiceImpl;
+    friend class SetWidgetParamCallbackService;
     virtual bool Start() = 0;
     virtual bool Stop() = 0;
-    virtual void OnStartFailed(int32_t errorCode) = 0;
-    virtual uint64_t GetContextId() const = 0;
     std::chrono::steady_clock::time_point GetCreateTime() const
     {
         return createTime_;
     }
-    virtual ContextType GetContextType() const = 0;
     virtual std::shared_ptr<ScheduleNode> GetScheduleNode(uint64_t scheduleId) const = 0;
-    virtual uint32_t GetTokenId() const = 0;
-    virtual int32_t GetLatestError() const = 0;
-    virtual void SetLatestError(int32_t error) = 0;
-    virtual int32_t GetUserId() const = 0;
-    virtual int32_t GetAuthType() const = 0;
     virtual std::string GetCallerName() const = 0;
     virtual void SetRemoteAuthParam(const WidgetParamInner &widgetParam, const sptr<IModalCallback> &modalCallback) = 0;
     virtual AuthIntent GetAuthIntent() const
@@ -88,12 +100,6 @@ public:
     {
         return PreemptDecision::KEEP_RUNNING;
     }
-    virtual bool IsPrimaryContext() const
-    {
-        return false;
-    }
-
-private:
     std::chrono::steady_clock::time_point createTime_ {std::chrono::steady_clock::now()};
 };
 } // namespace UserAuth

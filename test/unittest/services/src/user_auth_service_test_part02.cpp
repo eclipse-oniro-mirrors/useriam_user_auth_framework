@@ -73,7 +73,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_001, TestSize.Level0)
     int32_t ret = service.AuthWidget(apiVersion, authParam, widgetParam, testUserAuthCallback, testModalCallback,
         contextId);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    EXPECT_EQ(contextId, (uint64_t)0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 }
 
 HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidget_002, TestSize.Level0)
@@ -176,7 +176,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidgetTokenSchedule001, TestSiz
     int32_t ret = service.AuthWidget(apiVersion, authParam, widgetParam, callbackInterface, testModalCallback,
         contextId);
     EXPECT_EQ(ret, CHECK_SYSTEM_APP_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     // system caller: widget auth does not consume token schedule, reject instead of silently ignoring it
     IpcCommon::AddPermission(IS_SYSTEM_APP);
@@ -187,7 +187,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidgetTokenSchedule001, TestSiz
         });
     ret = service.AuthWidget(apiVersion, authParam, widgetParam, callbackInterface, testModalCallback, contextId);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -219,7 +219,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthWidgetSystemOnlyParam001, TestS
     int32_t ret = service.AuthWidget(apiVersion, authParam, widgetParam, callbackInterface, testModalCallback,
         contextId);
     EXPECT_EQ(ret, CHECK_SYSTEM_APP_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -244,13 +244,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUserAuthTypesNotEmpty001, TestS
     uint64_t contextId = 0;
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     // multi-element list: internal auth is single-type by contract
     authParam.authTypes = {FACE, FINGERPRINT};
     ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -295,13 +295,13 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUserTokenSchedule001, TestSize.
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_SYSTEM_APP_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     // system caller: the same malformed schedule now fails schedule validation
     IpcCommon::AddPermission(IS_SYSTEM_APP);
     ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -354,7 +354,7 @@ void AuthUserAndExpect(UserAuthService &service, const IpcAuthParamInner &authPa
 {
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, expected);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 }
 
 // every system-only field at once; the malformed schedule keeps the case self-contained
@@ -462,7 +462,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUserRemoteAuthParam001, TestSiz
     IpcCommon::AddPermission(ACCESS_USER_AUTH_INTERNAL_PERMISSION);
     int32_t ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, CHECK_SYSTEM_APP_FAILED);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
 
     // system caller: remoteAuthOptions passes the gate and runs into the
     // schedule+remote combination check (a valid schedule keeps it self-contained)
@@ -474,7 +474,7 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceAuthUserRemoteAuthParam001, TestSiz
     authParam.tokenScheduleValidEndTime = 2000;
     ret = service.AuthUser(authParam, remoteAuthParam, callbackInterface, contextId);
     EXPECT_EQ(ret, INVALID_PARAMETERS);
-    EXPECT_EQ(contextId, 0);
+    EXPECT_EQ(contextId, BAD_CONTEXT_ID);
     IpcCommon::DeleteAllPermission();
 }
 

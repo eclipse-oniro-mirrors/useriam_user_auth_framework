@@ -57,21 +57,6 @@ bool GenerateRand(uint8_t *data, size_t len)
     }
     return true;
 }
-
-bool IsSameCallerDuplicate(const Context &incoming, const Context &existing)
-{
-    if (!incoming.IsPrimaryContext() || !existing.IsPrimaryContext() ||
-        incoming.GetCallerName() != existing.GetCallerName() ||
-        incoming.GetContextType() != existing.GetContextType() ||
-        incoming.GetAuthType() != existing.GetAuthType() ||
-        incoming.GetUserId() != existing.GetUserId()) {
-        return false;
-    }
-    IAM_LOGI("context ****%{public}hx superseded by newer request ****%{public}hx from same caller",
-        static_cast<uint16_t>(existing.GetContextId()),
-        static_cast<uint16_t>(incoming.GetContextId()));
-    return true;
-}
 }
 class ContextPoolImpl final : public ContextPool, public DelayedRefSingleton<ContextPoolImpl> {
 public:
@@ -95,7 +80,8 @@ private:
         std::map<uint64_t, std::shared_ptr<Context>> toStop;
         std::vector<std::shared_ptr<Context>> toStart;
     };
-    void PromoteWaitingLocked(AdmissionPlan &plan);
+    static bool IsSameCallerDuplicate(const Context &incoming, const Context &existing);
+    void AdmitWaitingContextsLocked(AdmissionPlan &plan);
     void ExecutePlan(AdmissionPlan plan);
     static bool StopIfPooled(uint64_t contextId);
     static void StartIfPooled(uint64_t contextId);
@@ -118,14 +104,14 @@ ContextPool &ContextPool::Instance()
 }
 
 ContextPool::Cleaner::Cleaner(const std::shared_ptr<Context> &context)
-    : contextId_(context != nullptr ? context->GetContextId() : INVALID_CONTEXT_ID)
+    : contextId_(context != nullptr ? context->GetContextId() : BAD_CONTEXT_ID)
 {
 }
 
 void ContextPool::Cleaner::operator()()
 {
     IAM_LOGD("start");
-    if (contextId_ == INVALID_CONTEXT_ID) {
+    if (contextId_ == BAD_CONTEXT_ID) {
         IAM_LOGE("invalid context id");
         return;
     }
@@ -138,15 +124,15 @@ uint64_t ContextPool::GetNewContextId()
     static constexpr uint32_t MAX_TRY_TIMES = 10;
     static std::mutex mutex;
     std::lock_guard<std::mutex> lock(mutex);
-    uint64_t contextId = 0;
+    uint64_t contextId = BAD_CONTEXT_ID;
     unsigned char *contextIdPtr = static_cast<unsigned char *>(static_cast<void *>(&contextId));
     for (uint32_t i = 0; i < MAX_TRY_TIMES; i++) {
         bool genRandRet = GenerateRand(contextIdPtr, sizeof(uint64_t));
         if (!genRandRet) {
             IAM_LOGE("generate rand fail");
-            return 0;
+            return BAD_CONTEXT_ID;
         }
-        if (contextId == 0 || contextId == REUSE_AUTH_RESULT_CONTEXT_ID ||
+        if (contextId == BAD_CONTEXT_ID || contextId == REUSE_AUTH_RESULT_CONTEXT_ID ||
             ContextPool::Instance().Select(contextId).lock() != nullptr) {
             IAM_LOGE("invalid or duplicate context id");
             continue;
@@ -159,6 +145,7 @@ uint64_t ContextPool::GetNewContextId()
 bool ContextPoolImpl::Schedule(const std::shared_ptr<Context> &context)
 {
     IF_FALSE_LOGE_AND_RETURN_VAL(context != nullptr, false);
+    IF_FALSE_LOGE_AND_RETURN_VAL(context->GetContextId() != BAD_CONTEXT_ID, false);
     auto handler = ThreadHandler::GetSingleThreadInstance();
     IF_FALSE_LOGE_AND_RETURN_VAL(handler != nullptr, false);
     AdmissionPlan plan;
@@ -174,7 +161,7 @@ bool ContextPoolImpl::Schedule(const std::shared_ptr<Context> &context)
             return false;
         }
         waitingFifo_.push_back(context);
-        PromoteWaitingLocked(plan);
+        AdmitWaitingContextsLocked(plan);
     }
     ExecutePlan(std::move(plan));
     return true;
@@ -221,7 +208,7 @@ bool ContextPoolImpl::Delete(uint64_t contextId)
             IAM_LOGE("context not found");
             return false;
         }
-        PromoteWaitingLocked(plan);
+        AdmitWaitingContextsLocked(plan);
     }
     ExecutePlan(std::move(plan));
     return true;
@@ -256,7 +243,7 @@ void ContextPoolImpl::NotifyPreemptStateChanged()
     AdmissionPlan plan;
     {
         std::lock_guard<std::recursive_mutex> lock(poolMutex_);
-        PromoteWaitingLocked(plan);
+        AdmitWaitingContextsLocked(plan);
     }
     ExecutePlan(std::move(plan));
 }
@@ -342,11 +329,30 @@ std::vector<std::weak_ptr<Context>> ContextPoolImpl::SelectAll() const
 }
 #endif
 
-void ContextPoolImpl::PromoteWaitingLocked(AdmissionPlan &plan)
+bool ContextPoolImpl::IsSameCallerDuplicate(const Context &incoming, const Context &existing)
+{
+    if (!incoming.IsPrimaryContext() || !existing.IsPrimaryContext() ||
+        incoming.GetCallerName() != existing.GetCallerName() ||
+        incoming.GetContextType() != existing.GetContextType() ||
+        incoming.GetAuthType() != existing.GetAuthType() ||
+        incoming.GetUserId() != existing.GetUserId()) {
+        return false;
+    }
+    IAM_LOGI("context ****%{public}hx superseded by newer request ****%{public}hx from same caller",
+        static_cast<uint16_t>(existing.GetContextId()),
+        static_cast<uint16_t>(incoming.GetContextId()));
+    return true;
+}
+
+// Walks the FIFO once and fills the plan: each waiter stops the predecessors it supersedes
+// (same caller) or that yield to it (STOP_NOW), and starts when it can run beside the rest.
+// Callers hold poolMutex_ and run the plan after unlocking.
+void ContextPoolImpl::AdmitWaitingContextsLocked(AdmissionPlan &plan)
 {
     if (waitingFifo_.empty()) {
         return;
     }
+    // Every running context, then each waiter as it is visited, admitted or not.
     std::vector<std::shared_ptr<Context>> predecessors;
     predecessors.reserve(runningContexts_.size());
     for (const auto &[contextId, context] : runningContexts_) {
@@ -360,27 +366,26 @@ void ContextPoolImpl::PromoteWaitingLocked(AdmissionPlan &plan)
             it = waitingFifo_.erase(it);
             continue;
         }
-        std::vector<std::pair<uint64_t, std::shared_ptr<Context>>> pendingVictims;
+        // predecessor: an earlier context judged against the waiter; visible: those that stay ahead of it.
         std::vector<std::weak_ptr<Context>> visible;
-        for (const auto &member : predecessors) {
-            if (member == nullptr) {
+        for (const auto &predecessor : predecessors) {
+            if (predecessor == nullptr) {
                 continue;
             }
-            bool canCollect = waiter->GetCreateTime() > member->GetCreateTime();
-            if (canCollect && IsSameCallerDuplicate(*waiter, *member)) {
-                plan.toStop.emplace(member->GetContextId(), member);
+            // The waiter is a newer request than this predecessor.
+            bool isNewRequest = waiter->GetCreateTime() > predecessor->GetCreateTime();
+            if (isNewRequest && IsSameCallerDuplicate(*waiter, *predecessor)) {
+                plan.toStop.emplace(predecessor->GetContextId(), predecessor);
                 continue;
             }
-            if (canCollect && member->GetPreemptDecision(*waiter) == PreemptDecision::STOP_NOW) {
-                pendingVictims.emplace_back(member->GetContextId(), member);
+            // The predecessor yields its seat to the waiter.
+            if (isNewRequest && predecessor->GetPreemptDecision(*waiter) == PreemptDecision::STOP_NOW) {
+                plan.toStop.emplace(predecessor->GetContextId(), predecessor);
                 continue;
             }
-            visible.emplace_back(member);
+            visible.emplace_back(predecessor);
         }
         predecessors.push_back(waiter);
-        for (auto &[victimId, victim] : pendingVictims) {
-            plan.toStop.emplace(victimId, victim);
-        }
         if (!waiter->CanStart(visible)) {
             ++it;
             continue;

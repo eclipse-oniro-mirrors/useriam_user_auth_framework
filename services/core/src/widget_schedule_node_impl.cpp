@@ -73,6 +73,7 @@ std::shared_ptr<FiniteStateMachine> WidgetScheduleNodeImpl::MakeFiniteStateMachi
     BuildReloadWaitingStateTransitions(builder);
     BuildParamWaitingStateTransitions(builder);
     BuildAuthFinishedStateTransitions(builder);
+    builder->SetOwnerLifetime(weak_from_this());
     return builder->Build();
 }
 
@@ -174,7 +175,6 @@ bool WidgetScheduleNodeImpl::TryKickMachine(Event event)
         IAM_LOGE("Invalid FSM of widget schedule");
         return false;
     }
-    machine->AttachOwnerLifetime(weak_from_this());
     machine->Schedule(event);
     return true;
 }

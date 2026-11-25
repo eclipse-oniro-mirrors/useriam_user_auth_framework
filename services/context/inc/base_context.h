@@ -73,7 +73,7 @@ protected:
 private:
     bool Start() final;
     bool Stop() final;
-    uint64_t contextId_ = INVALID_CONTEXT_ID;
+    uint64_t contextId_ = BAD_CONTEXT_ID;
     std::string description_;
     bool hasStarted_ = false;
     bool stopRequested_ = false;

@@ -256,7 +256,7 @@ napi_value UserAuthImpl::CancelAuth(napi_env env, napi_callback_info info)
         return nullptr;
     }
     IAM_LOGI("contextId's low 16 bits is %{public}s", GET_MASKED_STRING(contextId).c_str());
-    if (contextId == 0) {
+    if (contextId == BAD_CONTEXT_ID) {
         IAM_LOGE("invalid error");
         return nullptr;
     }

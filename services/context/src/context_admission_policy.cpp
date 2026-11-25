@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-#include "context_arbitration_policy.h"
+#include "context_admission_policy.h"
 
 #include "iam_common_defines.h"
 #include "iam_logger.h"
 
 #define LOG_TAG "USER_AUTH_SA"
-#define LOG_FILE_ID LOG_FILE_CONTEXT_ARBITRATION_POLICY
+#define LOG_FILE_ID LOG_FILE_CONTEXT_ADMISSION_POLICY
 
 namespace OHOS {
 namespace UserIam {
@@ -42,7 +42,7 @@ bool ContextAdmissionPolicy::BearsPin(const Context &ctx)
     return false;
 }
 
-bool BlockedBySudoPinContention(const Context &self, const Context &predecessor)
+bool ContextAdmissionPolicy::BlockedBySudoPinContention(const Context &self, const Context &predecessor)
 {
     int32_t userId = self.GetUserId();
     if (userId == INVALID_USER_ID || userId != predecessor.GetUserId()) {

@@ -18,7 +18,6 @@
 
 #include "authentication.h"
 
-#undef private
 
 namespace OHOS {
 namespace UserIam {

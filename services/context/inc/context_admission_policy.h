@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IAM_CONTEXT_ARBITRATION_POLICY_H
-#define IAM_CONTEXT_ARBITRATION_POLICY_H
+#ifndef IAM_CONTEXT_ADMISSION_POLICY_H
+#define IAM_CONTEXT_ADMISSION_POLICY_H
 
 #include <memory>
 #include <vector>
@@ -30,8 +30,11 @@ public:
     static bool IsAuthContext(ContextType type);
     static bool BearsPin(const Context &ctx);
     static bool CanStart(const Context &self, const std::vector<std::weak_ptr<Context>> &predecessors);
+
+private:
+    static bool BlockedBySudoPinContention(const Context &self, const Context &predecessor);
 };
 } // namespace UserAuth
 } // namespace UserIam
 } // namespace OHOS
-#endif // IAM_CONTEXT_ARBITRATION_POLICY_H
+#endif // IAM_CONTEXT_ADMISSION_POLICY_H
