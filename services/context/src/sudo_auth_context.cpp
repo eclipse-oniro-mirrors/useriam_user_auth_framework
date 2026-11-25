@@ -225,6 +225,7 @@ bool SudoAuthContext::StartSilentChild(const ContextFactory::AuthProfile &profil
     para.sdkVersion = para_.sdkVersion;
     para.authIntent = AuthIntent::DEFAULT;
     para.isOsAccountVerified = para_.isOsAccountVerified;
+    IAM_LOGI("%{public}s create SimpleAuthContext", GetDescription());
     auto child = ContextFactory::CreateSimpleAuthContext(para, false, false, childCallback);
     IF_FALSE_LOGE_AND_RETURN_VAL(child != nullptr, false);
     childCallback->SetCleaner(ContextPool::Cleaner(child));
@@ -268,6 +269,7 @@ bool SudoAuthContext::StartWidgetChild(const ContextFactory::AuthProfile &profil
     para.widgetParam.title = ResolveWidgetTitle(para_.additionalInfo);
     para.widgetParam.windowMode = WindowModeType::DIALOG_BOX;
     para.authProfileMap[AuthType::PIN] = profile;
+    IAM_LOGI("%{public}s create WidgetContext", GetDescription());
     auto child = ContextFactory::CreateWidgetContext(para, false, childCallback, nullptr, nullptr);
     IF_FALSE_LOGE_AND_RETURN_VAL(child != nullptr, false);
     dialogActive_.store(true);
