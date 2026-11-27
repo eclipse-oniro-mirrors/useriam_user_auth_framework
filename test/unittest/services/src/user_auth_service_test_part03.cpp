@@ -1762,12 +1762,61 @@ HWTEST_F(UserAuthServiceTest, UserAuthServiceGetTemplatesByAuthTypeTest, TestSiz
     EXPECT_EQ(GetTemplatesByAuthType(userId, authType, templateId), GENERAL_ERROR);
 }
 
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetTemplatesByAuthTypeEmptyTest, TestSize.Level0)
+{
+    int32_t userId = 110;
+    AuthType authType = FACE;
+    std::vector<uint64_t> templateIds;
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
+        .WillOnce([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
+            return SUCCESS; // keep infos empty
+        });
+    EXPECT_EQ(GetTemplatesByAuthType(userId, authType, templateIds), SUCCESS);
+    EXPECT_TRUE(templateIds.empty());
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetTemplatesByAuthTypeValidTest, TestSize.Level0)
+{
+    int32_t userId = 110;
+    AuthType authType = FACE;
+    std::vector<uint64_t> templateIds;
+    auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
+    EXPECT_NE(mockHdi, nullptr);
+    EXPECT_CALL(*mockHdi, GetCredential(_, _, _))
+        .WillOnce([](int32_t userId, int32_t authType, std::vector<HdiCredentialInfo> &infos) {
+            HdiCredentialInfo info = {};
+            info.templateId = 12345;
+            infos.push_back(info);
+            return SUCCESS;
+        });
+    EXPECT_EQ(GetTemplatesByAuthType(userId, authType, templateIds), SUCCESS);
+    EXPECT_EQ(templateIds.size(), 1);
+    EXPECT_EQ(templateIds[0], 12345);
+}
+
 HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAuthParamStrTest, TestSize.Level0)
 {
     AuthParamInner authParam;
     RemoteAuthParam tmpAuthParam;
     std::optional<RemoteAuthParam> remoteAuthParam = RemoteAuthParam{};
     remoteAuthParam->collectorTokenId = std::make_optional<uint32_t>(1000000);
+    EXPECT_NE(GetAuthParamStr(authParam, remoteAuthParam), "");
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAuthParamStrNoRemoteTest, TestSize.Level0)
+{
+    AuthParamInner authParam;
+    std::optional<RemoteAuthParam> remoteAuthParam = std::nullopt;
+    EXPECT_NE(GetAuthParamStr(authParam, remoteAuthParam), "");
+}
+
+HWTEST_F(UserAuthServiceTest, UserAuthServiceGetAuthParamStrShortTokenTest, TestSize.Level0)
+{
+    AuthParamInner authParam;
+    std::optional<RemoteAuthParam> remoteAuthParam = RemoteAuthParam{};
+    remoteAuthParam->collectorTokenId = std::make_optional<uint32_t>(12);
     EXPECT_NE(GetAuthParamStr(authParam, remoteAuthParam), "");
 }
 

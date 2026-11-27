@@ -36,7 +36,7 @@ namespace UserAuth {
 class UserAuthService : public SystemAbility, public UserAuthStub, public NoCopyable {
 public:
     DECLARE_SYSTEM_ABILITY(UserAuthService);
-    static std::shared_ptr<UserAuthService> GetInstance();
+    static sptr<UserAuthService> GetInstance();
 
     UserAuthService();
     ~UserAuthService() override = default;
@@ -108,6 +108,8 @@ public:
 
     int32_t CallbackEnter(uint32_t code) override;
     int32_t CallbackExit([[maybe_unused]] uint32_t code, [[maybe_unused]] int32_t result) override;
+
+    void PublishSelf();
 
 protected:
     void OnStart() override;
@@ -221,8 +223,7 @@ private:
     int32_t AdminAuthForToken(int32_t uid, std::vector<uint8_t> &authToken);
     int32_t GetAuthToken(EngLaunchServiceType serviceType, int32_t uid, ContextFactory::AuthWidgetContextPara &para,
         std::vector<uint8_t> &authToken);
-    static std::mutex mutex_;
-    static std::shared_ptr<UserAuthService> instance_;
+    static sptr<UserAuthService> instance_;
 };
 } // namespace UserAuth
 } // namespace UserIam

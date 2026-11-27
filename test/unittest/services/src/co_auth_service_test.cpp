@@ -64,8 +64,6 @@ HWTEST_F(CoAuthServiceTest, CoAuthServiceTest001, TestSize.Level0)
     
     auto service = Common::MakeShared<CoAuthService>();
     EXPECT_NE(service, nullptr);
-    service->SetIsReady(true);
-    service->SetAccessTokenReady(true);
     auto mockHdi = MockUserAuthEngine::Holder::GetInstance().Get();
     EXPECT_NE(mockHdi, nullptr);
     std::promise<void> promise;
@@ -125,13 +123,11 @@ HWTEST_F(CoAuthServiceTest, CoAuthServiceTestExecutorRegister001, TestSize.Level
     
     auto service = Common::MakeShared<CoAuthService>();
     EXPECT_NE(service, nullptr);
-    service->SetIsReady(false);
-    service->SetAccessTokenReady(false);
     sptr<IExecutorCallback> callbackInterface = testCallback;
     uint64_t executorIndex = 0;
-    EXPECT_EQ(service->ExecutorRegister(info, callbackInterface, executorIndex), GENERAL_ERROR);
+    EXPECT_EQ(service->ExecutorRegister(info, callbackInterface, executorIndex), CHECK_PERMISSION_FAILED);
     EXPECT_EQ(executorIndex, INVALID_EXECUTOR_INDEX);
-    EXPECT_EQ(service->ExecutorUnregister(executorIndex), SUCCESS);
+    EXPECT_EQ(service->ExecutorUnregister(executorIndex), CHECK_PERMISSION_FAILED);
     IpcCommon::DeleteAllPermission();
 }
 
@@ -150,8 +146,6 @@ HWTEST_F(CoAuthServiceTest, CoAuthServiceTestExecutorRegister002, TestSize.Level
     
     auto service = Common::MakeShared<CoAuthService>();
     EXPECT_NE(service, nullptr);
-    service->SetIsReady(true);
-    service->SetAccessTokenReady(true);
     sptr<IExecutorCallback> callbackInterface = testCallback;
     uint64_t executorIndex = 0;
     EXPECT_EQ(service->ExecutorRegister(info, callbackInterface, executorIndex), CHECK_PERMISSION_FAILED);
@@ -185,48 +179,6 @@ HWTEST_F(CoAuthServiceTest, CoAuthServiceTestDump, TestSize.Level0)
     EXPECT_EQ(service->Dump(testFd2, testArgs), GENERAL_ERROR);
 
     EXPECT_TRUE(ResourceNodePool::Instance().Delete(20));
-}
-
-HWTEST_F(CoAuthServiceTest, CoAuthServiceTestRegisterAccessTokenListener, TestSize.Level0)
-{
-    auto service = Common::MakeShared<CoAuthService>();
-    EXPECT_NE(service, nullptr);
-    service->OnEngineReady();
-    service->SetIsReady(true);
-    service->SetAccessTokenReady(true);
-    EXPECT_EQ(service->RegisterAccessTokenListener(), SUCCESS);
-    EXPECT_EQ(service->RegisterAccessTokenListener(), SUCCESS);
-    EXPECT_EQ(service->UnRegisterAccessTokenListener(), SUCCESS);
-    EXPECT_EQ(service->UnRegisterAccessTokenListener(), SUCCESS);
-}
-
-HWTEST_F(CoAuthServiceTest, CoAuthServiceTestNotifyFwkReady, TestSize.Level0)
-{
-    auto service = Common::MakeShared<CoAuthService>();
-    EXPECT_NE(service, nullptr);
-    service->SetIsReady(false);
-    EXPECT_NO_THROW(service->NotifyFwkReady());
-    service->SetIsReady(true);
-    EXPECT_NO_THROW(service->NotifyFwkReady());
-}
-
-HWTEST_F(CoAuthServiceTest, CoAuthServiceTestOnEngineUnavailable, TestSize.Level0)
-{
-    auto service = Common::MakeShared<CoAuthService>();
-    EXPECT_NE(service, nullptr);
-    service->SetIsReady(true);
-    EXPECT_NO_THROW(service->OnEngineReady());
-    EXPECT_NO_THROW(service->OnEngineUnavailable());
-    EXPECT_NO_THROW(service->OnEngineUnavailable());
-}
-
-HWTEST_F(CoAuthServiceTest, CoAuthServiceTestIsFwkReady, TestSize.Level0)
-{
-    auto service = Common::MakeShared<CoAuthService>();
-    EXPECT_NE(service, nullptr);
-    service->SetIsReady(true);
-    service->SetAccessTokenReady(true);
-    EXPECT_NO_THROW(service->NotifyFwkReady());
 }
 } // namespace UserAuth
 } // namespace UserIam

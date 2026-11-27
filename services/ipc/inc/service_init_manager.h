@@ -16,7 +16,11 @@
 #ifndef SERVICE_INIT_MANAGER_H
 #define SERVICE_INIT_MANAGER_H
 
-#include <mutex>
+#include <memory>
+
+#include "iam_common_defines.h"
+#include "system_ability_listener.h"
+#include "thread_handler.h"
 
 namespace OHOS {
 namespace UserIam {
@@ -25,27 +29,53 @@ class ServiceInitManager {
 public:
     static ServiceInitManager &GetInstance();
 
+    void OnCoAuthServiceStart();
+    void OnCoAuthServiceStop();
+    void OnUserAuthServiceStart();
+    void OnUserAuthServiceStop();
     void OnIdmServiceStart();
     void OnIdmServiceStop();
 
-    void OnCoAuthServiceStart();
-    void OnCoAuthServiceStop();
-
-    void OnUserAuthServiceStart();
-    void OnUserAuthServiceStop();
+    void OnEngineReady();
+    void OnEngineUnavailable();
+    void OnAccessTokenReady();
 
 private:
-    ServiceInitManager() = default;
+    ServiceInitManager();
     ~ServiceInitManager() = default;
 
-    void CheckAllServiceStart();
-    void CheckAllServiceStop();
+    void StartCoAuthServiceImpl();
+    void StopCoAuthServiceImpl();
+    void StartUserAuthServiceImpl();
+    void StopUserAuthServiceImpl();
+    void StartIdmServiceImpl();
+    void StopIdmServiceImpl();
 
-    std::recursive_mutex mutex_;
+    void HandleServiceStart();
+    void HandleServiceStop();
 
-    bool isUserAuthServiceStart_ = false;
+    void InitGlobalInstance();
+    void DeinitGlobalInstance();
+    void CheckAllFlags();
+    void PublishAllServices();
+
+    void OnEngineReadyImpl();
+    void OnEngineUnavailableImpl();
+    void OnAccessTokenReadyImpl();
+
+    ResultCode RegisterAccessTokenListenerImpl();
+    ResultCode UnRegisterAccessTokenListenerImpl();
+
+    std::shared_ptr<ThreadHandler> threadHandler_;
+
     bool isCoAuthServiceStart_ = false;
+    bool isUserAuthServiceStart_ = false;
     bool isIdmServiceStart_ = false;
+    bool accessTokenReady_ = false;
+    bool fwkReady_ = false;
+    bool engineReady_ = false;
+
+    sptr<SystemAbilityListener> accessTokenListener_{nullptr};
 };
 } // namespace UserAuth
 } // namespace UserIam

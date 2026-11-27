@@ -29,15 +29,15 @@ namespace UserIam {
 namespace UserAuth {
 class MockThreadHandler final : public ThreadHandler {
 public:
-    MOCK_METHOD1(PostTask, void(const Task &task));
+    MOCK_METHOD2(PostTask, void(const Task &task, uint32_t timeoutSec));
     MOCK_METHOD1(EnsureTask, void(const Task &task));
     MOCK_METHOD0(Suspend, void());
     static std::shared_ptr<ThreadHandler> InvokeDirectly()
     {
         using namespace testing;
         auto handler = std::make_shared<MockThreadHandler>();
-        EXPECT_CALL(*handler, PostTask(_)).Times(AnyNumber());
-        ON_CALL(*handler, PostTask).WillByDefault([](const ThreadHandler::Task &f) {
+        EXPECT_CALL(*handler, PostTask(_, _)).Times(AnyNumber());
+        ON_CALL(*handler, PostTask).WillByDefault([](const ThreadHandler::Task &f, uint32_t) {
             if (f) {
                 f();
             }
